@@ -1,0 +1,20 @@
+#[CASE]
+testcase =
+testfactory_key =
+dashboard_version =
+
+#[PATHS]
+data_path =
+data_path_dri =
+factory_excel_path =
+factory_layout_path = ""
+simulation_path =
+
+#[LOGS]
+enable_log_factory_setup =
+enable_log_simulation_setup =
+enable_log_solver =
+enable_time_tracking =
+
+#[SLACKS]
+enable_slacks =
