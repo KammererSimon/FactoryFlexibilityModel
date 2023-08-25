@@ -10,12 +10,12 @@ import numpy as np
 import openpyxl
 import pandas as pd
 
-import factory_flexibility_model.factory.factory_blueprint as bp
+import factory_flexibility_model.factory.blueprint as bp
 
 # IMPORT ENDOGENOUS COMPONENTS
-import factory_flexibility_model.factory.factory_model as fm
+import factory_flexibility_model.factory.factory as fm
 import factory_flexibility_model.input_validations as iv
-import factory_flexibility_model.simulation.factory_simulation as fs
+import factory_flexibility_model.simulation.simulation as fs
 
 
 # MAIN FUNCTIONS
@@ -39,7 +39,7 @@ def import_factory_blueprint(blueprint):
         flow_type = flow["type"]
         flow.pop("type")
 
-        # Add new flow to factory with given specifications
+        # Add new flowtype to factory with given specifications
         factory.add_flow(flow_name, flow_type, **flow)
 
     # CREATE COMPONENTS
@@ -56,8 +56,8 @@ def import_factory_blueprint(blueprint):
             pass
 
         # delete parameters already defined
-        if "flow" in component:
-            component.pop("flow")
+        if "flowtype" in component:
+            component.pop("flowtype")
         component.pop("type")
 
         # Set configuration for remaining parameters of the component
@@ -85,7 +85,7 @@ def import_factory_layout_from_excel(data_path: str):
     containing all the specified components and configurations in the excel-file. This is done by first transforming
     the excel information into a factory-blueprint-object and then calling the import_factory_blueprint-method to create
     the factory object itself
-    :param data_path: Filepath of the Excel input file
+    :param data_path: Filepath of the Excel validate file
     :return: factory_model.factory - object
     """
 
@@ -100,7 +100,7 @@ def import_factory_layout_from_excel(data_path: str):
 
     # Check version compatibilities
     iv.check_version_compatibility(
-        "factory_import.py", version, "factory_model.py", blueprint.version
+        "factory_import.py", version, "factory.py", blueprint.version
     )
 
     # CREATE FLOWS
@@ -149,7 +149,7 @@ def import_factory(data_path: str):
             f"ERROR: The given file does not contain a factory_model.factory-object"
         )
 
-    # write log
+    # write log_simulation
     print("FACTORY IMPORT FROM FILE SUCCESSFUL")
 
     # Return the imported factory
@@ -158,9 +158,9 @@ def import_factory(data_path: str):
 
 def import_simulation(data_path: str):
     """
-    This function takes a path to a stored factory_simulation.simulation - object. The Simulation is being imported and returned
+    This function takes a path to a stored simulation - object. The Simulation is being imported and returned
     :param data_path: Path to a valid simulation-object that has been created using simulation.save()
-    :return: factory_simulation.simulation - object
+    :return: fsimulation.simulation - object
     """
 
     # check, if the requested file exists
@@ -175,10 +175,10 @@ def import_simulation(data_path: str):
     # make sure that the imported data represents a factory-object
     if not isinstance(imported_simulation, fs.simulation):
         raise Exception(
-            f"ERROR: The given file does not contain a factory_simulation.simulation-object"
+            f"ERROR: The given file does not contain a simulation.simulation-object"
         )
 
-    # write log
+    # write log_simulation
     print("SIMULATION IMPORT FROM FILE SUCCESSFUL")
 
     # Return the imported simulation
@@ -205,7 +205,7 @@ def __create_blueprint(workbook, version):
             sheet_data[row[0].value] = row[1].value
 
     # create a newe blueprint with the given parameters
-    blueprint = bp.factory_blueprint()
+    blueprint = bp.blueprint()
     blueprint.info["name"] = sheet_data["factory_name"]
     blueprint.info["description"] = sheet_data["factory_description"]
     blueprint.info["max_timesteps"] = sheet_data["max_number_of_timesteps"]
@@ -223,8 +223,8 @@ def __add_flows_to_blueprint(workbook, blueprint):
     This function adds all flows specified in the given workbook
     to the given factory and then returns the edited factory blueprint
     :param workbook: excel-workbook in openpyxl-format
-    :param factory:  factory_blueprint.blueprint-object
-    :return: factory_blueprint.blueprint-object
+    :param factory:  blueprint.blueprint-object
+    :return: blueprint.blueprint-object
     """
 
     # read in the required sheet
@@ -232,13 +232,13 @@ def __add_flows_to_blueprint(workbook, blueprint):
 
     # iterate over all given flows
     for flow_name in input_data_flows:
-        # get data corresponding to the flow name
+        # get data corresponding to the flowtype name
         flow_data = input_data_flows[flow_name]
 
-        # initialize new flow within blueprint
+        # initialize new flowtype within blueprint
         blueprint.flows[flow_name] = {}
 
-        # add given specifications to the flow description within the blueprint
+        # add given specifications to the flowtype description within the blueprint
         blueprint.flows[flow_name]["name"] = flow_name
         for attribute in flow_data:
             blueprint.flows[flow_name][attribute] = flow_data[attribute]
@@ -251,8 +251,8 @@ def __add_components_to_blueprint(workbook, blueprint, timeseries, scenario_para
     This function adds all components specified in the given workbook to the given
     factory blueprint and then returns the edited blueprint
     :param workbook: excel-workbook in openpyxl-format
-    :param factory:  factory_blueprint-object
-    :return: factory_blueprint-object
+    :param factory:  blueprint-object
+    :return: blueprint-object
     """
     types = {
         "pool": "POOLS",
@@ -321,8 +321,8 @@ def __add_connections_to_blueprint(workbook, blueprint):
     This function adds all connections specified in the given workbook
     to the given factory blueprint and then returns the edited blueprint
     :param workbook: excel-workbook in openpyxl-format
-    :param factory:  factory_blueprint-object
-    :return: factory_blueprint-object
+    :param factory:  blueprint-object
+    :return: blueprint-object
     """
 
     # initialize variables
@@ -425,7 +425,7 @@ def __read_in_scenario_parameters(sheet):
     """
     This function takes the "SCENARIO PARAMETERS" - workbook sheet of a factory
     template xlsx and returns alist of all the keys
-    :param sheet: "SCENARIO PARAMETERS" sheet from excel input data in openpyxl format
+    :param sheet: "SCENARIO PARAMETERS" sheet from excel validate data in openpyxl format
     :return: List containing all specified keys from the given excel-file
     """
 

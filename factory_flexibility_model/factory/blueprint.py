@@ -6,7 +6,7 @@
 from collections import defaultdict
 
 
-class factory_blueprint:
+class blueprint:
     def __init__(self):
         self.version = 20221201  # script version
         self.timefactor = 1  # timefactor of the factory. See documentation for details
@@ -15,7 +15,7 @@ class factory_blueprint:
         }  # sets the size of displayed icons within the preview of the factory in the gui
         self.components = {}  # dict with all components of the factory
         self.connections = defaultdict(lambda: None)  # dict of connections
-        self.flows = defaultdict(lambda: None)  # list of flows
+        self.flowtypes = defaultdict(lambda: None)  # list of flowtypes
         self.info = {
             "name": "Undefined",  # Standard Information, equivalent to factory-object initialization
             "description": "Undefined",
@@ -32,8 +32,8 @@ class factory_blueprint:
                 "name": "Electricity",
                 "key": "electricity",
                 "type": "energy",
-                "unit_energy": "kWh",
-                "unit_power": "kW",
+                "unit_flow": "kWh",
+                "unit_flowrate": "kW",
                 "conversion_factor": 1,
                 "color": [0.44, 0.676, 0.277, 1],
             }
@@ -45,8 +45,8 @@ class factory_blueprint:
                 "name": "Dark Energy",
                 "key": "darkenergy",
                 "type": "energy",
-                "unit_energy": "kWh",
-                "unit_power": "kW",
+                "unit_flow": "kWh",
+                "unit_flowrate": "kW",
                 "conversion_factor": 1,
                 "color": [0, 0, 0, 1],
             }
@@ -58,7 +58,7 @@ class factory_blueprint:
                 "name": "Grid Electricity",
                 "key": "grid_electricity",
                 "type": "source",
-                "flow": "electricity",
+                "flowtype": "electricity",
                 "cost": "5",
                 "icon": "Assets\\sources\\source_powerpole.png",
                 "position_x": 0.1,
@@ -73,7 +73,7 @@ class factory_blueprint:
                 "key": "e_solar",
                 "type": "source",
                 "description": "Onsite generation of installed solar panels",
-                "flow": "electricity",
+                "flowtype": "electricity",
                 "cost": "0",
                 "icon": "Assets\\sources\\source_solar.png",
                 "position_x": 0.1,
@@ -88,7 +88,7 @@ class factory_blueprint:
                 "key": "battery_storage",
                 "type": "storage",
                 "description": "A 200kWh stationary lithium ion battery storage",
-                "flow": "electricity",
+                "flowtype": "electricity",
                 "icon": "Assets\\components\\component_battery.png",
                 "position_x": 0.5,
                 "position_y": 0.2,
@@ -102,7 +102,7 @@ class factory_blueprint:
                 "key": "electricity_sales",
                 "type": "sink",
                 "description": "Option to sell electricity to the grid",
-                "flow": "electricity",
+                "flowtype": "electricity",
                 "revenue": "5",
                 "icon": "Assets\\sinks\\sink_sales.png",
                 "position_x": 0.9,
@@ -117,7 +117,7 @@ class factory_blueprint:
                 "key": "electricity_demand",
                 "type": "sink",
                 "description": "Fixed electricity demand timeseries",
-                "flow": "electricity",
+                "flowtype": "electricity",
                 "icon": "Assets\\sinks\\sink_lightbulb.png",
                 "position_x": 0.9,
                 "position_y": 0.3,
@@ -132,7 +132,7 @@ class factory_blueprint:
                 "icon": "Assets\\components\\pool_frame.png",
                 "type": "pool",
                 "description": "electrical power equilibrium within the factory",
-                "flow": "electricity",
+                "flowtype": "electricity",
                 "position_x": 0.5,
                 "position_y": 0.6,
             }
@@ -145,7 +145,7 @@ class factory_blueprint:
                 "key": "connection_1",
                 "from": "grid_electricity",
                 "to": "pool_electricity",
-                "flow": "electricity",
+                "flowtype": "electricity",
                 "weight_source": 1,
                 "weight_sink": 1,
                 "to_losses": False,
@@ -159,7 +159,7 @@ class factory_blueprint:
                 "key": "connection_2",
                 "from": "e_solar",
                 "to": "pool_electricity",
-                "flow": "electricity",
+                "flowtype": "electricity",
                 "weight_source": 1,
                 "weight_sink": 1,
                 "to_losses": False,
@@ -173,7 +173,7 @@ class factory_blueprint:
                 "key": "connection_3",
                 "from": "pool_electricity",
                 "to": "electricity_sales",
-                "flow": "electricity",
+                "flowtype": "electricity",
                 "weight_source": 1,
                 "weight_sink": 1,
                 "to_losses": False,
@@ -187,7 +187,7 @@ class factory_blueprint:
                 "key": "connection_4",
                 "from": "pool_electricity",
                 "to": "battery_storage",
-                "flow": "electricity",
+                "flowtype": "electricity",
                 "weight_source": 1,
                 "weight_sink": 1,
                 "to_losses": False,
@@ -201,7 +201,7 @@ class factory_blueprint:
                 "key": "connection_0",
                 "from": "battery_storage",
                 "to": "pool_electricity",
-                "flow": "electricity",
+                "flowtype": "electricity",
                 "weight_source": 1,
                 "weight_sink": 1,
                 "to_losses": False,

@@ -2,7 +2,7 @@
 name = "factory-flexibility-model"
 version = "0.1.0"
 description = ""
-authors = ["Constantin Chaumet <constantin.chaumet@tu-dortmund.de>"]
+authors = ["Simon Kammerer <simon.kammerer@tu-dortmund.de>"]
 readme = "README.md"
 packages = [{include = "factory_flexibility_model"}]
 
@@ -33,4 +33,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-start = "main:start"
+gui = "examples.main:gui_development"
+dashboard = "examples.main:dashboard_development"
+dri = "examples.main:dri_iteration"
+simulate = "examples.main:script_based"

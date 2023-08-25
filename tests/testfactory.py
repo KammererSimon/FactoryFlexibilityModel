@@ -1,7 +1,7 @@
 # TESTFACTORIES
 # This Script is a temporary solution for the definition of factory layouts.
 # By now factories can only be specified by executing the method-prompts for factory_model as a skript.
-# This Skript contains multiple layouts, nested in an if-statement. Better input routines are in the pipeline...
+# This Skript contains multiple layouts, nested in an if-statement. Better validate routines are in the pipeline...
 
 import numpy as np
 
@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 # IMPORT ENDOGENOUS COMPONENTS
-from factory_flexibility_model.factory import factory_model as fm
+from factory_flexibility_model.factory import factory as fm
 from factory_flexibility_model.simulation import scenario as sc
 
 
@@ -366,7 +366,7 @@ def create_testfactory(size, data_path, **kwargs):
         Testfactory.add_component("ProductionEnergyDemand", "sink")
         Testfactory.add_component("RoomHeating", "thermalsystem")
         Testfactory.add_component("RoomHeatDemand", "sink")
-        # Testfactory.add_component("BatteryStorage", "storage", flow="electricity")
+        # Testfactory.add_component("BatteryStorage", "storage", flowtype="electricity")
 
         # Testfactory.add_connection("BatteryStorage", "EPool")
         # Testfactory.set_configuration("BatteryStorage", capacity=100, efficiency=0.95)

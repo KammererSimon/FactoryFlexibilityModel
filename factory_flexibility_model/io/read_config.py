@@ -8,7 +8,7 @@ import configparser
 # Code start
 def read_config(filepath: str):
     """
-    This function takes a filepath as input argument that points to a valid factorymodel config.
+    This function takes a filepath as validate argument that points to a valid factorymodel config.
     The specified config file is opened using the configparser library.
     All parameters given in the config are transferred into a config-dictionary which is returned as output
     :param filepath: path to a valid factorymodel config

@@ -7,7 +7,7 @@
 import input_validations as iv
 
 # IMPORT ENDOGENOUS COMPONENTS
-from factory_flexibility_model.simulation import factory_simulation as sm
+from factory_flexibility_model.simulation import simulation as sm
 
 
 # MAIN FUNCTIONS
@@ -22,17 +22,17 @@ def calculate_sensitivities(factory, scenarios, **kwargs):
     :return: list with all simulated factory.simulation_objects
     """
 
-    # TODO: Write some input validation!
+    # TODO: Write some validate validation!
 
     # check if logging shall be enabled
     log = False
     if "enable_log" in kwargs:
-        log = iv.input(kwargs["enable_log"], "boolean")
+        log = iv.validate(kwargs["enable_log"], "boolean")
 
     # check, if there are any sensitivities handed over
     if "sensitivities" not in kwargs:
 
-        # write log
+        # write log_simulation
         if log:
             print(
                 "No sensitivities were handed over. Calculations will just handle different scenarios"
@@ -46,7 +46,7 @@ def calculate_sensitivities(factory, scenarios, **kwargs):
         if not kwargs["sensitivities"]:
             raise Exception("ERROR: The given list of sensitivities is empty!")
 
-        # write log
+        # write log_simulation
         if log:
             print(
                 "Sensitivities have been specified. Starting the recursive factory alternation"
@@ -57,7 +57,7 @@ def calculate_sensitivities(factory, scenarios, **kwargs):
             factory, {}, scenarios, kwargs["sensitivities"], log
         )
 
-    # write log
+    # write log_simulation
     if log:
         print(
             f"Simulations finished. A total of {len(results)} calculations has been performed."
@@ -148,7 +148,7 @@ def __calculate_scenarios(factory, simulation_description, scenarios, log):
         # add the name of the current scenario to the simulation_description
         simulation_description["Scenario"] = scenario.name
 
-        # write log
+        # write log_simulation
         if log:
             print(f"Simulating {simulation_description}")
 

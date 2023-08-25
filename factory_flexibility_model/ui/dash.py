@@ -1240,12 +1240,12 @@ def create_dash(simulation):
         user_input,
     ):  # function arguments come from the component property of the Input
         # CREATE SANKEY PLOTS
-        # create weights for the displayed connections based on the user input:
+        # create weights for the displayed connections based on the user validate:
         connection_list = np.empty((0, 4), int)
         connection_colorlist = []
         for i in simulation.factory.connections:
             if user_input == "Energy Flows":
-                if simulation.factory.connections[i].flow.is_energy():
+                if simulation.factory.connections[i].flowtype.is_energy():
                     connection_list = np.append(
                         connection_list,
                         np.array(
@@ -1268,10 +1268,10 @@ def create_dash(simulation):
                     )
                     # add the color of the new connection to the colorlist
                     connection_colorlist.append(
-                        simulation.factory.connections[i].flow.connection_color
+                        simulation.factory.connections[i].flowtype.connection_color
                     )
             elif user_input == "Material Flows":
-                if simulation.factory.connections[i].flow.is_material():
+                if simulation.factory.connections[i].flowtype.is_material():
                     connection_list = np.append(
                         connection_list,
                         np.array(
@@ -1294,7 +1294,7 @@ def create_dash(simulation):
                     )
                     # add the color of the new connection to the colorlist
                     connection_colorlist.append(
-                        simulation.factory.connections[i].flow.connection_color
+                        simulation.factory.connections[i].flowtype.connection_color
                     )
             elif user_input == "Factory Architecture":
                 connection_list = np.append(
@@ -1313,12 +1313,12 @@ def create_dash(simulation):
                 )
                 # add the color of the new connection to the colorlist
                 connection_colorlist.append(
-                    simulation.factory.connections[i].flow.connection_color
+                    simulation.factory.connections[i].flowtype.connection_color
                 )
             elif user_input == "Energy Losses":
                 if (
-                    simulation.factory.connections[i].flow.is_losses()
-                    and simulation.factory.connections[i].flow.type == "energy"
+                    simulation.factory.connections[i].flowtype.is_losses()
+                    and simulation.factory.connections[i].flowtype.type == "energy"
                 ):
                     connection_list = np.append(
                         connection_list,
@@ -1342,12 +1342,12 @@ def create_dash(simulation):
                     )
                     # add the color of the new connection to the colorlist
                     connection_colorlist.append(
-                        simulation.factory.connections[i].flow.connection_color
+                        simulation.factory.connections[i].flowtype.connection_color
                     )
             elif user_input == "Material Losses":
                 if (
-                    simulation.factory.connections[i].flow.is_losses()
-                    and simulation.factory.connections[i].flow.type == "material"
+                    simulation.factory.connections[i].flowtype.is_losses()
+                    and simulation.factory.connections[i].flowtype.type == "material"
                 ):
                     connection_list = np.append(
                         connection_list,
@@ -1371,14 +1371,14 @@ def create_dash(simulation):
                     )
                     # add the color of the new connection to the colorlist
                     connection_colorlist.append(
-                        simulation.factory.connections[i].flow.connection_color
+                        simulation.factory.connections[i].flowtype.connection_color
                     )
 
         # create a list of existing components to be displayed
         component_colorlist = []
         for i in simulation.factory.components:
             component_colorlist.append(
-                simulation.factory.components[i].flow.component_color
+                simulation.factory.components[i].flowtype.component_color
             )  # add fitting color to the colorlist
 
         fig_sankey = go.Figure(
@@ -1422,27 +1422,30 @@ def create_dash(simulation):
         for c in simulation.factory.components:
             component = simulation.factory.components[c]
             if component.type == "source":
-                if component.flow.is_energy() and user_input == "Energy Flows":
+                if component.flowtype.is_energy() and user_input == "Energy Flows":
                     values_in = np.append(
                         values_in, sum(simulation.result[component.name]["utilization"])
                     )
                     names_in.append(component.name)
 
-                if component.flow.is_material() and user_input == "Material Flows":
+                if component.flowtype.is_material() and user_input == "Material Flows":
                     values_in = np.append(
                         values_in, sum(simulation.result[component.name]["utilization"])
                     )
                     names_in.append(component.name)
 
             if component.type == "sink":
-                if component.flow.is_energy() and user_input == "Energy Flows":
+                if component.flowtype.is_energy() and user_input == "Energy Flows":
                     values_out = np.append(
                         values_out,
                         sum(simulation.result[component.name]["utilization"]),
                     )
                     names_out.append(component.name)
 
-                if not component.flow.is_energy() and user_input == "Material Flows":
+                if (
+                    not component.flowtype.is_energy()
+                    and user_input == "Material Flows"
+                ):
                     values_out = np.append(
                         values_out,
                         sum(simulation.result[component.name]["utilization"]),
@@ -1451,7 +1454,7 @@ def create_dash(simulation):
         if user_input == "Energy Losses":
             for c in simulation.factory.connections:
                 connection = simulation.factory.connections[c]
-                if connection.flow.is_energy() and connection.flow.is_losses():
+                if connection.flowtype.is_energy() and connection.flowtype.is_losses():
                     values_in = np.append(
                         values_in, sum(simulation.result[connection.name])
                     )
@@ -1459,7 +1462,10 @@ def create_dash(simulation):
         if user_input == "Material Losses":
             for c in simulation.factory.connections:
                 connection = simulation.factory.connections[c]
-                if connection.flow.is_material() and connection.flow.is_losses():
+                if (
+                    connection.flowtype.is_material()
+                    and connection.flowtype.is_losses()
+                ):
                     values_in = np.append(
                         values_in, sum(simulation.result[connection.name])
                     )
@@ -1467,7 +1473,7 @@ def create_dash(simulation):
         df_in = {"values": values_in, "names": names_in}
         df_out = {"values": values_out, "names": names_out}
 
-        # calculate total input and output values
+        # calculate total validate and output values
         input_info = f"## {round(sum(values_in))}"
         output_info = f"## {round(sum(values_out))}"
 
@@ -1792,7 +1798,7 @@ def create_dash(simulation):
             figure_config,
             # title_text="BILANCE SUM AT POOL",
             xaxis_title="Simulation interval",
-            yaxis_title=f"{component.flow.flow_description} [{component.inputs[0].flow.unit_energy}]",
+            yaxis_title=f"{component.flowtype.flow_description} [{component.inputs[0].flowtype.unit_flow}]",
         )
         return fig
 
@@ -1860,7 +1866,7 @@ def create_dash(simulation):
         fig.update_layout(
             figure_config,
             xaxis_title="Timesteps",
-            yaxis_title=f"{component.flow_description} {component.flow.unit_power}",
+            yaxis_title=f"{component.flow_description} {component.flowtype.unit_flowrate}",
             showlegend=False,
         )
         fig.update_xaxes(linewidth=2, linecolor=style["axis_color"])
@@ -1879,16 +1885,16 @@ def create_dash(simulation):
         fig2.update_layout(
             figure_config,
             xaxis_title="Timesteps",
-            yaxis_title=f"€ / {component.flow.unit_energy}",
+            yaxis_title=f"€ / {component.flowtype.unit_flow}",
         )
 
-        source_sum = f"## {round(sum(simulation.result[component.name]['utilization'][t0:t1]))} {component.flow.unit_energy}"
-        source_minmax = f"## {round(min(simulation.result[component.name]['utilization'][t0:t1]))} - {round(max(simulation.result[component.name]['utilization'][t0:t1]))} {component.flow.unit_power}"
+        source_sum = f"## {round(sum(simulation.result[component.name]['utilization'][t0:t1]))} {component.flowtype.unit_flow}"
+        source_minmax = f"## {round(min(simulation.result[component.name]['utilization'][t0:t1]))} - {round(max(simulation.result[component.name]['utilization'][t0:t1]))} {component.flowtype.unit_flowrate}"
         source_cost = f"## {round(sum(simulation.result[component.name]['utilization'][t0:t1] * component.cost[t0:t1]))} €"
         if component.power_max_limited:
-            source_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flow.unit_power} / {round(((simulation.result[component.name]['utilization'][t0:t1]+0.000001) / (component.power_max[t0:t1] * component.availability[t0:t1] + 0.000001)).mean() * 100)}%"
+            source_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit_flowrate} / {round(((simulation.result[component.name]['utilization'][t0:t1] + 0.000001) / (component.power_max[t0:t1] * component.availability[t0:t1] + 0.000001)).mean() * 100)}%"
         else:
-            source_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flow.unit_power}"
+            source_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit_flowrate}"
 
         return fig, fig2, source_sum, source_cost, source_minmax, source_avg
 
@@ -1949,15 +1955,15 @@ def create_dash(simulation):
             figure_config,
             # title_text="UTILIZATION",
             xaxis_title="Timesteps",
-            yaxis_title=f"{component.flow_description} [{component.flow.unit_power}]",
+            yaxis_title=f"{component.flow_description} [{component.flowtype.unit_flowrate}]",
         )
         fig.update_xaxes(linewidth=2, linecolor=style["axis_color"])
         fig.update_yaxes(
             linewidth=2, linecolor=style["axis_color"], range=[0, max(data) * 1.05]
         )
 
-        sink_sum = f"## {round(sum(simulation.result[component.name]['utilization'][t0:t1]))} {component.flow.unit_energy}"
-        sink_minmax = f"## {round(min(simulation.result[component.name]['utilization'][t0:t1]))} - {round(max(simulation.result[component.name]['utilization'][t0:t1]))} {component.flow.unit_power}"
+        sink_sum = f"## {round(sum(simulation.result[component.name]['utilization'][t0:t1]))} {component.flowtype.unit_flow}"
+        sink_minmax = f"## {round(min(simulation.result[component.name]['utilization'][t0:t1]))} - {round(max(simulation.result[component.name]['utilization'][t0:t1]))} {component.flowtype.unit_flowrate}"
 
         cost = 0
         if component.chargeable:
@@ -1973,9 +1979,9 @@ def create_dash(simulation):
         sink_cost = f"## {round(cost)} €"
 
         if component.power_max_limited:
-            sink_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flow.unit_power} / {round(((simulation.result[component.name]['utilization'][t0:t1] + 0.000001) / (component.power_max[t0:t1] * component.availability[t0:t1] + 0.000001)).mean() * 100)}%"
+            sink_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit_flowrate} / {round(((simulation.result[component.name]['utilization'][t0:t1] + 0.000001) / (component.power_max[t0:t1] * component.availability[t0:t1] + 0.000001)).mean() * 100)}%"
         else:
-            sink_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flow.unit_power}"
+            sink_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit_flowrate}"
 
         return fig, sink_sum, sink_cost, sink_minmax, sink_avg
 
@@ -2054,14 +2060,14 @@ def create_dash(simulation):
                 xaxis_title="Timesteps",
             )
             fig.update_yaxes(
-                title_text=f"State of charge [{component.flow.unit_energy}]",
+                title_text=f"State of charge [{component.flowtype.unit_flow}]",
                 range=[0, component.capacity],
                 secondary_y=False,
                 linewidth=2,
                 linecolor=style["axis_color"],
             )
             fig.update_yaxes(
-                title_text=f"Inflow/Outflow [{component.flow.unit_energy}]",
+                title_text=f"Inflow/Outflow [{component.flowtype.unit_flow}]",
                 range=[min(data) * 1.1, max(data) * 1.1],
                 secondary_y=True,
                 linewidth=2,
@@ -2081,32 +2087,32 @@ def create_dash(simulation):
                 output_sum += sum(simulation.result[i_output.name])
 
             config = (
-                f"\n **Capacity:** {component.capacity} {component.flow.unit_energy}\n"
+                f"\n **Capacity:** {component.capacity} {component.flowtype.unit_flow}\n"
                 f"\n **Base efficiency:** {component.efficiency * 100} %\n"
-                f"\n **SOC_start:** {component.soc_start * component.capacity} {component.flow.unit_energy} ({component.soc_start * 100}%)\n"
-                f"\n **SOC_end:** {simulation.result[component.name]['SOC'][t1-1]} {component.flow.unit_energy} ({(simulation.result[component.name]['SOC'][t1-1]-simulation.result[component.name]['utilization'][t1-1])/component.capacity*100}%)\n"
+                f"\n **SOC_start:** {component.soc_start * component.capacity} {component.flowtype.unit_flow} ({component.soc_start * 100}%)\n"
+                f"\n **SOC_end:** {simulation.result[component.name]['SOC'][t1-1]} {component.flowtype.unit_flow} ({(simulation.result[component.name]['SOC'][t1 - 1] - simulation.result[component.name]['utilization'][t1 - 1]) / component.capacity * 100}%)\n"
                 f"\n **Leakage per timestep:** \n"
                 f"\n * {component.leakage_time} % of total Capacity\n"
                 f"\n * {component.leakage_SOC} % of SOC\n"
-                f"\n **Max charging Power:** {component.power_max_charge} {component.flow.unit_power}\n"
-                f"\n **Max discharging Power:** {component.power_max_discharge} {component.flow.unit_power}\n"
+                f"\n **Max charging Power:** {component.power_max_charge} {component.flowtype.unit_flowrate}\n"
+                f"\n **Max discharging Power:** {component.power_max_discharge} {component.flowtype.unit_flowrate}\n"
                 f"\n **Inputs:** \n"
                 f"\n {inputs} \n"
                 f"\n **Outputs:** \n"
                 f"\n {outputs} \n"
             )
             results = (
-                f"\n **Total Inflow:** {round(input_sum)} {component.flow.unit_energy}\n"
-                f"\n **Total Outflow:** {round(output_sum)} {component.flow.unit_energy}\n"
-                f"\n **Occuring Losses:** {round(sum(simulation.result[component.to_losses.name]))} {component.flow.unit_energy} ({round(sum(simulation.result[component.to_losses.name]) / input_sum * 100, 2)}%)\n "
-                f"\n **Max Input Power:** {-round(min(simulation.result[component.name]['utilization']))} {component.flow.unit_power}\n "
-                f"\n **Max Output Power:** {round(max(simulation.result[component.name]['utilization']))} {component.flow.unit_power}\n "
-                f"\n **Average SOC:** {round(simulation.result[component.name]['SOC'].mean())} {component.flow.unit_energy}\n "
+                f"\n **Total Inflow:** {round(input_sum)} {component.flowtype.unit_flow}\n"
+                f"\n **Total Outflow:** {round(output_sum)} {component.flowtype.unit_flow}\n"
+                f"\n **Occuring Losses:** {round(sum(simulation.result[component.to_losses.name]))} {component.flowtype.unit_flow} ({round(sum(simulation.result[component.to_losses.name]) / input_sum * 100, 2)}%)\n "
+                f"\n **Max Input Power:** {-round(min(simulation.result[component.name]['utilization']))} {component.flowtype.unit_flowrate}\n "
+                f"\n **Max Output Power:** {round(max(simulation.result[component.name]['utilization']))} {component.flowtype.unit_flowrate}\n "
+                f"\n **Average SOC:** {round(simulation.result[component.name]['SOC'].mean())} {component.flowtype.unit_flow}\n "
                 f"\n **Charging circles:** {round(input_sum / (component.capacity + 0.0001))} (Estimated) \n "
             )
 
-            # f"\n **Total Cooling:** {round(total_cooling)} {component.flow.unit}\n " \
-            # f"\n **Total thermal losses:** {round(sum(simulation.result[component.to_losses.name]))}{component.flow.unit}\n" \
+            # f"\n **Total Cooling:** {round(total_cooling)} {component.flowtype.unit}\n " \
+            # f"\n **Total thermal losses:** {round(sum(simulation.result[component.to_losses.name]))}{component.flowtype.unit}\n" \
             # f"\n **Max charging Power:** {round(max(simulation.result[component.name]['temperature']))} °C\n " \
             # f"\n **T min:** {round(min(simulation.result[component.name]['temperature']))} °C\n " \
             # f"\n **T average:** {round(simulation.result[component.name]['temperature'].mean())} °C\n "
@@ -2317,9 +2323,9 @@ def create_dash(simulation):
             f"\n {outputs} \n"
         )
         results = (
-            f"\n **Total Heating:** {round(total_heating)} {component.flow.unit_energy}\n "
-            f"\n **Total Cooling:** {round(total_cooling)} {component.flow.unit_energy}\n "
-            f"\n **Total thermal losses:** {round(sum(simulation.result[component.to_losses.name]))}{component.flow.unit_energy}\n"
+            f"\n **Total Heating:** {round(total_heating)} {component.flowtype.unit_flow}\n "
+            f"\n **Total Cooling:** {round(total_cooling)} {component.flowtype.unit_flow}\n "
+            f"\n **Total thermal losses:** {round(sum(simulation.result[component.to_losses.name]))}{component.flowtype.unit_flow}\n"
             f"\n **T max:** {round(max(simulation.result[component.name]['temperature'])-273.15)} °C\n "
             f"\n **T min:** {round(min(simulation.result[component.name]['temperature'])-273.15)} °C\n "
             f"\n **T average:** {round(simulation.result[component.name]['temperature'].mean()-273.15)} °C\n "
@@ -2424,7 +2430,7 @@ def create_dash(simulation):
                 col=1,
             )
             fig.update_yaxes(
-                title_text=f"{component.flow_description} [{component.flow.unit_energy}]",
+                title_text=f"{component.flow_description} [{component.flowtype.unit_flow}]",
                 linewidth=2,
                 range=[0, max(sum(utilization)) * 1.05],
                 linecolor=style["axis_color"],
@@ -2473,17 +2479,17 @@ def create_dash(simulation):
             if component.power_max_limited:
                 config = (
                     config
-                    + f"\n**power_max:** {max(component.power_max)} {component.flow.unit_power}\n "
+                    + f"\n**power_max:** {max(component.power_max)} {component.flowtype.unit_flowrate}\n "
                 )
             else:
                 config = config + f"\n**power_max**: unlimited \n"
 
             config = (
                 config
-                + f"\n **Flow**: {component.flow.name} \n \n**Unit:** {component.flow.unit_energy}\n \n **Number of Demands:** {len(component.demands)} \n"
+                + f"\n **Flow**: {component.flowtype.name} \n \n**Unit:** {component.flowtype.unit_flow}\n \n **Number of Demands:** {len(component.demands)} \n"
             )
 
-            results = f"\n **Total Flow:** {round(sum(sum(utilization)))} {component.flow.unit_energy}\n \n **power_max:** {max(sum(utilization))}{component.flow.unit_power}\n"
+            results = f"\n **Total Flow:** {round(sum(sum(utilization)))} {component.flowtype.unit_flow}\n \n **power_max:** {max(sum(utilization))}{component.flowtype.unit_flowrate}\n"
         else:
             fig = go.Figure()
             fig2 = go.Figure()

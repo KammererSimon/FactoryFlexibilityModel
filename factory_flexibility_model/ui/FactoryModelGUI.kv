@@ -438,7 +438,7 @@ Screen:
                                                                         hint_text: 'Maximum Output Power'
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
-                                                                        validation_type: "source_power_max"
+                                                                        validation_type: "source"
                                                                         on_text: app.validate_textfield_input(self)
 
                                                                     ValidatedTextField:
@@ -447,7 +447,7 @@ Screen:
                                                                         hint_text: 'Minimum Output Power'
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
-                                                                        validation_type: "source_power_min"
+                                                                        validation_type: "source"
                                                                         on_text: app.validate_textfield_input(self)
 
                                                                 MDBoxLayout:
@@ -461,7 +461,7 @@ Screen:
                                                                         hint_text: 'Fixed Operation Level'
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
-                                                                        validation_type: "source_power_determined"
+                                                                        validation_type: "source"
                                                                         on_text: app.validate_textfield_input(self)
                                                                         size_hint_x: .7
                                                                     MDCheckbox:
@@ -485,7 +485,7 @@ Screen:
                                                                         hint_text: 'Availability'
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
-                                                                        validation_type: "source_availability"
+                                                                        validation_type: "source"
                                                                         on_text: app.validate_textfield_input(self)
                                                                         size_hint_x: .7
                                                                     MDCheckbox:
@@ -767,7 +767,7 @@ Screen:
                                                                         hint_text: 'Maximum Input Power'
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
-                                                                        validation_type: "sink_power_max"
+                                                                        validation_type: "sink"
                                                                         on_text: app.validate_textfield_input(self)
 
                                                                     ValidatedTextField:
@@ -776,7 +776,7 @@ Screen:
                                                                         hint_text: 'Minimum Input Power'
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
-                                                                        validation_type: "sink_power_min"
+                                                                        validation_type: "sink"
                                                                         on_text: app.validate_textfield_input(self)
 
                                                                 MDBoxLayout:
@@ -789,7 +789,7 @@ Screen:
                                                                         hint_text: 'Fixed Demand'
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
-                                                                        validation_type: "sink_demand"
+                                                                        validation_type: "sink"
                                                                         on_text: app.validate_textfield_input(self)
                                                                         size_hint_x: .7
                                                                     MDCheckbox:
@@ -817,7 +817,7 @@ Screen:
                                                                 text: "Save Changes"
                                                                 on_release: app.save_changes_on_sink()
 
-        # CONVERTER CONFIG SCREEN ######################################################################################
+        #  CONFIG SCREEN ######################################################################################
                                                 Screen:
                                                     name: "converter_config"
                                                     MDBoxLayout:
@@ -892,7 +892,7 @@ Screen:
                                                                         hint_text: "Maximum operating power"
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
-                                                                        validation_type: "converter_power_max"
+                                                                        validation_type: "converter"
                                                                         on_text: app.validate_textfield_input(self)
 
                                                                     ValidatedTextField:
@@ -901,7 +901,7 @@ Screen:
                                                                         hint_text: "Minimum operating power"
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
-                                                                        validation_type: "converter_power_min"
+                                                                        validation_type: "converter"
                                                                         on_text: app.validate_textfield_input(self)
 
                                                                     ValidatedTextField:
@@ -910,7 +910,7 @@ Screen:
                                                                         hint_text: "Availability"
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
-                                                                        validation_type: "converter_availability"
+                                                                        validation_type: "converter"
                                                                         on_text: app.validate_textfield_input(self)
 
                                                                     ValidatedTextField:
@@ -950,7 +950,7 @@ Screen:
                                                                         hint_text: "Maximum efficiency [%]"
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
-                                                                        validation_type: "converter_eta_max"
+                                                                        validation_type: "converter"
                                                                         on_text: app.validate_textfield_input(self)
 
                                                                     ValidatedTextField:
@@ -959,7 +959,7 @@ Screen:
                                                                         hint_text: "Operating of max efficiency"
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
-                                                                        validation_type: "converter_power_nominal"
+                                                                        validation_type: "converter"
                                                                         on_text: app.validate_textfield_input(self)
 
                                                                     ValidatedTextField:
@@ -1077,7 +1077,7 @@ Screen:
                                                                         size_hint_x: .75
                                                                         id: textfield_thermalsystem_temperature_start
                                                                         hint_text: "Start temperature"
-                                                                        helper_text: ""
+                                                                        helper_text: "Eingaben plausibel"
                                                                         helper_text_mode: "on_error"
                                                                         validation_type: "thermalsystem_temperature"
                                                                         #hint_text_color_focus: "green"
@@ -1085,6 +1085,8 @@ Screen:
                                                                         #pos_hint:{"center_x": .5, "center_y": .5}
                                                                         #size_hint_x: .5
                                                                         on_text: app.validate_textfield_input(self)
+                                                                        #app.validate_thermalsystem(self)
+                                                                        #on_text: app.validate_thermalsystem(self)
                                                                         #on_text_validate: app.on_text_validate(textfield_thermalsystem_temperature_start)
 
                                                                 MDBoxLayout:
@@ -1096,7 +1098,7 @@ Screen:
                                                                     ValidatedTextField:
                                                                         id: textfield_thermalsystem_temperature_ambient
                                                                         hint_text: "ambient temperature"
-                                                                        helper_text: "mistake"
+                                                                        helper_text: "Eingaben plausibel"
                                                                         helper_text_mode: "on_error"
                                                                         validation_type: "thermalsystem_temperature"
                                                                         #hint_text_color_focus: "green"
@@ -1104,6 +1106,7 @@ Screen:
                                                                         #pos_hint:{"center_x": .5, "center_y": .5}
                                                                         #size_hint_x: .5
                                                                         on_text: app.validate_textfield_input(self)
+                                                                        #on_text: app.validate_thermalsystem(self)
                                                                         #on_text_validate: app.on_text_validate(textfield_thermalsystem_temperature_ambient)
                                                                         size_hint_x: .7
                                                                     MDCheckbox:
@@ -1126,10 +1129,11 @@ Screen:
                                                                     ValidatedTextField:
                                                                         id: textfield_thermalsystem_temperature_max
                                                                         hint_text: "Maximum tempertaure"
-                                                                        helper_text: ""
+                                                                        helper_text: "Eingaben plausibel"
                                                                         helper_text_mode: "on_error"
                                                                         validation_type: "thermalsystem_temperature"
                                                                         on_text: app.validate_textfield_input(self)
+                                                                        #on_text: app.validate_thermalsystem(self)
                                                                         size_hint_x: .7
                                                                     #MDCheckbox:
                                                                     ValidatedCheckBox:
@@ -1153,10 +1157,11 @@ Screen:
                                                                     ValidatedTextField:
                                                                         id: textfield_thermalsystem_temperature_min
                                                                         hint_text: "Minimum temperature"
-                                                                        helper_text: ""
+                                                                        helper_text: "Eingaben plausibel"
                                                                         helper_text_mode: "on_error"
                                                                         validation_type: "thermalsystem_temperature"
                                                                         on_text: app.validate_textfield_input(self)
+                                                                        #on_text: app.validate_thermalsystem(self)
                                                                         size_hint_x: .7
                                                                     MDCheckbox:
                                                                         id: switch_thermalsystem_temperature_min

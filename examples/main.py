@@ -1,4 +1,4 @@
-e  # FACTORY MODEL MAIN
+# FACTORY MODEL MAIN
 #     This skript is used to call the factory_model functionalities during ongoing development.
 #     Right now there is no GUI or regular way to test the package, so this file is used to create a dummy environment.
 #     Configuration of the process is done within the config.ini. (NOT in git!!!)
@@ -10,10 +10,10 @@ import time
 # from joblib import Parallel, delayed
 import pandas as pd
 
-from factory_flexibility_model.factory import factory_blueprint as bp
+from factory_flexibility_model.factory import blueprint as bp
 from factory_flexibility_model.io import factory_import as imp
 from factory_flexibility_model.io import read_config as rc
-from factory_flexibility_model.simulation import factory_simulation as fs
+from factory_flexibility_model.simulation import simulation as fs
 from tests import DRI_factories as dri
 from tests import testfactory as tf
 from tests import testscenario as ts
@@ -35,18 +35,24 @@ def simulate_dri(simulation_task, **kwargs):
         # set variable simulation parameters in the scenario
         if not simulation_task["layout"] == "Hydrogen":
             factory.set_configuration(
-                "Source Natural Gas", cost=simulation_task["natural_gas_cost"]
+                "Source Natural Gas",
+                parameters={"cost": simulation_task["natural_gas_cost"]},
             )
-        factory.set_configuration("CO2 Emissions", cost=simulation_task["CO2_price"])
+
+        factory.set_configuration(
+            "CO2 Emissions", parameters={"cost": simulation_task["CO2_price"]}
+        )
         scenario.cost_electricity = simulation_task["cost_electricity"]
         scenario.cost_electricity = (
             scenario.cost_electricity - scenario.cost_electricity.mean()
         ) * simulation_task["volatility"] + simulation_task["avg_electricity_price"]
         scenario.cost_electricity[scenario.cost_electricity < 0] = 0
 
-        simulation = fs.simulation(factory, scenario)
+        simulation = fs.simulation(factory=factory, scenario=scenario)
         t_start = time.time()
-        simulation.simulate(treshold=0.01, max_solver_time=250, **kwargs)
+        simulation.simulate(
+            threshold=0.01, solver_config={"max_solver_time": 250}, **kwargs
+        )
         simulation_task["solver_time"] = time.time() - t_start
         simulation.info = simulation_task
         if simulation.simulated:
@@ -139,25 +145,18 @@ def dashboard_development():
 
 
 def blueprint_development():
-    blueprint = bp.factory_blueprint()
+    blueprint = bp.blueprint()
     blueprint.create_test_blueprint()
 
 
-def GUI_development():
-    from factory_flexibility_model.ui import factory_creation_GUI as fg
+def gui_development():
+    from factory_flexibility_model.ui import kivy_gui as fg
 
-    GUI = fg.factory_GUIApp()
-    GUI.run()
-
-
-def unit_class_development():
-    import factory_flexibility_model.ui.factory_creation_GUI as fg
-
-    GUI = fg.factory_GUIApp()
-    GUI.run()
+    gui = fg.factory_GUIApp()
+    gui.run()
 
 
-def DRI():
+def dri():
     config = rc.read_config("config.ini")
     t_start = time.time()
 
@@ -182,7 +181,9 @@ def DRI():
     simulation.create_dash()
 
 
-def DRI_iteration():
+def dri_iteration():
+    from tests import DRI_factories as dri
+
     config = rc.read_config("config.ini")
 
     layout = "Partial"
@@ -216,6 +217,10 @@ def DRI_iteration():
         enable_slacks=config["SLACKS"]["enable_slacks"],
     )
 
+    testscenario.log_simulation = config["LOGS"]["enable_log_simulation_setup"]
+    testscenario.log_solver = config["LOGS"]["enable_log_solver"]
+    testscenario.enable_time_tracking = config["LOGS"]["enable_time_tracking"]
+
     simulation_list = list()
     i = 0
     for avg_electricity_price in avg_electricity_prices:
@@ -241,16 +246,14 @@ def DRI_iteration():
                             }
                         )
 
-    # for x in simulation_list:
-    #     simulate_dri(x, enable_simulation_log=config["LOGS"]["enable_log_simulation_setup"],
-    #                  enable_solver_log=config["LOGS"]["enable_log_solver"],
-    #                  enable_time_tracking=config["LOGS"]["enable_time_tracking"])
+    for x in simulation_list:
+        simulate_dri(x)
 
 
 #    results = Parallel(n_jobs=2)(delayed(simulate_dri)(x) for x in simulation_list)
 
 
-def DRI_results():
+def dri_results():
 
     data = pd.DataFrame(
         columns=[

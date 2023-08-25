@@ -1,6 +1,6 @@
 ### INPUT VALIDATIONS
 # Contained functions:
-# - input() -> Validates a single user input and returns it as a guaranteed compatible value
+# - validate() -> Validates a single user validate and returns it as a guaranteed compatible value
 # - check_version_compatibility -> Compares the versions of two scripts and warns when incompatibilities might occur
 
 # TODO: Refactor this to get rid of the excessive if/elif-nesting!
@@ -14,45 +14,38 @@ import pandas as pd
 
 
 # CODE START
-def input(input, type, **kwargs):
-    """This function represents the FORMAL input validation takes any input and transforms it into the desired format
+def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
+    """This function represents the FORMAL validate validation takes any validate and transforms it into the desired format
     or throws an error, if the datatypes are not compatible.
-
-    :param input: User given Input data, valid types = {int, float, string, boolean, np-array, list, pandas-series}
-    :param type: {"str", "string", "int", "integer", "float", "bool", "boolean", "%", "0..1"}
-    :param kwargs: {min, max, timesteps, positive}
+    :param input: [int, float, string, boolean, np-array, list, pandas-series] User given Input data
+    :param type: [String] {"str", "string", "int", "integer", "float", "bool", "boolean", "%", "0..1"}
+    :param min: [Float] Optional Lower boundary for numeric values
+    :param max: [Float] Optional upper boundary for numeric values
+    :param timesteps: [Int] Optional number of timesteps required for timeseries data
+    :param positive: [Boolean] Optional constraint to positive numerical values
     :return: User data in the specfied format"""
 
-    # handle kwargs and prepare the limits for numeric inputs
-    if "max" in kwargs:
-        max = kwargs["max"]
+    # handle config and prepare the limits for numeric inputs
+    if max is not None:
         upperlimit = True
     else:
-        max = 1  # dummy value, doesn't do anything
         upperlimit = False
 
-    if "min" in kwargs:
-        min = kwargs["min"]
+    if min is not None:
         lowerlimit = True
     else:
-        min = 0  # dummy value, doesn't do anything
         lowerlimit = False
 
-    if "positive" in kwargs:
-        if lowerlimit:
-            if min < 0:
-                warnings.warn(
-                    "Warning: 'Positive'-constraint overrides lower variable limit!"
-                )
-        min = 0
-        lowerlimit = True
+    if positive:
+        if not lowerlimit or min < 0:
+            min = 0
+            lowerlimit = True
 
     # Determine, if a timeseries is requested
-    timeseries = False
-    if "timesteps" in kwargs:
-        if kwargs["timesteps"] > 1:
-            timeseries = True
-            timesteps = kwargs["timesteps"]
+    if timesteps > 1:
+        timeseries = True
+    else:
+        timeseries = False
 
     # Handle strings
     if type == "str" or type == "string":
@@ -61,14 +54,16 @@ def input(input, type, **kwargs):
         if isinstance(input, str):
             return input
         else:
-            raise Exception(f"Given input is {type(input)}, not a string as requested!")
+            raise Exception(
+                f"Given validate is {type(input)}, not a string as requested!"
+            )
 
     # Handle booleans
     if type == "boolean" or type == "bool":
         if isinstance(input, bool):
             if timeseries:
                 raise Exception(
-                    f"handling of boolean arrays as input is not implemented yet"
+                    f"handling of boolean arrays as validate is not implemented yet"
                 )
                 # TODO: implement boolean array generation
             else:
@@ -80,11 +75,11 @@ def input(input, type, **kwargs):
                 return False
             else:
                 raise Exception(
-                    f"The given input string '{input}' cannot be identified as 'True' or 'False'!"
+                    f"The given validate string '{input}' cannot be identified as 'True' or 'False'!"
                 )
         else:
             raise Exception(
-                f"Given input is of type {type(input)} and incompatible with requested type (boolean)!"
+                f"Given validate is of type {type(input)} and incompatible with requested type (boolean)!"
             )
 
     # Handle ratios
@@ -110,7 +105,7 @@ def input(input, type, **kwargs):
                         f"the given timeseries does not have enough timesteps! Minimum requirement is {timesteps} values"
                     )
 
-                # is input data type a numpy array?
+                # is validate data type a numpy array?
             elif isinstance(input, np.ndarray):
                 if len(input) >= timesteps:
                     data = input[0:timesteps]
@@ -124,7 +119,7 @@ def input(input, type, **kwargs):
                         f"the given timeseries does not have enough timesteps! Minimum requirement is {timesteps} values"
                     )
 
-                # is input data type a pandas array?
+                # is validate data type a pandas array?
             elif isinstance(input, pd.core.series.Series):
                 data = input.astype("float64").to_numpy()
                 if len(input) >= timesteps:
@@ -140,7 +135,7 @@ def input(input, type, **kwargs):
                     )
             else:
                 raise Exception(
-                    f"data type {type(input)} is invalid as input for a timeseries!"
+                    f"data type {type(input)} is invalid as validate for a timeseries!"
                 )
             # TODO: implement ratio array generation
         else:
@@ -148,26 +143,26 @@ def input(input, type, **kwargs):
                 if input == 0 or input == 1:
                     return input
                 else:
-                    raise Exception(f"Given input is not a value between 0 and 1")
+                    raise Exception(f"Given validate is not a value between 0 and 1")
 
             elif isinstance(input, float):
                 if 0 <= input <= 1:
                     return input
                 else:
-                    raise Exception(f"Given input is not a value between 0 and 1")
+                    raise Exception(f"Given validate is not a value between 0 and 1")
 
             elif isinstance(input, bool):
                 if input:
                     return 1
                 else:
                     warnings.warn(
-                        "Given input was a boolean and not a value between 0 and 1. It has been translated to True=1, False=0"
+                        "Given validate was a boolean and not a value between 0 and 1. It has been translated to True=1, False=0"
                     )
                     return 0
 
             else:
                 raise Exception(
-                    f"Given input is of type {type(input)} and not a value between 0 and 1"
+                    f"Given validate is of type {type(input)} and not a value between 0 and 1"
                 )
 
     # INTEGERS
@@ -202,7 +197,7 @@ def input(input, type, **kwargs):
                         f"the given timeseries does not have enough timesteps! Minimum requirement is {timesteps} values"
                     )
 
-                # is input data type a numpy array?
+                # is validate data type a numpy array?
             elif isinstance(input, np.ndarray):
                 if len(input) >= timesteps:
                     data = input[0:timesteps]
@@ -220,7 +215,7 @@ def input(input, type, **kwargs):
                         f"the given timeseries does not have enough timesteps! Minimum requirement is {timesteps} values"
                     )
 
-                # is input data type a pandas array?
+                # is validate data type a pandas array?
             elif isinstance(input, pd.core.series.Series):
                 data = input.astype("float64").to_numpy()
                 if len(input) >= timesteps:
@@ -240,7 +235,7 @@ def input(input, type, **kwargs):
                     )
             else:
                 raise Exception(
-                    f"data type {type(input)} is invalid as input for a timeseries!"
+                    f"data type {type(input)} is invalid as validate for a timeseries!"
                 )
         # INT, NO TIMESERIES
         else:
@@ -248,12 +243,12 @@ def input(input, type, **kwargs):
                 return input
             elif isinstance(input, float):
                 warnings.warn(
-                    "Given input was a float and has been rounded to next int!"
+                    "Given validate was a float and has been rounded to next int!"
                 )
                 return round(input)
             else:
                 raise Exception(
-                    f"Given input is of type {type(input)} and incompatible with requested type (int)!"
+                    f"Given validate is of type {type(input)} and incompatible with requested type (int)!"
                 )
 
             # TODO: Check, what happened here ;)
@@ -296,7 +291,7 @@ def input(input, type, **kwargs):
                         f"the given timeseries does not have enough timesteps! Minimum requirement is {timesteps} values"
                     )
 
-                # is input data type a numpy array?
+                # is validate data type a numpy array?
             elif isinstance(input, np.ndarray):
                 if len(input) >= timesteps:
                     data = input[0:timesteps]
@@ -314,7 +309,7 @@ def input(input, type, **kwargs):
                         f"the given timeseries does not have enough timesteps! Minimum requirement is {timesteps} values"
                     )
 
-                # is input data type a pandas array?
+                # is validate data type a pandas array?
             elif isinstance(input, pd.core.series.Series):
                 data = input.astype("float64").to_numpy()
                 if len(input) >= timesteps:
@@ -334,7 +329,7 @@ def input(input, type, **kwargs):
                     )
             else:
                 raise Exception(
-                    f"data type {type(input)} is invalid as input for a timeseries!"
+                    f"data type {type(input)} is invalid as validate for a timeseries!"
                 )
         else:
             if not isinstance(input, float):
@@ -342,18 +337,16 @@ def input(input, type, **kwargs):
                     return input
                 try:
                     input = float(input)
-                    warnings.warn("Given input has been converted to float")
+                    warnings.warn("Given validate has been converted to float")
                 except:
                     raise Exception(
-                        f"Given input is of type {type(input)} and incompatible with requested type (float)!"
+                        f"Given validate is of type {type(input)} and incompatible with requested type (float)!"
                     )
 
-            if "positive" in kwargs:
-                if kwargs["positive"]:
-                    if input < 0:
-                        raise Exception(
-                            "The given value is negative but a positive float is requested! "
-                        )
+            if positive and input < 0:
+                raise Exception(
+                    "The given value is negative but a positive float is requested! "
+                )
             return input
 
     if type == "timeseries":
