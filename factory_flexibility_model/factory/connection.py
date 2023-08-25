@@ -1,6 +1,8 @@
 # CONNECTION
 # This script contains the connection class, which specifies a connection between two components
 
+import logging
+
 # IMPORT ENDOGENOUS COMPONENTS
 import factory_flexibility_model.input_validations as iv
 
@@ -74,9 +76,10 @@ class connection:
                 and not (sink.flowtype.is_losses())
                 and not (source.flowtype == self.flowtype or self.flowtype.is_unknown())
             ):
-                raise Exception(
+                logging.critical(
                     f"incompatible flowtypes between connection {self.name} and component {source.name}: {self.flowtype.name} vs {source.flowtype.name}"
                 )
+                raise Exception
 
             # check if it is compatible with the flowtype of the sink
             if not (sink.flowtype.is_unknown()) and not (
@@ -84,9 +87,10 @@ class connection:
                 or sink.flowtype == self.flowtype
                 or self.flowtype.is_unknown()
             ):
-                raise Exception(
+                logging.critical(
                     f"incompatible flowtypes between connection {self.name} and component {sink.name}: {self.flowtype.name} vs {sink.flowtype.name}"
                 )
+                raise Exception
 
         # if no flowtype is handed over: check, if it can be derived from sink or source
         else:
@@ -104,9 +108,10 @@ class connection:
 
             else:
                 # if nothing of the above is the case the flows of source and sink must be incompatible -> throw an error
-                raise Exception(
+                logging.critical(
                     f"Flowtypes of origin and destination do not match: {source.flowtype.name} vs {sink.flowtype.name}"
                 )
+                raise Exception
 
     def update_flowtype(self, flowtype):
         """This function takes a name of a flowtype. If the flowtype of the connection is not yet defined it will be set to the given flowtype.
@@ -129,9 +134,10 @@ class connection:
         # if yes: is it compatible with the flowtype that has just been set for the connection?
         elif not self.source.flowtype == flowtype:
             # throw error if the flows are not the same
-            raise Exception(
+            logging.critical(
                 f"Error while assigning flowtype types: interface between {self.source.name} and {self.sink.name} does not match"
             )
+            raise Exception
 
         # do the same for the sink side: Check, if the flowtype of the sink component is already known
         if self.sink.flowtype.is_unknown():
@@ -141,12 +147,11 @@ class connection:
         # if yes: is it compatible with the flowtype that has just been set for the connection?
         elif not self.sink.flowtype == flowtype:
             # throw error if the flows are not the same
-            raise Exception(
+            logging.critical(
                 f"Error while assigning flowtype types: interface between {self.source.name} and {self.sink.name} does not match"
             )
+            raise Exception
 
-        # everything succesful? -> Write log_simulation
-        if self.source.factory.log_simulation:
-            print(
-                f"            (UPDATE) The flowtype of connection {self.name} is now defined as {flowtype.name}"
-            )
+        logging.debug(
+            f"            (UPDATE) The flowtype of connection {self.name} is now defined as {flowtype.name}"
+        )

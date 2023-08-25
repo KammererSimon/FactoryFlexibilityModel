@@ -4,8 +4,8 @@
 #               It collects all given Information and organizes the setup process
 
 
+import logging
 import pickle
-import warnings
 from pathlib import Path
 
 # IMPORT 3RD PARTY PACKAGES
@@ -28,7 +28,6 @@ class factory:
         max_timesteps=8760,
         description="Unspecified Factory",
         enable_slacks=False,
-        enable_log=False,
         timefactor=1,
     ):
         # Initialize structure variables
@@ -49,30 +48,23 @@ class factory:
         self.description = iv.validate(description, "string")
         self.enable_slacks = iv.validate(enable_slacks, "boolean")
         self.timefactor = iv.validate(timefactor, "float")
-        self.log = iv.validate(enable_log, "boolean")
 
         # create the set of standard flowtypes
         self.initialize_flowtypes()
 
-        # write log_simulation
-        if self.log:
-            print("        - New factory created")
+        logging.debug("        - New factory created")
 
     def add_component(self, name, component_type, *, flowtype=None):
         # validate the given inputs as strings
         name = iv.validate(name, "str")
         component_type = iv.validate(component_type, "str")
 
-        # did the user specify a flowtype?
-        # if flowtype is not None:
-        #    # Exchange a user given string identifier with the flowtype if necessary
-        #    flowtype = self.__get_flowtype_object(flowtype)
-
         # make sure that the specified name is not already taken by a component or flowtype
         if name in self.component_names or name in self.flowtype_names:
-            raise Exception(
+            logging.critical(
                 f"Cannot create Component {name} because the name is already assigned"
             )
+            raise Exception
 
         # Add name of the new component to the namelist
         self.component_names.append(name)
@@ -129,9 +121,10 @@ class factory:
 
             # raise an error if the flowtype of the storage is unspecified
             else:
-                raise Exception(
+                logging.critical(
                     f"Losses-connection for {name} could not be created because the flowtype isn't specified!"
                 )
+                raise Exception
 
         elif component_type == "converter":
             # call converter constructor
@@ -192,9 +185,10 @@ class factory:
             )
         else:
             # if we end here the given type must have been invalid! -> Throw an error
-            raise Exception(
+            logging.critical(
                 f"Cannot create new component: {component_type} is an invalid type"
             )
+            raise Exception
 
         # are slacks required?
         if self.enable_slacks:
@@ -259,10 +253,9 @@ class factory:
         self.next_ids["connection"] += 1
 
         # writelog
-        if self.log:
-            print(
-                f"        - New connection {new_connection.name} of flowtype {new_connection.flowtype.name} added between {self.components[origin].name} and {self.components[destination].name} with connection_id {self.next_ids['connection']}"
-            )
+        logging.debug(
+            f"        - New connection {new_connection.name} of flowtype {new_connection.flowtype.name} added between {self.components[origin].name} and {self.components[destination].name} with connection_id {self.next_ids['connection']}"
+        )
 
     def save(self, file_path, *, overwrite=False):
         """
@@ -277,21 +270,20 @@ class factory:
         file = Path(file_path)
         if file.is_file():
             if overwrite:
-                warnings.warn(
+                logging.warning(
                     f"WARNING: The specified file already exists and will be overwritten"
                 )
             else:
-                raise Exception(
+                logging.critical(
                     f"ERROR: The specified file already exists! Saving Factory aborted!"
                 )
+                raise Exception
 
         # save the factory at the given path
         with open(file_path, "wb") as f:
             pickle.dump(self, f)
 
-        # write log_simulation
-        if self.log:
-            print(f"FACTORY SAVED under {file_path}")
+        logging.info(f"FACTORY SAVED under {file_path}")
 
         return True
 
@@ -373,8 +365,8 @@ class factory:
         """
         # check, if the name exists in self.component_names
         if name not in self.component_names:
-            raise Exception(f"Component {name} does not exist")
-        # return True
+            logging.critical(f"Component {name} does not exist")
+            raise Exception
 
     def create_essentials(self):
         # create standard assets
@@ -499,9 +491,10 @@ class factory:
         # make sure, that the name is still unused
         if name in self.component_names or name in self.flowtype_names:
             # if not: throw an error
-            raise Exception(
+            logging.critical(
                 f"Cannot create Flowtype {name} because the name is already assigned"
             )
+            raise Exception
 
         # create a new flowtype with specified parameters and store it in the factory.flows - dictionary
         self.flowtypes[name] = ft.flowtype(
@@ -518,9 +511,7 @@ class factory:
         # add the new flowtype to the list of flowtype-keys
         self.flowtype_names.append(name)
 
-        # write log_simulation
-        if self.log:
-            print(f"        - New flowtype added: {name}")
+        logging.debug(f"        - New flowtype added: {name}")
 
     def check_validity(self):
         """
@@ -557,9 +548,10 @@ class factory:
 
                     else:
                         # otherwise the type of the flowtype remained unspecified during factory setup und therefore is invalid
-                        raise Exception(
+                        logging.critical(
                             f"Flowtype of connection {input_i.name} is still unknown! The flowtype needs to be specified in order to correctly bilance it at {component.name}"
                         )
+                        raise Exception
 
                 # II) calculate sum of output weights
                 # initialize summing variables
@@ -581,75 +573,89 @@ class factory:
 
                     else:
                         # otherwise the type of the flowtype remained unspecified during factory setup und therefore is invalid
-                        raise Exception(
+                        logging.critical(
                             f"Flowtype of connection {output_i.name} is still unknown! The flowtype needs to be specified in order to correctly bilance it at {component.name}"
                         )
+                        raise Exception
 
                 # check, if there are any inputs
                 if weightsum_input_energy == 0 and weightsum_input_material == 0:
-                    raise Exception(
+                    logging.critical(
                         f"ERROR: converter {component.name} does not have any inputs connected!"
                     )
+                    raise Exception
 
                 # if there is energy involved: calculate the base energy efficiency (used for visualisations later)
                 if weightsum_input_energy > 0:
                     component.eta_base = (
                         weightsum_output_energy / weightsum_input_energy
                     )
+                    return False
 
                 # check, if the combination of validate and output weight sums is valid
                 if weightsum_output_energy > weightsum_input_energy:
-                    raise Exception(
+                    logging.critical(
                         f"Error in the factory architecture: The sum of weights at the energy output of converter '{component.name}' ({weightsum_output_energy}) is greater that the sum of validate weights {weightsum_input_energy}!"
                     )
+                    raise Exception
 
                 if weightsum_output_material > weightsum_input_material:
-                    raise Exception(
+                    logging.critical(
                         f"Error in the factory architecture: The sum of weights at the material output of converter '{component.name}' ({weightsum_output_material}) is greater that the sum of validate weights {weightsum_input_material}!"
                     )
+                    raise Exception
 
             elif component.type == "deadtime":
                 # if component is a deadtime: make sure that there is at least one validate
                 if len(component.inputs) == 0:
-                    raise Exception(
+                    logging.critical(
                         f"ERROR: Deadtime-component '{component.name}' does not have an validate!"
                     )
+                    raise Exception
 
                 # makesure that there is at least one output
                 if len(component.outputs) == 0:
-                    raise Exception(
+                    logging.critical(
                         f"ERROR: Deadtime-component '{component.name}' does not have an output!"
                     )
+                    raise Exception
 
                 # make sure, that the delay is realizable within the length of allowed simulations
                 if component.delay > self.max_timesteps:
-                    raise Exception(
+                    logging.critical(
                         f"ERROR: Delay of component '{component.name}' is to large for the maximum simulation length of the factory ({self.max_timesteps}!"
                     )
+                    raise Exception
 
             elif component.type == "triggerdemand":
                 # check, that the combinations of validate and outputs connected is valid
                 if not (component.input_energy or component.output_energy):
-                    raise Exception(
+                    logging.critical(
                         f"Triggerdemand {component.name} has no inputs connected!"
                     )
+                    raise Exception
                 if component.input_energy and not component.output_energy:
-                    raise Exception(
+                    logging.critical(
                         f"Triggerdemand {component.name} has an energy validate but no energy output!"
                     )
+                    raise Exception
                 if component.output_energy and not component.input_energy:
-                    raise Exception(
+                    logging.critical(
                         f"Triggerdemand {component.name} has an energy output but no energy validate!"
                     )
+                    raise Exception
                 if component.input_material and not component.output_material:
-                    raise Exception(
+                    logging.critical(
                         f"Triggerdemand {component.name} has a material validate but no material output!"
                     )
+                    raise Exception
                 if component.output_material and not component.input_material:
-                    raise Exception(
+                    logging.critical(
                         f"Triggerdemand {component.name} has a material output but no material validate!"
                     )
+                    raise Exception
 
+        logging.info(f"Factory architecture validation successful")
         return True
 
     def __get_flowtype_object(self, flowtype_name):
@@ -665,22 +671,25 @@ class factory:
 
         # if no: check if the flowtype-identifier has been handed over as a string
         if not isinstance(flowtype_name, str):
-            raise Exception(
+            logging.critical(
                 "Flowtypes must be specified with their name identifiers (string) when creating components!"
             )
+            raise Exception
 
         # check if the given flowtype actually exists
         if flowtype_name not in self.flowtypes:
-            raise Exception(
+            logging.critical(
                 f"The specified flowtype {flowtype_name} does not exist in the flowtype list of the current factory. Add it first via .add_flow(). "
                 f"\n Existing flowtypes at this point are: {[i for i in self.flowtypes]}"
             )
+            raise Exception
 
         # converters must not have a flowtype specified. Throw an error if this is what's happening...
         if type == "converter":
-            raise Exception(
+            logging.critical(
                 f"Error while creating Converter {self.name}: Converters must not have a flowtype assigned!"
             )
+            raise Exception
 
         # all checks passed? -> return the pointer to the actual flowtype object
         return self.flowtypes[flowtype_name]

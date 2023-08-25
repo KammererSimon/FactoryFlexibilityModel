@@ -14,9 +14,9 @@
 # self.create_dash
 # self.show_results
 
+import logging
 import pickle
 import time
-import warnings
 from datetime import datetime
 from pathlib import Path
 
@@ -41,14 +41,10 @@ class simulation:
         *,
         scenario=None,
         factory=None,
-        log_simulation=False,
-        log_solver=False,
         enable_time_tracking=False,
         name="UnspecifiedSimulation",
     ):
         """
-        :param log_simulation: Set to true if you want the simulation routine to write logging info in the terminal
-        :param log_solver: Set to true if you want the optimization solver routine to write logging info in the terminal
         :param enable_time_tracking: Set to true if you want to track the time required for simulation
         """
         # set general data for the simulation
@@ -59,8 +55,6 @@ class simulation:
         self.factory = factory  # Variable to store the factory for the simulation
         self.interval_length = None  # realtime length of one simulation interval...to be taken out of the scenario
         self.info = None  # Free attribute to store additional information
-        self.log_simulation = log_simulation
-        self.log_solver = log_solver
         self.m = None  # Placeholder for the Gurobi-Model to be created
         self.name = name
         self.scenario = scenario  # Variable to store the scenario for the simulation
@@ -89,11 +83,9 @@ class simulation:
         self.MVars[f"P_{component.name}"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"P_{component.name}"
         )
-        if self.log_simulation:
-            print(
-                f"        - Variable:     P_{component.name}                              "
-                f"(timeseries of the nominal power of {component.name}"
-            )
+        logging.debug(
+            f"        - Variable:     P_{component.name} timeseries of the nominal power of {component.name}"
+        )
 
         # add variables to express the positive and negative deviations from the nominal operating point
         self.MVars[f"P_{component.name}_devpos"] = self.m.addMVar(
@@ -109,30 +101,27 @@ class simulation:
                 self.MVars[f"P_{component.name}"]
                 <= component.power_max * component.availability
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   P_{component.name} <= P_{component.name}_max"
-                )
+            logging.debug(
+                f"        - Constraint:   P_{component.name} <= P_{component.name}_max"
+            )
 
         if component.power_min_limited:
             self.m.addConstr(
                 self.MVars[f"P_{component.name}"]
                 >= component.power_min * component.availability
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   P_{component.name} >= P_{component.name}_min"
-                )
+            logging.debug(
+                f"        - Constraint:   P_{component.name} >= P_{component.name}_min"
+            )
 
         # Calculate the efficiency of operation for each timestep based on the deviations
         self.MVars[f"Eta_{component.name}"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"Eta_{component.name}"
         )
-        if self.log_simulation:
-            print(
-                f"        - Variable:     Eta_{component.name}                              "
-                f"(Operating efficiency of {component.name}"
-            )
+        logging.debug(
+            f"        - Variable:     Eta_{component.name}                              "
+            f"(Operating efficiency of {component.name}"
+        )
 
         if component.eta_variable:
             if self.problem_class["grade"] < 2:
@@ -144,22 +133,21 @@ class simulation:
                 - self.MVars[f"P_{component.name}_devneg"][t] * component.delta_eta_low
                 for t in range(self.T)
             )
-            if self.log_simulation:
-                print(f"        - Constraint:   Calculate Eta(t) for {component.name}")
+            logging.debug(
+                f"        - Constraint:   Calculate Eta(t) for {component.name}"
+            )
         else:
             self.m.addConstrs(
                 self.MVars[f"Eta_{component.name}"][t] == 1 for t in range(self.T)
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   Eta(t) for {component.name} fixed to 100%"
-                )
+            logging.debug(
+                f"        - Constraint:   Eta(t) for {component.name} fixed to 100%"
+            )
 
         # calculate the absolute operating point out of the nominal operating point, the deviations and the switching state
         # Can the Converter be turned on/off regardless of the power constraints?
         if component.switchable:
-            if self.log_simulation:
-                self.problem_class["type"] = "mixed integer"
+            self.problem_class["type"] = "mixed integer"
             # introduce a variable representing the switching state of the converter
             self.MVars[f"Bool_{component.name}_state"] = self.m.addMVar(
                 self.T, vtype=GRB.BINARY, name=f"{component.name}_state"
@@ -197,10 +185,9 @@ class simulation:
                 >= self.MVars[f"P_{component.name}"][0 : self.T - 1]
                 - component.max_neg_ramp_power
             )  # restrict ramping down
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   Ramping constraints for {component.name}"
-                )
+            logging.debug(
+                f"        - Constraint:   Ramping constraints for {component.name}"
+            )
 
         # set the flows of incoming connections
         for connection in component.inputs:
@@ -221,10 +208,9 @@ class simulation:
                     * self.interval_length
                     * self.MVars[f"Eta_{component.name}"]
                 )
-                if self.log_simulation:
-                    print(
-                        f"        - added energy output calculation with losses for {connection.name}"
-                    )
+                logging.debug(
+                    f"        - added energy output calculation with losses for {connection.name}"
+                )
             else:
                 self.m.addConstr(
                     self.MVars[connection.name]
@@ -232,10 +218,9 @@ class simulation:
                     * connection.weight_source
                     * self.interval_length
                 )
-                if self.log_simulation:
-                    print(
-                        f"        - added material output calculation for {connection.name}"
-                    )
+                logging.debug(
+                    f"        - added material output calculation for {connection.name}"
+                )
 
         # calculate the resulting energy losses: losses(t) = sum(inputs(t)) - sum(outputs(t))
         self.m.addConstr(
@@ -261,7 +246,7 @@ class simulation:
         # calculate the number of timesteps required to match the scenario - timescale:
         delay = component.delay / self.time_reference_factor
         if not delay % 1 == 0:
-            warnings.warn(
+            logging.warning(
                 f"Warning: The delay of {component.name} has been rounded to {delay}, since to clean conversion to the scenario timestep length is possible"
             )
         delay = int(delay)
@@ -322,19 +307,17 @@ class simulation:
         self.MVars[f"E_{component.name}_in"] = self.m.addMVar(
             (self.T, rows), vtype=GRB.CONTINUOUS, name=f"{component.name}_Pin"
         )
-        if self.log_simulation:
-            print(
-                f"        - Variable(s):  Ein for {rows} part demands of {component.name}"
-            )
+        logging.debug(
+            f"        - Variable(s):  Ein for {rows} part demands of {component.name}"
+        )
 
         # define constraint: validate and output must be equal at any timestep to ensure, that the component just does flowtype control
         self.m.addConstr(
             self.MVars[component.outputs[0].name]
             == self.MVars[component.inputs[0].name]
         )
-        if self.log_simulation:
-            print(f"        - Constraint:   E_in == E_out for {component.name}")
-            # TODO: doesnt this have to be fulfilled for every timestep??!
+        logging.debug(f"        - Constraint:   E_in == E_out for {component.name}")
+        # TODO: doesnt this have to be fulfilled for every timestep??!
 
         # define constraint: taken inputs for demand fulfillment must equal the used validate in every timestep
         self.m.addConstrs(
@@ -342,10 +325,9 @@ class simulation:
             == self.MVars[component.inputs[0].name][t]
             for t in range(self.T)
         )
-        if self.log_simulation:
-            print(
-                f"        - Constraint:   E_demands must be fed by inputs within {component.name}"
-            )
+        logging.debug(
+            f"        - Constraint:   E_demands must be fed by inputs within {component.name}"
+        )
 
         # define constraint: each part demand d must have it's individual demand fulfilled
         self.m.addConstrs(
@@ -354,10 +336,9 @@ class simulation:
             == component.demands[i, 2]
             for i in range(rows)
         )
-        if self.log_simulation:
-            print(
-                f"        - Constraint:   Each part demand of {component.name} must have its demand fulfilled"
-            )
+        logging.debug(
+            f"        - Constraint:   Each part demand of {component.name} must have its demand fulfilled"
+        )
 
         # define constraint: adhere power_max constraints per part demand
         self.m.addConstrs(
@@ -366,10 +347,9 @@ class simulation:
             for t in range(self.T)
             for i in range(rows)
         )
-        if self.log_simulation:
-            print(
-                f"        - Constraint:   Adhere the power_max constraints for every part demand of {component.name}"
-            )
+        logging.debug(
+            f"        - Constraint:   Adhere the power_max constraints for every part demand of {component.name}"
+        )
 
         # define constraint: adhere power_max for total power if needed
         if component.power_max_limited:
@@ -379,10 +359,9 @@ class simulation:
                 <= component.power_max[t]
                 for t in range(self.T)
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   power_total(t) <= power_max for {component.name}"
-                )
+            logging.debug(
+                f"        - Constraint:   power_total(t) <= power_max for {component.name}"
+            )
 
     def __add_pool(self, component):
         # create constraint that ensures, that the sum of inputs equals the sum of outputs in every timestep
@@ -396,10 +375,9 @@ class simulation:
                 for output_id in range(len(component.outputs))
             )
         )
-        if self.log_simulation:
-            print(
-                f"        - Constraint:   Energy equilibrium for Pool {component.name}"
-            )
+        logging.debug(
+            f"        - Constraint:   Energy equilibrium for Pool {component.name}"
+        )
 
     def __add_sink(self, component):
         """
@@ -416,10 +394,9 @@ class simulation:
         self.MVars[f"E_{component.name}"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.name}"
         )
-        if self.log_simulation:
-            print(
-                f"        - Variable:     E_{component.name}                                  (timeseries of global outflows to {component.name}"
-            )
+        logging.debug(
+            f"        - Variable:     E_{component.name}                                  (timeseries of global outflows to {component.name}"
+        )
 
         if component.determined:
             # set the sum of incoming flows to meet the power demand
@@ -431,10 +408,9 @@ class simulation:
                 )
                 == component.demand
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   Sum of incoming flows == determined total demand              (E_{component.name} determined by timeseries)"
-                )
+            logging.debug(
+                f"        - Constraint:   Sum of incoming flows == determined total demand              (E_{component.name} determined by timeseries)"
+            )
 
         # add constraints to calculate the total outflow from the system as the sum of all weighted energys of incoming connections
         self.m.addConstr(
@@ -444,10 +420,9 @@ class simulation:
             )
             == self.MVars[f"E_{component.name}"]
         )
-        if self.log_simulation:
-            print(
-                f"        - Constraint:   E_{component.name} == sum of incoming flows"
-            )
+        logging.debug(
+            f"        - Constraint:   E_{component.name} == sum of incoming flows"
+        )
 
         # is the maximum output power of the sink limited? If yes: Add power_max constraint
         if component.power_max_limited:
@@ -455,10 +430,9 @@ class simulation:
                 self.MVars[f"E_{component.name}"]
                 <= component.power_max * component.availability * self.interval_length
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   P_{component.name} <= P_{component.name}_max"
-                )
+            logging.debug(
+                f"        - Constraint:   P_{component.name} <= P_{component.name}_max"
+            )
 
         # is the minimum output power of the source limited? If yes: Add power_min constraint
         if component.power_min_limited:
@@ -467,7 +441,7 @@ class simulation:
                 >= component.power_min[t]
                 for t in range(self.T)
             )
-            print(
+            logging.debug(
                 f"        - Constraint:   P_{component.name} >= P_{component.name}_min"
             )
 
@@ -480,8 +454,9 @@ class simulation:
                 self.C_objective[-1]
                 == component.cost[0 : self.T] @ self.MVars[f"E_{component.name}"]
             )
-            if self.factory.log:
-                print(f"        - CostFactor:   Cost for dumping into {component.name}")
+            logging.debug(
+                f"        - CostFactor:   Cost for dumping into {component.name}"
+            )
 
         # does the utilization of the sink create revenue? If yes: Add the corresponding negative cost factors
         if component.refundable:
@@ -492,10 +467,9 @@ class simulation:
                 self.R_objective[-1]
                 == component.revenue[0 : self.T] @ self.MVars[f"E_{component.name}"]
             )
-            if self.factory.log:
-                print(
-                    f"        - CostFactor:   Revenue for sales generated by {component.name}"
-                )
+            logging.debug(
+                f"        - CostFactor:   Revenue for sales generated by {component.name}"
+            )
 
         if component.avoids_emissions:
             # avoided emissions
@@ -510,10 +484,9 @@ class simulation:
                 @ self.MVars[f"E_{component.name}"]
                 * self.scenario.cost_co2_per_kg
             )
-            if self.log_simulation:
-                print(
-                    f"        - CostFactor:   Revenue from reduced CO2-emissions due to usage of {component.name}"
-                )
+            logging.debug(
+                f"        - CostFactor:   Revenue from reduced CO2-emissions due to usage of {component.name}"
+            )
         if component.causes_emissions:
             # additional emissions
             self.C_objective.append(
@@ -527,10 +500,9 @@ class simulation:
                 @ self.MVars[f"E_{component.name}"]
                 * self.scenario.cost_co2_per_kg
             )
-            if self.log_simulation:
-                print(
-                    f"        - CostFactor:   Costs for CO2-emissions due to usage of {component.name}"
-                )
+            logging.debug(
+                f"        - CostFactor:   Costs for CO2-emissions due to usage of {component.name}"
+            )
 
     def __add_slack(self, component):
         # slacks don't need any power restrictions or other constraints.
@@ -547,8 +519,7 @@ class simulation:
                 == component.cost[0 : self.T]
                 @ self.MVars[component.inputs[i].name][0 : self.T]
             )
-            if self.log_simulation:
-                print(f"        - CostFactor:   C_{component.name}_negative")
+            logging.debug(f"        - CostFactor:   C_{component.name}_negative")
 
         # add a cost term for negative slack usage to the target function
         for i in range(len(component.outputs)):
@@ -560,8 +531,7 @@ class simulation:
                 == component.cost[0 : self.T]
                 @ self.MVars[component.outputs[i].name][0 : self.T]
             )
-            if self.log_simulation:
-                print(f"        - CostFactor:   C_{component.name}_positive")
+            logging.debug(f"        - CostFactor:   C_{component.name}_positive")
 
     def __add_storage(self, component):
         # create  variable for initial SOC
@@ -572,14 +542,14 @@ class simulation:
             self.m.addConstr(
                 self.MVars[f"SOC_{component.name}_start"] == component.soc_start
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   SOC_start == {component.soc_start} for storage {component.name}"
-                )
+            logging.debug(
+                f"        - Constraint:   SOC_start == {component.soc_start} for storage {component.name}"
+            )
         else:
             self.m.addConstr(self.MVars[f"SOC_{component.name}_start"] <= 1)
-            if self.log_simulation:
-                print(f"        - Variable:     SOC_start for storage {component.name}")
+            logging.debug(
+                f"        - Variable:     SOC_start for storage {component.name}"
+            )
 
         # create variable for Echarge
         self.MVars[f"E_{component.name}_charge"] = self.m.addMVar(
@@ -592,8 +562,7 @@ class simulation:
                 for input_id in range(len(component.inputs))
             )
         )
-        if self.log_simulation:
-            print(f"        - Variable:     ECharge for storage {component.name} ")
+        logging.debug(f"        - Variable:     ECharge for storage {component.name} ")
 
         # create variable for Edischarge
         self.MVars[f"E_{component.name}_discharge"] = self.m.addMVar(
@@ -607,15 +576,15 @@ class simulation:
                 for output_id in range(len(component.outputs))
             )
         )
-        if self.log_simulation:
-            print(f"        - Variable:     EDischarge for storage {component.name} ")
+        logging.debug(
+            f"        - Variable:     EDischarge for storage {component.name} "
+        )
 
         # create variable for SOC
         self.MVars[f"SOC_{component.name}"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"SOC_{component.name}"
         )
-        if self.log_simulation:
-            print(f"        - Variable:     SOC for storage {component.name} ")
+        logging.debug(f"        - Variable:     SOC for storage {component.name} ")
 
         # calculate SOC for every timestep using cumsum + SOC_start
         cumsum_matrix = np.tril(
@@ -631,32 +600,28 @@ class simulation:
             + component.capacity * self.MVars[f"SOC_{component.name}_start"][0]
         )
 
-        if self.log_simulation:
-            print(
-                f"        - Constraint:   Calculate SOC_end(t) for storage {component.name} "
-            )
+        logging.debug(
+            f"        - Constraint:   Calculate SOC_end(t) for storage {component.name} "
+        )
 
         # set SOC_end = SOC_start
         self.m.addConstr(
             self.MVars[f"SOC_{component.name}"][self.T - 1]
             == self.MVars[f"SOC_{component.name}_start"][0] * component.capacity
         )
-        if self.log_simulation:
-            print(
-                f"        - Constraint:   SOC_end == SOC_start for storage {component.name}"
-            )
+        logging.debug(
+            f"        - Constraint:   SOC_end == SOC_start for storage {component.name}"
+        )
 
         # don't violate the capacity boundary: cumsum of all inputs and outputs plus initial soc must not be more than the capacity in any timestep
         self.m.addConstr(self.MVars[f"SOC_{component.name}"] <= component.capacity)
-        if self.log_simulation:
-            print(
-                f"        - Constraint:   Cumsum(E) <= Capacity for {component.name} "
-            )
+        logging.debug(
+            f"        - Constraint:   Cumsum(E) <= Capacity for {component.name} "
+        )
 
         # don't take out more than stored: cumsum of all inputs and outputs plus initial soc must be more than zero in any timestep
         self.m.addConstr(self.MVars[f"SOC_{component.name}"] >= 0)
-        if self.log_simulation:
-            print(f"        - Constraint:   Cumsum(E) >= 0 for {component.name} ")
+        logging.debug(f"        - Constraint:   Cumsum(E) >= 0 for {component.name} ")
 
         # create Pcharge_max-constraint
         if component.power_max_charge > 0:
@@ -664,10 +629,9 @@ class simulation:
                 self.MVars[f"E_{component.name}_charge"]
                 <= component.power_max_charge * self.interval_length
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   power_charge <= power_charge_max for {component.name}"
-                )
+            logging.debug(
+                f"        - Constraint:   power_charge <= power_charge_max for {component.name}"
+            )
 
         # create Pdischarge_max-constraint
         if component.power_max_discharge > 0:
@@ -675,10 +639,9 @@ class simulation:
                 self.MVars[f"E_{component.name}_discharge"]
                 <= component.power_max_discharge * self.interval_length
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   power_discharge <= power_discharge_max for {component.name}"
-                )
+            logging.debug(
+                f"        - Constraint:   power_discharge <= power_discharge_max for {component.name}"
+            )
 
         # create constraint to calculate the occuring losses if necessary
         if component.leakage_SOC > 0 or component.leakage_time > 0:
@@ -699,10 +662,9 @@ class simulation:
                 )
                 for t in range(self.T)
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   E_losses = E_discharge * (1-efficiency) for {component.name}"
-                )
+            logging.debug(
+                f"        - Constraint:   E_losses = E_discharge * (1-efficiency) for {component.name}"
+            )
 
     def __add_source(self, component):
         """
@@ -717,11 +679,9 @@ class simulation:
             self.T, vtype=GRB.CONTINUOUS, name=f"P_{component.name}"
         )
 
-        # write log_simulation
-        if self.log_simulation:
-            print(
-                f"        - Variable:     E_{component.name}                              (timeseries of global inputs from E_{component.name}"
-            )
+        logging.debug(
+            f"        - Variable:     E_{component.name}                              (timeseries of global inputs from E_{component.name}"
+        )
 
         # set the sum of outgoing flows to meet the fixed supply
         if component.determined:
@@ -742,11 +702,10 @@ class simulation:
             )
             == self.MVars[f"E_{component.name}"]
         )
-        # write log_simulation
-        if self.log_simulation:
-            print(
-                f"        - Constraint:   E_{component.name} == sum of outgoing flows"
-            )
+
+        logging.debug(
+            f"        - Constraint:   E_{component.name} == sum of outgoing flows"
+        )
 
         # is the maximum output power of the source limited? If yes: Add power_max constraint
         if component.power_max_limited:
@@ -759,10 +718,9 @@ class simulation:
                 / self.interval_length
                 <= component.power_max * component.availability
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   P_{component.name} <= P_{component.name}_max"
-                )
+            logging.debug(
+                f"        - Constraint:   P_{component.name} <= P_{component.name}_max"
+            )
         else:
             # TODO: Abhängig machen von slacks
             self.m.addConstr(
@@ -774,10 +732,9 @@ class simulation:
                 * 1000
                 <= 1000000
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   P_{component.name} <= P_SECURITY                            -> Prevent Model from being unbounded"
-                )
+            logging.debug(
+                f"        - Constraint:   P_{component.name} <= P_SECURITY                            -> Prevent Model from being unbounded"
+            )
 
         # is the minimum output power of the source limited? If yes: Add power_min constraint
         if component.power_min_limited:
@@ -790,11 +747,10 @@ class simulation:
                 / self.interval_length
                 >= component.power_min
             )
-            # write log_simulation
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   P_{component.name} >= P_{component.name}_min"
-                )
+
+            logging.debug(
+                f"        - Constraint:   P_{component.name} >= P_{component.name}_min"
+            )
 
         # does the utilization of the source cost something? If yes: Add the corresponding cost factors
         if component.chargeable:
@@ -805,16 +761,7 @@ class simulation:
                 self.C_objective[-1]
                 == component.cost[0 : self.T] @ self.MVars[f"E_{component.name}"]
             )
-            if self.log_simulation:
-                print(f"        - CostFactor:   Cost for usage of {component.name}")
-
-                # for i in range(len(component.outputs)):
-                #    self.C_objective.append(self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"C_{component.name}_{i}"))
-                #    self.m.addConstr(self.C_objective[-1] == component.cost[0:self.T] @ self.MVars[component.outputs[i].name])
-                # if self.log_simulation:
-                #   print(
-                #      f"        - CostFactor:   Cost to use {component.outputs[i].flowtype.name} from {component.name} for {component.outputs[i].sink.name}")
-                # TODO: delete the lines above if no error occures in the next weeks (01/23)
+            logging.debug(f"        - CostFactor:   Cost for usage of {component.name}")
 
         # is the source afflicted with a capacity charge?
         # If yes: Add an MVar for the maximum used Power and add cost factor
@@ -851,11 +798,9 @@ class simulation:
                 * self.MVars[f"P_max_{component.name}"]
             )
 
-            # write log_simulation
-            if self.log_simulation:
-                print(
-                    f"        - CostFactor:   Cost for capacity charge of {component.name}"
-                )
+            logging.debug(
+                f"        - CostFactor:   Cost for capacity charge of {component.name}"
+            )
 
         # does the source cause direct or indirect emissions when used?
         if component.causes_emissions:
@@ -873,11 +818,10 @@ class simulation:
                 @ self.MVars[f"E_{component.name}"]
                 * self.scenario.cost_co2_per_kg
             )
-            # write log_simulation
-            if self.log_simulation:
-                print(
-                    f"        - CostFactor:   Cost for CO2-emissions due to usage of {component.name}"
-                )
+
+            logging.debug(
+                f"        - CostFactor:   Cost for CO2-emissions due to usage of {component.name}"
+            )
 
     def __add_thermalsystem(self, component):
         # create a timeseries of decision variables to represent the total inflow going into the thermal demand:
@@ -894,10 +838,9 @@ class simulation:
             )
             for t in range(self.T)
         )
-        if self.log_simulation:
-            print(
-                f"        - Variable:     E_{component.name}_in                                 (timeseries of incoming thermal energy at {component.name})"
-            )
+        logging.debug(
+            f"        - Variable:     E_{component.name}_in                                 (timeseries of incoming thermal energy at {component.name})"
+        )
 
         # create a timeseries of decision variables to represent the total outflow going out of the thermal demand:
         self.MVars[f"E_{component.name}_out"] = self.m.addMVar(
@@ -913,26 +856,23 @@ class simulation:
             )
             for t in range(self.T)
         )
-        if self.log_simulation:
-            print(
-                f"        - Variable:     E_{component.name}_out                                  (timeseries of removed thermal energy at {component.name})"
-            )
+        logging.debug(
+            f"        - Variable:     E_{component.name}_out                                  (timeseries of removed thermal energy at {component.name})"
+        )
 
         # create a timeseries for the internal temperature:
         self.MVars[f"T_{component.name}"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"T_{component.name}"
         )
-        if self.log_simulation:
-            print(
-                f"        - Variable:     T_{component.name}                                  (Internal Temperature of {component.name})"
-            )
+        logging.debug(
+            f"        - Variable:     T_{component.name}                                  (Internal Temperature of {component.name})"
+        )
 
         # set the starting temperature:
         self.m.addConstr(
             self.MVars[f"T_{component.name}"][0] == component.temperature_start
         )
-        if self.log_simulation:
-            print(f"        - Constraint:   T_{component.name}[0] = Tstart")
+        logging.debug(f"        - Constraint:   T_{component.name}[0] = Tstart")
 
         # add constraint for the thermal R-C-factory
         self.m.addConstrs(
@@ -964,10 +904,9 @@ class simulation:
             (self.MVars[f"T_{component.name}"][t] <= component.temperature_max[t])
             for t in range(self.T)
         )
-        if self.log_simulation:
-            print(
-                f"        - Constraint:   Tmin < T_{component.name} < Tmax for {component.name}"
-            )
+        logging.debug(
+            f"        - Constraint:   Tmin < T_{component.name} < Tmax for {component.name}"
+        )
 
         # set the end temperature:
         if component.sustainable:
@@ -987,8 +926,7 @@ class simulation:
                 / component.C
                 == component.temperature_start
             )
-            if self.log_simulation:
-                print(f"        - Constraint:   T_{component.name}[T] = Tstart")
+            logging.debug(f"        - Constraint:   T_{component.name}[T] = Tstart")
         else:
             # keep the temperature within allowed boundaries at timestep T+1
             self.m.addConstr(
@@ -1035,10 +973,9 @@ class simulation:
             for t in range(self.T)
         )
 
-        if self.log_simulation:
-            print(
-                f"        - Constraint:     calculation of thermal losses for {component.name}"
-            )
+        logging.debug(
+            f"        - Constraint:     calculation of thermal losses for {component.name}"
+        )
 
     def __add_triggerdemand(self, component):
         # create Matrix with all executable load-profiles
@@ -1070,20 +1007,18 @@ class simulation:
         self.MVars[f"{component.name}_executions"] = self.m.addMVar(
             possibilities, vtype=GRB.INTEGER, name=f"{component.name}_executions"
         )
-        if self.log_simulation:
-            print(
-                f"        - Variable:     {component.name}_executions                                 (List of triggered events at triggerdemand {component.name})"
-            )
+        logging.debug(
+            f"        - Variable:     {component.name}_executions                                 (List of triggered events at triggerdemand {component.name})"
+        )
 
         # guarantee the required amount of executions
         if component.executions > 0:
             self.m.addConstr(
                 sum(self.MVars[f"{component.name}_executions"]) == component.executions
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:     Guarantee the required amount of process executions at {component.name}"
-                )
+            logging.debug(
+                f"        - Constraint:     Guarantee the required amount of process executions at {component.name}"
+            )
 
         # limit the number of parallel executions
         if component.max_parallel > 0:
@@ -1092,10 +1027,9 @@ class simulation:
                 <= np.ones(component.Tend - component.Tstart + 1)
                 * component.max_parallel
             )
-            if self.log_simulation:
-                print(
-                    f"        - Constraint:   Limit the maximum parallel executions at {component.name}"
-                )
+            logging.debug(
+                f"        - Constraint:   Limit the maximum parallel executions at {component.name}"
+            )
 
         # calculate resulting load profile
         if component.input_energy:
@@ -1110,10 +1044,9 @@ class simulation:
                 vtype=GRB.CONTINUOUS,
                 name=f"{component.name}_loadprofile_material",
             )
-        if self.log_simulation:
-            print(
-                f"        - Variable:     {component.name}_loadprofile                                 (resulting load profile of triggerdemand {component.name})"
-            )
+        logging.debug(
+            f"        - Variable:     {component.name}_loadprofile                                 (resulting load profile of triggerdemand {component.name})"
+        )
 
         if component.Tstart > 1:
             if component.input_energy:
@@ -1163,8 +1096,9 @@ class simulation:
                     ]
                     == 0
                 )
-        if self.log_simulation:
-            print(f"        - Constraint:   Calculate load profile at {component.name}")
+        logging.debug(
+            f"        - Constraint:   Calculate load profile at {component.name}"
+        )
 
         # set validate and output connection to match the load profile
         if component.input_energy:
@@ -1199,11 +1133,9 @@ class simulation:
                 self.T, vtype=GRB.CONTINUOUS, name=connection.name
             )
 
-            # write log_simulation
-            if self.log_simulation:
-                print(
-                    f"        - Variable:     E_Flow_{connection.name}                                (timeseries of flowtype on connection {connection.name})"
-                )
+            logging.debug(
+                f"        - Variable:     E_Flow_{connection.name}                                (timeseries of flowtype on connection {connection.name})"
+            )
 
     def __collect_results(self, *, threshold=None, rounding_decimals=None):
         """
@@ -1211,16 +1143,15 @@ class simulation:
         single dictionary under simulation.results
         """
 
-        # write log_simulation
-        if self.log_simulation:
-            print("COLLECTING RESULTS")
+        logging.info("COLLECTING RESULTS")
 
         # check, if simulation has been conducted yet
         if not self.simulated:
             # if not: raise an Exception
-            raise Exception(
+            logging.critical(
                 f"Cannot collect results for simulation {self.name} because it has not been calculated yet"
             )
+            raise Exception
 
         # initialize a dict to store all the results
         self.result = {}
@@ -1326,8 +1257,7 @@ class simulation:
                     total_emissions -= emissions
                     total_emission_cost -= emission_cost
 
-                    # write log_simulation
-                    print(
+                    logging.info(
                         f"Sink {component.name} avoided total emissions of {round(sum(emissions), 2)} kgCO2, refunding {round(emission_cost, 2)}€"
                     )
 
@@ -1340,8 +1270,8 @@ class simulation:
                     # add avoided costs and emissions to the summing variables
                     total_emissions += emissions
                     total_emission_cost += emission_cost
-                    # write log_simulation
-                    print(
+
+                    logging.info(
                         f"Sink {component.name} caused total emissions of {round(sum(emissions), 2)} kgCO2, costing {round(emission_cost, 2)}€"
                     )
 
@@ -1395,8 +1325,7 @@ class simulation:
                     total_emissions += emissions
                     total_emission_cost += emission_cost
 
-                    # write log_simulation
-                    print(
+                    logging.info(
                         f"Source {component.name} caused total emissions of {round(sum(emissions),2)} kgCO2, costing additional {round(emission_cost,2)}€"
                     )
                 else:
@@ -1552,8 +1481,6 @@ class simulation:
         self.result["total_emissions"] = total_emissions
         self.result["total_emission_cost"] = total_emission_cost
 
-        # print(f"Total emissions: {round(sum(self.result['total_emissions']),2)}, Certificate Costs: {round(self.result['total_emission_cost'],2)}€")
-
         # collect achieved costs/revenues (objective of target function - ambient_gain_punishment_term)
         self.result["objective"] = self.m.objVal - sum(
             self.result["ambient_gains"]["utilization"]
@@ -1566,15 +1493,11 @@ class simulation:
         # set results_collected to true
         self.results_collected = True
 
-        # write log_simulation
-        if self.log_simulation:
-            print(" -> Results processed")
+        logging.info(" -> Results processed")
 
     def create_dash(self) -> object:
         """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted simulation"""
-        # write log_simulation-entry if requested
-        if self.log_simulation:
-            print("CREATING DASHBOARD")
+        logging.info("CREATING DASHBOARD")
         fd.create_dash(self)
 
     def __read_scenario_data(self):
@@ -1598,9 +1521,10 @@ class simulation:
 
                 # check, if the scenario has the requested key
                 if not hasattr(self.scenario, key):
-                    raise Exception(
+                    logging.critical(
                         f'ERROR while setting scenario data for component {component.name}: Scenario "{self.scenario.name}" does not contain the requested attribute "{key}"'
                     )
+                    raise Exception
 
                 # add the identified parameter to the parameters-dict
                 parameters[parameter] = getattr(self.scenario, key)
@@ -1621,13 +1545,14 @@ class simulation:
         file = Path(file_path)
         if file.is_file():
             if overwrite:
-                warnings.warn(
+                logging.warning(
                     f"WARNING: The specified file already exists and will be overwritten"
                 )
             else:
-                raise Exception(
+                logging.critical(
                     f"ERROR: The specified file already exists! Saving Factory aborted!"
                 )
+                raise Exception
 
         # create a copy of the simulation without the gurobi_model
         simulation_data = self
@@ -1640,21 +1565,12 @@ class simulation:
         with open(file_path, "wb") as f:
             pickle.dump(simulation_data, f)
 
-        # write log_simulation
-        if self.log_simulation:
-            print(f"SIMULATION SAVED under{file_path}")
+        logging.info(f"SIMULATION SAVED under{file_path}")
 
     def set_factory(self, factory):
         """This function sets a factory_model.factory-object as the factory for the simulation"""
         self.factory = factory
-
-        if factory.version == self.version:
-            print("Factory for simulation set")
-        else:
-            warnings.warn(
-                "Different skript-versions of factory_model and factory_simulation are being used! "
-                "This might lead to errors due to incompatibilities"
-            )
+        logging.debug("Factory for simulation set")
 
     def set_name(self, name=str):
         """This function sets the given name as a name for the simulation"""
@@ -1663,9 +1579,16 @@ class simulation:
     def set_scenario(self, scenario):
         """This function sets a factory_scenario.scenario-object as the scenario for the simulation"""
         self.scenario = scenario
-        print("scenario for simulation set")
+        logging.debug("scenario for simulation set")
 
-    def simulate(self, *, threshold=None, rounding_decimals=None, solver_config={}):
+    def simulate(
+        self,
+        *,
+        threshold=None,
+        rounding_decimals=None,
+        log_solver=False,
+        solver_config={},
+    ):
         """
         This function builds an optimization problem out of the factory and scenario and calls gurobi to solve it.
         :param solver_config: Optional dict with configuration parameters for the solver (max_solver_time, barrier_tolerance, solver_method)
@@ -1679,8 +1602,7 @@ class simulation:
             self.t_start = time.time()
 
         # PREPARATIONS
-        if self.log_simulation:
-            self.problem_class = {"grade": 1, "type": "float"}
+        self.problem_class = {"grade": 1, "type": "float"}
 
         # Write timestamp
         now = datetime.now()
@@ -1691,9 +1613,10 @@ class simulation:
 
         # check, if the factory can handle enough timesteps
         if self.scenario.number_of_timesteps > self.factory.max_timesteps:
-            raise Exception(
+            logging.critical(
                 f"ERROR: Length of scenario {self.scenario.name} ({self.scenario.number_of_timesteps}) is longer than the factory {self.factory.name} allows {self.factory.max_timesteps}!"
             )
+            raise Exception
 
         # Configure the timefactor as specified in the scenario:
         self.interval_length = (
@@ -1709,22 +1632,15 @@ class simulation:
         )  # a conversion factor that implies, how many factory related timesteps are represented by one simulation timestep
 
         # writelog
-        if self.log_simulation:
-            print(
-                f"   Timefactor of the simulation set to: 1 timestep == {self.scenario.timefactor} hours ({self.scenario.timefactor*60} minutes)"
-            )
+        logging.debug(
+            f"   Timefactor of the simulation set to: 1 timestep == {self.scenario.timefactor} hours ({self.scenario.timefactor*60} minutes)"
+        )
 
         # INITIALIZE GUROBI MODEL
-        # write log_simulation
-        if self.log_simulation:
-            print("INITIALIZING GUROBI")
+        logging.info("INITIALIZING GUROBI")
 
-        # create new gurobi factory
+        # create new gurobi model
         self.m = gp.Model("Factory")
-
-        # write log_simulation
-        if not self.log_solver:
-            self.m.Params.LogToConsole = 0
 
         # initialize variables for collecting parts of the optimization problem
         self.MVars = {}  # Initialize a dict to store all the factory variables
@@ -1736,24 +1652,21 @@ class simulation:
         )  # List of revenue terms that need to be summed up for the target function
 
         # ADAPTING SCENARIO DATA
-        if self.log_simulation:
-            print("SETTING SCENARIO_DATA")
+        logging.info("SETTING SCENARIO_DATA")
         self.__read_scenario_data()
-        if self.log_simulation:
-            print(" -> Scenario data collection successful")
+        logging.debug(" -> Scenario data collection successful")
 
         # BUILDING OPTIMIZATION PROBLEM
-        if self.log_simulation:
-            print("BUILDING OPTIMIZATION PROBLEM")
+        logging.info("BUILDING OPTIMIZATION PROBLEM")
 
         if self.enable_time_tracking:
-            print(f"Preperations: {round(time.time()-self.t_start,2)}s")
+            logging.info(f"Preperations: {round(time.time()-self.t_start,2)}s")
             self.t_step = time.time()
 
         # CREATE MVARS FOR ALL FLOWS IN THE FACTORY
         self.__add_flows()
         if self.enable_time_tracking:
-            print(f"Creating Flows: {round(time.time() - self.t_step, 2)}s")
+            logging.info(f"Creating Flows: {round(time.time() - self.t_step, 2)}s")
             self.t_step = time.time()
 
         # CREATE MVARS AND CONSTRAINTS FOR ALL COMPONENTS IN THE FACTORY
@@ -1780,7 +1693,7 @@ class simulation:
                 self.__add_schedule(component)
 
             if self.enable_time_tracking:
-                print(
+                logging.info(
                     f"Adding {component.type} {component.name}: {round(time.time() - self.t_step, 2)}s"
                 )
                 self.t_step = time.time()
@@ -1794,19 +1707,19 @@ class simulation:
             GRB.MINIMIZE,
         )  # ...as sum of all created cost components
         if self.enable_time_tracking:
-            print(
+            logging.info(
                 f"Creating objective function: {round(time.time() - self.t_step, 2)}s"
             )
             self.t_step = time.time()
 
-        if self.log_simulation:
-            print(f" -> Building optimization problem finished ")
-        if self.log_solver:
-            print(
-                f"-> The resulting problem is of type {self.problem_class['type']} with grade {self.problem_class['grade']}!"
-            )
+        logging.info(f" -> Building optimization problem finished ")
+        logging.debug(
+            f"-> The resulting problem is of type {self.problem_class['type']} with grade {self.problem_class['grade']}!"
+        )
         if self.enable_time_tracking:
-            print(f"Time Required for factory setup: {time.time() - self.t_start}s")
+            logging.info(
+                f"Time Required for factory setup: {time.time() - self.t_start}s"
+            )
             self.t_start = time.time()  # reset timer
 
         # CONFIGURE SOLVER
@@ -1835,24 +1748,24 @@ class simulation:
                 iv.validate(solver_config["barrier_tolerance"], "0..1"),
             )
 
-        # write log_simulation
-        if self.log_simulation:
-            print(f"CALLING THE SOLVER")
+        # set solver logging
+        if not log_solver:
+            self.m.Params.LogToConsole = 0
+
+        logging.info(f"CALLING THE SOLVER")
 
         # CALL SOLVER
         self.m.optimize()
         if self.enable_time_tracking:
-            print(f"Solver Time: {round(time.time() - self.t_step, 2)}s")
+            logging.info(f"Solver Time: {round(time.time() - self.t_step, 2)}s")
             self.t_step = time.time()
 
         if not self.m.Status == GRB.TIME_LIMIT:
             # mark simulation as solved
             self.simulated = True
-            # write log_simulation
-            if self.log_simulation:
-                print(" -> Simulation solved")
+            logging.info(" -> Simulation solved")
             if self.enable_time_tracking:
-                print(
+                logging.info(
                     f"Time Required for factory solving: {time.time() - self.t_start}s"
                 )
                 self.t_start = time.time()  # reset timer
@@ -1862,12 +1775,11 @@ class simulation:
                 threshold=threshold, rounding_decimals=rounding_decimals
             )
             if self.enable_time_tracking:
-                print(
+                logging.info(
                     f"Time Required for collecting results: {time.time() - self.t_start}s"
                 )
 
-        elif self.log_simulation:
-            print("Solver time exceeded. Calculation aborted")
+        logging.warning("Solver time exceeded. Calculation aborted")
 
     def __validate_component(self, component):
         """
@@ -1878,9 +1790,10 @@ class simulation:
 
         # check, if the simulation has been simulated already
         if not self.simulated:
-            raise Exception(
+            logging.critical(
                 f"ERROR: Cannot validate the results of the simulation, because it has not been simualted yet!"
             )
+            raise Exception
 
         # skip the routine if the component is a sink, source or slack
         if (
@@ -1905,7 +1818,7 @@ class simulation:
         if not round(input_sum_energy, 3) == round(
             output_sum_energy, 3
         ):  # round to 3 digits to avoid false positives due to solver tolerances
-            warnings.warn(
+            logging.warning(
                 f"WARNING: Energy is not conserved at component {component.name}! Input: {round(input_sum_energy)}    Output: {round(output_sum_energy)}"
             )
             return False
@@ -1914,7 +1827,7 @@ class simulation:
         if not round(input_sum_material, 3) == round(
             output_sum_material, 3
         ):  # round to 3 digits to avoid false positives due to solver tolerances
-            warnings.warn(
+            logging.warning(
                 f"WARNING: Material is not conserved at component {component.name}! Input: {round(input_sum_material)}    Output: {round(output_sum_material)}"
             )
             return False
@@ -1925,11 +1838,7 @@ class simulation:
         """
         This function calls the factory.check_validity-method for the given factory and writes the corresponding log_simulation
         """
-        if self.log_simulation:
-            print("VALIDATING FACTORY ARCHITECTURE")
-        if self.factory.check_validity():
-            if self.log_simulation:
-                print(" -> FACTORY IS VALID")
+        self.factory.check_validity()
 
     def __validate_results(self):
         """
@@ -1939,13 +1848,12 @@ class simulation:
         """
 
         if not self.simulated:
-            raise Exception(
+            logging.critical(
                 f"ERROR: Cannot validate the results of the simulation, "
                 f"because it has not been simualted yet!"
             )
-
-        if self.log_simulation:
-            print("CHECKING RESULT CONSISTENCY")
+            raise Exception
+        logging.info("CHECKING RESULT CONSISTENCY")
         self.simulation_valid = True
 
         slacks_used = False
@@ -2009,44 +1917,44 @@ class simulation:
                     slacks_used = True
                     self.simulation_valid = False
 
-        sum_energy_in = round(sum(values_energy_in), 3)
-        sum_energy_out = round(sum(values_energy_out), 3)
-        sum_material_in = round(sum(values_material_in), 3)
-        sum_material_out = round(sum(values_material_out), 3)
+        sum_energy_in = round(sum(values_energy_in), 2)
+        sum_energy_out = round(sum(values_energy_out), 2)
+        sum_material_in = round(sum(values_material_in), 2)
+        sum_material_out = round(sum(values_material_out), 2)
 
         if sum_energy_in < sum_energy_out:
-            warnings.warn(
+            logging.warning(
                 f"WARNING: There is Energy being created within the system! Input: {round(sum_energy_in)}   Output: {round(sum_energy_out)}"
             )
             self.simulation_valid = False
 
         if sum_energy_in > sum_energy_out:
-            warnings.warn(
+            logging.warning(
                 f"WARNING: There is Energy being lost within the system! Input: {round(sum_energy_in)}   Output: {round(sum_energy_out)}"
             )
             self.simulation_valid = False
 
         if sum_material_in < sum_material_out:
-            warnings.warn(
+            logging.warning(
                 f"WARNING: There is Material being created within the system! Input: {round(sum_energy_in)}   Output: {round(sum_energy_out)}"
             )
             self.simulation_valid = False
 
         if sum_material_in > sum_material_out:
-            warnings.warn(
+            logging.warning(
                 f"WARNING: There is Material being lost within the system! Input: {round(sum_energy_in)}   Output: {round(sum_energy_out)}"
             )
             self.simulation_valid = False
 
         if slacks_used:
             df_slacks = {"values": values_slacks, "names": names_slacks}
-            warnings.warn(
+            logging.warning(
                 f"WARNING: Slacks were needed to solve the optimization: {df_slacks}"
             )
 
         # Check, if the punishment term for ambient gains was chosen high enough
         if max(self.result["ambient_gains"]["utilization"]) > 10000000:
-            warnings.warn(
+            logging.warning(
                 f"Warning: There is a high utilization of ambient gains! "
                 f"This could be due to a numerical issue with the punishment-"
                 f"term within factory_model.create_essentials(). "
@@ -2054,24 +1962,23 @@ class simulation:
             )
             self.simulation_valid = False
 
-        if self.log_simulation:
-            if self.simulation_valid:
-                print(" -> Simulation is valid!")
-            else:
-                print(" -> Simulation is invalid!")
+        if self.simulation_valid:
+            logging.info(" -> Simulation is valid!")
+        else:
+            logging.warning(" -> Simulation is invalid!")
 
     def write_results_to_excel(self, path):
 
         # check, that the simulation has already been performed
         if not self.simulated:
-            warnings.warn(
+            logging.warning(
                 "The simulation has to be solved before the results can be exported. Calling the simulation method now..."
             )
             self.simulate()
 
         # check, that results have been collected
         if not self.results_collected:
-            warnings.warn(
+            logging.warning(
                 "The simulation results have not been processed yet. Calling the result processing method now..."
             )
             self.__collect_results()

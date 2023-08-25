@@ -3,6 +3,7 @@
 #     Right now there is no GUI or regular way to test the package, so this file is used to create a dummy environment.
 #     Configuration of the process is done within the config.ini. (NOT in git!!!)
 
+import logging
 import os
 import time
 
@@ -57,18 +58,20 @@ def simulate_dri(simulation_task, **kwargs):
         simulation.info = simulation_task
         if simulation.simulated:
             simulation.save(file, overwrite=True)
-            print(
+            logging.info(
                 f"Simulation number {simulation_task['simulation_number']} finished within: {round((time.time()-t_start), 2)} s"
             )
         else:
             simulation.save(
                 f"C:\\Users\\smsikamm\\Documents\\Daten\\DRI-Setups\\problems\\{simulation_task['layout']}_NG{simulation_task['natural_gas_cost']}_EL{simulation_task['avg_electricity_price']}_VOL{simulation_task['volatility']}_CO2{simulation_task['CO2_price']}_{simulation_task['month']}.fsim"
             )
-            print(
+            logging.warning(
                 f"Simulation number {simulation_task['simulation_number']} aborted due to solver timeout"
             )
     else:
-        print(f"Simulation {simulation_task['simulation_number']} is already solved")
+        logging.info(
+            f"Simulation {simulation_task['simulation_number']} is already solved"
+        )
 
 
 def script_based():
@@ -77,7 +80,6 @@ def script_based():
     [Testfactory, Testscenario] = tf.create_testfactory(
         config["CASE"]["testfactory_key"],
         config["PATHS"]["data_path"],
-        enable_log=config["LOGS"]["enable_log_factory_setup"],
         enable_slacks=config["SLACKS"]["enable_slacks"],
     )
 
@@ -85,8 +87,6 @@ def script_based():
     simulation = fs.simulation(
         Testfactory,
         Testscenario,
-        enable_simulation_log=config["LOGS"]["enable_log_simulation_setup"],
-        enable_solver_log=config["LOGS"]["enable_log_solver"],
     )
     simulation.simulate(treshold=0.001)
 
@@ -108,8 +108,6 @@ def excel_import():
     simulation = fs.simulation(
         Testfactory,
         Testscenario,
-        enable_simulation_log=config["LOGS"]["enable_log_simulation_setup"],
-        enable_solver_log=config["LOGS"]["enable_log_solver"],
     )
     simulation.simulate(treshold=0.001)
     simulation.write_results_to_excel("path")
@@ -122,7 +120,6 @@ def create_simulation_file():
     [Testfactory, Testscenario] = tf.create_testfactory(
         config["CASE"]["testfactory_key"],
         config["PATHS"]["data_path"],
-        enable_log=config["LOGS"]["enable_log_factory_setup"],
         enable_slacks=config["SLACKS"]["enable_slacks"],
     )
 
@@ -130,8 +127,6 @@ def create_simulation_file():
     simulation = fs.simulation(
         Testfactory,
         Testscenario,
-        enable_simulation_log=config["LOGS"]["enable_log_simulation_setup"],
-        enable_solver_log=config["LOGS"]["enable_log_solver"],
     )
     simulation.simulate(treshold=0.001)
 
@@ -164,17 +159,14 @@ def dri():
     [Testfactory, Testscenario] = dri.create_steel_plant(
         config["PATHS"]["data_path_dri"],
         config["CASE"]["testfactory_key"],
-        enable_log=config["LOGS"]["enable_log_factory_setup"],
         enable_slacks=config["SLACKS"]["enable_slacks"],
     )
-    print(f"Building plant infrastructure model finished: {time.time()-t_start}")
+    logging.info(f"Building plant infrastructure model finished: {time.time()-t_start}")
 
     # SIMULATION
     simulation = fs.simulation(Testfactory, Testscenario)
     simulation.simulate(
         treshold=0.001,
-        enable_simulation_log=config["LOGS"]["enable_log_simulation_setup"],
-        enable_solver_log=config["LOGS"]["enable_log_solver"],
         enable_time_tracking=config["LOGS"]["enable_time_tracking"],
     )
     simulation.save(config["CASE"]["testfactory_key"], overwrite=True)
@@ -185,7 +177,6 @@ def dri_iteration():
     from tests import DRI_factories as dri
 
     config = rc.read_config("config.ini")
-
     layout = "Partial"
     natural_gas_costs = [100]
     avg_electricity_prices = [
@@ -213,12 +204,9 @@ def dri_iteration():
     [testfactory, testscenario] = dri.create_steel_plant(
         config["PATHS"]["data_path_dri"],
         layout,
-        enable_log=config["LOGS"]["enable_log_factory_setup"],
         enable_slacks=config["SLACKS"]["enable_slacks"],
     )
 
-    testscenario.log_simulation = config["LOGS"]["enable_log_simulation_setup"]
-    testscenario.log_solver = config["LOGS"]["enable_log_solver"]
     testscenario.enable_time_tracking = config["LOGS"]["enable_time_tracking"]
 
     simulation_list = list()
@@ -304,13 +292,13 @@ def dri_results():
         cost_per_ton = simulation.result["objective"] / sum(
             simulation.result["Crude Steel Output"]["utilization"]
         )
-        # print(f"cost_per_ton: {round(cost_per_ton, 2)}€")
+        logging.debug(f"cost_per_ton: {round(cost_per_ton, 2)}€")
 
         # calculate co2 emissions per ton of produced crude steel
         co2_per_ton = sum(simulation.result["CO2 Emissions"]["utilization"]) / sum(
             simulation.result["Crude Steel Output"]["utilization"]
         )
-        # print(f"co2_per_ton: {round(co2_per_ton, 3)}t")
+        logging.debug(f"co2_per_ton: {round(co2_per_ton, 3)}t")
 
         if simulation.info["layout"] == "CCS":
             # calculate co2 capture rate
@@ -319,7 +307,7 @@ def dri_results():
             )
         else:
             co2_capture_rate = 0
-        # print(f"co2_capture_rate: {round(co2_capture_rate, 3) * 100}%")
+        logging.debug(f"co2_capture_rate: {round(co2_capture_rate, 3) * 100}%")
 
         # calculate ratio of H2 and NG used for DRI
         if simulation.info["layout"] == "Partial":
@@ -330,7 +318,7 @@ def dri_results():
             rate_h2_in_dri = 0
         else:
             rate_h2_in_dri = 1
-        # print(f"rate_h2_in_dri: {round(rate_h2_in_dri, 3) * 100}%")
+        logging.debug(f"rate_h2_in_dri: {round(rate_h2_in_dri, 3) * 100}%")
 
         # calculate h2_storage_rate
         if simulation.info["layout"] == "Partial":
@@ -343,7 +331,7 @@ def dri_results():
             ) / sum(simulation.result["Pool Hydrogen_to_DRI"])
         else:
             h2_storage_rate = 0
-        # print(f"h2_storage_rate: {round(h2_storage_rate, 3) * 100}%")
+        logging.debug(f"h2_storage_rate: {round(h2_storage_rate, 3) * 100}%")
 
         # calculate hbi_storage_rate
         hbi_storage_rate = sum(simulation.result["Pool DRI_to_DRI Compactor"]) / sum(
@@ -355,7 +343,7 @@ def dri_results():
             simulation.result["Source Electricity"]["utilization"]
             * simulation.scenario.cost_electricity
         ) / sum(simulation.result["Source Electricity"]["utilization"])
-        # print(f"price_electricity: {round(cost_electricity, 2)}€/MWh")
+        logging.debug(f"price_electricity: {round(cost_electricity, 2)}€/MWh")
 
         data = data.append(
             {

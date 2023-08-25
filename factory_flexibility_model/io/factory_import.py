@@ -1,18 +1,17 @@
 # This script is used to read in factory layouts and specifications from Excel files and to generate
 # factory-objects out of them that can be used for the simulations
 
+# IMPORT 3RD PARTY PACKAGES
+import logging
 import pickle
 from pathlib import Path
 
 import numpy as np
-
-# IMPORT 3RD PARTY PACKAGES
 import openpyxl
 import pandas as pd
 
-import factory_flexibility_model.factory.blueprint as bp
-
 # IMPORT ENDOGENOUS COMPONENTS
+import factory_flexibility_model.factory.blueprint as bp
 import factory_flexibility_model.factory.factory as fm
 import factory_flexibility_model.input_validations as iv
 import factory_flexibility_model.simulation.simulation as fs
@@ -137,20 +136,20 @@ def import_factory(data_path: str):
     # check, if the requested file exists
     file = Path(data_path)
     if not file.is_file():
-        raise Exception(f"ERROR: The given file does not exist: {data_path}")
-
+        logging.critical(f"ERROR: The given file does not exist: {data_path}")
+        raise Exception
     # open the given file
     with open(data_path, "rb") as f:
         imported_factory = pickle.load(f)
 
     # make sure that the imported data represents a factory-object
     if not isinstance(imported_factory, fm.factory):
-        raise Exception(
+        logging.critical(
             f"ERROR: The given file does not contain a factory_model.factory-object"
         )
+        raise Exception
 
-    # write log_simulation
-    print("FACTORY IMPORT FROM FILE SUCCESSFUL")
+    logging.info("FACTORY IMPORT FROM FILE SUCCESSFUL")
 
     # Return the imported factory
     return imported_factory
@@ -166,20 +165,20 @@ def import_simulation(data_path: str):
     # check, if the requested file exists
     file = Path(data_path)
     if not file.is_file():
-        raise Exception(f"ERROR: The given file does not exist: {data_path}")
-
+        logging.critical(f"ERROR: The given file does not exist: {data_path}")
+        raise Exception
     # open the given file
     with open(data_path, "rb") as f:
         imported_simulation = pickle.load(f)
 
     # make sure that the imported data represents a factory-object
     if not isinstance(imported_simulation, fs.simulation):
-        raise Exception(
+        logging.critical(
             f"ERROR: The given file does not contain a simulation.simulation-object"
         )
+        raise Exception
 
-    # write log_simulation
-    print("SIMULATION IMPORT FROM FILE SUCCESSFUL")
+    logging.info("SIMULATION IMPORT FROM FILE SUCCESSFUL")
 
     # Return the imported simulation
     return imported_simulation
@@ -209,7 +208,6 @@ def __create_blueprint(workbook, version):
     blueprint.info["name"] = sheet_data["factory_name"]
     blueprint.info["description"] = sheet_data["factory_description"]
     blueprint.info["max_timesteps"] = sheet_data["max_number_of_timesteps"]
-    blueprint.info["enable_log"] = sheet_data["enable_log"]
     blueprint.info["enable_slacks"] = sheet_data["enable_slacks"]
 
     iv.check_version_compatibility(
@@ -279,8 +277,6 @@ def __add_components_to_blueprint(workbook, blueprint, timeseries, scenario_para
             blueprint.components[component_name] = kwargs
             blueprint.components[component_name]["name"] = component_name
             blueprint.components[component_name]["type"] = component_type
-            if component_type == "storage":
-                print(input_data_component)
 
     return blueprint
 
@@ -492,9 +488,10 @@ def __read_in_scheduler_demands(sheet):
     # check, if the format is correct
     for demand in scheduler_demands.values():
         if not len(demand) == 4:
-            raise Exception(
+            logging.critical(
                 "At least one partdemand of sheet 'SCHEDULER DEMANDS' is given in an invalid way!"
             )
+            raise Exception
 
     # return the list
     return scheduler_demands

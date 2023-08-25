@@ -21,11 +21,9 @@ class blueprint:
             "description": "Undefined",
             "max_timesteps": 8760,
             "enable_slacks": False,
-            "enable_log": False,
         }
 
     def create_test_blueprint(self):
-        self.info["enable_log"] = True
         self.flows["electricity"] = defaultdict(lambda: "")
         self.flows["electricity"].update(
             {

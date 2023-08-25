@@ -40,7 +40,6 @@ def create_steel_plant(data_path, plant_type, *, enable_log=None, enable_slacks=
     # CREATE PLANT - FACTORY MODEL OBJECT
     Plant = fm.factory(
         enable_slacks=enable_slacks,
-        enable_log=enable_log,
         timefactor=timestep_length_hours,
     )
     Plant.name = f"{plant_type}-DRI + EAF"

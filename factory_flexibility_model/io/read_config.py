@@ -3,6 +3,7 @@
 
 # IMPORT 3RD PARTY PACKAGES
 import configparser
+import logging
 
 
 # Code start
@@ -20,6 +21,17 @@ def read_config(filepath: str):
 
     # read the contained parameters
     config.read("config.ini")
+
+    if config["LOGS"]["logging_level"] == "debug":
+        logging.basicConfig(level=logging.DEBUG)
+    elif config["LOGS"]["logging_level"] == "info":
+        logging.basicConfig(level=logging.INFO)
+    elif config["LOGS"]["logging_level"] == "warning":
+        logging.basicConfig(level=logging.WARNING)
+    elif config["LOGS"]["logging_level"] == "error":
+        logging.basicConfig(level=logging.ERROR)
+    elif config["LOGS"]["logging_level"] == "critical":
+        logging.basicConfig(level=logging.CRITICAL)
 
     # return the dictionary
     return config
