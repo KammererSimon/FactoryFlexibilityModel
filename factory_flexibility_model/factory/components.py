@@ -7,6 +7,8 @@ import logging
 # IMPORT 3RD PARTY PACKAGES
 import numpy as np
 
+import factory_flexibility_model.factory.flowtype as ft
+
 # IMPORT ENDOGENOUS COMPONENTS
 import factory_flexibility_model.input_validations as iv
 
@@ -54,7 +56,19 @@ class component:
 
         # FLOWTYPE DETERMINATION
         if flowtype is not None:
-            self.flowtype = factory.flowtypes[flowtype]
+            if isinstance(flowtype, ft.flowtype):
+                self.flowtype = flowtype
+            elif isinstance(flowtype, str):
+                try:
+                    self.flowtype = factory.flowtypes[flowtype]
+                except:
+                    logging.warning(
+                        f"Given flowtype {flowtype} is not defined within {factory.name}. Flowtype is set as 'unknown' to proceed."
+                    )
+                    self.flowtype = factory.flowtypes[
+                        "unknown"
+                    ]  # initialize with "unknown"
+
         else:
             self.flowtype = factory.flowtypes["unknown"]  # initialize with "unknown"
 

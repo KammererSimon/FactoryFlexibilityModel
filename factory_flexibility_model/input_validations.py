@@ -163,28 +163,28 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
                 if input == 0 or input == 1:
                     return input
                 else:
-                    logging.critical(f"Given validate is not a value between 0 and 1")
+                    logging.critical(f"Given value is not a value between 0 and 1")
                     raise Exception
 
             elif isinstance(input, float):
                 if 0 <= input <= 1:
                     return input
                 else:
-                    logging.critical(f"Given validate is not a value between 0 and 1")
+                    logging.critical(f"Given value is not a value between 0 and 1")
                     raise Exception
 
             elif isinstance(input, bool):
                 if input:
                     return 1
                 else:
-                    logging.warning(
-                        "Given validate was a boolean and not a value between 0 and 1. It has been translated to True=1, False=0"
+                    logging.info(
+                        "Given value was a boolean and not a value between 0 and 1. It has been translated to True=1, False=0"
                     )
                     return 0
 
             else:
                 logging.critical(
-                    f"Given validate is of type {type(input)} and not a value between 0 and 1"
+                    f"Given value is of type {type(input)} and not a value between 0 and 1"
                 )
                 raise Exception
 
@@ -277,13 +277,13 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
             if isinstance(input, int):
                 return input
             elif isinstance(input, float):
-                logging.warning(
-                    "Given validate was a float and has been rounded to next int!"
+                logging.info(
+                    "Given value was a float and has been rounded to next int!"
                 )
                 return round(input)
             else:
                 logging.critical(
-                    f"Given validate is of type {type(input)} and incompatible with requested type (int)!"
+                    f"Given value is of type {type(input)} and incompatible with requested type (int)!"
                 )
                 raise Exception
 
@@ -305,10 +305,10 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
                 return None
             try:
                 input = float(input)
-                logging.warning("Given validate has been converted to float")
+                logging.info("Given value has been converted to float")
             except:
                 logging.critical(
-                    f"Given validate is of type {type(input)} and incompatible with requested type (float)!"
+                    f"Given value of type {type(input)} and incompatible with requested type (float)!"
                 )
                 raise Exception
 
