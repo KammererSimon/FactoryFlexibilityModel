@@ -11,9 +11,9 @@ def create_test_blueprint():
     This function generates a demo object of the blueprint-class containing a simple factory layout for testing
     :return: factory.blueprint-object
     """
-    blueprint = bp()
-    blueprint.flows["electricity"] = defaultdict(lambda: "")
-    blueprint.flows["electricity"].update(
+    blueprint = bp.blueprint()
+    blueprint.flowtypes["electricity"] = defaultdict(lambda: "")
+    blueprint.flowtypes["electricity"].update(
         {
             "name": "Electricity",
             "key": "electricity",
@@ -25,8 +25,8 @@ def create_test_blueprint():
         }
     )
 
-    blueprint.flows["darkenergy"] = defaultdict(lambda: "")
-    blueprint.flows["darkenergy"].update(
+    blueprint.flowtypes["darkenergy"] = defaultdict(lambda: "")
+    blueprint.flowtypes["darkenergy"].update(
         {
             "name": "Dark Energy",
             "key": "darkenergy",
