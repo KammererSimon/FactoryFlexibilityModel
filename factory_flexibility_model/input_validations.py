@@ -57,8 +57,9 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
         if isinstance(input, str):
             return input
         else:
+            print(input)
             logging.critical(
-                f"Given validate is {type(input)}, not a string as requested!"
+                f"Given value is {type(input)}, not a string as requested!"
             )
             raise Exception
 
@@ -80,12 +81,12 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
                 return False
             else:
                 logging.critical(
-                    f"The given validate string '{input}' cannot be identified as 'True' or 'False'!"
+                    f"The given value string '{input}' cannot be identified as 'True' or 'False'!"
                 )
                 raise Exception
         else:
             logging.critical(
-                f"Given validate is of type {type(input)} and incompatible with requested type (boolean)!"
+                f"Given value is of type {type(input)} and incompatible with requested type (boolean)!"
             )
             raise Exception
 
@@ -299,6 +300,18 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
                 raise Exception
 
     if type == "float":
+        if not isinstance(input, float):
+            if input == "" or input is None:
+                return None
+            try:
+                input = float(input)
+                logging.warning("Given validate has been converted to float")
+            except:
+                logging.critical(
+                    f"Given validate is of type {type(input)} and incompatible with requested type (float)!"
+                )
+                raise Exception
+
         if timeseries:
             if isinstance(input, float) or isinstance(input, int):
                 if upperlimit and input > max:
@@ -377,22 +390,11 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
                     raise Exception
             else:
                 logging.critical(
-                    f"data type {type(input)} is invalid as validate for a timeseries!"
+                    f"data type ({input}) is invalid as validate for a timeseries!"
                 )
+                raise Exception
 
         else:
-            if not isinstance(input, float):
-                if input == "" or input == None:
-                    return input
-                try:
-                    input = float(input)
-                    logging.warning("Given validate has been converted to float")
-                except:
-                    logging.critical(
-                        f"Given validate is of type {type(input)} and incompatible with requested type (float)!"
-                    )
-                    raise Exception
-
             if positive and input < 0:
                 logging.critical(
                     "The given value is negative but a positive float is requested! "
