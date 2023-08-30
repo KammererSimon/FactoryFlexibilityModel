@@ -3,7 +3,7 @@
 
 # CODE START
 class scenario:
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.cost_co2_per_kg = (
             0  # assumed additional external costs for emitting one kg of CO²
         )

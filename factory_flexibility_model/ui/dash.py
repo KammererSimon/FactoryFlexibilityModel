@@ -1238,7 +1238,7 @@ def create_dash(simulation):
     )
     def update_plots_overview(
         user_input,
-    ):  # function arguments come from the component property of the Input
+    ):  # function arguments come from the Component property of the Input
         # CREATE SANKEY PLOTS
         # create weights for the displayed connections based on the user validate:
         connection_list = np.empty((0, 4), int)
@@ -1268,7 +1268,7 @@ def create_dash(simulation):
                     )
                     # add the color of the new connection to the colorlist
                     connection_colorlist.append(
-                        simulation.factory.connections[i].flowtype.connection_color
+                        simulation.factory.connections[i].flowtype.color.hex
                     )
             elif user_input == "Material Flows":
                 if simulation.factory.connections[i].flowtype.is_material():
@@ -1294,7 +1294,7 @@ def create_dash(simulation):
                     )
                     # add the color of the new connection to the colorlist
                     connection_colorlist.append(
-                        simulation.factory.connections[i].flowtype.connection_color
+                        simulation.factory.connections[i].flowtype.color.hex
                     )
             elif user_input == "Factory Architecture":
                 connection_list = np.append(
@@ -1313,12 +1313,13 @@ def create_dash(simulation):
                 )
                 # add the color of the new connection to the colorlist
                 connection_colorlist.append(
-                    simulation.factory.connections[i].flowtype.connection_color
+                    simulation.factory.connections[i].flowtype.color.hex
                 )
             elif user_input == "Energy Losses":
                 if (
                     simulation.factory.connections[i].flowtype.is_losses()
-                    and simulation.factory.connections[i].flowtype.type == "energy"
+                    and simulation.factory.connections[i].flowtype.unit.resource_type
+                    == "energy"
                 ):
                     connection_list = np.append(
                         connection_list,
@@ -1342,7 +1343,7 @@ def create_dash(simulation):
                     )
                     # add the color of the new connection to the colorlist
                     connection_colorlist.append(
-                        simulation.factory.connections[i].flowtype.connection_color
+                        simulation.factory.connections[i].flowtype.color.hex
                     )
             elif user_input == "Material Losses":
                 if (
@@ -1371,14 +1372,14 @@ def create_dash(simulation):
                     )
                     # add the color of the new connection to the colorlist
                     connection_colorlist.append(
-                        simulation.factory.connections[i].flowtype.connection_color
+                        simulation.factory.connections[i].flowtype.color.hex
                     )
 
         # create a list of existing components to be displayed
         component_colorlist = []
         for i in simulation.factory.components:
             component_colorlist.append(
-                simulation.factory.components[i].flowtype.component_color
+                simulation.factory.components[i].flowtype.color.hex
             )  # add fitting color to the colorlist
 
         fig_sankey = go.Figure(
@@ -1388,7 +1389,7 @@ def create_dash(simulation):
                         pad=70,
                         thickness=20,
                         line=dict(color="grey", width=0.8),
-                        label=simulation.factory.component_names,
+                        label=simulation.factory.component_keys,
                         color=component_colorlist,
                     ),
                     link=dict(
@@ -1473,21 +1474,19 @@ def create_dash(simulation):
         df_in = {"values": values_in, "names": names_in}
         df_out = {"values": values_out, "names": names_out}
 
-        # calculate total validate and output values
-        input_info = f"## {round(sum(values_in))}"
-        output_info = f"## {round(sum(values_out))}"
-
         # create pie descriptions
         title_in = ""
         title_out = ""
         if user_input == "Energy Flows":
             title_in = "##### DISTRIBUTION OF ENERGY INPUTS"
             title_out = "##### DISTRIBUTION OF ENERGY OUTPUTS"
-            input_info += " kWh"
-            output_info += " kWh"
+            input_info = f"## {simulation.factory.units['kW'].get_value_expression(sum(values_in), 'flow')}"
+            output_info = f"## {simulation.factory.units['kW'].get_value_expression(sum(values_out), 'flow')}"
         elif user_input == "Material Flows":
             title_in = "##### DISTRIBUTION OF MATERIAL INPUTS"
             title_out = "##### DISTRIBUTION OF MATERIAL OUTPUTS"
+            input_info = f"## {simulation.factory.units['kg'].get_value_expression(sum(values_in), 'flow')}"
+            output_info = f"## {simulation.factory.units['kg'].get_value_expression(sum(values_out), 'flow')}"
         elif user_input == "Energy Losses" or user_input == "Material Losses":
             title_in = "##### ORIGINS OF LOSSES"
             title_out = ""
@@ -1520,7 +1519,7 @@ def create_dash(simulation):
             input_info,
             output_info,
             total_cost,
-        )  # returned objects are assigned to the component property of the Output
+        )  # returned objects are assigned to the Component property of the Output
 
     # TAB: CONVERTERS
     @app.callback(
@@ -1866,7 +1865,7 @@ def create_dash(simulation):
         fig.update_layout(
             figure_config,
             xaxis_title="Timesteps",
-            yaxis_title=f"{component.flow_description} {component.flowtype.unit_flowrate}",
+            yaxis_title=f"{component.flow_description} {component.flowtype.unit_flowrate()}",
             showlegend=False,
         )
         fig.update_xaxes(linewidth=2, linecolor=style["axis_color"])
@@ -2111,11 +2110,11 @@ def create_dash(simulation):
                 f"\n **Charging circles:** {round(input_sum / (component.capacity + 0.0001))} (Estimated) \n "
             )
 
-            # f"\n **Total Cooling:** {round(total_cooling)} {component.flowtype.unit}\n " \
-            # f"\n **Total thermal losses:** {round(sum(simulation.result[component.to_losses.name]))}{component.flowtype.unit}\n" \
-            # f"\n **Max charging Power:** {round(max(simulation.result[component.name]['temperature']))} °C\n " \
-            # f"\n **T min:** {round(min(simulation.result[component.name]['temperature']))} °C\n " \
-            # f"\n **T average:** {round(simulation.result[component.name]['temperature'].mean())} °C\n "
+            # f"\n **Total Cooling:** {round(total_cooling)} {Component.flowtype.unit}\n " \
+            # f"\n **Total thermal losses:** {round(sum(simulation.result[Component.to_losses.name]))}{Component.flowtype.unit}\n" \
+            # f"\n **Max charging Power:** {round(max(simulation.result[Component.name]['temperature']))} °C\n " \
+            # f"\n **T min:** {round(min(simulation.result[Component.name]['temperature']))} °C\n " \
+            # f"\n **T average:** {round(simulation.result[Component.name]['temperature'].mean())} °C\n "
         else:
             fig = go.Figure()
             config = ""
@@ -2440,7 +2439,7 @@ def create_dash(simulation):
             )
 
             # create demand heatmap
-            # duration=component
+            # duration=Component
             data3 = np.zeros(
                 [max(component.demands[:, 1] - component.demands[:, 0]) + 1, T]
             )
@@ -2474,7 +2473,7 @@ def create_dash(simulation):
                 ticktext=np.linspace(t0, t1, num=10, endpoint=True).round(),
             )
 
-            # create component info
+            # create Component info
             config = ""
             if component.power_max_limited:
                 config = (

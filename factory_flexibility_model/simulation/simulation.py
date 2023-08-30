@@ -14,6 +14,7 @@
 # self.create_dash
 # self.show_results
 
+# IMPORTS
 import logging
 import pickle
 import time
@@ -21,18 +22,11 @@ from datetime import datetime
 from pathlib import Path
 
 import gurobipy as gp
-
-# IMPORT 3RD PARTY PACKAGES
 import numpy as np
-import xlsxwriter
 from gurobipy import GRB
 
 import factory_flexibility_model.input_validations as iv
-
-# IMPORT ENDOGENOUS COMPONENTS
 from factory_flexibility_model.ui import dash as fd
-
-# import xlsxwriter
 
 
 class simulation:
@@ -79,6 +73,12 @@ class simulation:
         )  # date/time of the creation of the simulation object
 
     def __add_converter(self, component):
+        """
+        This function adds all necessary MVARS and constraints to the optimization problem that are
+        required to integrate the converter handed over as 'Component'
+        :param component: components.converter-object
+        :return: self.m is beeing extended
+        """
         # create a timeseries of decision variables to represent the utilization U(t)
         self.MVars[f"P_{component.name}"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"P_{component.name}"
@@ -242,6 +242,12 @@ class simulation:
             )
 
     def __add_deadtime(self, component):
+        """
+        This function adds all necessary MVARS and constraints to the optimization problem that are
+        required to integrate the deadtime handed over as 'Component'
+        :param component: components.deadtime-object
+        :return: self.m is beeing extended
+        """
 
         # calculate the number of timesteps required to match the scenario - timescale:
         delay = component.delay / self.time_reference_factor
@@ -291,6 +297,13 @@ class simulation:
             )
 
     def __add_schedule(self, component):
+        """
+        This function adds all necessary MVARS and constraints to the optimization problem that are
+        required to integrate the schedule handed over as 'Component'
+        :param component: components.schedule-object
+        :return: self.m is beeing extended
+        """
+
         # get number of individual flexible demands:
         rows = len(component.demands)
 
@@ -311,7 +324,7 @@ class simulation:
             f"        - Variable(s):  Ein for {rows} part demands of {component.name}"
         )
 
-        # define constraint: validate and output must be equal at any timestep to ensure, that the component just does flowtype control
+        # define constraint: validate and output must be equal at any timestep to ensure, that the Component just does flowtype control
         self.m.addConstr(
             self.MVars[component.outputs[0].name]
             == self.MVars[component.inputs[0].name]
@@ -364,6 +377,12 @@ class simulation:
             )
 
     def __add_pool(self, component):
+        """
+        This function adds all necessary MVARS and constraints to the optimization problem that are
+        required to integrate the pool handed over as 'Component'
+        :param component: components.pool-object
+        :return: self.m is beeing extended
+        """
         # create constraint that ensures, that the sum of inputs equals the sum of outputs in every timestep
         self.m.addConstr(
             gp.quicksum(
@@ -382,8 +401,8 @@ class simulation:
     def __add_sink(self, component):
         """
         This function adds all necessary MVARS and constraints to the optimization problem that are
-        required to factory the sink handed over as 'component'
-        :param component: factory_model.sink-object
+        required to simulate the sink handed over as 'Component'
+        :param component: components.sink-object
         :return: self.m is beeing extended
         """
         # Sinks may be determined in their power intake or the power consumption may be calculated during the optimization.
@@ -505,6 +524,12 @@ class simulation:
             )
 
     def __add_slack(self, component):
+        """
+        This function adds all necessary MVARS and constraints to the optimization problem that are
+        required to integrate the slack handed over as 'Component'
+        :param component: components.slack-object
+        :return: self.m is beeing extended
+        """
         # slacks don't need any power restrictions or other constraints.
         # All they basically have to do is to be usable in any situation but be very expensive then.
         # So just two cost terms are being created here
@@ -534,6 +559,12 @@ class simulation:
             logging.debug(f"        - CostFactor:   C_{component.name}_positive")
 
     def __add_storage(self, component):
+        """
+        This function adds all necessary MVARS and constraints to the optimization problem that are
+        required to integrate the slack handed over as 'Component'
+        :param component: components.slack-object
+        :return: self.m is beeing extended
+        """
         # create  variable for initial SOC
         self.MVars[f"SOC_{component.name}_start"] = self.m.addMVar(
             1, vtype=GRB.CONTINUOUS, name=f"SOC_{component.name}_start"
@@ -669,8 +700,8 @@ class simulation:
     def __add_source(self, component):
         """
         This function adds all necessary MVARS and constraints to the optimization problem that are
-        required to factory the source handed over as 'component'
-        :param component: factory_model.source-object
+        required to integrate the source handed over as 'Component'
+        :param component: components.source-object
         :return: self.m is being extended
         """
 
@@ -824,6 +855,12 @@ class simulation:
             )
 
     def __add_thermalsystem(self, component):
+        """
+        This function adds all necessary MVARS and constraints to the optimization problem that are
+        required to integrate the thermalsystem handed over as 'Component'
+        :param component: components.thermalsystem-object
+        :return: self.m is beeing extended
+        """
         # create a timeseries of decision variables to represent the total inflow going into the thermal demand:
         self.MVars[f"E_{component.name}_in"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.name}_in"
@@ -978,6 +1015,13 @@ class simulation:
         )
 
     def __add_triggerdemand(self, component):
+        """
+        This function adds all necessary MVARS and constraints to the optimization problem that are
+        required to integrate the triggerdemand handed over as 'Component'
+        :param component: components.triggerdemand-object
+        :return: self.m is beeing extended
+        """
+
         # create Matrix with all executable load-profiles
         possibilities = component.Tend - component.Tstart - component.profile_length + 2
         if component.input_energy:
@@ -1123,7 +1167,9 @@ class simulation:
             )
 
     def __add_flows(self):
-        """This function adds a MVar for the flowtype on every existing connection to te optimization problem"""
+        """This function adds a MVar for the flowtype on every existing connection to te optimization problem
+        :return: self.m is beeing extended
+        """
 
         # iterate over all existing connections
         for connection in self.factory.connections.values():
@@ -1137,10 +1183,15 @@ class simulation:
                 f"        - Variable:     E_Flow_{connection.name}                                (timeseries of flowtype on connection {connection.name})"
             )
 
-    def __collect_results(self, *, threshold=None, rounding_decimals=None):
+    def __collect_results(
+        self, *, threshold: float = None, rounding_decimals: int = None
+    ):
         """
         This function collects all the simulation results of the simulation object and writes them in a
-        single dictionary under simulation.results
+        single dictionary under simulation.results.
+        :param threshold: [float] Threshold under which numerical values are considered as zero
+        :param rounding_decimals: [int] Number of decimals that values are rounded to
+        :return: self.results is being created
         """
 
         logging.info("COLLECTING RESULTS")
@@ -1188,7 +1239,7 @@ class simulation:
         self.result["energy_consumed_onsite"] = np.zeros(self.T)
         self.result["energy_consumed_offsite"] = np.zeros(self.T)
 
-        # collect all component specific timeseries: iterate over all components
+        # collect all Component specific timeseries: iterate over all components
         for component in self.factory.components.values():
 
             # handle pools
@@ -1508,7 +1559,7 @@ class simulation:
         for i_component in self.factory.components:
             component = self.factory.components[i_component]  # cache the actual object
 
-            # continue with next component if the current one is not scenario dependent
+            # continue with next Component if the current one is not scenario dependent
             if not component.scenario_dependent:
                 continue
 
@@ -1522,20 +1573,20 @@ class simulation:
                 # check, if the scenario has the requested key
                 if not hasattr(self.scenario, key):
                     logging.critical(
-                        f'ERROR while setting scenario data for component {component.name}: Scenario "{self.scenario.name}" does not contain the requested attribute "{key}"'
+                        f'ERROR while setting scenario data for Component {component.name}: Scenario "{self.scenario.name}" does not contain the requested attribute "{key}"'
                     )
                     raise Exception
 
                 # add the identified parameter to the parameters-dict
                 parameters[parameter] = getattr(self.scenario, key)
 
-            # change component configuration
+            # change Component configuration
             self.factory.set_configuration(component.name, parameters)
 
-    def save(self, file_path, *, overwrite=False):
+    def save(self, file_path: str, *, overwrite: bool = False):
         """
         This function saves a simulation-object under the specified filepath as a single file.
-        :param file_path: Path to the file to be created
+        :param file_path: [string] Path to the file to be created
         :param override: [boolean] Set True to allow the method to overwrite existing files.
         Otherwise an error will occur when trying to overwrite a file
         :return: Nothing
@@ -1568,33 +1619,43 @@ class simulation:
         logging.info(f"SIMULATION SAVED under{file_path}")
 
     def set_factory(self, factory):
-        """This function sets a factory_model.factory-object as the factory for the simulation"""
+        """This function sets a factory_model.factory-object as the factory for the simulation
+        :param factory: [factory.factory] Factory-object to be simulated
+        :return: [True] -> self.factory is set
+        """
+
         self.factory = factory
         logging.debug("Factory for simulation set")
 
     def set_name(self, name=str):
-        """This function sets the given name as a name for the simulation"""
+        """This function sets a name for the simulation object
+        :param name: [factory.factory] Factory-object to be simulated
+        :return: [True] -> self.name is set
+        """
         self.name = iv.validate(name, "string")
 
     def set_scenario(self, scenario):
-        """This function sets a factory_scenario.scenario-object as the scenario for the simulation"""
+        """This function sets a simulation.scenario-object as the scenario for the simulation
+        :param scenario: [simulation.scenario] Scenario-object to be used for simulation
+        :return: [True] -> self.scenario is set
+        """
         self.scenario = scenario
         logging.debug("scenario for simulation set")
 
     def simulate(
         self,
         *,
-        threshold=None,
-        rounding_decimals=None,
-        log_solver=False,
-        solver_config={},
+        threshold: float = None,
+        rounding_decimals: int = None,
+        log_solver: bool = False,
+        solver_config: dict = {},
     ):
         """
         This function builds an optimization problem out of the factory and scenario and calls gurobi to solve it.
-        :param solver_config: Optional dict with configuration parameters for the solver (max_solver_time, barrier_tolerance, solver_method)
-        :param rounding_decimals: Number of decimals that the results are rounded to
-        :param threshold: threshold under whoch results are interpreted as zero
-        :return: Adds an attribute .result to the simulation object
+        :param solver_config: [dict] Optional dict with configuration parameters for the solver (max_solver_time, barrier_tolerance, solver_method)
+        :param rounding_decimals: [int] Number of decimals that the results are rounded to
+        :param threshold: [float] Threshold under whoch results are interpreted as zero
+        :return: [True] -> Adds an attribute .result to the simulation object
         """
 
         # ENABLE LOGGING/TIMETRACKING?
@@ -1778,14 +1839,14 @@ class simulation:
                 logging.info(
                     f"Time Required for collecting results: {time.time() - self.t_start}s"
                 )
-
-        logging.warning("Solver time exceeded. Calculation aborted")
+        else:
+            logging.warning("Solver time exceeded. Calculation aborted")
 
     def __validate_component(self, component):
         """
-        This function checks, if the energy/material - conservation at a component has been fulfilled during simulation
-        :param component: factory_components.component-object
-        :return: True/False
+        This function checks, if the energy/material - conservation at a Component has been fulfilled during simulation
+        :param component: [factory.components.Component-object]
+        :return: [Boolean] True if Component result is valid
         """
 
         # check, if the simulation has been simulated already
@@ -1795,7 +1856,7 @@ class simulation:
             )
             raise Exception
 
-        # skip the routine if the component is a sink, source or slack
+        # skip the routine if the Component is a sink, source or slack
         if (
             component.type == "sink"
             or component.type == "source"
@@ -1803,12 +1864,12 @@ class simulation:
         ):
             return True  # Sinks, sources and slacks don't have to be balanced
 
-        # calculate the sum of inputs at the component
+        # calculate the sum of inputs at the Component
         [input_sum_energy, input_sum_material] = self.__calculate_component_input_sum(
             component
         )
 
-        # calculate the sum of outputs at the component
+        # calculate the sum of outputs at the Component
         [
             output_sum_energy,
             output_sum_material,
@@ -1819,7 +1880,7 @@ class simulation:
             output_sum_energy, 3
         ):  # round to 3 digits to avoid false positives due to solver tolerances
             logging.warning(
-                f"WARNING: Energy is not conserved at component {component.name}! Input: {round(input_sum_energy)}    Output: {round(output_sum_energy)}"
+                f"WARNING: Energy is not conserved at Component {component.name}! Input: {round(input_sum_energy)}    Output: {round(output_sum_energy)}"
             )
             return False
 
@@ -1828,7 +1889,7 @@ class simulation:
             output_sum_material, 3
         ):  # round to 3 digits to avoid false positives due to solver tolerances
             logging.warning(
-                f"WARNING: Material is not conserved at component {component.name}! Input: {round(input_sum_material)}    Output: {round(output_sum_material)}"
+                f"WARNING: Material is not conserved at Component {component.name}! Input: {round(input_sum_material)}    Output: {round(output_sum_material)}"
             )
             return False
 
@@ -1836,7 +1897,7 @@ class simulation:
 
     def __validate_factory_architecture(self):
         """
-        This function calls the factory.check_validity-method for the given factory and writes the corresponding log_simulation
+        This function calls the factory.check_validity-method for the given factory
         """
         self.factory.check_validity()
 
@@ -1967,63 +2028,10 @@ class simulation:
         else:
             logging.warning(" -> Simulation is invalid!")
 
-    def write_results_to_excel(self, path):
-
-        # check, that the simulation has already been performed
-        if not self.simulated:
-            logging.warning(
-                "The simulation has to be solved before the results can be exported. Calling the simulation method now..."
-            )
-            self.simulate()
-
-        # check, that results have been collected
-        if not self.results_collected:
-            logging.warning(
-                "The simulation results have not been processed yet. Calling the result processing method now..."
-            )
-            self.__collect_results()
-
-        # create a result dict with reduced depth:
-        result_dict = {}
-        for key, value in self.result.items():
-            if isinstance(value, dict):
-                for subkey, subvalue in value.items():
-                    result_dict[f"{key}_{subkey}"] = subvalue
-            else:
-                result_dict[key] = value
-
-        # create a new excel workbook
-        workbook = xlsxwriter.Workbook(
-            "C:\\Users\\smsikamm\\Documents\\Daten\\output.xlsx"
-        )
-        worksheet = workbook.add_worksheet()
-
-        # iterate over all parameters and write each of them in an individual column in the excel file
-        col = 0
-        for key in result_dict.keys():
-            # insert key names
-            worksheet.write(0, col, key)
-
-            # insert data
-            if (
-                isinstance(result_dict[key], int)
-                or isinstance(result_dict[key], float)
-                or isinstance(result_dict[key], bool)
-            ):
-                worksheet.write(1, col, result_dict[key])
-            else:
-                for row in range(len(result_dict[key])):
-                    worksheet.write(row + 1, col, result_dict[key][row])
-
-            # continue with next column in excel sheet
-            col += 1
-
-        workbook.close()
-
     def __calculate_component_input_sum(self, component):
         """
-        This function calculates the sum of energy and material inputs that arrived at a component
-        :param component: factory_components.component-object
+        This function calculates the sum of energy and material inputs that arrived at a Component
+        :param component: factory_components.Component-object
         :return: input_sum_energy, input_sum_material: float
         """
 
@@ -2050,8 +2058,8 @@ class simulation:
 
     def __calculate_component_output_sum(self, component):
         """
-        This function calculates the sum of energy and material outputs that leave at a component
-        :param component: factory_comonents.component-object
+        This function calculates the sum of energy and material outputs that leave at a Component
+        :param component: factory_comonents.Component-object
         :return: output_sum_energy, output_sum_material: float
         """
 
@@ -2070,14 +2078,14 @@ class simulation:
             if output_i.flowtype.is_material():
                 output_sum_material += sum(self.result[output_i.name])
 
-        # if the component is a converter: add the energy and material losses as well
+        # if the Component is a converter: add the energy and material losses as well
         if component.type == "converter":
             if not component.to_Elosses == []:
                 output_sum_energy += sum(self.result[component.to_Elosses.name])
             if not component.to_Mlosses == []:
                 output_sum_material += sum(self.result[component.to_Mlosses.name])
 
-        # if the component is a storage or a thermalsystem: ad the energy or material losses as well
+        # if the Component is a storage or a thermalsystem: ad the energy or material losses as well
         if component.type == "storage" or component.type == "thermalsystem":
 
             # check, if the flowtype is energy or material and add the losses to the correct bilance

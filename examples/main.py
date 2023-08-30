@@ -11,11 +11,11 @@ import time
 # from joblib import Parallel, delayed
 import pandas as pd
 
-from factory_flexibility_model.factory import blueprint as bp
 from factory_flexibility_model.io import factory_import as imp
 from factory_flexibility_model.io import read_config as rc
 from factory_flexibility_model.simulation import simulation as fs
 from tests import DRI_factories as dri
+from tests import testblueprint as tb
 from tests import testfactory as tf
 from tests import testscenario as ts
 
@@ -140,8 +140,25 @@ def dashboard_development():
 
 
 def blueprint_development():
-    blueprint = bp.blueprint()
-    blueprint.create_test_blueprint()
+    import factory_flexibility_model.factory.Flowtype as Flowtype
+    import tests.testscenario as sc
+
+    blueprint = tb.create_test_blueprint()
+    factory = blueprint.to_factory()
+
+    blueprint.save()
+
+    Resource = Flowtype.Flowtype("Liquid Steel", unit="kg")
+    print(Resource.get_value_expression(15.5135249875, "flow"))
+    print(Resource.get_value_expression(15000, "flow"))
+    print(Resource.get_value_expression(156521328, "flowrate"))
+    print(Resource.get_value_expression(0.133, "flow"))
+
+    scenario = sc.create_testscenario("C:\\Users\\smsikamm\\Documents\\Daten\\")
+    simulation = fs.simulation(factory=factory, scenario=scenario)
+    simulation.simulate()
+    simulation.create_dash()
+    print("check")
 
 
 def gui_development():
@@ -164,7 +181,7 @@ def dri():
     logging.info(f"Building plant infrastructure model finished: {time.time()-t_start}")
 
     # SIMULATION
-    simulation = fs.simulation(Testfactory, Testscenario)
+    simulation = fs.simulation(factory=Testfactory, scenario=Testscenario)
     simulation.simulate(
         treshold=0.001,
         enable_time_tracking=config["LOGS"]["enable_time_tracking"],

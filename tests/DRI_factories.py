@@ -4,7 +4,7 @@ import openpyxl
 import pandas as pd
 
 # IMPORT ENDOGENOUS COMPONENTS
-from factory_flexibility_model.factory import factory as fm
+from factory_flexibility_model.factory import Factory as fm
 from factory_flexibility_model.simulation import scenario as sc
 
 

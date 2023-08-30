@@ -3,7 +3,7 @@
 # IMPORTS
 from collections import defaultdict
 
-from factory_flexibility_model.factory import blueprint as bp
+from factory_flexibility_model.factory import Blueprint as bp
 
 
 def create_test_blueprint():
@@ -11,17 +11,14 @@ def create_test_blueprint():
     This function generates a demo object of the blueprint-class containing a simple factory layout for testing
     :return: factory.blueprint-object
     """
-    blueprint = bp.blueprint()
+    blueprint = bp.Blueprint()
     blueprint.flowtypes["electricity"] = defaultdict(lambda: "")
     blueprint.flowtypes["electricity"].update(
         {
             "name": "Electricity",
             "key": "electricity",
-            "type": "energy",
-            "unit_flow": "kWh",
-            "unit_flowrate": "kW",
-            "conversion_factor": 1,
-            "color": [0.44, 0.676, 0.277, 1],
+            "unit": "kW",
+            "color": "#FF0000",
         }
     )
 
@@ -30,11 +27,8 @@ def create_test_blueprint():
         {
             "name": "Dark Energy",
             "key": "darkenergy",
-            "type": "energy",
-            "unit_flow": "kWh",
-            "unit_flowrate": "kW",
-            "conversion_factor": 1,
-            "color": [0, 0, 0, 1],
+            "unit": "kW",
+            "color": "#000000",
         }
     )
 

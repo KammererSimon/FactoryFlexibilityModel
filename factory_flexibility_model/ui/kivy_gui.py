@@ -40,7 +40,7 @@ from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.tab import MDTabsBase
 from kivymd.uix.textfield import MDTextField
 
-import factory_flexibility_model.factory.blueprint as bp
+import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.input_validations as iv
 import factory_flexibility_model.io.factory_import as imp
 import factory_flexibility_model.simulation.scenario as sc
@@ -496,19 +496,19 @@ class factory_GUIApp(MDApp):
         if len(self.blueprint.flows) == 0:
             self.add_flow(instance, touch)
 
-        # assign a key to the new component
+        # assign a key to the new Component
         i = 0
         while f"component_{i}" in self.blueprint.components.keys():
             i += 1
         component_key = f"component_{i}"
 
-        # create a blueprint entry for the component
+        # create a blueprint entry for the Component
         self.blueprint.components[component_key] = defaultdict(lambda: "")
         self.blueprint.components[component_key]["position_x"] = 0
         self.blueprint.components[component_key]["position_y"] = 0
         self.blueprint.components[component_key][
             "key"
-        ] = component_key  # number of the component which is dragged into the layout beginning by 0
+        ] = component_key  # number of the Component which is dragged into the layout beginning by 0
         self.blueprint.components[component_key]["flowtype"] = self.blueprint.flows[
             "flow_0"
         ][
@@ -522,28 +522,28 @@ class factory_GUIApp(MDApp):
         self.root.ids.canvas_layout.add_widget(component_framelabel)
         self.root.ids[f"frame_{component_key}"] = component_framelabel
 
-        # specify component type, initial name and initial icon depending on the dragged dummy:
+        # specify Component type, initial name and initial icon depending on the dragged dummy:
 
-        # give the component a unique name
+        # give the Component a unique name
         i = 1
         while self.get_key(f"Unspecified {instance.key} {i}"):
             i += 1
         self.blueprint.components[component_key][
             "name"
-        ] = f"Unspecified {instance.key} {i}"  # name of component which is dragged into the layout by numbering exemplary is 'Unspecified thermal system 1'
+        ] = f"Unspecified {instance.key} {i}"  # name of Component which is dragged into the layout by numbering exemplary is 'Unspecified thermal system 1'
         self.blueprint.components[component_key][
             "type"
         ] = (
             instance.key
-        )  # name of component which is dragged into the layout exemplary thermalsystem
+        )  # name of Component which is dragged into the layout exemplary thermalsystem
         self.blueprint.components[component_key]["icon"] = self.default_icons[
             instance.key
         ]
 
-        # close the component selection menu
+        # close the Component selection menu
         self.root.ids.component_shelf.set_state("closed")
 
-        # catch the position of the new component and update the visualisation to show it in the correct place
+        # catch the position of the new Component and update the visualisation to show it in the correct place
         self.save_component_positions()
         self.initialize_visualization()
 
@@ -643,10 +643,10 @@ class factory_GUIApp(MDApp):
         self.blueprint.flows[flow_key]["color"] = [0.5, 0.5, 0.5, 1]
         self.blueprint.flows[flow_key]["conversion_factor"] = 1
 
-        # reset the component creation menu
+        # reset the Component creation menu
         self.root.ids.component_shelf.set_state("closed")
 
-        # catch the position of the new component and update the visualisation to show it in the correct place
+        # catch the position of the new Component and update the visualisation to show it in the correct place
         self.save_component_positions()
         self.initialize_visualization()
 
@@ -686,7 +686,7 @@ class factory_GUIApp(MDApp):
             "time_factor": 1,
         }
         self.selected_timeseries = np.zeros(168)  # the currently activated timeseries
-        self.search_text = ""  # text within the component search bar
+        self.search_text = ""  # text within the Component search bar
         self.timeseries = []  # List of imported timeseries within the session
         self.write_log = (
             True  # sets, if a log_simulation of function calls is written or not
@@ -941,7 +941,7 @@ class factory_GUIApp(MDApp):
 
     def change_selected_asset(self, key):
         """
-        This function takes a component key and sets the asset adressed by the key as the currently selected asset.
+        This function takes a Component key and sets the asset adressed by the key as the currently selected asset.
         """
 
         if not self.dialog == None:
@@ -969,9 +969,9 @@ class factory_GUIApp(MDApp):
 
     def click_on_component(self, instance, touch):
         """
-        This function is triggered everytime when the user clicks on the component (or on the canvas if it is still buggy)
-        This function will select the clicked component as the current asset.
-        If the user moves the component the new position will be stored using self.save_component_positions
+        This function is triggered everytime when the user clicks on the Component (or on the canvas if it is still buggy)
+        This function will select the clicked Component as the current asset.
+        If the user moves the Component the new position will be stored using self.save_component_positions
         """
 
         # check, if the function call actually came from an object that has been clicked/moved
@@ -989,8 +989,8 @@ class factory_GUIApp(MDApp):
                 self.connection_edit_mode = False
                 return
 
-        # otherwise just select the component that has been clicked on
-        print(f"selecting component {instance.id}")
+        # otherwise just select the Component that has been clicked on
+        print(f"selecting Component {instance.id}")
         self.initiate_asset_selection(instance.id)
         self.save_component_positions()
 
@@ -1090,7 +1090,7 @@ class factory_GUIApp(MDApp):
 
         self.close_dialog()
 
-        # check, which connections need to be removed along with the component
+        # check, which connections need to be removed along with the Component
         delete_list = []
         for connection in self.blueprint.connections:
             if (
@@ -1111,14 +1111,14 @@ class factory_GUIApp(MDApp):
         # inform the user
         Snackbar(text=f"{self.selected_asset['name']} has been deleted!").open()
 
-        # delete the component out of the blueprint
+        # delete the Component out of the blueprint
         del self.blueprint.components[self.selected_asset["key"]]
 
-        # now there is no more selected component
+        # now there is no more selected Component
         self.selected_asset = None
         self.root.ids.asset_config_screens.current = "welcome_screen"
 
-        # redraw the visualisation without the selected component
+        # redraw the visualisation without the selected Component
         self.initialize_visualization()
 
     def delete_connection(self, key):
@@ -1165,10 +1165,10 @@ class factory_GUIApp(MDApp):
 
     def get_key(self, given_name):
         """
-        This method takes a component name and returns the corresponding key that the component can be adressed with in the blueprint
+        This method takes a Component name and returns the corresponding key that the Component can be adressed with in the blueprint
         """
 
-        # search name in component dict
+        # search name in Component dict
         for component in self.blueprint.components.values():
             if component["name"] == given_name:
                 return component["key"]
@@ -1250,7 +1250,7 @@ class factory_GUIApp(MDApp):
         canvas.clear()
 
         # predefine lines for connections
-        # TODO: This step is needed to have them at the background under the component labels
+        # TODO: This step is needed to have them at the background under the Component labels
         #  ...change this if there is a better way to get this behaviour
         for connection in self.blueprint.connections.values():
             # get connection color from blueprint
@@ -1314,7 +1314,7 @@ class factory_GUIApp(MDApp):
         # create assets according to the blueprint:
         for component in self.blueprint.components.values():
 
-            # create draglabel for the icon of the component
+            # create draglabel for the icon of the Component
             component_framelabel = DragLabel(
                 source=component["icon"],
                 size=(component_width[component["type"]], component_height),
@@ -1347,7 +1347,7 @@ class factory_GUIApp(MDApp):
                 + 50,
             )
 
-            # if the component is a pool: create a circle in the correct color
+            # if the Component is a pool: create a circle in the correct color
             if component["type"] == "pool":
                 # exchange the icon with an empty one
                 component_framelabel.source = "Assets\\empty_rectangle.png"
@@ -1581,7 +1581,7 @@ class factory_GUIApp(MDApp):
         self.unsaved_changes_on_session = False
         self.unsaved_changes_on_asset = False
 
-        # there is no component selected initially
+        # there is no Component selected initially
         self.selected_asset = None
 
         # update the GUI to display the data
@@ -1835,7 +1835,7 @@ class factory_GUIApp(MDApp):
 
         # include scenario_data of currently selected scenario
         for parameter in self.selected_scenario["parameters"].values():
-            simulation_data.components[parameter["component"]][
+            simulation_data.components[parameter["Component"]][
                 parameter["attribute"]
             ] = parameter["timeseries"]
 
@@ -2451,7 +2451,7 @@ class factory_GUIApp(MDApp):
         # overwrite old entry
         self.blueprint.components[self.selected_asset["key"]] = source_new
 
-        # change the selected component:
+        # change the selected Component:
         self.selected_asset = source_new
 
         # update connection names to adapt changes if the name of the source has changed
@@ -2525,7 +2525,7 @@ class factory_GUIApp(MDApp):
         # overwrite old entry
         self.blueprint.components[self.selected_asset["key"]] = storage_new
 
-        # change the selected component:
+        # change the selected Component:
         self.selected_asset = storage_new
 
         # update connection names to adapt changes if the name of the source has changed
@@ -2612,7 +2612,7 @@ class factory_GUIApp(MDApp):
 
     def save_component_positions(self):
         """
-        This function is called everytime when a component has been moven by the user within the layout visualisation.
+        This function is called everytime when a Component has been moven by the user within the layout visualisation.
         It checks the current positions of all components for deviations from their last known location.
         If a position deviates more than the expected rounding error the new position is stored in the blueprint
         """
@@ -2647,7 +2647,7 @@ class factory_GUIApp(MDApp):
 
         # iterate over all components
         for component in self.blueprint.components.values():
-            # calculate the current relative position on the canvas for the component
+            # calculate the current relative position on the canvas for the Component
             current_pos_x = round(
                 (
                     self.root.ids[f"frame_{component['key']}"].pos[0]
@@ -2671,7 +2671,7 @@ class factory_GUIApp(MDApp):
                 0,
             )
 
-            # make sure that the new position is within the grid. If not: move tho component to the closest border
+            # make sure that the new position is within the grid. If not: move tho Component to the closest border
             if current_pos_x < 0:
                 current_pos_x = 0
             if current_pos_x > self.display_grid_size[0]:
@@ -2687,7 +2687,7 @@ class factory_GUIApp(MDApp):
                 and self.root.ids.canvas_layout.height > 500
             ):
 
-                # Check, if the component has been dragged on top of the recycle bin to delete it..
+                # Check, if the Component has been dragged on top of the recycle bin to delete it..
                 if (
                     self.root.ids[f"frame_{component['key']}"].pos[0]
                     < self.root.ids.icon_delete_component.pos[0]
@@ -2706,12 +2706,12 @@ class factory_GUIApp(MDApp):
                     self.update_visualization()
 
                 else:
-                    # if x coordinate of the component has changed more than expected rounding error:
+                    # if x coordinate of the Component has changed more than expected rounding error:
                     if not current_pos_x - component["position_x"] == 0:
                         component["position_x"] = current_pos_x
                         changes_done = True
 
-                    # if y coordinate of the component has changed more than expected rounding error: store it
+                    # if y coordinate of the Component has changed more than expected rounding error: store it
                     if not current_pos_y - component["position_y"] == 0:
                         component["position_y"] = current_pos_y
                         changes_done = True
@@ -2741,7 +2741,7 @@ class factory_GUIApp(MDApp):
                 "type": "static_value",
                 "timeseries": self.selected_timeseries,
                 "unit": self.root.ids.textfield_static_value_unit.text,
-                "component": self.selected_parameter["component"],
+                "Component": self.selected_parameter["Component"],
                 "attribute": self.selected_parameter["attribute"],
             }
         if value_type == "Custom Timeseries":
@@ -2750,7 +2750,7 @@ class factory_GUIApp(MDApp):
                 "type": "custom_timeseries",
                 "timeseries": self.selected_timeseries,
                 "unit": self.root.ids.textfield_custom_timeseries_unit.text,
-                "component": self.selected_parameter["component"],
+                "Component": self.selected_parameter["Component"],
                 "attribute": self.selected_parameter["attribute"],
                 "description": self.root.ids.label_selected_timeseries.text,
             }
@@ -2766,7 +2766,7 @@ class factory_GUIApp(MDApp):
         This event is triggered when the user clicks on an image in the scenario image selection dialog.
         The selected image will be taken as the visualisation image for the current scenario
         """
-        # abort if the event has not been triggered by the touched component
+        # abort if the event has not been triggered by the touched Component
         if not instance.collide_point(*touch.pos):
             # abort if not
             return
@@ -2844,7 +2844,7 @@ class factory_GUIApp(MDApp):
                 item.add_widget(icon)
                 self.root.ids.list_assets.add_widget(item)
 
-        # iterate over all component types
+        # iterate over all Component types
         for component in self.blueprint.components.values():
             if (
                 self.search_text == ""
@@ -2880,7 +2880,7 @@ class factory_GUIApp(MDApp):
 
         # COMPONENTS
 
-        # define the component dummys to be created
+        # define the Component dummys to be created
         component_dummys = {
             "source": {
                 "id": "dummy_source",
@@ -2913,7 +2913,7 @@ class factory_GUIApp(MDApp):
             },
         }
 
-        # get available height of the component canvas
+        # get available height of the Component canvas
         canvas_height = self.root.ids.canvas_shelf.size[1]
         canvas_width = self.root.ids.canvas_shelf.size[0]
 
@@ -2921,13 +2921,13 @@ class factory_GUIApp(MDApp):
         component_height = canvas_height / (len(component_dummys) + 1)
         component_pos_x = (canvas_width - component_height * 1.5) / 2
 
-        # clear component dummy canvas
+        # clear Component dummy canvas
         self.root.ids.canvas_shelf.canvas.clear()
 
         # iterate over all specified dummys and create them
         i = 0
         for type in component_dummys:
-            # create draglabel for the icon of the component
+            # create draglabel for the icon of the Component
             component_dummy = DragLabel(
                 source=component_dummys[type]["source"],
                 id=component_dummys[type]["id"],
@@ -2964,7 +2964,7 @@ class factory_GUIApp(MDApp):
         )
         self.root.ids.canvas_flow.add_widget(flow_dummy)
 
-        # show the component shelf
+        # show the Component shelf
         self.root.ids.component_shelf.set_state("open")
 
     def show_component_deletion_dialog(self):
@@ -2983,7 +2983,7 @@ class factory_GUIApp(MDApp):
         self.dialog = MDDialog(
             title="Delete Component",
             buttons=[btn_false, btn_true],
-            text="Do you really want to delete the component with all its adherent connections?",
+            text="Do you really want to delete the Component with all its adherent connections?",
         )
         btn_false.bind(on_release=self.dialog.dismiss)
         btn_true.bind(on_release=self.delete_component)
@@ -3068,7 +3068,7 @@ class factory_GUIApp(MDApp):
     def show_flow_selection_dropdown(self, caller):
         """
         This function creates a dropdown menu giving the user the option to select one of the flows in the blueprint.
-        The name of the selected flowtype is being set as text to the component that this function is being called from.
+        The name of the selected flowtype is being set as text to the Component that this function is being called from.
         """
 
         def set_text(caller, text):
@@ -3104,7 +3104,7 @@ class factory_GUIApp(MDApp):
     def show_icon_selection_dropdown(self, caller):
         """
         This function creates a dropdown menu giving the user the option to select one of the predefined icons.
-        The filepath of the selected icon is being set as text to the component that this function is being called from.
+        The filepath of the selected icon is being set as text to the Component that this function is being called from.
         """
 
         def set_image(caller, path):
@@ -3410,7 +3410,7 @@ class factory_GUIApp(MDApp):
 
     def select_asset_list_item(self, list_item):
         """
-        This function is called everytime when the user selects a component in the component browser.
+        This function is called everytime when the user selects a Component in the Component browser.
         It searches for the corresponding key to the selected listitem and calls the change_selected_asset - method
         """
 
@@ -3459,7 +3459,7 @@ class factory_GUIApp(MDApp):
         parameter_key = f"{self.get_key(list_item.text)}_{list_item.secondary_text}"
         self.selected_parameter = {
             "key": parameter_key,
-            "component": self.get_key(list_item.text),
+            "Component": self.get_key(list_item.text),
             "attribute": list_item.secondary_text,
         }
 
@@ -3537,7 +3537,7 @@ class factory_GUIApp(MDApp):
 
         def append_item(frame, component_name, parameter_name):
             """
-            This subfunction creates a list entry representing a single component parameter that has to be specified
+            This subfunction creates a list entry representing a single Component parameter that has to be specified
             for the simulation. The Item is being attached to the list_scenario_parameters-object
             """
 
@@ -4137,7 +4137,7 @@ class factory_GUIApp(MDApp):
     def update_visualization(self, *args, **kwargs):
         """
         This function updates the position of connections and labels of the factory layout visualization.
-        It is being called on startup once and everytime a component gets moved by the user
+        It is being called on startup once and everytime a Component gets moved by the user
         """
 
         # Specify a scaling factor depending on the size of the canvas and the number of components to be displayed
@@ -4173,7 +4173,7 @@ class factory_GUIApp(MDApp):
 
         # store pointer to canvas to make following code better readable
 
-        # create dataset with the incoming and outgoing connections per component, sorted by the direction
+        # create dataset with the incoming and outgoing connections per Component, sorted by the direction
         # initialize a dict to store the information per direction
         connection_data = defaultdict(lambda: None)
         for component in self.blueprint.components:
@@ -4244,7 +4244,7 @@ class factory_GUIApp(MDApp):
                 i = 0
                 number_of_connections = len(component[direction])
                 for connection_end in component[direction]:
-                    # set the id of the current connection at the component
+                    # set the id of the current connection at the Component
                     i += 1
 
                     # set the offset of the connections breaking points
@@ -4262,7 +4262,7 @@ class factory_GUIApp(MDApp):
                             {"direction": "vertical", "key": connection_end[1]}
                         )
 
-                    # get the component that the connection has to start/end from
+                    # get the Component that the connection has to start/end from
                     if connection_end[2] == "in":
                         act_component = self.blueprint.components[
                             self.blueprint.connections[connection_end[1]]["to"]
@@ -4345,7 +4345,7 @@ class factory_GUIApp(MDApp):
                     connection["end_y"],
                 )
 
-                # get the widths of sink and source component
+                # get the widths of sink and source Component
                 source_width = component_width[
                     self.blueprint.components[
                         self.blueprint.connections[connection["key"]]["from"]
@@ -4471,7 +4471,7 @@ class factory_GUIApp(MDApp):
                     component_height - 4 * line_width,
                 )
 
-        # highlight the selected component
+        # highlight the selected Component
         if (
             self.selected_asset == None
             or self.selected_asset == ""
@@ -4479,7 +4479,7 @@ class factory_GUIApp(MDApp):
             or self.selected_asset["type"] == "material"
             or self.selected_asset["type"] == "connection"
         ):
-            #  if the user selected a flowtype, a connection or no component at all: move the highlight image out of sight
+            #  if the user selected a flowtype, a connection or no Component at all: move the highlight image out of sight
             self.root.ids["highlight"].pos = [-1000, -1000]
 
         else:
@@ -4492,7 +4492,7 @@ class factory_GUIApp(MDApp):
                 component_width[self.selected_asset["type"]] * 2,
                 component_height * 2,
             ]
-            # place it behind the selected component
+            # place it behind the selected Component
             self.root.ids["highlight"].pos = [
                 self.root.ids[f"frame_{self.selected_asset['key']}"].pos[0]
                 - component_width[self.selected_asset["type"]] / 2,
