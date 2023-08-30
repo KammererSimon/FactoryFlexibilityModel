@@ -4,42 +4,41 @@
 #               It collects all given Information and organizes the setup process
 
 
+# IMPORTS
 import logging
 import pickle
 from pathlib import Path
 
-# IMPORT 3RD PARTY PACKAGES
-import numpy as np
-import plotly.graph_objects as go
-
-# IMPORT ENDOGENOUS COMPONENTS
 import factory_flexibility_model.input_validations as iv
-from factory_flexibility_model.factory import components as factory_components
-from factory_flexibility_model.factory import connection as factory_connection
-from factory_flexibility_model.factory import flowtype as ft
+from factory_flexibility_model.factory import Components as factory_components
+from factory_flexibility_model.factory import Connection as factory_connection
+from factory_flexibility_model.factory import Flowtype as ft
+from factory_flexibility_model.factory import Unit
 
 
 # CODE START
-class factory:
+class Factory:
     def __init__(
         self,
         *,
-        name="New Factory",
-        max_timesteps=8760,
-        description="Unspecified Factory",
-        enable_slacks=False,
-        timefactor=1,
+        name: str = "New Factory",
+        max_timesteps: int = 8760,
+        description: str = "Unspecified Factory",
+        enable_slacks: bool = False,
+        timefactor: float = 1,
     ):
+
         # Initialize structure variables
         self.connections = {}
         self.components = {}
-        self.component_names = []
+        self.component_keys = []
         self.flowtypes = {}
         self.flowtype_names = []
         self.next_ids = {
             "connection": 0,
-            "component": 0,
-        }  # Internal counter. Everytime a component or connection is added it gets the next value and the counter is incremented
+            "Component": 0,
+        }  # Internal counter. Everytime a Component or connection is added it gets the next value and the counter is incremented
+        self.units = {}
         self.version = 20221201
 
         # Initialize user configurable variables
@@ -54,66 +53,62 @@ class factory:
 
         logging.debug("        - New factory created")
 
-    def add_component(self, name, component_type, *, flowtype=None):
+    def add_component(self, key: str, component_type: str, *, flowtype: str = None):
         # validate the given inputs as strings
-        name = iv.validate(name, "str")
+        key = iv.validate(key, "str")
         component_type = iv.validate(component_type, "str")
 
-        # make sure that the specified name is not already taken by a component or flowtype
-        if name in self.component_names or name in self.flowtype_names:
+        # make sure that the specified name is not already taken by a Component or flowtype
+        if key in self.component_keys or key in self.flowtype_names:
             logging.critical(
-                f"Cannot create Component {name} because the name is already assigned"
+                f"Cannot create Component {key} because the namekey is already assigned"
             )
             raise Exception
 
-        # Add name of the new component to the namelist
-        self.component_names.append(name)
+        # Add name of the new Component to the namelist
+        self.component_keys.append(key)
 
-        # create new object of desired component
+        # create new object of desired Component
         if component_type == "pool":
             # call pool constructor
-            self.components[name] = factory_components.pool(
-                name, self, flowtype=flowtype
-            )
+            self.components[key] = factory_components.pool(key, self, flowtype=flowtype)
 
         elif component_type == "sink":
             # call sink constructor
-            self.components[name] = factory_components.sink(
-                name, self, flowtype=flowtype
-            )
+            self.components[key] = factory_components.sink(key, self, flowtype=flowtype)
 
         elif component_type == "source":
             # call source constructor
-            self.components[name] = factory_components.source(
-                name, self, flowtype=flowtype
+            self.components[key] = factory_components.source(
+                key, self, flowtype=flowtype
             )
 
         elif component_type == "storage":
             # call storage constructor
-            self.components[name] = factory_components.storage(
-                name, self, flowtype=flowtype
+            self.components[key] = factory_components.storage(
+                key, self, flowtype=flowtype
             )
 
             # auto generate a connection to losses: determine, whether storage refers to energy or material and connect it to the corresponding loss sink
-            if self.components[name].flowtype.is_energy():
+            if self.components[key].flowtype.is_energy():
 
                 # create connection to losses_energy if flowtype is a type of energy
                 self.add_connection(
-                    name,
+                    key,
                     "losses_energy",
-                    name=f"{name}_to_Elosses",
+                    name=f"{key}_to_Elosses",
                     flowtype="energy_losses",
                     weight=0.01,
                     to_losses=True,
                 )
 
-            elif self.components[name].flowtype.is_material():
+            elif self.components[key].flowtype.is_material():
 
                 # create a connection to losses_material if flowtype is a type of material
                 self.add_connection(
-                    name,
+                    key,
                     "losses_material",
-                    name=f"{name}_to_Mlosses",
+                    name=f"{key}_to_Mlosses",
                     flowtype="material_losses",
                     weight=0.01,
                     to_losses=True,
@@ -122,38 +117,38 @@ class factory:
             # raise an error if the flowtype of the storage is unspecified
             else:
                 logging.critical(
-                    f"Losses-connection for {name} could not be created because the flowtype isn't specified!"
+                    f"Losses-connection for {key} could not be created because the flowtype isn't specified!"
                 )
                 raise Exception
 
         elif component_type == "converter":
             # call converter constructor
-            self.components[name] = factory_components.converter(name, self)
+            self.components[key] = factory_components.converter(key, self)
 
             # connect the new converter to losses_energy
             self.add_connection(
-                name,
+                key,
                 "losses_energy",
-                name=f"{name}_to_Elosses",
+                name=f"{key}_to_Elosses",
                 weight=0.01,
                 to_losses=True,
             )  # auto generate a connection to losses
 
         elif component_type == "deadtime":
             # call deadtime constructor
-            self.components[name] = factory_components.deadtime(name, self)
+            self.components[key] = factory_components.deadtime(key, self)
 
         elif component_type == "thermalsystem":
             # call thermalsystem constructor
-            self.components[name] = factory_components.thermalsystem(
-                name, self, flowtype=flowtype
+            self.components[key] = factory_components.thermalsystem(
+                key, self, flowtype=flowtype
             )
 
             # connect the new thermalsystem to losses_energy
             self.add_connection(
-                name,
+                key,
                 "losses_energy",
-                name=f"{name}_to_Elosses",
+                name=f"{key}_to_Elosses",
                 flowtype="energy_losses",
                 weight=0.01,
                 to_losses=True,
@@ -162,54 +157,54 @@ class factory:
             # connect the new thermalsystem to ambient_gains
             self.add_connection(
                 "ambient_gains",
-                name,
-                name=f"ambient_gains_to_{name}",
+                key,
+                name=f"ambient_gains_to_{key}",
                 weight=0.01,
                 from_gains=True,
             )
 
         elif component_type == "triggerdemand":
             # call triggerdemand constructor
-            self.components[name] = factory_components.triggerdemand(name, self)
+            self.components[key] = factory_components.triggerdemand(key, self)
 
         elif component_type == "slack":
             # call slack constructor
-            self.components[name] = factory_components.slack(
-                name, self, flowtype=flowtype
+            self.components[key] = factory_components.slack(
+                key, self, flowtype=flowtype
             )
 
         elif component_type == "schedule":
             # call schedule constructor
-            self.components[name] = factory_components.schedule(
-                name, self, flowtype=flowtype
+            self.components[key] = factory_components.schedule(
+                key, self, flowtype=flowtype
             )
         else:
             # if we end here the given type must have been invalid! -> Throw an error
             logging.critical(
-                f"Cannot create new component: {component_type} is an invalid type"
+                f"Cannot create new Component: {component_type} is an invalid type"
             )
             raise Exception
 
         # are slacks required?
         if self.enable_slacks:
-            # create a slack for the new component
-            self.__slack_component(component_type, name)
+            # create a slack for the new Component
+            self.__slack_component(component_type, key)
 
     def add_connection(
         self,
-        origin,
-        destination,
+        origin: factory_components.Component,
+        destination: factory_components.Component,
         *,
-        to_losses=False,
-        name=None,
-        flowtype=None,
-        weight=None,
-        weight_sink=None,
-        weight_source=None,
+        to_losses: bool = False,
+        name: str = None,
+        flowtype: str = None,
+        weight: float = None,
+        weight_sink: float = None,
+        weight_source: float = None,
     ):
         """
         This function ads a new connection between two components to the factory
-        :param origin: name-string of the source component
+        :param origin: name-string of the source Component
         :param destination: name-string of the sink
         :param to_losses: Set to true if the new connection is meant to deduct losses from its source
         :param flowtype: Name of a flowtype object that determines the flowtype transported n the connection
@@ -228,7 +223,7 @@ class factory:
             flowtype = self.__get_flowtype_object(flowtype)
 
         # create new connection as object
-        new_connection = factory_connection.connection(
+        new_connection = factory_connection.Connection(
             self.components[origin],
             self.components[destination],
             self.next_ids["connection"],
@@ -240,10 +235,10 @@ class factory:
             name=name,
         )
 
-        # set new connection as output for the source component
+        # set new connection as output for the source Component
         self.components[origin].set_output(new_connection)
 
-        # set connection as validate for the sink component
+        # set connection as validate for the sink Component
         self.components[destination].set_input(new_connection)
 
         # insert the new connection into the connection_list of the factory
@@ -257,7 +252,7 @@ class factory:
             f"        - New connection {new_connection.name} of flowtype {new_connection.flowtype.name} added between {self.components[origin].name} and {self.components[destination].name} with connection_id {self.next_ids['connection']}"
         )
 
-    def save(self, file_path, *, overwrite=False):
+    def save(self, file_path: str, *, overwrite: bool = False):
         """
         This function saves a factory-object under the specified filepath as a single file.
         :param file_path: Path to the file to be created
@@ -287,85 +282,28 @@ class factory:
 
         return True
 
-    def show_structure(self):
-        # TODO:Remove this when we feel that the project doesnt need it anymore
-        # check, if structure is already valid
-        self.check_validity()
-
-        # create a list of existing connections to be displayed
-        connection_list = np.empty((0, 4), int)
-        connection_colorlist = []
-        for i in self.connections:
-            connection_list = np.append(
-                connection_list,
-                np.array(
-                    [
-                        [
-                            self.connections[i].source.component_id,
-                            self.connections[i].sink.component_id,
-                            self.connections[i].weight_source,
-                            self.connections[i].connection_id,
-                        ]
-                    ]
-                ),
-                axis=0,
-            )
-            # add the color of the new connection to the colorlist
-            connection_colorlist.append(self.connections[i].flowtype.connection_color)
-
-        component_colorlist = []
-        for i in self.components:
-            component_colorlist.append(
-                self.components[i].flowtype.component_color
-            )  # add fitting color to the colorlist
-
-        fig = go.Figure(
-            data=[
-                go.Sankey(
-                    node=dict(
-                        pad=70,
-                        thickness=10,
-                        line=dict(color="black", width=0.8),
-                        label=self.component_names,
-                        color=component_colorlist,
-                    ),
-                    link=dict(
-                        source=connection_list[
-                            :, 0
-                        ],  # indices correspond to labels, eg A1, A2, A1, B1, ...
-                        target=connection_list[:, 1],
-                        value=connection_list[:, 2],
-                        color=connection_colorlist,
-                    ),
-                )
-            ]
-        )
-
-        fig.update_layout(title_text=f"Factory Structure", font_size=15)
-        fig.show()
-
-    def set_configuration(self, component, parameters):
+    def set_configuration(self, component: str, parameters: dict):
         """
-        This function takes a string-identifier of a component in a factory and a dict of configuration parameters.
-        It hands the configuration parameters over to the set_configuration method of the component.
-        :param component: string-identifier of a component in the factory
-        :param parameters: dict with name-value-combinations for configuring the component
+        This function takes a string-identifier of a Component in a factory and a dict of configuration parameters.
+        It hands the configuration parameters over to the set_configuration method of the Component.
+        :param component: string-identifier of a Component in the factory
+        :param parameters: dict with name-value-combinations for configuring the Component
         """
-        # make sure that the specified component exists
+        # make sure that the specified Component exists
         self.check_existence(component)
 
         # call the set_configuration - methodof the factory
         self.components[component].set_configuration(self.max_timesteps, parameters)
 
-    def check_existence(self, name):
+    def check_existence(self, key: str):
         """
-        This function checks, if a component with the specified name exists within the factory
-        :param name: name of a component in the factory (string)
-        :return: True/ERROR
+        This function checks, if a Component with the specified key exists within the factory
+        :param key: [string] name/key of a Component in the factory
+        :return: [Boolean]
         """
-        # check, if the name exists in self.component_names
-        if name not in self.component_names:
-            logging.critical(f"Component {name} does not exist")
+        # check, if the name exists in self.component_keys
+        if key not in self.component_keys:
+            logging.critical(f"Component {key} does not exist")
             raise Exception
 
     def create_essentials(self):
@@ -378,118 +316,74 @@ class factory:
         )
         self.add_component("ambient_gains", "source", flowtype=self.flowtypes["heat"])
         self.set_configuration(
-            "ambient_gains", is_onsite=True, cost=0.0001
+            "ambient_gains", parameters={"is_onsite": True, "cost": 0.0001}
         )  # Ambient gain gets a tiny cost related to it to avoid a direct feed of energy from ambient gains to thermal losses!
 
     def initialize_flowtypes(self):
-        # this creates a basic set of the most important flowtypes that might be used in a typical simualtion setup.
-        # All conversion factors are chosen in a way, that one Optimization Unit (OU) represents one MJ
-        self.flowtypes["hydrogen"] = ft.flowtype(
-            "hydrogen",
-            "energy",
-            unit_flow="kWh",
-            unit_flowrate="kW",
-            conversion_factor=1,
-            color="#41719C",
+        """
+        This creates a basic set of the most important units and flowtypes that might be used in a typical simulation setup:
+        Units:
+            - [key: "kW"]    Basic energy unit in kWh | kW
+            - [key: "kg"]   Basic material unit in kg | kg/h
+            - [key: "unit"] Basic quantity unit in units | units/h
+        Flowtypes:
+            - Heat in ["kW"]
+            - material_losses in ["kg"]
+            - energy_losses in ["kW"]
+            - unknown in ["unit"]
+        """
+
+        # initialize basic units
+        self.units["kW"] = Unit.Unit(key="kW")
+        self.units["kg"] = Unit.Unit(key="kg")
+        self.units["units"] = Unit.Unit(key="units")
+
+        # initialize basic flowtypes
+        self.flowtypes["heat"] = ft.Flowtype(
+            "heat", color="#41719C", unit=self.units["kW"]
         )
-        self.flowtypes["electricity"] = ft.flowtype(
-            "electricity",
-            "energy",
-            unit_flow="kWh",
-            unit_flowrate="kW",
-            conversion_factor=1,
-            color="#41719C",
-        )
-        self.flowtypes["water"] = ft.flowtype(
-            "water",
-            "material",
-            unit_flow="l",
-            unit_flowrate="l/h",
-            conversion_factor=1,
-            color="#41719C",
-        )
-        self.flowtypes["heat"] = ft.flowtype(
-            "heat_low",
-            "energy",
-            unit_flow="MJ",
-            conversion_factor=3.6,
-            color="#41719C",
-        )
-        self.flowtypes["material_losses"] = ft.flowtype(
+
+        self.flowtypes["material_losses"] = ft.Flowtype(
             "material_losses",
-            "material",
-            unit_flow="unit",
-            unit_flowrate="units/h",
-            conversion_factor=1,
+            unit=self.units["kg"],
             color="#444444",
-            to_losses=True,
+            suffix="",
+            represents_losses=True,
         )
-        self.flowtypes["energy_losses"] = ft.flowtype(
+        self.flowtypes["energy_losses"] = ft.Flowtype(
             "energy_losses",
-            "energy",
-            unit_flow="kWh",
-            unit_flowrate="kW",
-            conversion_factor=1,
+            unit=self.units["kW"],
             color="#444444",
-            to_losses=True,
+            suffix="",
+            represents_losses=True,
         )
-        self.flowtypes["natural_gas"] = ft.flowtype(
-            "natural_gas",
-            "energy",
-            unit_flow="MJ",
-            conversion_factor=3.6,
-            color="#41719C",
-        )
-        self.flowtypes["unknown"] = ft.flowtype(
+
+        self.flowtypes["unknown"] = ft.Flowtype(
             "unknown",
-            "unspecified",
-            unit_flow="unit",
-            conversion_factor=1,
-            color="#999999",
-        )
-        self.flowtypes["energy"] = ft.flowtype(
-            "energy",
-            "energy",
-            unit_flow="kWh",
-            unit_flowrate="kW",
-            conversion_factor=1,
-            color="#41719C",
-        )
-        self.flowtypes["material"] = ft.flowtype(
-            "material",
-            "material",
-            unit_flow="units",
-            unit_flowrate="units/h",
-            conversion_factor=1,
+            suffix="",
+            unit=self.units["units"],
             color="#999999",
         )
 
     def add_flowtype(
         self,
-        name,
-        resource_type,
+        name: str,
         *,
-        to_losses=None,
-        unit_flow=None,
-        unit_flowrate=None,
-        conversion_factor=None,
-        description=None,
-        color=None,
+        unit: str | Unit.Unit = "unit",
+        to_losses: bool = None,
+        description: str = None,
+        color: str | list[float] = None,
     ):
         """
         This function creates a new flowtype-object and adds it to the factory
         :param name: [String] name identifier for the new flowtype (string)
-        :param resource_type: [string] "energy" / "material" / "unspecified"
         :param to_losses: [Boolean] Specifies if the connection is deducting losses
-        :param unit_flow: [String] Unit description for labeling flows of the flowtype
-        :param unit_flowrate: [String] Unit description for labeling the flowrate of the flowtype
-        :param conversion_factor: [float] conversion factor between one unit of the flow and one baseunit of the flow ressource type
         :param description: [String] Description of the flow, just for GUI and labeling purposes
         :param color: [String; #XXXXXX] Color code for displaying the flow in GUI and Figures
         """
 
         # make sure, that the name is still unused
-        if name in self.component_names or name in self.flowtype_names:
+        if name in self.component_keys or name in self.flowtype_names:
             # if not: throw an error
             logging.critical(
                 f"Cannot create Flowtype {name} because the name is already assigned"
@@ -497,13 +391,10 @@ class factory:
             raise Exception
 
         # create a new flowtype with specified parameters and store it in the factory.flows - dictionary
-        self.flowtypes[name] = ft.flowtype(
+        self.flowtypes[name] = ft.Flowtype(
             name,
-            resource_type,
-            to_losses=to_losses,
-            unit_flow=unit_flow,
-            unit_flowrate=unit_flowrate,
-            conversion_factor=conversion_factor,
+            unit=unit,
+            represents_losses=to_losses,
             description=description,
             color=color,
         )
@@ -521,12 +412,13 @@ class factory:
         :return: True/False
         """
 
+        logging.info(f"Validating factory architecture...")
         # iterate over all components
         for component in self.components.values():
 
-            # conducted validations depend on the component type...
+            # conducted validations depend on the Component type...
             if component.type == "converter":
-                # if component is a converter: ratio of inputs and outputs at converters must be valid
+                # if Component is a converter: ratio of inputs and outputs at converters must be valid
 
                 # I) calculate sums of validate weights
                 # initialize summing variables
@@ -606,24 +498,24 @@ class factory:
                     raise Exception
 
             elif component.type == "deadtime":
-                # if component is a deadtime: make sure that there is at least one validate
+                # if Component is a deadtime: make sure that there is at least one validate
                 if len(component.inputs) == 0:
                     logging.critical(
-                        f"ERROR: Deadtime-component '{component.name}' does not have an validate!"
+                        f"ERROR: Deadtime-Component '{component.name}' does not have an validate!"
                     )
                     raise Exception
 
                 # makesure that there is at least one output
                 if len(component.outputs) == 0:
                     logging.critical(
-                        f"ERROR: Deadtime-component '{component.name}' does not have an output!"
+                        f"ERROR: Deadtime-Component '{component.name}' does not have an output!"
                     )
                     raise Exception
 
                 # make sure, that the delay is realizable within the length of allowed simulations
                 if component.delay > self.max_timesteps:
                     logging.critical(
-                        f"ERROR: Delay of component '{component.name}' is to large for the maximum simulation length of the factory ({self.max_timesteps}!"
+                        f"ERROR: Delay of Component '{component.name}' is to large for the maximum simulation length of the factory ({self.max_timesteps}!"
                     )
                     raise Exception
 
@@ -658,7 +550,7 @@ class factory:
         logging.info(f"Factory architecture validation successful")
         return True
 
-    def __get_flowtype_object(self, flowtype_name):
+    def __get_flowtype_object(self, flowtype_name: str):
         """
         This function takes the user validate for "flowtype" and returns the corresponding flowtype-object from the factorys flowtype-list
         :param flow_name: name identifier (string) or flowtype object
@@ -666,7 +558,7 @@ class factory:
         """
 
         # has the flowtype already been handed over as a flowtype-object? If yes: just return it
-        if isinstance(flowtype_name, ft.flowtype):
+        if isinstance(flowtype_name, ft.Flowtype):
             return flowtype_name
 
         # if no: check if the flowtype-identifier has been handed over as a string
@@ -694,20 +586,20 @@ class factory:
         # all checks passed? -> return the pointer to the actual flowtype object
         return self.flowtypes[flowtype_name]
 
-    def __slack_component(self, component_type, name):
+    def __slack_component(self, component_type: str, name: str):
         """
-        This function creates a slack for the given component if necessary and connects it to the corresponding in- and outputs
+        This function creates a slack for the given Component if necessary and connects it to the corresponding in- and outputs
         :param component_type: converter, pool, etc...
-        :param name: identifier of the component to be slacked
+        :param name: identifier of the Component to be slacked
         """
 
         # deadtimes, pools and thermalsystems get slacked in both directions
         if component_type in ["deadtime", "pool", "thermalsystem"]:
 
-            # create new slack component
+            # create new slack Component
             self.add_component(f"{name}_slack", "slack")
 
-            # connect it to the validate and output of the component
+            # connect it to the validate and output of the Component
             self.add_connection(
                 f"{name}_slack",
                 name,
@@ -728,7 +620,7 @@ class factory:
             name == "losses_energy" or name == "losses_material"
         ):
 
-            # create new slack component
+            # create new slack Component
             self.add_component(f"{name}_slack", "slack")
 
             # connect it to the validate of the sink

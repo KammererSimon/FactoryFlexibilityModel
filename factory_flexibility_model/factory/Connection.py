@@ -7,20 +7,20 @@ import logging
 import factory_flexibility_model.input_validations as iv
 
 
-class connection:
+class Connection:
     def __init__(
         self,
         source,
         sink,
-        connection_id,
+        connection_id: str,
         *,
-        to_losses=None,
-        from_gains=None,
-        flowtype=None,
-        name=None,
-        weight=None,
-        weight_source=None,
-        weight_sink=None,
+        to_losses: bool = None,
+        from_gains: bool = None,
+        flowtype: str = None,
+        name: str = None,
+        weight: float = None,
+        weight_source: float = None,
+        weight_sink: float = None,
     ):
 
         # define attributes
@@ -77,7 +77,7 @@ class connection:
                 and not (source.flowtype == self.flowtype or self.flowtype.is_unknown())
             ):
                 logging.critical(
-                    f"incompatible flowtypes between connection {self.name} and component {source.name}: {self.flowtype.name} vs {source.flowtype.name}"
+                    f"incompatible flowtypes between connection {self.name} and Component {source.name}: {self.flowtype.name} vs {source.flowtype.name}"
                 )
                 raise Exception
 
@@ -88,7 +88,7 @@ class connection:
                 or self.flowtype.is_unknown()
             ):
                 logging.critical(
-                    f"incompatible flowtypes between connection {self.name} and component {sink.name}: {self.flowtype.name} vs {sink.flowtype.name}"
+                    f"incompatible flowtypes between connection {self.name} and Component {sink.name}: {self.flowtype.name} vs {sink.flowtype.name}"
                 )
                 raise Exception
 
@@ -115,7 +115,7 @@ class connection:
 
     def update_flowtype(self, flowtype):
         """This function takes a name of a flowtype. If the flowtype of the connection is not yet defined it will be set to the given flowtype.
-        In this case the update-cascade will be continued at the other sides component of the connection.
+        In this case the update-cascade will be continued at the other sides Component of the connection.
         If the flowtype of the connection is already assigned, it is checked, whether the given flowtype matches with the defined flowtype.
         An Error is thrown if the flows are incompatible."""
 
@@ -126,7 +126,7 @@ class connection:
         # ...otherwise set the flowtype of the connection
         self.flowtype = flowtype
 
-        # check, if the flowtype of the source component is already known
+        # check, if the flowtype of the source Component is already known
         if self.source.flowtype.is_unknown():
             # if no: update it as well
             self.source.update_flow(flowtype)
@@ -139,7 +139,7 @@ class connection:
             )
             raise Exception
 
-        # do the same for the sink side: Check, if the flowtype of the sink component is already known
+        # do the same for the sink side: Check, if the flowtype of the sink Component is already known
         if self.sink.flowtype.is_unknown():
             # if no: update it as well
             self.sink.update_flow(flowtype)

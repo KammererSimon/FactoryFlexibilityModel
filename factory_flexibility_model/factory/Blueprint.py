@@ -4,13 +4,15 @@
 
 import logging
 
-# IMPORT 3RD PARTY PACKAGES
+# IMPORTS
 from collections import defaultdict
 
-import factory_flexibility_model.factory.factory as fm
+import yaml
+
+import factory_flexibility_model.factory.Factory as fm
 
 
-class blueprint:
+class Blueprint:
     def __init__(self):
         self.timefactor = 1  # timefactor of the factory. See documentation for details
         self.GUI_config = {
@@ -20,7 +22,7 @@ class blueprint:
         self.connections = defaultdict(lambda: None)  # dict of connections
         self.flowtypes = defaultdict(lambda: None)  # list of flowtypes
         self.info = {
-            "name": "Undefined",  # Standard Information, equivalent to factory-object initialization
+            "name": "Undefined_Factory",  # Standard Information, equivalent to factory-object initialization
             "description": "Undefined",
             "max_timesteps": 8760,
         }
@@ -34,7 +36,7 @@ class blueprint:
         # create a new factory with the parameters specified in the blueprint.
         # Input validation is happening within factory()-method
         logging.info("Creating factory object")
-        factory = fm.factory(
+        factory = fm.Factory(
             name=self.info["name"],
             max_timesteps=self.info["max_timesteps"],
             description=self.info["description"],
@@ -44,20 +46,16 @@ class blueprint:
         # CREATE FLOWS
         logging.info("Creating flowtypes")
         for flowtype in self.flowtypes.values():
-
             # Add new flowtype to factory with given specifications
             factory.add_flowtype(
-                name=flowtype["name"],
-                resource_type=flowtype["type"],
-                unit_flow=flowtype["unit_flow"],
-                unit_flowrate=flowtype["unit_flowrate"],
-                conversion_factor=flowtype["conversion_factor"],
+                name=flowtype["key"],
+                unit=flowtype["unit"],
                 color=flowtype["color"],
             )
 
         # CREATE COMPONENTS
         logging.info("Creating factory components")
-        # iterate over all component types
+        # iterate over all Component types
         for component in self.components.values():
             # Extract values that have to be directly specified:
             name = component["key"]
@@ -67,20 +65,20 @@ class blueprint:
             else:
                 flowtype = None
 
-            # delete all values that are only relevant for the GUI or are already processed
-            component.pop("flowtype")
-            component.pop("name")
-            component.pop("type")
-            component.pop("position_x")
-            component.pop("position_y")
-            component.pop("icon")
-            component.pop("key")
+            # create a copy of the Component with GUI specific keys removed
+            component_copy = component.copy()
+            component_copy.pop("flowtype")
+            component_copy.pop("type")
+            component_copy.pop("position_x")
+            component_copy.pop("position_y")
+            component_copy.pop("icon")
+            component_copy.pop("key")
 
-            # Add new component to factory
+            # Add new Component to factory
             factory.add_component(name, type, flowtype=flowtype)
 
-            # Set configuration for remaining parameters of the component
-            factory.set_configuration(name, parameters=component)
+            # Set configuration for remaining parameters of the Component
+            factory.set_configuration(name, parameters=component_copy)
 
         # CREATE CONNECTIONS
         # iterate over all specified connections
@@ -101,3 +99,46 @@ class blueprint:
         factory.check_validity()
 
         return factory
+
+    def save(self, *, path: str = None):
+
+        # create a set of serializable data out of the blueprint
+        # initialize a new dict
+        data = {}
+
+        # store only the defined values per asset. Data doesnt contain defaultdicts anymore now
+        data["components"] = {}
+        for component in self.components.values():
+            data["components"][component["key"]] = {}
+            for value in component:
+                if not value == "key":
+                    data["components"][component["key"]][value] = component[value]
+
+        data["connections"] = {}
+        for connection in self.connections.values():
+            data["connections"][connection["key"]] = {}
+            for value in connection:
+                if not value == "key":
+                    data["connections"][connection["key"]][value] = connection[value]
+
+        data["flowtypes"] = {}
+        for flowtype in self.flowtypes.values():
+            data["flowtypes"][flowtype["key"]] = {}
+            for value in flowtype:
+                if not value == "key":
+                    data["flowtypes"][flowtype["key"]][value] = flowtype[value]
+
+        data["info"] = self.info
+
+        # store the blueprint dictionary as json file
+        if path is None:
+            with open(f"{self.info['name']}.factory", "w") as file:
+                yaml.dump(data, file)
+            logging.info(f"Blueprint saved as {self.info['name']}.factory")
+        else:
+            try:
+                with open(f"{path}.factory", "w") as file:
+                    yaml.dump(data, file)
+                logging.info(f"Blueprint saved as {path}.factory")
+            except:
+                logging.error(f"Saving blueprint under '{path}.factory' failed!")
