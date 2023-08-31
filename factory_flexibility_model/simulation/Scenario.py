@@ -1,8 +1,9 @@
 # SCENARIO
 # This script contains the scenario class wich is used to factory the outer circumstances for a simulation
 
-#IMPORT
+# IMPORT
 import logging
+
 
 # CODE START
 class Scenario:
@@ -18,20 +19,19 @@ class Scenario:
         :return: [boolean] True if import was successfull
         """
 
-        #initialize self.parameters
+        # initialize self.parameters
         self.parameters = {}
 
         try:
             # open the given file
-            with open(parameter_file, "r") as file:
+            with open(parameter_file) as file:
                 # iterate over all lines in the file
                 for line in file:
                     key, value = line.strip().split("\t")
                     # add entry to parameters-dict
                     self.parameters[key] = float(value.replace(",", "."))
         except:
-            logging.error(f"The given file is not a valid parameters.txt-config file! ({parameter_file})")
+            logging.error(
+                f"The given file is not a valid parameters.txt-config file! ({parameter_file})"
+            )
             raise Exception
-
-
-
