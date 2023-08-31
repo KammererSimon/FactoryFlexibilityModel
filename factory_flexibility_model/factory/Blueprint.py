@@ -37,7 +37,7 @@ class Blueprint:
         logging.info("Creating factory object")
         factory = fm.Factory(
             name=self.info["name"],
-            max_timesteps=self.info["max_timesteps"],
+            timesteps=self.info["timesteps"],
             description=self.info["description"],
         )
         factory.create_essentials()
