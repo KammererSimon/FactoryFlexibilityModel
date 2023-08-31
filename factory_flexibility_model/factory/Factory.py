@@ -1,5 +1,5 @@
 # FACTORY MODEL
-# This Package contains everything that is needed to specify the structure of a factory for the simulation:
+# This Package contains everything that is needed to specify the structure of a factory for the Simulation:
 #        -> "factory" is the main class and the only one meant to be called by the user.
 #               It collects all given Information and organizes the setup process
 
@@ -22,7 +22,7 @@ class Factory:
         self,
         *,
         name: str = "New Factory",
-        max_timesteps: int = 8760,
+        timesteps: int = 168,
         description: str = "Unspecified Factory",
         enable_slacks: bool = False,
         timefactor: float = 1,
@@ -39,10 +39,9 @@ class Factory:
             "Component": 0,
         }  # Internal counter. Everytime a Component or connection is added it gets the next value and the counter is incremented
         self.units = {}
-        self.version = 20221201
 
         # Initialize user configurable variables
-        self.max_timesteps = iv.validate(max_timesteps, "int")
+        self.timesteps = timesteps
         self.name = iv.validate(name, "string")
         self.description = iv.validate(description, "string")
         self.enable_slacks = iv.validate(enable_slacks, "boolean")
@@ -293,7 +292,7 @@ class Factory:
         self.check_existence(component)
 
         # call the set_configuration - methodof the factory
-        self.components[component].set_configuration(self.max_timesteps, parameters)
+        self.components[component].set_configuration(self.timesteps, parameters)
 
     def check_existence(self, key: str):
         """
@@ -321,7 +320,7 @@ class Factory:
 
     def initialize_flowtypes(self):
         """
-        This creates a basic set of the most important units and flowtypes that might be used in a typical simulation setup:
+        This creates a basic set of the most important units and flowtypes that might be used in a typical Simulation setup:
         Units:
             - [key: "kW"]    Basic energy unit in kWh | kW
             - [key: "kg"]   Basic material unit in kg | kg/h
@@ -515,9 +514,9 @@ class Factory:
                     raise Exception
 
                 # make sure, that the delay is realizable within the length of allowed simulations
-                if component.delay > self.max_timesteps:
+                if component.delay > self.timesteps:
                     logging.critical(
-                        f"ERROR: Delay of Component '{component.name}' is to large for the maximum simulation length of the factory ({self.max_timesteps}!"
+                        f"ERROR: Delay of Component '{component.name}' is to large for the maximum Simulation length of the factory ({self.timesteps}!"
                     )
                     raise Exception
 
