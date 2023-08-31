@@ -32,14 +32,24 @@ class Component:
         self.determined = (
             False  # only useful for some subclasses, but defining it for all of
         )
+        self.flowtype_description = ""  # String that can give a detailled explanation how the flow of the component is to be interpreted
         self.inputs = (
             []
-        )  # initialize list, which stores pointers to all validate connections
+        )  # initialize list, which stores pointers to all input connections
         self.outputs = (
             []
         )  # initialize list, which stores pointers to all output connections
         self.type = "unknown"  # set keyword "unknown" if no type is specified
         self.component_id = factory.next_ids["Component"]  # unique Component id
+        self.scenario_dependent = (
+            False  # is there any relevant data for the Component that has to be
+        )
+        # delivered by the scenario
+        self.scenario_data = (
+            {}
+        )  # empty dictionary. If the Component requires data, that will only been
+        # known when the scenario is specified this will be stored here as a list
+        # of attribute:value combinations
         factory.next_ids[
             "Component"
         ] += 1  # Increase counter for id_definition in the parent factory
@@ -63,7 +73,10 @@ class Component:
             self.flowtype = factory.flowtypes["unknown"]  # initialize with "unknown"
 
     def set_input(self, connection: co.Connection):
-        # sets the connection-object "connection" as an validate for self.
+        """
+        This function sets the given connection as an input for the component
+        :param connection: [fm.Connection-object]
+        """
 
         if not self.is_sink:
             logging.critical(
@@ -81,6 +94,10 @@ class Component:
             connection.update_flowtype(self.flowtype)
 
     def set_output(self, connection: co.Connection):
+        """
+        This function sets the given connection as an output for the component
+        :param connection: [fm.Connection-object]
+        """
         if not self.is_source:
             logging.critical(
                 f"ERROR: Cannot create output connection {connection.name}, because Component {self.name} is not a valid source"
@@ -116,7 +133,7 @@ class Component:
 
     def set_parameter(self, timesteps: int, parameter: str, parameters: dict):
         """
-        This function is mostly an validate validation, that checks, if the parameters that the user wants to set are compatible to each other and fullfill the data requirements of the simulation.
+        This function is mostly an input validation, that checks, if the parameters that the user wants to set are compatible to each other and fullfill the data requirements of the simulation.
         # If all checks are passed the parameter given will be written to self
         :param: timesteps:  [int] number of timesteps of the current factory
         :param: parameter:  [str] Parameter out of the parameters-list that will be set during execution
@@ -192,6 +209,16 @@ class Component:
         elif parameter == "name":
             self.name = iv.validate(parameters[parameter], "string")
 
+        # handle scenario_parameters
+        elif parameter == "scenario_data":
+            if not isinstance(parameters[parameter], dict):
+                logging.critical(
+                    f"ERROR while assigning scenario_data for {self.name}: scenario_data must be specified as a dictionary with attribute:value-combinations!"
+                )
+                raise Exception
+            self.scenario_data = parameters[parameter]
+            self.scenario_dependent = True
+
         elif parameter == "flowtype":
             logging.warning(
                 f"Cannot set the flowtype of {self.name} during a set_configuration() prompt. Flows are a "
@@ -216,7 +243,8 @@ class Component:
                     f"effekt until power_max is specified!"
                 )
 
-            # prepare the validate for following validations:
+            # prepare the input for following validations:
+            print(parameter)
             data = iv.validate(parameters[parameter], "%", timesteps=timesteps)
 
             # values for availability must be >=0:
@@ -230,13 +258,13 @@ class Component:
             if max(data) > 1:
                 data = data / max(data)
                 logging.warning(
-                    f"given data for availability of Component {self.name} containes values >1. The timeseries has been normalized. If this was not your intent, check the validate data again!"
+                    f"given data for availability of Component {self.name} containes values >1. The timeseries has been normalized. If this was not your intent, check the input data again!"
                 )
 
             # setting an availability may interfere with the given Pmin...check this:
             # power_max/Pmin may already be set or already handed over but pending to be set...determine the actual constraints:
             if "power_max" in parameters:
-                # validate validation for power_max includes conflicts with .determined and .Pmin. Both is done here as well, so it should be fine this way
+                # input validation for power_max includes conflicts with .determined and .Pmin. Both is done here as well, so it should be fine this way
                 power_max = iv.validate(
                     parameters[parameter], "float", timesteps=timesteps
                 )
@@ -244,7 +272,7 @@ class Component:
                 power_max = self.power_max
 
             if "power_min" in parameters:
-                # validate validation for power_max includes conflicts with .determined and .Pmin. Both is done here as well, so it should be fine this way
+                # input validation for power_max includes conflicts with .determined and .Pmin. Both is done here as well, so it should be fine this way
                 power_min = iv.validate(
                     parameters[parameter], "float", timesteps=timesteps
                 )
@@ -283,7 +311,7 @@ class Component:
         elif hasattr(self, parameter):
             setattr(self, parameter, parameters[parameter])
             logging.warning(
-                f"The attribute {parameter} was found in {self.name}, but is not part of the ordinary configuration routine. It has been set to the given value without validate validation. This could lead to errors during the simulation"
+                f"The attribute {parameter} was found in {self.name}, but is not part of the ordinary configuration routine. It has been set to the given value without input validation. This could lead to errors during the simulation"
             )
 
         # handle with attributes that are not part of the specific Component
@@ -292,27 +320,37 @@ class Component:
                 f" The parameter {parameter} was ignored for Component {self.name}, because it is unknown"
             )
 
-    def is_converter(self):
+    def is_converter(self) -> bool:
+        """
+        This function returns, if the component is a converter
+        :return: [boolean] True, if the component is a converter, otherwise False
+        """
         # just a simple function to avoid boolean-checks with keywords in any function outside the Component-class
         if self.type == "converter":
             return True
         else:
             return False
 
-    def is_sink(self):
+    def is_sink(self) -> bool:
+        """
+        :return: [boolean] True, if the component is a valid sink, otherwise False
+        """
         if self.type == "sink":
             return True
         else:
             return False
 
-    def is_source(self):
+    def is_source(self) -> bool:
+        """
+        :return: [boolean] True, if the component is a valid source, otherwise False
+        """
         if self.type == "source":
             return True
         else:
             return False
 
 
-class converter(Component):
+class Converter(Component):
     def __init__(self, name: str, factory):
         # STANDARD COMPONENT ATTRIBUTES
         super().__init__(name, factory)
@@ -383,8 +421,8 @@ class converter(Component):
 
     def set_input(self, connection: co.Connection):
         """
-        This function sets the given connection as an validate for the converter.
-        The weight is either taken from weight or weight_sink.
+        This function sets the given connection as an input for the deadtime-component. the weight is either taken from weight or weight sink.
+        :param connection: [fm.Connection-object]
         """
 
         self.inputs.append(connection)
@@ -395,7 +433,7 @@ class converter(Component):
             # converters do not have a material losses connection by default..check if one is required
             if self.to_Mlosses == []:
                 self.factory.add_connection(
-                    self.name,
+                    self.key,
                     "losses_material",
                     name=f"{self.name}_to_Mlosses",
                     weight=0.01,
@@ -408,6 +446,10 @@ class converter(Component):
             raise Exception
 
     def set_output(self, connection: co.Connection):
+        """
+        This function sets the given connection as an output for the component
+        :param connection: [fm.Connection-object]
+        """
         # handle connections to losses if specified:
         if connection.to_losses:
             if connection.flowtype.is_energy():
@@ -432,10 +474,18 @@ class converter(Component):
                 raise Exception
 
     def update_flowtype(self, flowtype: str):
+        """
+        This function acts as a broadcast through the factory to determine regions with common flows.
+        If any flow within the factory is being defined it is called to make sure, that
+        """
         # break the recursive broadcast # FLOWTYPE DETERMINATION
-        pass
 
-    def validate_eta(self):
+    def validate_eta(self) -> bool:
+        """
+        This function validates, if the current definition of pmin/pmax and efficiency behaviour is consistent.
+        :return: [boolean] True, if the current configuration is valid.
+        """
+
         if self.power_nominal < min(self.power_min) or self.power_nominal > max(
             self.power_max
         ):
@@ -470,7 +520,13 @@ class converter(Component):
             raise Exception
         return True
 
-    def set_configuration(self, timesteps: int, parameters: dict):
+    def set_configuration(self, timesteps: int, parameters: dict) -> bool:
+        """
+        This function sets the configuration for the component. All parameters to be defined can be handed over as key-value-pairs within a single dictionary.
+        :param timesteps: [int] The number of timesteps that stationary values are scaled to and user given timeseries need to have at minimum
+        :param parameters: [dict] dictionary with key-value-combinations that specify all the parameters to be configured.
+        :return: [boolean] True, if the configuration war successfull
+        """
         # iterate over all given parameters and figure out how to handle them...
         for parameter in parameters:
             # HANDLE CONVERTER-SPECIFIC PARAMETERS
@@ -557,7 +613,7 @@ class converter(Component):
             self.validate_eta()
 
 
-class deadtime(Component):
+class Deadtime(Component):
     def __init__(self, name: str, factory):
         # STANDARD COMPONENT ATTRIBUTES
         super().__init__(name, factory)
@@ -577,22 +633,30 @@ class deadtime(Component):
         )
 
     def set_input(self, connection: co.Connection):
+        """
+        This function sets the given connection as the input for the deadtime-component
+        :param connection: [fm.Connection-object]
+        """
         # If self doesnt have its flowtype already determined: check whether the flowtype can be specified via the connection
         if len(self.inputs) == 1:
             if not self.inputs[0].source.type == "slack":
                 logging.critical(
                     f"ERROR: Cannot add {connection.name} to {self.name}, "
-                    f"since deadtime-components are only allowed to have one validate and {self.name} "
-                    f"already has {self.inputs[0].name} as validate!"
+                    f"since deadtime-components are only allowed to have one input and {self.name} "
+                    f"already has {self.inputs[0].name} as input!"
                 )
                 raise Exception
 
-        # set the connection-object "connection" as an validate for self.
+        # set the connection-object "connection" as an input for self.
         self.inputs.append(connection)
         if self.flowtype.is_unknown() and not connection.flowtype.is_unknown():
             self.update_flowtype(connection.flowtype)
 
     def set_output(self, connection: co.Connection):
+        """
+        This function sets the given connection as an output for the component
+        :param connection: [fm.Connection-object]
+        """
         if len(self.outputs) == 1:
             if not self.outputs[0].sink.type == "slack":
                 logging.critical(
@@ -606,7 +670,13 @@ class deadtime(Component):
         if self.flowtype.is_unknown() and not connection.flowtype.is_unknown():
             self.update_flowtype(connection.flowtype)
 
-    def set_configuration(self, timesteps: int, parameters: dict):
+    def set_configuration(self, timesteps: int, parameters: dict) -> bool:
+        """
+        This function sets the configuration for the component. All parameters to be defined can be handed over as key-value-pairs within a single dictionary.
+        :param timesteps: [int] The number of timesteps that stationary values are scaled to and user given timeseries need to have at minimum
+        :param parameters: [dict] dictionary with key-value-combinations that specify all the parameters to be configured.
+        :return: [boolean] True, if the configuration war successfull
+        """
         # iterate over all given parameters and figure out how to handle them...
         for parameter in parameters:
             # HANDLE DEADTIME-SPECIFIC PARAMETERS
@@ -625,7 +695,7 @@ class deadtime(Component):
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
 
-class pool(Component):
+class Pool(Component):
     def __init__(self, name, factory, *, flowtype=None):
         super().__init__(name, factory, flowtype=flowtype)
         self.is_sink = True  # pools can act as a sink
@@ -641,6 +711,12 @@ class pool(Component):
         )
 
     def set_configuration(self, timesteps: str, parameters: dict):
+        """
+        This function sets the configuration for the component. All parameters to be defined can be handed over as key-value-pairs within a single dictionary.
+        :param timesteps: [int] The number of timesteps that stationary values are scaled to and user given timeseries need to have at minimum
+        :param parameters: [dict] dictionary with key-value-combinations that specify all the parameters to be configured.
+        :return: [boolean] True, if the configuration war successfull
+        """
         # iterate over all given parameters and figure out how to handle them...
         for parameter in parameters:
             # HANDLE GENERAL PARAMETERS
@@ -648,7 +724,7 @@ class pool(Component):
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
 
-class sink(Component):
+class Sink(Component):
     def __init__(self, name: str, factory, *, flowtype: str = None):
         super().__init__(name, factory, flowtype=flowtype)
         self.availability = np.ones(
@@ -692,6 +768,12 @@ class sink(Component):
         )
 
     def set_configuration(self, timesteps: int, parameters: dict):
+        """
+        This function sets the configuration for the component. All parameters to be defined can be handed over as key-value-pairs within a single dictionary.
+        :param timesteps: [int] The number of timesteps that stationary values are scaled to and user given timeseries need to have at minimum
+        :param parameters: [dict] dictionary with key-value-combinations that specify all the parameters to be configured.
+        :return: [boolean] True, if the configuration war successfull
+        """
         # iterate over all given parameters and figure out how to handle them...
         for parameter in parameters:
             # HANDLE SINK-SPECIFIC PARAMETERS
@@ -854,6 +936,15 @@ class sink(Component):
             elif parameter == "is_onsite":
                 self.is_onsite = iv.validate(parameters["is_onsite"], "boolean")
 
+            # handle keys with no relevance for simulation
+            elif parameter in [
+                "icon",
+                "position_x",
+                "position_y",
+                "scenario_determined",
+            ]:
+                pass
+
             # Handle requests that are general attributes of components or generic attributes:
             else:
                 super().set_parameter(timesteps, parameter, parameters)
@@ -861,7 +952,7 @@ class sink(Component):
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
 
-class source(Component):
+class Source(Component):
     def __init__(self, name: str, factory, *, flowtype: str = None):
         super().__init__(name, factory, flowtype=flowtype)
         self.availability = np.ones(
@@ -882,7 +973,7 @@ class source(Component):
         )
         self.determined_power = []  # must be specified by set_configuration
         self.is_source = True  # sources can obviously act as a source
-        self.is_onsite = False  # determines wether the validate is generated within the factory or comes from outside. This is used to calculate the self sufficiency in the end
+        self.is_onsite = False  # determines wether the input is generated within the factory or comes from outside. This is used to calculate the self sufficiency in the end
         self.power_max_limited = False  # specify if maximum output is limited
         self.power_max = []  # must be specified by set_configuration
         self.power_min_limited = False  # specify if the minimum output power is limited
@@ -894,7 +985,13 @@ class source(Component):
             f"        - New source {self.name} created with Component-id {self.component_id}"
         )
 
-    def set_configuration(self, timesteps: int, parameters: dict):
+    def set_configuration(self, timesteps: int, parameters: dict) -> bool:
+        """
+        This function sets the configuration for the component. All parameters to be defined can be handed over as key-value-pairs within a single dictionary.
+        :param timesteps: [int] The number of timesteps that stationary values are scaled to and user given timeseries need to have at minimum
+        :param parameters: [dict] dictionary with key-value-combinations that specify all the parameters to be configured.
+        :return: [boolean] True, if the configuration war successfull
+        """
         # iterate over all given parameters and figure out how to handle them...
         for parameter in parameters:
             # handle power_max/power_min/determined_power constraints
@@ -1039,7 +1136,7 @@ class source(Component):
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
 
-class storage(Component):
+class Storage(Component):
     def __init__(self, name: str, factory, *, flowtype: str = None):
         super().__init__(name, factory, flowtype=flowtype)
         self.capacity = 0  # Storage capacity, initialized as zero, so that the Component has no effect if not explicitly specified
@@ -1070,7 +1167,13 @@ class storage(Component):
             f"        - New storage {self.name} created with Component-id {self.component_id}"
         )
 
-    def set_configuration(self, timesteps: int, parameters: dict):
+    def set_configuration(self, timesteps: int, parameters: dict) -> bool:
+        """
+        This function sets the configuration for the component. All parameters to be defined can be handed over as key-value-pairs within a single dictionary.
+        :param timesteps: [int] The number of timesteps that stationary values are scaled to and user given timeseries need to have at minimum
+        :param parameters: [dict] dictionary with key-value-combinations that specify all the parameters to be configured.
+        :return: [boolean] True, if the configuration war successfull
+        """
         # iterate over all given parameters and figure out how to handle them...
         for parameter in parameters:
             # HANDLE STORAGE-SPECIFIC PARAMETERS
@@ -1102,7 +1205,10 @@ class storage(Component):
             logging.debug("        - {parameter} set for {self.type} {self.name}")
 
     def set_input(self, connection: co.Connection):
-        # sets the connection-object "connection" as an validate for self.
+        """
+        This function sets the given connection as an input for the storage-component
+        :param connection: [fm.Connection-object]
+        """
         self.inputs.append(connection)
 
         # if self doesnt have its flowtype already determined it is checked, whether the flowtype can be specified via the connection
@@ -1113,6 +1219,10 @@ class storage(Component):
             connection.update_flowtype(self.flowtype)
 
     def set_output(self, connection: co.Connection):
+        """
+        This function sets the given connection as an output for the component
+        :param connection: [fm.Connection-object]
+        """
         # handle connections to losses if specified:
         if connection.to_losses:
             self.to_losses = connection
@@ -1125,7 +1235,7 @@ class storage(Component):
             connection.update_flowtype(self.flowtype)
 
 
-class thermalsystem(Component):
+class Thermalsystem(Component):
     def __init__(self, name: str, factory):
         super().__init__(name, factory)
         self.C = 10  # Storage inertia
@@ -1167,7 +1277,10 @@ class thermalsystem(Component):
         pass  # break the recursive broadcast
 
     def set_input(self, connection: co.Connection):
-        # sets the connection-object "connection" as an validate for self.
+        """
+        This function sets the given connection as the input for the thermalsystem-component
+        :param connection: [fm.Connection-object]
+        """
 
         # handle connections from external gains:
         if connection.from_gains:
@@ -1188,6 +1301,10 @@ class thermalsystem(Component):
             connection.update_flowtype(self.flowtype)
 
     def set_output(self, connection: co.Connection):
+        """
+        This function sets the given connection as an output for the component
+        :param connection: [fm.Connection-object]
+        """
         # prohibit direct connections between two thermalsystems:
         if connection.sink.type == "thermalsystem":
             logging.critical(
@@ -1207,7 +1324,13 @@ class thermalsystem(Component):
         elif connection.flowtype.is_unknown():
             connection.update_flowtype(self.flowtype)
 
-    def set_configuration(self, timesteps: int, parameters: dict):
+    def set_configuration(self, timesteps: int, parameters: dict) -> bool:
+        """
+        This function sets the configuration for the component. All parameters to be defined can be handed over as key-value-pairs within a single dictionary.
+        :param timesteps: [int] The number of timesteps that stationary values are scaled to and user given timeseries need to have at minimum
+        :param parameters: [dict] dictionary with key-value-combinations that specify all the parameters to be configured.
+        :return: [boolean] True, if the configuration war successfull
+        """
         # iterate over all given parameters and figure out how to handle them...
         for parameter in parameters:
             # HANLDE THERMALSYSTEM-SPECIFIC PARAMETERS
@@ -1268,14 +1391,14 @@ class thermalsystem(Component):
             raise Exception
 
 
-class triggerdemand(Component):
+class Triggerdemand(Component):
     def __init__(self, name: str, factory):
         super().__init__(name, factory)
         self.executions = (
             0  # total number of required executions, Initialized as 0 = no restrictions
         )
-        self.input_energy = []  # energy validate
-        self.input_material = []  # material validate
+        self.input_energy = None  # energy input
+        self.input_material = None  # material input
         self.is_sink = True  # triggerdemands are a sinks
         self.is_source = True  # triggerdemands are sources
         self.load_profile_energy = (
@@ -1299,6 +1422,12 @@ class triggerdemand(Component):
         )
 
     def set_configuration(self, timesteps: int, parameters: dict):
+        """
+        This function sets the configuration for the component. All parameters to be defined can be handed over as key-value-pairs within a single dictionary.
+        :param timesteps: [int] The number of timesteps that stationary values are scaled to and user given timeseries need to have at minimum
+        :param parameters: [dict] dictionary with key-value-combinations that specify all the parameters to be configured.
+        :return: [boolean] True, if the configuration war successfull
+        """
         # iterate over all given parameters and figure out how to handle them...
         for parameter in parameters:
             # HANLDE TRIGGERDEMAND-SPECIFIC PARAMETERS
@@ -1343,31 +1472,40 @@ class triggerdemand(Component):
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
     def set_input(self, connection: co.Connection):
-        # check, that there is no more than one energy and material validate each
-        if connection.flowtype.type == "energy":
-            if len(self.input_energy) == 1:
+        """
+        This function sets the given connection as the input for the triggerdemand-component
+        :param connection: [fm.Connecntion-object]
+        """
+
+        # check, that there is no more than one energy and material input each
+        if connection.flowtype.unit.resource_type == "energy":
+            if self.input_energy is not None:
                 logging.critical(
-                    f"ERROR: Cannot add {connection.name} to {self.name}, since triggerdemand-components are only allowed to have one energy validate and {self.name} already has {self.input_energy.name} as validate!"
+                    f"ERROR: Cannot add {connection.name} to {self.name}, since triggerdemand-components are only allowed to have one energy input and {self.name} already has {self.input_energy.name} as input!"
                 )
                 raise Exception
-            # if this was the first energy validate -> confirm and save it
+            # if this was the first energy input -> confirm and save it
             self.input_energy = connection
         else:
-            if len(self.input_material) == 1:
+            if self.input_material is not None:
                 logging.critical(
-                    f"ERROR: Cannot add {connection.name} to {self.name}, since triggerdemand-components are only allowed to have one material validate and {self.name} already has {self.input_material.name} as validate!"
+                    f"ERROR: Cannot add {connection.name} to {self.name}, since triggerdemand-components are only allowed to have one material input and {self.name} already has {self.input_material.name} as input!"
                 )
                 raise Exception
-            # if this was the first material validate -> confirm and save it
+            # if this was the first material input -> confirm and save it
             self.input_material = connection
-        # fill the global validate list of the Component as well
+        # fill the global input list of the Component as well
         self.inputs.append(
             connection
-        )  # sets the connection-object "connection" as an validate for self.
+        )  # sets the connection-object "connection" as an input for self.
 
     def set_output(self, connection: co.Connection):
+        """
+        This function sets the given connection as an output for the component
+        :param connection: [fm.Connection-object]
+        """
         # check, that there is no more than one energy and material output each
-        if connection.flowtype.type == "energy":
+        if connection.flowtype.unit.resource_type == "energy":
             if self.output_energy:
                 logging.critical(
                     f"ERROR: Cannot add {connection.name} to {self.name}, since triggerdemand-components are only allowed to have one energy output and {self.name} already has {self.output_energy.name} as output!"
@@ -1392,7 +1530,7 @@ class triggerdemand(Component):
         pass
 
 
-class slack(Component):
+class Slack(Component):
     def __init__(self, name: str, factory):
         super().__init__(name, factory)
         self.is_sink = True  # pools can act as a sink
@@ -1406,11 +1544,14 @@ class slack(Component):
         )
 
     def set_input(self, connection: co.Connection):
-        # sets the connection-object "connection" as an validate for self.
+        """
+        This function sets the given connection as the input for the slack-component
+        :param connection: [fm.Connecntion-object]
+        """
         # if self doesnt have its flowtype already determined it is checked, whether the flowtype can be specified via the connection
         if not len(self.inputs) == 0:
             logging.critical(
-                f"Slack {self.name} already has {connection.name} assigned as validate. Slacks are limited to one single validate."
+                f"Slack {self.name} already has {connection.name} assigned as input. Slacks are limited to one single input."
             )
             raise Exception
 
@@ -1420,6 +1561,10 @@ class slack(Component):
                 self.update_flowtype(connection.flowtype)
 
     def set_output(self, connection: co.Connection):
+        """
+        This function sets the given connection as an output for the component
+        :param connection: [fm.Connection-object]
+        """
         if not len(self.outputs) == 0:
             logging.critical(
                 f"Slack {self.name} already has {connection.name} assigned as output. Slacks are limited to one single output."
@@ -1432,7 +1577,7 @@ class slack(Component):
                 self.update_flowtype(connection.flowtype)
 
 
-class schedule(Component):
+class Schedule(Component):
     def __init__(self, name: str, factory):
         super().__init__(name, factory)
         self.demands = np.array(
@@ -1451,11 +1596,14 @@ class schedule(Component):
         )
 
     def set_input(self, connection: co.Connection):
-        # sets the connection-object "connection" as an validate for self.
+        """
+        This function sets the given connection as an input for the schedule-component
+        :param connection: [fm.Connecntion-object]
+        """
         # if self doesnt have its flowtype already determined it is checked, whether the flowtype can be specified via the connection
         if not len(self.inputs) == 0:
             logging.critical(
-                f"Schedule {self.name} already has {connection.name} assigned as validate. Schedules are limited to one single validate."
+                f"Schedule {self.name} already has {connection.name} assigned as input. Schedules are limited to one single input."
             )
             raise Exception
         self.inputs.append(connection)
@@ -1465,6 +1613,10 @@ class schedule(Component):
                 self.update_flowtype(connection.flowtype)
 
     def set_output(self, connection: co.Connection):
+        """
+        This function sets the given connection as an output for the component
+        :param connection: [fm.Connection-object]
+        """
         if not len(self.outputs) < 2:
             logging.critical(
                 f"Schedules {self.name} already has two outputs, which is the maximum allowed number"
@@ -1477,7 +1629,13 @@ class schedule(Component):
             if not connection.flowtype == "unknown":
                 self.update_flowtype(connection.flowtype)
 
-    def set_configuration(self, timesteps: int, parameters: dict):
+    def set_configuration(self, timesteps: int, parameters: dict) -> bool:
+        """
+        This function sets the configuration for the component. All parameters to be defined can be handed over as key-value-pairs within a single dictionary.
+        :param timesteps: [int] The number of timesteps that stationary values are scaled to and user given timeseries need to have at minimum
+        :param parameters: [dict] dictionary with key-value-combinations that specify all the parameters to be configured.
+        :return: [boolean] True, if the configuration war successfull
+        """
         # iterate over all given parameters and figure out how to handle them...
         for parameter in parameters:
             # HANDLE SCHEDULE-SPECIFIC PARAMETERS
@@ -1492,22 +1650,22 @@ class schedule(Component):
                 check = (self.demands[:, 0] - self.demands[:, 1]) > 0
                 if check.any():
                     logging.critical(
-                        f"ERROR in demand validate data for {self.name}: Data contains demands with Tend ahead of Tstart."
+                        f"ERROR in demand input data for {self.name}: Data contains demands with Tend ahead of Tstart."
                     )
                     raise Exception
                 if not np.equal(np.mod(self.demands[:, 0:1], 1), 0).all():
                     logging.critical(
-                        f"ERROR in demand validate data for {self.name}: Time information needs to be integer!"
+                        f"ERROR in demand input data for {self.name}: Time information needs to be integer!"
                     )
                     raise Exception
                 if max(self.demands[:, 1]) > timesteps:
                     logging.critical(
-                        f"ERROR in demand validate data for {self.name}: Endpoint of at least one demand interval is after maximum simulation length."
+                        f"ERROR in demand input data for {self.name}: Endpoint of at least one demand interval is after maximum simulation length."
                     )
                     raise Exception
                 if min(self.demands[:, 0]) <= 0:
                     logging.critical(
-                        f"ERROR in demand validate data for {self.name}: The earliest starting Point for demands is interval 1. Earlier starts are invalid."
+                        f"ERROR in demand input data for {self.name}: The earliest starting Point for demands is interval 1. Earlier starts are invalid."
                     )
                     raise Exception
                 if any(
@@ -1515,22 +1673,22 @@ class schedule(Component):
                     > self.demands[:, 1] - self.demands[:, 0]
                 ):
                     logging.critical(
-                        f"ERROR in demand validate data for {self.name}: At least one demand is not fulfillable with its given volume and power_max and time combination."
+                        f"ERROR in demand input data for {self.name}: At least one demand is not fulfillable with its given volume and power_max and time combination."
                     )
                     raise Exception
                 if len(self.demands[:, 1]) == 0:
                     logging.critical(
-                        f"ERROR in demand validate data for {self.name}: Diven demand list is empty"
+                        f"ERROR in demand input data for {self.name}: Diven demand list is empty"
                     )
                     raise Exception
                 if len(self.demands[:, 1]) == 0:
                     logging.critical(
-                        f"ERROR in demand validate data for {self.name}: Diven demand list is empty"
+                        f"ERROR in demand input data for {self.name}: Diven demand list is empty"
                     )
                     raise Exception
                 if min(self.demands[:, 2]) == 0:
                     logging.critical(
-                        f"ERROR in demand validate data for {self.name}: List contains demands with zero volume"
+                        f"ERROR in demand input data for {self.name}: List contains demands with zero volume"
                     )
                     raise Exception
 

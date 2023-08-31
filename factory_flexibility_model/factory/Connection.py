@@ -52,7 +52,7 @@ class Connection:
 
         # check, if weights have been specified
         if weight is not None:
-            # If just one "weight" is specified: use it for validate and output
+            # If just one "weight" is specified: use it for input and output
             self.weight_sink = iv.validate(weight, "float")
             self.weight_source = iv.validate(weight, "float")
 

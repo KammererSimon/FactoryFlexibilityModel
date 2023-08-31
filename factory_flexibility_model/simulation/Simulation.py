@@ -1552,16 +1552,15 @@ class simulation:
         fd.create_dash(self)
 
     def __read_scenario_data(self):
-        """This function checks the factory for "scenario_data" arguments and configures concerning
+        """This function checks the factory for scenario paramater arguments and configures concerning
         components with the requested parameters from self.scenario"""
 
-        # find components, that need to be fed with data from the scenario
-        for i_component in self.factory.components:
-            component = self.factory.components[i_component]  # cache the actual object
+        # iterate components and search for scenario data keys
+        for component in self.factory.components.values():
 
-            # continue with next Component if the current one is not scenario dependent
-            if not component.scenario_dependent:
-                continue
+            for key, value in vars(component).items():
+                if value == "$parameter$":
+                    pass
 
             # initialize new parameters-dict
             parameters = {}

@@ -10,13 +10,14 @@ import factory_flexibility_model.ui.color as c
 class Flowtype:
     def __init__(
         self,
-        name,
+        key,
         *,
         unit: str | Unit.Unit = "unit",
         description: str = "",
         color: str | list[float] = None,
         represents_losses: bool = False,
         suffix: str = None,
+        name: str = None,
     ):
         """
         This function creates a new flowtype-object and adds it to the factory
@@ -26,8 +27,12 @@ class Flowtype:
         :param color: [String; #XXXXXX] Color code for displaying the flow in GUI and Figures
         """
 
-        # set the name (validate validation happens during factory.add_flow)
-        self.name = name
+        # set the key and name (validate validation happens during factory.add_flow)
+        self.key = key
+        if name is None:
+            self.name = key
+        else:
+            self.name = name
 
         # set the suffix if given
         if suffix is None:

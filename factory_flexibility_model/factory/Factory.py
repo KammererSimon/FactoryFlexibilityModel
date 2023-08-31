@@ -33,7 +33,7 @@ class Factory:
         self.components = {}
         self.component_keys = []
         self.flowtypes = {}
-        self.flowtype_names = []
+        self.flowtype_keys = []
         self.next_ids = {
             "connection": 0,
             "Component": 0,
@@ -59,7 +59,7 @@ class Factory:
         component_type = iv.validate(component_type, "str")
 
         # make sure that the specified name is not already taken by a Component or flowtype
-        if key in self.component_keys or key in self.flowtype_names:
+        if key in self.component_keys or key in self.flowtype_keys:
             logging.critical(
                 f"Cannot create Component {key} because the namekey is already assigned"
             )
@@ -71,21 +71,21 @@ class Factory:
         # create new object of desired Component
         if component_type == "pool":
             # call pool constructor
-            self.components[key] = factory_components.pool(key, self, flowtype=flowtype)
+            self.components[key] = factory_components.Pool(key, self, flowtype=flowtype)
 
         elif component_type == "sink":
             # call sink constructor
-            self.components[key] = factory_components.sink(key, self, flowtype=flowtype)
+            self.components[key] = factory_components.Sink(key, self, flowtype=flowtype)
 
         elif component_type == "source":
             # call source constructor
-            self.components[key] = factory_components.source(
+            self.components[key] = factory_components.Source(
                 key, self, flowtype=flowtype
             )
 
         elif component_type == "storage":
             # call storage constructor
-            self.components[key] = factory_components.storage(
+            self.components[key] = factory_components.Storage(
                 key, self, flowtype=flowtype
             )
 
@@ -123,7 +123,7 @@ class Factory:
 
         elif component_type == "converter":
             # call converter constructor
-            self.components[key] = factory_components.converter(key, self)
+            self.components[key] = factory_components.Converter(key, self)
 
             # connect the new converter to losses_energy
             self.add_connection(
@@ -136,11 +136,11 @@ class Factory:
 
         elif component_type == "deadtime":
             # call deadtime constructor
-            self.components[key] = factory_components.deadtime(key, self)
+            self.components[key] = factory_components.Deadtime(key, self)
 
         elif component_type == "thermalsystem":
             # call thermalsystem constructor
-            self.components[key] = factory_components.thermalsystem(
+            self.components[key] = factory_components.Thermalsystem(
                 key, self, flowtype=flowtype
             )
 
@@ -165,17 +165,17 @@ class Factory:
 
         elif component_type == "triggerdemand":
             # call triggerdemand constructor
-            self.components[key] = factory_components.triggerdemand(key, self)
+            self.components[key] = factory_components.Triggerdemand(key, self)
 
         elif component_type == "slack":
             # call slack constructor
-            self.components[key] = factory_components.slack(
+            self.components[key] = factory_components.Slack(
                 key, self, flowtype=flowtype
             )
 
         elif component_type == "schedule":
             # call schedule constructor
-            self.components[key] = factory_components.schedule(
+            self.components[key] = factory_components.Schedule(
                 key, self, flowtype=flowtype
             )
         else:
@@ -238,7 +238,7 @@ class Factory:
         # set new connection as output for the source Component
         self.components[origin].set_output(new_connection)
 
-        # set connection as validate for the sink Component
+        # set connection as input for the sink Component
         self.components[destination].set_input(new_connection)
 
         # insert the new connection into the connection_list of the factory
@@ -367,12 +367,13 @@ class Factory:
 
     def add_flowtype(
         self,
-        name: str,
+        key: str,
         *,
         unit: str | Unit.Unit = "unit",
         to_losses: bool = None,
         description: str = None,
         color: str | list[float] = None,
+        name: str = None,
     ):
         """
         This function creates a new flowtype-object and adds it to the factory
@@ -383,26 +384,27 @@ class Factory:
         """
 
         # make sure, that the name is still unused
-        if name in self.component_keys or name in self.flowtype_names:
+        if key in self.component_keys or key in self.flowtype_keys:
             # if not: throw an error
             logging.critical(
-                f"Cannot create Flowtype {name} because the name is already assigned"
+                f"Cannot create Flowtype {key} because the key is already assigned"
             )
             raise Exception
 
         # create a new flowtype with specified parameters and store it in the factory.flows - dictionary
-        self.flowtypes[name] = ft.Flowtype(
-            name,
+        self.flowtypes[key] = ft.Flowtype(
+            key,
             unit=unit,
             represents_losses=to_losses,
             description=description,
             color=color,
+            name=name,
         )
 
         # add the new flowtype to the list of flowtype-keys
-        self.flowtype_names.append(name)
+        self.flowtype_keys.append(key)
 
-        logging.debug(f"        - New flowtype added: {name}")
+        logging.debug(f"        - New flowtype added: {self.flowtypes[key].name}")
 
     def check_validity(self):
         """
@@ -420,22 +422,22 @@ class Factory:
             if component.type == "converter":
                 # if Component is a converter: ratio of inputs and outputs at converters must be valid
 
-                # I) calculate sums of validate weights
+                # I) calculate sums of input weights
                 # initialize summing variables
                 weightsum_input_energy = 0
                 weightsum_input_material = 0
 
-                # iterate over all validate connections
+                # iterate over all input connections
                 for input_i in component.inputs:
 
-                    # check if the validate refers to energy or material
-                    if input_i.flowtype.type == "energy":
-                        # if energy: add the weight of the incoming connection to the sum of energy validate weights
+                    # check if the input refers to energy or material
+                    if input_i.flowtype.unit.quantity_type == "energy":
+                        # if energy: add the weight of the incoming connection to the sum of energy input weights
                         weightsum_input_energy += input_i.weight_sink
 
-                    elif input_i.flowtype.type == "material":
+                    elif input_i.flowtype.unit.quantity_type == "material":
 
-                        # if material: add the weight of the incoming connection to the sum of material validate weights
+                        # if material: add the weight of the incoming connection to the sum of material input weights
                         weightsum_input_material += input_i.weight_sink
 
                     else:
@@ -453,14 +455,14 @@ class Factory:
                 # iterate over all output connections
                 for output_i in component.outputs:
 
-                    # if energy: add the weight of the outgoing connection to the sum of energy validate weights
-                    if output_i.flowtype.type == "energy":
+                    # if energy: add the weight of the outgoing connection to the sum of energy input weights
+                    if output_i.flowtype.unit.quantity_type == "energy":
 
                         # if energy:
                         weightsum_output_energy += output_i.weight_source
-                    elif output_i.flowtype.type == "material":
+                    elif output_i.flowtype.unit.quantity_type == "material":
 
-                        # if material: add the weight of the outgoing connection to the sum of material validate weights
+                        # if material: add the weight of the outgoing connection to the sum of material input weights
                         weightsum_output_material += output_i.weight_source
 
                     else:
@@ -484,24 +486,24 @@ class Factory:
                     )
                     return False
 
-                # check, if the combination of validate and output weight sums is valid
+                # check, if the combination of input and output weight sums is valid
                 if weightsum_output_energy > weightsum_input_energy:
                     logging.critical(
-                        f"Error in the factory architecture: The sum of weights at the energy output of converter '{component.name}' ({weightsum_output_energy}) is greater that the sum of validate weights {weightsum_input_energy}!"
+                        f"Error in the factory architecture: The sum of weights at the energy output of converter '{component.name}' ({weightsum_output_energy}) is greater that the sum of input weights {weightsum_input_energy}!"
                     )
                     raise Exception
 
                 if weightsum_output_material > weightsum_input_material:
                     logging.critical(
-                        f"Error in the factory architecture: The sum of weights at the material output of converter '{component.name}' ({weightsum_output_material}) is greater that the sum of validate weights {weightsum_input_material}!"
+                        f"Error in the factory architecture: The sum of weights at the material output of converter '{component.name}' ({weightsum_output_material}) is greater that the sum of input weights {weightsum_input_material}!"
                     )
                     raise Exception
 
             elif component.type == "deadtime":
-                # if Component is a deadtime: make sure that there is at least one validate
+                # if Component is a deadtime: make sure that there is at least one input
                 if len(component.inputs) == 0:
                     logging.critical(
-                        f"ERROR: Deadtime-Component '{component.name}' does not have an validate!"
+                        f"ERROR: Deadtime-Component '{component.name}' does not have an input!"
                     )
                     raise Exception
 
@@ -520,7 +522,7 @@ class Factory:
                     raise Exception
 
             elif component.type == "triggerdemand":
-                # check, that the combinations of validate and outputs connected is valid
+                # check, that the combinations of input and outputs connected is valid
                 if not (component.input_energy or component.output_energy):
                     logging.critical(
                         f"Triggerdemand {component.name} has no inputs connected!"
@@ -528,22 +530,22 @@ class Factory:
                     raise Exception
                 if component.input_energy and not component.output_energy:
                     logging.critical(
-                        f"Triggerdemand {component.name} has an energy validate but no energy output!"
+                        f"Triggerdemand {component.name} has an energy input but no energy output!"
                     )
                     raise Exception
                 if component.output_energy and not component.input_energy:
                     logging.critical(
-                        f"Triggerdemand {component.name} has an energy output but no energy validate!"
+                        f"Triggerdemand {component.name} has an energy output but no energy input!"
                     )
                     raise Exception
                 if component.input_material and not component.output_material:
                     logging.critical(
-                        f"Triggerdemand {component.name} has a material validate but no material output!"
+                        f"Triggerdemand {component.name} has a material input but no material output!"
                     )
                     raise Exception
                 if component.output_material and not component.input_material:
                     logging.critical(
-                        f"Triggerdemand {component.name} has a material output but no material validate!"
+                        f"Triggerdemand {component.name} has a material output but no material input!"
                     )
                     raise Exception
 
@@ -552,7 +554,7 @@ class Factory:
 
     def __get_flowtype_object(self, flowtype_name: str):
         """
-        This function takes the user validate for "flowtype" and returns the corresponding flowtype-object from the factorys flowtype-list
+        This function takes the user input for "flowtype" and returns the corresponding flowtype-object from the factorys flowtype-list
         :param flow_name: name identifier (string) or flowtype object
         :return: flowtype object
         """
@@ -599,7 +601,7 @@ class Factory:
             # create new slack Component
             self.add_component(f"{name}_slack", "slack")
 
-            # connect it to the validate and output of the Component
+            # connect it to the input and output of the Component
             self.add_connection(
                 f"{name}_slack",
                 name,
@@ -615,7 +617,7 @@ class Factory:
                 weight=0.01,
             )
 
-        # sinks get slacked on the validate side if they are not the losses sink
+        # sinks get slacked on the input side if they are not the losses sink
         elif component_type == "sink" and not (
             name == "losses_energy" or name == "losses_material"
         ):
@@ -623,7 +625,7 @@ class Factory:
             # create new slack Component
             self.add_component(f"{name}_slack", "slack")
 
-            # connect it to the validate of the sink
+            # connect it to the input of the sink
             self.add_connection(
                 f"{name}_slack",
                 name,

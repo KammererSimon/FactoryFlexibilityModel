@@ -1,7 +1,7 @@
 # This script fulfills the single task to read in config files for the factory factory
 # and to return the contained parameters as a dictionary
 
-# IMPORT 3RD PARTY PACKAGES
+# IMPORT
 import configparser
 import logging
 

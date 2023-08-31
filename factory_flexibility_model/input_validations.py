@@ -14,11 +14,11 @@ import pandas as pd
 
 
 # CODE START
-def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
+def validate(input, output_type, *, min=None, max=None, positive=False, timesteps=1):
     """This function represents the FORMAL validate validation takes any validate and transforms it into the desired format
     or throws an error, if the datatypes are not compatible.
     :param input: [int, float, string, boolean, np-array, list, pandas-series] User given Input data
-    :param type: [String] {"str", "string", "int", "integer", "float", "bool", "boolean", "%", "0..1"}
+    :param output_type: [String] {"str", "string", "int", "integer", "float", "bool", "boolean", "%", "0..1"}
     :param min: [Float] Optional Lower boundary for numeric values
     :param max: [Float] Optional upper boundary for numeric values
     :param timesteps: [Int] Optional number of timesteps required for timeseries data
@@ -26,6 +26,10 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
     :return: User data in the specfied format"""
 
     logging.basicConfig(level=logging.WARNING)
+
+    # if the input is a reference to a scenarioparameter: just skip and give it back
+    if input in ("$parameter$", "$timeseries$"):
+        return input
 
     # handle config and prepare the limits for numeric inputs
     if max is not None:
@@ -50,7 +54,7 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
         timeseries = False
 
     # Handle strings
-    if type == "str" or type == "string":
+    if output_type == "str" or output_type == "string":
         if timeseries:
             logging.critical(f"Creating a string - timeseries is not possible!")
             raise Exception
@@ -64,7 +68,7 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
             raise Exception
 
     # Handle booleans
-    if type == "boolean" or type == "bool":
+    if output_type == "boolean" or output_type == "bool":
         if isinstance(input, bool):
             if timeseries:
                 logging.critical(
@@ -91,7 +95,7 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
             raise Exception
 
     # Handle ratios
-    if type == "0..1" or type == "%":
+    if output_type == "0..1" or output_type == "%":
         if timeseries:
             if isinstance(input, float) or isinstance(input, int):
                 if input > 1:
@@ -154,7 +158,7 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
                     raise Exception
             else:
                 logging.critical(
-                    f"data type {type(input)} is invalid as validate for a timeseries!"
+                    f"data type {type(input)} is invalid as input for a timeseries!"
                 )
                 raise Exception
             # TODO: implement ratio array generation
@@ -189,7 +193,7 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
                 raise Exception
 
     # INTEGERS
-    if type == "int" or type == "integer":
+    if output_type == "int" or output_type == "integer":
         # INT, TIMESERIES
         if timeseries:
             if isinstance(input, float) or isinstance(input, int):
@@ -287,7 +291,7 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
                 )
                 raise Exception
 
-            # TODO: Check, what happened here ;)
+            # TODO: Hier geht noch was schief..die differenzierung zwischen zeitreihen  udn einzelwerten klappt noch nicht sauber
             if upperlimit and max(data) > max:
                 logging.critical(
                     f"ERROR: given value {data} is above the given upper limit ({max})"
@@ -299,18 +303,7 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
                 )
                 raise Exception
 
-    if type == "float":
-        if not isinstance(input, float):
-            if input == "" or input is None:
-                return None
-            try:
-                input = float(input)
-                logging.info("Given value has been converted to float")
-            except:
-                logging.critical(
-                    f"Given value of type {type(input)} and incompatible with requested type (float)!"
-                )
-                raise Exception
+    if output_type == "float":
 
         if timeseries:
             if isinstance(input, float) or isinstance(input, int):
@@ -390,11 +383,23 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
                     raise Exception
             else:
                 logging.critical(
-                    f"data type ({input}) is invalid as validate for a timeseries!"
+                    f"data type ({input}) is invalid as input for a timeseries!"
                 )
                 raise Exception
 
         else:
+            if not isinstance(input, float):
+
+                try:
+                    input = float(input)
+                    logging.info("Given value has been converted to float")
+                except:
+                    print(f"input {input}")
+                    logging.critical(
+                        f"Given value input incompatible with requested type (float)!"
+                    )
+                    raise Exception
+
             if positive and input < 0:
                 logging.critical(
                     "The given value is negative but a positive float is requested! "
@@ -402,6 +407,6 @@ def validate(input, type, *, min=None, max=None, positive=False, timesteps=1):
                 raise Exception
             return input
 
-    if type == "timeseries":
+    if output_type == "timeseries":
         logging.critical("This function call is no longer supported")
         raise Exception

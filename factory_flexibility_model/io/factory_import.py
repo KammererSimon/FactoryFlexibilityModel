@@ -7,7 +7,7 @@ import pickle
 from pathlib import Path
 
 import factory_flexibility_model.factory.Factory as fm
-import factory_flexibility_model.simulation.simulation as fs
+import factory_flexibility_model.simulation.Simulation as fs
 
 
 # MAIN FUNCTIONS

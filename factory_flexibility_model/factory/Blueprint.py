@@ -4,30 +4,29 @@
 
 import logging
 
-# IMPORTS
-from collections import defaultdict
-
 import yaml
 
 import factory_flexibility_model.factory.Factory as fm
 
+# IMPORTS
+
 
 class Blueprint:
     def __init__(self):
-        self.timefactor = 1  # timefactor of the factory. See documentation for details
         self.GUI_config = {
             "display_scaling_factor": 1
         }  # sets the size of displayed icons within the preview of the factory in the gui
         self.components = {}  # dict with all components of the factory
-        self.connections = defaultdict(lambda: None)  # dict of connections
-        self.flowtypes = defaultdict(lambda: None)  # list of flowtypes
+        self.connections = {}  # dict of connections
+        self.flowtypes = {}  # list of flowtypes
         self.info = {
             "name": "Undefined_Factory",  # Standard Information, equivalent to factory-object initialization
             "description": "Undefined",
             "max_timesteps": 8760,
         }
+        self.units = {}  # list of units
 
-    def to_factory(self):
+    def to_factory(self) -> fm.Factory:
         """
         This function creates the corresponding factory-object to the blueprint
         :return: [factory.factory] -> realization of the factory object described by the blueprint
@@ -44,11 +43,12 @@ class Blueprint:
         factory.create_essentials()
 
         # CREATE FLOWS
-        logging.info("Creating flowtypes")
-        for flowtype in self.flowtypes.values():
+        logging.info("Creating Flowtypes")
+        for key, flowtype in self.flowtypes.items():
             # Add new flowtype to factory with given specifications
             factory.add_flowtype(
-                name=flowtype["key"],
+                key,
+                name=flowtype["name"],
                 unit=flowtype["unit"],
                 color=flowtype["color"],
             )
@@ -56,29 +56,27 @@ class Blueprint:
         # CREATE COMPONENTS
         logging.info("Creating factory components")
         # iterate over all Component types
-        for component in self.components.values():
-            # Extract values that have to be directly specified:
-            name = component["key"]
-            type = component["type"]
+        for component_key, component in self.components.items():
+
             if "flowtype" in component:
                 flowtype = component["flowtype"]
             else:
                 flowtype = None
 
-            # create a copy of the Component with GUI specific keys removed
-            component_copy = component.copy()
-            component_copy.pop("flowtype")
-            component_copy.pop("type")
-            component_copy.pop("position_x")
-            component_copy.pop("position_y")
-            component_copy.pop("icon")
-            component_copy.pop("key")
-
             # Add new Component to factory
-            factory.add_component(name, type, flowtype=flowtype)
+            factory.add_component(component_key, component["type"], flowtype=flowtype)
+
+            # create a list of relevant configurations
+            parameters = {}
+            for parameter_key, parameter in component.items():
+                if (
+                    parameter_key not in ("key", "GUI", "flowtype", "type")
+                    and not parameter == ""
+                ):
+                    parameters[parameter_key] = parameter
 
             # Set configuration for remaining parameters of the Component
-            factory.set_configuration(name, parameters=component_copy)
+            factory.set_configuration(component_key, parameters=parameters)
 
         # CREATE CONNECTIONS
         # iterate over all specified connections
@@ -100,45 +98,84 @@ class Blueprint:
 
         return factory
 
-    def save(self, *, path: str = None):
+    def import_from_file(self, filepath: str, *, overwrite: bool = False) -> bool:
+        """ "
+        This function imports a  blueprint stored as .factory-file and sets all attributes of the blueprint according to the specified confidurations of the file
+        :param filepath: [string] path + filename of the data to import
+        :param overwrite: [boolean] determines, if the import is conducted even if some attributes of the blueprint have already been defined.
+        :return: [true] if successfull
+        """
 
+        # Check, if some specifications will be overwritten
+        if not overwrite:
+            if not self.components:
+                print("The dictionary is empty.")
+            else:
+                print("The dictionary is not empty.")
+            if not (
+                self.components
+                or self.connections
+                or self.flowtypes
+                or self.GUI_config
+                or self.units
+            ):
+                logging.error(
+                    f"Cannot import blueprint-file into blueprint {self.info['name']}, because it is not in its initialize-state anymore and overwriting is deactivated"
+                )
+                return False
+
+        # open yaml-file given by the user
+        try:
+            with open(filepath) as file:
+                data = yaml.load(file, Loader=yaml.UnsafeLoader)
+        except:
+            logging.error(
+                f"The given file is not a valid .factory - blueprint file! ({filepath}"
+            )
+            raise Exception
+
+        self.components.update(data["components"])
+        self.connections.update(data["connections"])
+        self.flowtypes.update(data["flowtypes"])
+        if hasattr(data, "GUI_config"):
+            self.GUI_config.update(data["GUI_config"])
+        self.info.update(data["info"])
+        if hasattr(data, "units"):
+            self.units.update(data["units"])
+
+        logging.info("Blueprint import successfull")
+
+    def save(self, *, path: str = None, filename: str = None) -> bool:
+        """
+        This function stores the blueprint as a .factory-file under the given path.
+        :param path: [string] Filepath where the file shall be saved
+        :param filename: [string] Name of the file. If no name is handed over the file will be named like the factoryname defined within the blueprint
+        """
         # create a set of serializable data out of the blueprint
         # initialize a new dict
-        data = {}
+        data = {
+            "components": self.components,
+            "connections": self.connections,
+            "flowtypes": self.flowtypes,
+            "GUI_config": self.GUI_config,
+            "info": self.info,
+            "units": self.units,
+        }
 
-        # store only the defined values per asset. Data doesnt contain defaultdicts anymore now
-        data["components"] = {}
-        for component in self.components.values():
-            data["components"][component["key"]] = {}
-            for value in component:
-                if not value == "key":
-                    data["components"][component["key"]][value] = component[value]
-
-        data["connections"] = {}
-        for connection in self.connections.values():
-            data["connections"][connection["key"]] = {}
-            for value in connection:
-                if not value == "key":
-                    data["connections"][connection["key"]][value] = connection[value]
-
-        data["flowtypes"] = {}
-        for flowtype in self.flowtypes.values():
-            data["flowtypes"][flowtype["key"]] = {}
-            for value in flowtype:
-                if not value == "key":
-                    data["flowtypes"][flowtype["key"]][value] = flowtype[value]
-
-        data["info"] = self.info
+        if filename is None:
+            filename = self.info["name"]
 
         # store the blueprint dictionary as json file
         if path is None:
-            with open(f"{self.info['name']}.factory", "w") as file:
+            with open(f"{filename}.factory", "w") as file:
                 yaml.dump(data, file)
             logging.info(f"Blueprint saved as {self.info['name']}.factory")
         else:
             try:
-                with open(f"{path}.factory", "w") as file:
+                with open(f"{path}\\{filename}.factory", "w") as file:
                     yaml.dump(data, file)
-                logging.info(f"Blueprint saved as {path}.factory")
+                logging.info(f"Blueprint saved under {path}\\{filename}.factory")
             except:
-                logging.error(f"Saving blueprint under '{path}.factory' failed!")
+                logging.error(
+                    f"Saving blueprint under '{path}\\{filename}.factory' failed!"
+                )

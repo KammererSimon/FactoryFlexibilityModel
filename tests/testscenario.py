@@ -8,7 +8,7 @@ from factory_flexibility_model.simulation import scenario as sc
 
 def create_testscenario(data_path):
 
-    Testscenario = sc.scenario("Testscenario")
+    Testscenario = sc.Scenario()
     Testscenario.number_of_timesteps = 168
     Testscenario.cost_co2_per_kg = 0.0814
     Testscenario.timefactor = 1

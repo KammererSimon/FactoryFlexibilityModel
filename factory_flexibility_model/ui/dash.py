@@ -1376,11 +1376,13 @@ def create_dash(simulation):
                     )
 
         # create a list of existing components to be displayed
+        component_namelist = []
         component_colorlist = []
         for i in simulation.factory.components:
             component_colorlist.append(
                 simulation.factory.components[i].flowtype.color.hex
             )  # add fitting color to the colorlist
+            component_namelist.append(simulation.factory.components[i].name)
 
         fig_sankey = go.Figure(
             data=[
@@ -1389,7 +1391,7 @@ def create_dash(simulation):
                         pad=70,
                         thickness=20,
                         line=dict(color="grey", width=0.8),
-                        label=simulation.factory.component_keys,
+                        label=component_namelist,
                         color=component_colorlist,
                     ),
                     link=dict(
@@ -1477,6 +1479,8 @@ def create_dash(simulation):
         # create pie descriptions
         title_in = ""
         title_out = ""
+        input_info = ""
+        output_info = ""
         if user_input == "Energy Flows":
             title_in = "##### DISTRIBUTION OF ENERGY INPUTS"
             title_out = "##### DISTRIBUTION OF ENERGY OUTPUTS"
@@ -1797,7 +1801,7 @@ def create_dash(simulation):
             figure_config,
             # title_text="BILANCE SUM AT POOL",
             xaxis_title="Simulation interval",
-            yaxis_title=f"{component.flowtype.flow_description} [{component.inputs[0].flowtype.unit_flow}]",
+            yaxis_title=f"{component.flowtype.suffix} [{component.inputs[0].flowtype.unit_flow}]",
         )
         return fig
 
@@ -1865,7 +1869,7 @@ def create_dash(simulation):
         fig.update_layout(
             figure_config,
             xaxis_title="Timesteps",
-            yaxis_title=f"{component.flow_description} {component.flowtype.unit_flowrate()}",
+            yaxis_title=f"{component.flowtype_description} {component.flowtype.unit_flowrate()}",
             showlegend=False,
         )
         fig.update_xaxes(linewidth=2, linecolor=style["axis_color"])
@@ -1954,7 +1958,7 @@ def create_dash(simulation):
             figure_config,
             # title_text="UTILIZATION",
             xaxis_title="Timesteps",
-            yaxis_title=f"{component.flow_description} [{component.flowtype.unit_flowrate}]",
+            yaxis_title=f"{component.flowtype_description} [{component.flowtype.unit_flowrate}]",
         )
         fig.update_xaxes(linewidth=2, linecolor=style["axis_color"])
         fig.update_yaxes(
@@ -2429,7 +2433,7 @@ def create_dash(simulation):
                 col=1,
             )
             fig.update_yaxes(
-                title_text=f"{component.flow_description} [{component.flowtype.unit_flow}]",
+                title_text=f"{component.flowtype_description} [{component.flowtype.unit_flow}]",
                 linewidth=2,
                 range=[0, max(sum(utilization)) * 1.05],
                 linecolor=style["axis_color"],

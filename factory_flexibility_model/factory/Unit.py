@@ -10,26 +10,26 @@ class Unit:
         self.magnitudes = np.array([1, 1000, 1000000, 1000000000, 1000000000000])
         self.units_flow = [" kWh", " MWh", " GWh", " TWh", " PWh"]
         self.units_flowrate = [" kW", " MW", " GW", " TW", " PW"]
-        self.quantity_type = "Energy"
+        self.quantity_type = "energy"
 
         if key == "kW" or key == "energy":
             self.conversion_factor = 1
             self.magnitudes = np.array([1, 1000, 1000000, 1000000000, 1000000000000])
             self.units_flow = [" kWh", " MWh", " GWh", " TWh", " PWh"]
             self.units_flowrate = [" kW", " MW", " GW", " TW", " PW"]
-            self.resource_type = "Energy"
+            self.resource_type = "energy"
         elif key == "kg" or key == "mass":
             self.conversion_factor = 1
             self.magnitudes = np.array([1, 1000, 1000000, 1000000000, 1000000000000])
             self.units_flow = [" kg", " t", " kt", " mt", " gt"]
             self.units_flowrate = [" kg/h", " t/h", " kt/h", " mt/h", " gt/h"]
-            self.resource_type = "Material"
+            self.resource_type = "material"
         elif key == "J":
             self.conversion_factor = 1 / 3.6
             self.magnitudes = np.array([1, 1000, 1000000, 1000000000])
             self.units_flow = [" MJ", " GJ", " TJ", " PJ"]
             self.units_flowrate = [" MJ/s", " GJ/s", " TJ/s", " PJ/s"]
-            self.resource_type = "Energy"
+            self.resource_type = "energy"
         else:
             if not key == "unit":
                 logging.warning(
@@ -75,13 +75,13 @@ class Unit:
         """
         :return: True, if the unit describes an energy value
         """
-        return self.resource_type == "Energy"
+        return self.resource_type == "energy"
 
     def is_material(self) -> bool:
         """
         :return: True, if the unit describes a material value
         """
-        return self.resource_type == "Material"
+        return self.resource_type == "material"
 
     def get_unit_flow(self) -> str:
         """

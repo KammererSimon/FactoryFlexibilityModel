@@ -13,9 +13,8 @@ import pandas as pd
 
 from factory_flexibility_model.io import factory_import as imp
 from factory_flexibility_model.io import read_config as rc
-from factory_flexibility_model.simulation import simulation as fs
+from factory_flexibility_model.simulation import Simulation as fs
 from tests import DRI_factories as dri
-from tests import testblueprint as tb
 from tests import testfactory as tf
 from tests import testscenario as ts
 
@@ -140,22 +139,21 @@ def dashboard_development():
 
 
 def blueprint_development():
-    import factory_flexibility_model.factory.Flowtype as Flowtype
-    import tests.testscenario as sc
+    import factory_flexibility_model.factory.Blueprint as bp
+    import factory_flexibility_model.simulation.Scenario as sc
 
-    blueprint = tb.create_test_blueprint()
+    # import tests.testscenario as sc
+    # blueprint = tb.create_test_blueprint()
+    # blueprint.save()
+
+    scenario = sc.Scenario(parameter_file=r"examples\DRI_steel_factory\parameters.txt")
+
+    blueprint = bp.Blueprint()
+    blueprint.import_from_file("examples\\DRI_steel_factory\\Layout.factory")
     factory = blueprint.to_factory()
 
-    blueprint.save()
-
-    Resource = Flowtype.Flowtype("Liquid Steel", unit="kg")
-    print(Resource.get_value_expression(15.5135249875, "flow"))
-    print(Resource.get_value_expression(15000, "flow"))
-    print(Resource.get_value_expression(156521328, "flowrate"))
-    print(Resource.get_value_expression(0.133, "flow"))
-
     scenario = sc.create_testscenario("C:\\Users\\smsikamm\\Documents\\Daten\\")
-    simulation = fs.simulation(factory=factory, scenario=scenario)
+    simulation = fs.Simulation(factory=factory, scenario=scenario)
     simulation.simulate()
     simulation.create_dash()
     print("check")
@@ -169,6 +167,8 @@ def gui_development():
 
 
 def dri():
+    import tests.DRI_factories as dri
+
     config = rc.read_config("config.ini")
     t_start = time.time()
 
@@ -181,10 +181,9 @@ def dri():
     logging.info(f"Building plant infrastructure model finished: {time.time()-t_start}")
 
     # SIMULATION
-    simulation = fs.simulation(factory=Testfactory, scenario=Testscenario)
+    simulation = fs.Simulation(factory=Testfactory, scenario=Testscenario)
     simulation.simulate(
-        treshold=0.001,
-        enable_time_tracking=config["LOGS"]["enable_time_tracking"],
+        threshold=0.001,
     )
     simulation.save(config["CASE"]["testfactory_key"], overwrite=True)
     simulation.create_dash()
