@@ -1,12 +1,12 @@
 # FACTORY SIMULATION
-# This Script contains the simulation class of the factory factory. It is used to store Factory-Scenario-Combinations and to perform the simulation itself on them
-# The following Methods are meant to be used by external Scripts to prepare a simulation:
+# This Script contains the Simulation class of the factory factory. It is used to store Factory-Scenario-Combinations and to perform the Simulation itself on them
+# The following Methods are meant to be used by external Scripts to prepare a Simulation:
 # self.__init__
 # self.set_factory
 # self.set_name
 # self.set_scenario
 
-# The simulation itself is conducted by the Method:
+# The Simulation itself is conducted by the Method:
 # self.simulate
 # -> This method calls all the other internal functions to build an optimization problem out of the components specified in the factory
 
@@ -29,7 +29,7 @@ import factory_flexibility_model.input_validations as iv
 from factory_flexibility_model.ui import dash as fd
 
 
-class simulation:
+class Simulation:
     def __init__(
         self,
         *,
@@ -39,26 +39,26 @@ class simulation:
         name="UnspecifiedSimulation",
     ):
         """
-        :param enable_time_tracking: Set to true if you want to track the time required for simulation
+        :param enable_time_tracking: Set to true if you want to track the time required for Simulation
         """
-        # set general data for the simulation
+        # set general data for the Simulation
         self.date_simulated = (
-            None  # date/time of the last simulation conducted on the object
+            None  # date/time of the last Simulation conducted on the object
         )
         self.enable_time_tracking = enable_time_tracking
-        self.factory = factory  # Variable to store the factory for the simulation
-        self.interval_length = None  # realtime length of one simulation interval...to be taken out of the scenario
+        self.factory = factory  # Variable to store the factory for the Simulation
+        self.interval_length = None  # realtime length of one Simulation interval...to be taken out of the scenario
         self.info = None  # Free attribute to store additional information
         self.m = None  # Placeholder for the Gurobi-Model to be created
         self.name = name
-        self.scenario = scenario  # Variable to store the scenario for the simulation
-        self.simulated = False  # Tracks, if the simulation has been calculated or not
+        self.scenario = scenario  # Variable to store the scenario for the Simulation
+        self.simulated = False  # Tracks, if the Simulation has been calculated or not
         self.simulation_result = (
-            None  # Variable for storing the results of the simulation
+            None  # Variable for storing the results of the Simulation
         )
         self.simulation_valid = None  # Is being set by self.validate_results
-        self.T = None  # To be set during simulation
-        self.time_reference_factor = None  # To be set during simulation
+        self.T = None  # To be set during Simulation
+        self.time_reference_factor = None  # To be set during Simulation
 
         # initialize tracking of resulting problem class
         self.problem_class = {
@@ -66,11 +66,11 @@ class simulation:
             "type": "float",
         }  # variable to keep track of the resulting problem class - used for logging purposes
 
-        # create timestamp of simulation setup
+        # create timestamp of Simulation setup
         now = datetime.now()
         self.date_created = now.strftime(
             "%d/%m/%Y %H:%M:%S"
-        )  # date/time of the creation of the simulation object
+        )  # date/time of the creation of the Simulation object
 
     def __add_converter(self, component):
         """
@@ -932,7 +932,7 @@ class simulation:
             for t in range(1, self.T)
         )  # heating/cooling impact
 
-        # keep the temperature within the allowed boundaries during simulation interval:
+        # keep the temperature within the allowed boundaries during Simulation interval:
         self.m.addConstrs(
             (self.MVars[f"T_{component.name}"][t] >= component.temperature_min[t])
             for t in range(self.T)
@@ -1187,8 +1187,8 @@ class simulation:
         self, *, threshold: float = None, rounding_decimals: int = None
     ):
         """
-        This function collects all the simulation results of the simulation object and writes them in a
-        single dictionary under simulation.results.
+        This function collects all the Simulation results of the Simulation object and writes them in a
+        single dictionary under Simulation.results.
         :param threshold: [float] Threshold under which numerical values are considered as zero
         :param rounding_decimals: [int] Number of decimals that values are rounded to
         :return: self.results is being created
@@ -1196,11 +1196,11 @@ class simulation:
 
         logging.info("COLLECTING RESULTS")
 
-        # check, if simulation has been conducted yet
+        # check, if Simulation has been conducted yet
         if not self.simulated:
             # if not: raise an Exception
             logging.critical(
-                f"Cannot collect results for simulation {self.name} because it has not been calculated yet"
+                f"Cannot collect results for Simulation {self.name} because it has not been calculated yet"
             )
             raise Exception
 
@@ -1290,7 +1290,7 @@ class simulation:
                     utilization = component.demand[0 : self.T]
 
                 else:
-                    # if no: use the simulation result
+                    # if no: use the Simulation result
                     utilization = self.MVars[f"E_{component.name}"].X
 
                 # apply rounding and threshold
@@ -1356,7 +1356,7 @@ class simulation:
                     # if yes: use the given timeseries
                     utilization = component.determined_power[0 : self.T]
                 else:
-                    # if no: use simulation result
+                    # if no: use Simulation result
                     utilization = self.MVars[f"E_{component.name}"].X
 
                 # apply rounding and threshold
@@ -1402,7 +1402,7 @@ class simulation:
 
             # handle slacks
             elif component.type == "slack":
-                # read the result timeseries of the simulation
+                # read the result timeseries of the Simulation
                 sum_energy_pos = sum(
                     self.MVars[i_input.name].X[0 : self.T]
                     for i_input in component.inputs
@@ -1439,7 +1439,7 @@ class simulation:
 
             # handle storages
             elif component.type == "storage":
-                # read the result timeseries from the simulation
+                # read the result timeseries from the Simulation
                 power_charge = (
                     self.MVars[f"E_{component.name}_charge"].X / self.interval_length
                 )
@@ -1474,7 +1474,7 @@ class simulation:
 
             # handle schedulers
             elif component.type == "schedule":
-                # read the result timeseries from the simulation
+                # read the result timeseries from the Simulation
                 utilization = self.MVars[f"E_{component.name}_in"].X
                 availability = self.MVars[f"X_{component.name}_availability"]
 
@@ -1494,7 +1494,7 @@ class simulation:
 
             # handle thermalsystems
             elif component.type == "thermalsystem":
-                # read the result timeseries from the simulation
+                # read the result timeseries from the Simulation
                 utilization = (
                     self.MVars[f"E_{component.name}_in"].X
                     - self.MVars[f"E_{component.name}_out"].X
@@ -1547,7 +1547,7 @@ class simulation:
         logging.info(" -> Results processed")
 
     def create_dash(self) -> object:
-        """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted simulation"""
+        """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted Simulation"""
         logging.info("CREATING DASHBOARD")
         fd.create_dash(self)
 
@@ -1557,34 +1557,30 @@ class simulation:
 
         # iterate components and search for scenario data keys
         for component in self.factory.components.values():
+            # prepare a dict to collect configs
+            required_configs = {}
 
+            # iterate over all attributes of the component
             for key, value in vars(component).items():
-                if value == "$parameter$":
-                    pass
+                # find $parameter$ - keys
+                if isinstance(value, str) and value == "$parameter$":
+                    # add required config to the dict if values are valid
+                    value_key = f"{component.key}/{key}"
 
-            # initialize new parameters-dict
-            parameters = {}
+                    if not value_key in self.scenario.parameters:
+                        logging.error(
+                            f"Missing parameter-key in the given scenario parameters: '{value_key}'"
+                        )
+                        raise Exception
 
-            # go through list of parameters to be set by the scenario
-            for parameter in component.scenario_data:
-                key = component.scenario_data[parameter]
+                    required_configs[key] = self.scenario.parameters[value_key]
 
-                # check, if the scenario has the requested key
-                if not hasattr(self.scenario, key):
-                    logging.critical(
-                        f'ERROR while setting scenario data for Component {component.name}: Scenario "{self.scenario.name}" does not contain the requested attribute "{key}"'
-                    )
-                    raise Exception
-
-                # add the identified parameter to the parameters-dict
-                parameters[parameter] = getattr(self.scenario, key)
-
-            # change Component configuration
-            self.factory.set_configuration(component.name, parameters)
+            # set all configurations for the component
+            self.factory.set_configuration(component.key, parameters=required_configs)
 
     def save(self, file_path: str, *, overwrite: bool = False):
         """
-        This function saves a simulation-object under the specified filepath as a single file.
+        This function saves a Simulation-object under the specified filepath as a single file.
         :param file_path: [string] Path to the file to be created
         :param override: [boolean] Set True to allow the method to overwrite existing files.
         Otherwise an error will occur when trying to overwrite a file
@@ -1604,7 +1600,7 @@ class simulation:
                 )
                 raise Exception
 
-        # create a copy of the simulation without the gurobi_model
+        # create a copy of the Simulation without the gurobi_model
         simulation_data = self
         simulation_data.m = []
         simulation_data.MVars = []
@@ -1618,28 +1614,28 @@ class simulation:
         logging.info(f"SIMULATION SAVED under{file_path}")
 
     def set_factory(self, factory):
-        """This function sets a factory_model.factory-object as the factory for the simulation
+        """This function sets a factory_model.factory-object as the factory for the Simulation
         :param factory: [factory.factory] Factory-object to be simulated
         :return: [True] -> self.factory is set
         """
 
         self.factory = factory
-        logging.debug("Factory for simulation set")
+        logging.debug("Factory for Simulation set")
 
     def set_name(self, name=str):
-        """This function sets a name for the simulation object
+        """This function sets a name for the Simulation object
         :param name: [factory.factory] Factory-object to be simulated
         :return: [True] -> self.name is set
         """
         self.name = iv.validate(name, "string")
 
     def set_scenario(self, scenario):
-        """This function sets a simulation.scenario-object as the scenario for the simulation
-        :param scenario: [simulation.scenario] Scenario-object to be used for simulation
+        """This function sets a Simulation.scenario-object as the scenario for the Simulation
+        :param scenario: [Simulation.scenario] Scenario-object to be used for Simulation
         :return: [True] -> self.scenario is set
         """
         self.scenario = scenario
-        logging.debug("scenario for simulation set")
+        logging.debug("scenario for Simulation set")
 
     def simulate(
         self,
@@ -1654,7 +1650,7 @@ class simulation:
         :param solver_config: [dict] Optional dict with configuration parameters for the solver (max_solver_time, barrier_tolerance, solver_method)
         :param rounding_decimals: [int] Number of decimals that the results are rounded to
         :param threshold: [float] Threshold under whoch results are interpreted as zero
-        :return: [True] -> Adds an attribute .result to the simulation object
+        :return: [True] -> Adds an attribute .result to the Simulation object
         """
 
         # ENABLE LOGGING/TIMETRACKING?
@@ -1671,29 +1667,20 @@ class simulation:
         # Validate factory architecture
         self.__validate_factory_architecture()
 
-        # check, if the factory can handle enough timesteps
-        if self.scenario.number_of_timesteps > self.factory.max_timesteps:
-            logging.critical(
-                f"ERROR: Length of scenario {self.scenario.name} ({self.scenario.number_of_timesteps}) is longer than the factory {self.factory.name} allows {self.factory.max_timesteps}!"
-            )
-            raise Exception
-
         # Configure the timefactor as specified in the scenario:
         self.interval_length = (
             self.scenario.timefactor
-        )  # The length of one simulation timesten in hours is taken from the scenario
-        self.T = (
-            self.scenario.number_of_timesteps
-        )  # just beeing lazy...writing "number_of_timesteps" every single time is a pain in the ass
+        )  # The length of one Simulation timesten in hours is taken from the scenario
+        self.T = self.factory.timesteps
 
         # calculate time_reference_factor
         self.time_reference_factor = (
             self.scenario.timefactor / self.factory.timefactor
-        )  # a conversion factor that implies, how many factory related timesteps are represented by one simulation timestep
+        )  # a conversion factor that implies, how many factory related timesteps are represented by one Simulation timestep
 
         # writelog
         logging.debug(
-            f"   Timefactor of the simulation set to: 1 timestep == {self.scenario.timefactor} hours ({self.scenario.timefactor*60} minutes)"
+            f"   Timefactor of the Simulation set to: 1 timestep == {self.scenario.timefactor} hours ({self.scenario.timefactor*60} minutes)"
         )
 
         # INITIALIZE GUROBI MODEL
@@ -1821,7 +1808,7 @@ class simulation:
             self.t_step = time.time()
 
         if not self.m.Status == GRB.TIME_LIMIT:
-            # mark simulation as solved
+            # mark Simulation as solved
             self.simulated = True
             logging.info(" -> Simulation solved")
             if self.enable_time_tracking:
@@ -1843,15 +1830,15 @@ class simulation:
 
     def __validate_component(self, component):
         """
-        This function checks, if the energy/material - conservation at a Component has been fulfilled during simulation
+        This function checks, if the energy/material - conservation at a Component has been fulfilled during Simulation
         :param component: [factory.components.Component-object]
         :return: [Boolean] True if Component result is valid
         """
 
-        # check, if the simulation has been simulated already
+        # check, if the Simulation has been simulated already
         if not self.simulated:
             logging.critical(
-                f"ERROR: Cannot validate the results of the simulation, because it has not been simualted yet!"
+                f"ERROR: Cannot validate the results of the Simulation, because it has not been simualted yet!"
             )
             raise Exception
 
@@ -1902,14 +1889,14 @@ class simulation:
 
     def __validate_results(self):
         """
-        This function takes a look at all the results of a simulation and performs some basic checks to confirm,
+        This function takes a look at all the results of a Simulation and performs some basic checks to confirm,
         that every equilibrium is met, no slacks have been used etc...
         :return: Sets self.simulation_valid as true or false
         """
 
         if not self.simulated:
             logging.critical(
-                f"ERROR: Cannot validate the results of the simulation, "
+                f"ERROR: Cannot validate the results of the Simulation, "
                 f"because it has not been simualted yet!"
             )
             raise Exception
