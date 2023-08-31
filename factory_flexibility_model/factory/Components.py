@@ -40,15 +40,6 @@ class Component:
         )  # initialize list, which stores pointers to all output connections
         self.type = "unknown"  # set keyword "unknown" if no type is specified
         self.component_id = factory.next_ids["Component"]  # unique Component id
-        self.scenario_dependent = (
-            False  # is there any relevant data for the Component that has to be
-        )
-        # delivered by the scenario
-        self.scenario_data = (
-            {}
-        )  # empty dictionary. If the Component requires data, that will only been
-        # known when the scenario is specified this will be stored here as a list
-        # of attribute:value combinations
         factory.next_ids[
             "Component"
         ] += 1  # Increase counter for id_definition in the parent factory
@@ -200,16 +191,6 @@ class Component:
             self.flowtype_description = iv.validate(parameters[parameter], "string")
         elif parameter == "name":
             self.name = iv.validate(parameters[parameter], "string")
-
-        # handle scenario_parameters
-        elif parameter == "scenario_data":
-            if not isinstance(parameters[parameter], dict):
-                logging.critical(
-                    f"ERROR while assigning scenario_data for {self.name}: scenario_data must be specified as a dictionary with attribute:value-combinations!"
-                )
-                raise Exception
-            self.scenario_data = parameters[parameter]
-            self.scenario_dependent = True
 
         elif parameter == "flowtype":
             logging.warning(
@@ -872,15 +853,6 @@ class sink(Component):
             # handle is_onsite definition
             elif parameter == "is_onsite":
                 self.is_onsite = iv.validate(parameters["is_onsite"], "boolean")
-
-            # handle keys with no relevance for simulation
-            elif parameter in [
-                "icon",
-                "position_x",
-                "position_y",
-                "scenario_determined",
-            ]:
-                pass
 
             # Handle requests that are general attributes of components or generic attributes:
             else:
