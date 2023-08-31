@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 # IMPORT ENDOGENOUS COMPONENTS
-from factory_flexibility_model.simulation import scenario as sc
+from factory_flexibility_model.simulation import Scenario as sc
 
 
 def create_testscenario(data_path):

@@ -5,7 +5,7 @@ import pandas as pd
 
 # IMPORT ENDOGENOUS COMPONENTS
 from factory_flexibility_model.factory import Factory as fm
-from factory_flexibility_model.simulation import scenario as sc
+from factory_flexibility_model.simulation import Scenario as sc
 
 
 def create_steel_plant(data_path, plant_type, *, enable_log=None, enable_slacks=None):

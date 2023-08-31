@@ -42,9 +42,9 @@ def import_factory(data_path: str):
 
 def import_simulation(data_path: str):
     """
-    This function takes a path to a stored simulation - object. The Simulation is being imported and returned
-    :param data_path: Path to a valid simulation-object that has been created using simulation.save()
-    :return: fsimulation.simulation - object
+    This function takes a path to a stored Simulation - object. The Simulation is being imported and returned
+    :param data_path: Path to a valid Simulation-object that has been created using Simulation.save()
+    :return: fsimulation.Simulation - object
     """
 
     # check, if the requested file exists
@@ -57,13 +57,13 @@ def import_simulation(data_path: str):
         imported_simulation = pickle.load(f)
 
     # make sure that the imported data represents a factory-object
-    if not isinstance(imported_simulation, fs.simulation):
+    if not isinstance(imported_simulation, fs.Simulation):
         logging.critical(
-            f"ERROR: The given file does not contain a simulation.simulation-object"
+            f"ERROR: The given file does not contain a Simulation.Simulation-object"
         )
         raise Exception
 
     logging.info("SIMULATION IMPORT FROM FILE SUCCESSFUL")
 
-    # Return the imported simulation
+    # Return the imported Simulation
     return imported_simulation

@@ -1,34 +1,39 @@
-#IMPORTS
+# IMPORTS
+import logging
+
+import numpy as np
 import openpyxl
 import pandas as pd
-import logging
-import numpy as np
 import xlsxwriter
+
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.simulation.Simulation as sim
 
 # MAIN FUNCTIONS
 
-def write_results_to_xlsx(simulation: sim.simulation, path: str, *, filename: str = None):
+
+def write_results_to_xlsx(
+    simulation: sim.Simulation, path: str, *, filename: str = None
+):
     """
-    This function checks, if the energy/material - conservation at a Component has been fulfilled during simulation
-    :param simulation: [simulation.simulation-object]
+    This function checks, if the energy/material - conservation at a Component has been fulfilled during Simulation
+    :param simulation: [Simulation.Simulation-object]
     :param path: [string] path where the created excel-file shall be stored
-    :param name: [string] Optional: Name of the excel file, if left empty, the file will be called simulation.name_results.xlsx
+    :param name: [string] Optional: Name of the excel file, if left empty, the file will be called Simulation.name_results.xlsx
     :return: [Boolean] True if saving was successfull
     """
 
-    # check, that the simulation has already been performed
+    # check, that the Simulation has already been performed
     if not simulation.simulated:
         logging.warning(
-            "The simulation has to be solved before the results can be exported. Calling the simulation method now..."
+            "The Simulation has to be solved before the results can be exported. Calling the Simulation method now..."
         )
         simulation.simulate()
 
     # check, that results have been collected
     if not simulation.results_collected:
         logging.warning(
-            "The simulation results have not been processed yet. Calling the result processing method now..."
+            "The Simulation results have not been processed yet. Calling the result processing method now..."
         )
         simulation.__collect_results()
 
@@ -57,9 +62,9 @@ def write_results_to_xlsx(simulation: sim.simulation, path: str, *, filename: st
 
         # insert data
         if (
-                isinstance(result_dict[key], int)
-                or isinstance(result_dict[key], float)
-                or isinstance(result_dict[key], bool)
+            isinstance(result_dict[key], int)
+            or isinstance(result_dict[key], float)
+            or isinstance(result_dict[key], bool)
         ):
             worksheet.write(1, col, result_dict[key])
         else:
@@ -125,7 +130,9 @@ def import_xlsx_to_factory(data_path: str):
 
     return factory
 
+
 # UTILITY FUNCTIONS
+
 
 def __add_flows_to_blueprint(workbook: openpyxl.workbook, blueprint: bp.blueprint):
     """
@@ -155,10 +162,12 @@ def __add_flows_to_blueprint(workbook: openpyxl.workbook, blueprint: bp.blueprin
     return blueprint
 
 
-def __add_components_to_blueprint(workbook: openpyxl.workbook,
-                                  blueprint: bp.blueprint,
-                                  timeseries: str,
-                                  scenario_parameters: str):
+def __add_components_to_blueprint(
+    workbook: openpyxl.workbook,
+    blueprint: bp.blueprint,
+    timeseries: str,
+    scenario_parameters: str,
+):
     """
     This function adds all components specified in the given workbook to the given
     factory blueprint and then returns the edited blueprint
@@ -195,7 +204,9 @@ def __add_components_to_blueprint(workbook: openpyxl.workbook,
     return blueprint
 
 
-def __add_connections_to_blueprint(workbook: openpyxl.workbook, blueprint: bp.blueprint):
+def __add_connections_to_blueprint(
+    workbook: openpyxl.workbook, blueprint: bp.blueprint
+):
     """
     This function adds all connections specified in the given workbook
     to the given factory blueprint and then returns the edited blueprint
@@ -437,4 +448,3 @@ def __read_in_timeseries(data_path: str):
 
     timeseries = pd.read_excel(data_path, sheet_name="TIMESERIES")
     return timeseries
-

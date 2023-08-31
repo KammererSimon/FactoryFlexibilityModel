@@ -43,7 +43,7 @@ from kivymd.uix.textfield import MDTextField
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.input_validations as iv
 import factory_flexibility_model.io.factory_import as imp
-import factory_flexibility_model.simulation.scenario as sc
+import factory_flexibility_model.simulation.Scenario as sc
 import factory_flexibility_model.simulation.simulation as fs
 
 # IMPORT 3RD PARTY PACKAGES
@@ -1792,7 +1792,7 @@ class factory_GUIApp(MDApp):
 
     def run_simulation(self):
 
-        # prepare blueprint for execution of simulation
+        # prepare blueprint for execution of Simulation
         simulation_data = bp.blueprint()
 
         # include components
@@ -1845,13 +1845,13 @@ class factory_GUIApp(MDApp):
 
         factory = imp.import_factory_blueprint(simulation_data)
 
-        # create a scenario object with the given simulation parameters:
+        # create a scenario object with the given Simulation parameters:
         Testscenario = sc.scenario(self.selected_scenario["name"])
         Testscenario.number_of_timesteps = self.selected_scenario["timesteps"]
         Testscenario.timefactor = self.selected_scenario["time_factor"]
 
-        # call the factory factory to conduct the simulation
-        simulation = fs.simulation(
+        # call the factory factory to conduct the Simulation
+        simulation = fs.Simulation(
             factory, Testscenario, enable_simulation_log=True, enable_solver_log=True
         )
 
@@ -3538,7 +3538,7 @@ class factory_GUIApp(MDApp):
         def append_item(frame, component_name, parameter_name):
             """
             This subfunction creates a list entry representing a single Component parameter that has to be specified
-            for the simulation. The Item is being attached to the list_scenario_parameters-object
+            for the Simulation. The Item is being attached to the list_scenario_parameters-object
             """
 
             # create list entry with basic parameter description

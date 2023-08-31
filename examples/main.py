@@ -32,7 +32,7 @@ def simulate_dri(simulation_task, **kwargs):
         factory = simulation_task["factory"]
         scenario = simulation_task["scenario"]
 
-        # set variable simulation parameters in the scenario
+        # set variable Simulation parameters in the scenario
         if not simulation_task["layout"] == "Hydrogen":
             factory.set_configuration(
                 "Source Natural Gas",
@@ -48,7 +48,7 @@ def simulate_dri(simulation_task, **kwargs):
         ) * simulation_task["volatility"] + simulation_task["avg_electricity_price"]
         scenario.cost_electricity[scenario.cost_electricity < 0] = 0
 
-        simulation = fs.simulation(factory=factory, scenario=scenario)
+        simulation = fs.Simulation(factory=factory, scenario=scenario)
         t_start = time.time()
         simulation.simulate(
             threshold=0.01, solver_config={"max_solver_time": 250}, **kwargs
@@ -83,14 +83,14 @@ def script_based():
     )
 
     # SIMULATION
-    simulation = fs.simulation(
+    simulation = fs.Simulation(
         Testfactory,
         Testscenario,
     )
     simulation.simulate(treshold=0.001)
 
-    # simulation.save("Testsim", overwrite=True)
-    # simulation = imp.import_simulation("Testsim")
+    # Simulation.save("Testsim", overwrite=True)
+    # Simulation = imp.import_simulation("Testsim")
 
     simulation.create_dash(config["CASE"]["dashboard_version"])
 
@@ -104,7 +104,7 @@ def excel_import():
     )
 
     # SIMULATION
-    simulation = fs.simulation(
+    simulation = fs.Simulation(
         Testfactory,
         Testscenario,
     )
@@ -123,7 +123,7 @@ def create_simulation_file():
     )
 
     # SIMULATION
-    simulation = fs.simulation(
+    simulation = fs.Simulation(
         Testfactory,
         Testscenario,
     )
@@ -152,7 +152,6 @@ def blueprint_development():
     blueprint.import_from_file("examples\\DRI_steel_factory\\Layout.factory")
     factory = blueprint.to_factory()
 
-    scenario = sc.create_testscenario("C:\\Users\\smsikamm\\Documents\\Daten\\")
     simulation = fs.Simulation(factory=factory, scenario=scenario)
     simulation.simulate()
     simulation.create_dash()
@@ -288,7 +287,7 @@ def dri_results():
             "co2_capture_rate": "Ratio of captured CO2 vs produced CO2 [%]",
             "rate_h2_in_dri": "Ratio of DRI produced using Hydrogen vs total DRI production volume [%]",
             "h2_storage_rate": "Ratio of total Hydrogen taking the storage path vs the total amount of H2 being fed into DRI [%]",
-            "solver_time": "Required runtime of the simulation [s]",
+            "solver_time": "Required runtime of the Simulation [s]",
             "cost_electricity": "Average cost of purchased electricity resulting from the optimized operation profile [€/MWh]",
         },
         ignore_index=True,
@@ -385,4 +384,4 @@ def dri_results():
         "C:\\Users\\smsikamm\\Documents\\Daten\\DRI-Setups\\iteration test\\CCS_Auswertung.xlsx",
         index=False,
     )
-    # simulation.create_dash()
+    # Simulation.create_dash()

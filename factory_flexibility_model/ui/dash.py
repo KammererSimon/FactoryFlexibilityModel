@@ -1,5 +1,5 @@
 """ FACTORY DASH """
-""" This script sets up a webbased dashboard to visualizue the results of a simulation run using plotly dash"""
+""" This script sets up a webbased dashboard to visualizue the results of a Simulation run using plotly dash"""
 
 import copy
 import warnings
@@ -20,10 +20,10 @@ from plotly.subplots import make_subplots
 def create_dash(simulation):
     pass
 
-    # Check, that simulation has been performed and results are existing
+    # Check, that Simulation has been performed and results are existing
     if not simulation.simulated:
         warnings.warn(
-            "Scenario has not been simulated yet. Calling the simulation routine... If you want to execute it with specific parameters do it before calling the show_results-function)"
+            "Scenario has not been simulated yet. Calling the Simulation routine... If you want to execute it with specific parameters do it before calling the show_results-function)"
         )
         simulation.simulate()
 
@@ -166,7 +166,7 @@ def create_dash(simulation):
         "backgroundColor": style["card_color_dark"],
     }
     interpolation = {"smoothed": "spline", "linear": "linear", "discrete": "hv"}
-    T = simulation.scenario.number_of_timesteps
+    T = simulation.factory.timesteps
 
     # INITIALIZE COMPONENTS
 
@@ -1215,7 +1215,7 @@ def create_dash(simulation):
             ),
             dbc.Row(
                 dcc.Markdown(
-                    children=f"##### FACTORY LAYOUT: {simulation.factory.name} | SCENARIO: {simulation.scenario.name}"
+                    children=f"##### FACTORY LAYOUT: {simulation.factory.name}"
                 ),
                 style=style["H3"],
             ),
@@ -2115,10 +2115,10 @@ def create_dash(simulation):
             )
 
             # f"\n **Total Cooling:** {round(total_cooling)} {Component.flowtype.unit}\n " \
-            # f"\n **Total thermal losses:** {round(sum(simulation.result[Component.to_losses.name]))}{Component.flowtype.unit}\n" \
-            # f"\n **Max charging Power:** {round(max(simulation.result[Component.name]['temperature']))} °C\n " \
-            # f"\n **T min:** {round(min(simulation.result[Component.name]['temperature']))} °C\n " \
-            # f"\n **T average:** {round(simulation.result[Component.name]['temperature'].mean())} °C\n "
+            # f"\n **Total thermal losses:** {round(sum(Simulation.result[Component.to_losses.name]))}{Component.flowtype.unit}\n" \
+            # f"\n **Max charging Power:** {round(max(Simulation.result[Component.name]['temperature']))} °C\n " \
+            # f"\n **T min:** {round(min(Simulation.result[Component.name]['temperature']))} °C\n " \
+            # f"\n **T average:** {round(Simulation.result[Component.name]['temperature'].mean())} °C\n "
         else:
             fig = go.Figure()
             config = ""

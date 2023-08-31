@@ -18,7 +18,7 @@ class Component:
         self.visualize = (
             False  # If True a Graph of the resulting timeseries of the Component
         )
-        # will be plotted after simulation
+        # will be plotted after Simulation
         self.factory = (
             factory  # enables callbacks to the factory the Component is assigned to
         )
@@ -133,7 +133,7 @@ class Component:
 
     def set_parameter(self, timesteps: int, parameter: str, parameters: dict):
         """
-        This function is mostly an input validation, that checks, if the parameters that the user wants to set are compatible to each other and fullfill the data requirements of the simulation.
+        This function is mostly an input validation, that checks, if the parameters that the user wants to set are compatible to each other and fullfill the data requirements of the Simulation.
         # If all checks are passed the parameter given will be written to self
         :param: timesteps:  [int] number of timesteps of the current factory
         :param: parameter:  [str] Parameter out of the parameters-list that will be set during execution
@@ -229,11 +229,11 @@ class Component:
         # handle given availability timeseries
         elif parameter == "availability" and hasattr(self, parameter):
             # self.determined overrides the pmax_constraint in the optimization.
-            # Setting both is useless und may lead to an unexpected behavior of the simulation. check and warn the user:
+            # Setting both is useless und may lead to an unexpected behavior of the Simulation. check and warn the user:
             if self.determined:
                 logging.warning(
                     f"the power of Component {self.name} is already defined as determined. Availability has "
-                    f"been set, but will have no effect during the simulation"
+                    f"been set, but will have no effect during the Simulation"
                 )
 
             # Availability without power_max is useless:
@@ -311,7 +311,7 @@ class Component:
         elif hasattr(self, parameter):
             setattr(self, parameter, parameters[parameter])
             logging.warning(
-                f"The attribute {parameter} was found in {self.name}, but is not part of the ordinary configuration routine. It has been set to the given value without input validation. This could lead to errors during the simulation"
+                f"The attribute {parameter} was found in {self.name}, but is not part of the ordinary configuration routine. It has been set to the given value without input validation. This could lead to errors during the Simulation"
             )
 
         # handle with attributes that are not part of the specific Component
@@ -387,16 +387,16 @@ class Converter(Component):
             False  # determines, whether the maximum Power of the converter is limited
         )
         self.power_max = (
-            np.ones(factory.max_timesteps) * 1000000000
+            np.ones(factory.timesteps) * 1000000000
         )  # big M, just in case....
         self.power_min_limited = (
             False  # determines, whether the minimum Power of the converter is limited
         )
         self.power_min = np.zeros(
-            factory.max_timesteps
+            factory.timesteps
         )  # doesn't do anything as long as it's zero
         self.availability = np.ones(
-            factory.max_timesteps
+            factory.timesteps
         )  # used for all classes with power_max, to determine the maximum power timedependent. is initialized as all ones, so that it has no effect if not specificly adressed
         self.ramp_power_limited = (
             False  # Set "True, if the power gradient of the Component is limited
@@ -586,7 +586,7 @@ class Converter(Component):
                     raise Exception
             # handle efficiency parameters
             elif parameter == "delta_eta":
-                # delta_eta is split into two values within the simulation and the converter-object. The user can specify it symmetrically by just giving a value for "delta_eta".
+                # delta_eta is split into two values within the Simulation and the converter-object. The user can specify it symmetrically by just giving a value for "delta_eta".
                 # the given value will be used for both segments of the operation range
                 self.delta_eta_low = iv.validate(parameters["delta_eta"], "0..1")
                 self.delta_eta_high = iv.validate(parameters["delta_eta"], "0..1")
@@ -682,10 +682,10 @@ class Deadtime(Component):
             # HANDLE DEADTIME-SPECIFIC PARAMETERS
             if parameter == "delay":
                 self.delay = iv.validate(parameters["delay"], "integer")
-                if self.factory.max_timesteps <= self.delay:
+                if self.factory.timesteps <= self.delay:
                     logging.critical(
                         f"ERROR: Cannot set the delay of Component {self.name} to {self.delay}, "
-                        f"because the factory only allows for {self.factory.max_timesteps} timesteps"
+                        f"because the factory only allows for {self.factory.timesteps} timesteps"
                     )
                     raise Exception
             # HANDLE GENERAL PARAMETERS
@@ -728,7 +728,7 @@ class Sink(Component):
     def __init__(self, name: str, factory, *, flowtype: str = None):
         super().__init__(name, factory, flowtype=flowtype)
         self.availability = np.ones(
-            factory.max_timesteps
+            factory.timesteps
         )  # used for all classes with power_max, to determine the maximum power timedependent. is initialized as all ones, so that it has no effect if not specificly adressed
         self.causes_emissions = (
             False  # Does the usage of this sink cause any CO2-Emissions?
@@ -936,7 +936,7 @@ class Sink(Component):
             elif parameter == "is_onsite":
                 self.is_onsite = iv.validate(parameters["is_onsite"], "boolean")
 
-            # handle keys with no relevance for simulation
+            # handle keys with no relevance for Simulation
             elif parameter in [
                 "icon",
                 "position_x",
@@ -956,12 +956,12 @@ class Source(Component):
     def __init__(self, name: str, factory, *, flowtype: str = None):
         super().__init__(name, factory, flowtype=flowtype)
         self.availability = np.ones(
-            factory.max_timesteps
+            factory.timesteps
         )  # used for all classes with power_max, to determine the maximum power timedependent. is initialized as all ones, so that it has no effect if not specificly adressed
         self.causes_emissions = False  # Does the usage of the source create internal or external CO2-Emissions?
         self.chargeable = False  # Must be changed to "true", if the utilization of the source is connected with costs
         self.cost = np.zeros(
-            factory.max_timesteps
+            factory.timesteps
         )  # must be specified by set_configuration
         self.capacity_charge = 0  # Set a fixed capacity charge (Leistungspreis) that is being charged once per year.
         self.co2_emissions_per_unit = 0  # specifies, how much CO² is emitted for every unit consumed from the source
@@ -1154,14 +1154,14 @@ class Storage(Component):
         self.power_max_discharge = (
             0  # maximum discharging / unloading speed, initialized as almost unlimited
         )
-        self.soc_start = 0.5  # State of charge at the beginning of the simulation, initialized as 50%
-        self.soc_start_determined = True  # Determines, wether the SOC at the start/end of the simulation has to be the given value or wether it it up to the solver
-        self.sustainable = True  # Determines, wether the SOC has to be the same at the start and end of the simulation or not.
+        self.soc_start = 0.5  # State of charge at the beginning of the Simulation, initialized as 50%
+        self.soc_start_determined = True  # Determines, wether the SOC at the start/end of the Simulation has to be the given value or wether it it up to the solver
+        self.sustainable = True  # Determines, wether the SOC has to be the same at the start and end of the Simulation or not.
         self.to_losses = (
             []
         )  # placeholder for a pointer directing to the correct losses sink
         self.type = "storage"  # specify Component as storage
-        self.visualize = False  # Set True, if you want the simulation to create a plot of the charging behaviour
+        self.visualize = False  # Set True, if you want the Simulation to create a plot of the charging behaviour
 
         logging.debug(
             f"        - New storage {self.name} created with Component-id {self.component_id}"
@@ -1251,15 +1251,15 @@ class Thermalsystem(Component):
         self.is_sink = True  # thermal systems are a sinks
         self.is_source = True  # thermal systems are sources
         self.R = 10  # Thermal loss factor
-        self.sustainable = True  # Does the thermal system have to retain to it's starting temperature at the end of the simulation?
+        self.sustainable = True  # Does the thermal system have to retain to it's starting temperature at the end of the Simulation?
         self.temperature_ambient = (
-            np.ones(factory.max_timesteps) * 293.15
+            np.ones(factory.timesteps) * 293.15
         )  # set a standard value for the ambient temperature
         self.temperature_max = (
-            np.ones(factory.max_timesteps) * 5000
+            np.ones(factory.timesteps) * 5000
         )  # set maximum temperature to 5000 degrees for every timestep-> should be equal to "infinite"
         self.temperature_min = np.zeros(
-            factory.max_timesteps
+            factory.timesteps
         )  # set minimum temperature to zero degrees as a standard value
         self.temperature_start = (
             293.15  # starting temperature of the internal storage (=20°C)
@@ -1412,7 +1412,7 @@ class Triggerdemand(Component):
         self.output_material = []  # output material
         self.profile_length = []  # length of the given load profile
         self.Tend = (
-            factory.max_timesteps
+            factory.timesteps
         )  # last timestep of the allowed fullfilment interval. Initialized as the last timestep
         self.Tstart = 1  # first timestep of the allowed fulfilment interval. Initialized as the first timestep
         self.type = "triggerdemand"  # specify Component as a thermal system
@@ -1537,7 +1537,7 @@ class Slack(Component):
         self.is_source = True  # pools can act as a source
         self.type = "slack"  # identify Component as slack
         self.cost = (
-            np.ones(factory.max_timesteps) * 1000000000
+            np.ones(factory.timesteps) * 1000000000
         )  # Cost of utilization is set to a big M -> 1.000.000€/kW
         logging.debug(
             f"        - New Slack {self.name} created with Component-id {self.component_id}"
@@ -1660,7 +1660,7 @@ class Schedule(Component):
                     raise Exception
                 if max(self.demands[:, 1]) > timesteps:
                     logging.critical(
-                        f"ERROR in demand input data for {self.name}: Endpoint of at least one demand interval is after maximum simulation length."
+                        f"ERROR in demand input data for {self.name}: Endpoint of at least one demand interval is after maximum Simulation length."
                     )
                     raise Exception
                 if min(self.demands[:, 0]) <= 0:

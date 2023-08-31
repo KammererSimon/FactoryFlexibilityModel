@@ -1,5 +1,5 @@
 # SCENARIO
-# This script contains the scenario class wich is used to factory the outer circumstances for a simulation
+# This script contains the scenario class wich is used to factory the outer circumstances for a Simulation
 
 # IMPORT
 import logging
@@ -7,7 +7,17 @@ import logging
 
 # CODE START
 class Scenario:
-    def __init__(self, *, parameter_file: str = None, timeseries_file: str = None):
+    def __init__(
+        self,
+        *,
+        parameter_file: str = None,
+        timefactor: int = 1,
+        timeseries_file: str = None,
+    ):
+
+        # set timefactor
+        self.timefactor = timefactor
+
         # read in parameter.txt
         if parameter_file is not None:
             self.import_parameters(parameter_file)

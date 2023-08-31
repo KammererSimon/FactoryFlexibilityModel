@@ -14,7 +14,7 @@ from factory_flexibility_model.simulation import simulation as sm
 def calculate_sensitivities(factory, scenarios, **kwargs):
     """
     This function takes a factory layout, a list of scenarios and a list of factory variations (called sensitivities).
-    It performs the factory simulation for all combination of factories and scenarios implied in the given data
+    It performs the factory Simulation for all combination of factories and scenarios implied in the given data
     :param factory: factory_model.factory - object
     :param scenarios: list of scenario.scenario-objects
     :param kwargs:   only possible kwarg: "sensitivities" = list of component parameter variations in the format:
@@ -82,7 +82,7 @@ def __recursive_simulation_setup(
     :param scenarios: list of scenario.scenario-objects
     :param sensitivities:   list of component parameter variations in the format:
                             {component, attribute_name, value_min, value_max, number_of_steps}
-    :return: a list with all simulated factory_simulation.simulation-objects
+    :return: a list with all simulated factory_simulation.Simulation-objects
     """
 
     # initialize a variable to collect results
@@ -133,10 +133,10 @@ def __recursive_simulation_setup(
 def __calculate_scenarios(factory, simulation_description, scenarios, log):
     """
     This function takes a factory and a list of scenarios. It simulates the given factory within all scenarios and
-    returns a list with all solved simulation objects
+    returns a list with all solved Simulation objects
     :param factory: factory_model.factory-object
     :param scenarios: list of factory_scenario.scenario-objects
-    :return: list of solved factory_simulation.simulation-objects
+    :return: list of solved factory_simulation.Simulation-objects
     """
 
     # initialize a variable to collect the results
@@ -152,17 +152,17 @@ def __calculate_scenarios(factory, simulation_description, scenarios, log):
         if log:
             print(f"Simulating {simulation_description}")
 
-        # create a new simulation object
-        simulation = sm.simulation(
+        # create a new Simulation object
+        simulation = sm.Simulation(
             factory, scenario, enable_simulation_log=False, enable_solver_log=False
         )
 
-        # solve the simulation
+        # solve the Simulation
         simulation.simulate(treshold=0.00001)
 
-        # append the last simulation result to the list of solved simulations
+        # append the last Simulation result to the list of solved simulations
         results = results + [
-            {"simulation": simulation, "description": simulation_description.copy()}
+            {"Simulation": simulation, "description": simulation_description.copy()}
         ]
 
     # return th results
