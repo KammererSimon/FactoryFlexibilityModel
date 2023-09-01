@@ -39,6 +39,7 @@ class Blueprint:
             name=self.info["name"],
             timesteps=self.info["timesteps"],
             description=self.info["description"],
+            enable_slacks=self.info["enable_slacks"],
         )
         factory.create_essentials()
 
@@ -52,6 +53,7 @@ class Blueprint:
                 unit=flowtype["unit"],
                 color=flowtype["color"],
             )
+        print(factory.flowtypes["Electricity"])
 
         # CREATE COMPONENTS
         logging.info("Creating factory components")
@@ -81,13 +83,14 @@ class Blueprint:
         # CREATE CONNECTIONS
         # iterate over all specified connections
         logging.info("Creating connection")
-        for connection in self.connections.values():
+        for key, connection in self.connections.items():
 
             # add specified connection to the factory
             factory.add_connection(
                 connection["from"],
                 connection["to"],
                 name=connection["name"],
+                key=key,
                 flowtype=connection["flowtype"],
                 weight_source=connection["weight_source"],
                 weight_sink=connection["weight_sink"],
@@ -108,10 +111,6 @@ class Blueprint:
 
         # Check, if some specifications will be overwritten
         if not overwrite:
-            if not self.components:
-                print("The dictionary is empty.")
-            else:
-                print("The dictionary is not empty.")
             if not (
                 self.components
                 or self.connections

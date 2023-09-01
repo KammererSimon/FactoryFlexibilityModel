@@ -28,6 +28,8 @@ from gurobipy import GRB
 import factory_flexibility_model.input_validations as iv
 from factory_flexibility_model.ui import dash as fd
 
+logging.basicConfig(level=logging.WARNING)
+
 
 class Simulation:
     def __init__(
@@ -42,9 +44,7 @@ class Simulation:
         :param enable_time_tracking: Set to true if you want to track the time required for Simulation
         """
         # set general data for the Simulation
-        self.date_simulated = (
-            None  # date/time of the last Simulation conducted on the object
-        )
+        self.date_simulated = None
         self.enable_time_tracking = enable_time_tracking
         self.factory = factory  # Variable to store the factory for the Simulation
         self.interval_length = None  # realtime length of one Simulation interval...to be taken out of the scenario
@@ -752,16 +752,14 @@ class Simulation:
             logging.debug(
                 f"        - Constraint:   P_{component.name} <= P_{component.name}_max"
             )
-        else:
-            # TODO: Abhängig machen von slacks
+        elif self.factory.enable_slacks:
             self.m.addConstr(
                 gp.quicksum(
                     component.outputs[o].weight_source
                     * self.MVars[component.outputs[o].name]
                     for o in range(len(component.outputs))
                 )
-                * 1000
-                <= 1000000
+                <= 10000000
             )
             logging.debug(
                 f"        - Constraint:   P_{component.name} <= P_SECURITY                            -> Prevent Model from being unbounded"
@@ -1557,6 +1555,11 @@ class Simulation:
 
         # iterate components and search for scenario data keys
         for component in self.factory.components.values():
+
+            # continue with next component if component is a slack
+            if component.type == "slack":
+                continue
+
             # prepare a dict to collect configs
             required_configs = {}
 
@@ -1575,8 +1578,34 @@ class Simulation:
 
                     required_configs[key] = self.scenario.parameters[value_key]
 
+                # find $timeseries$ - keys
+                if isinstance(value, str) and value == "$timeseries$":
+
+                    # add required config to the dict if values are valid
+                    value_key = f"{component.key}/{key}"
+                    if not value_key in self.scenario.timeseries:
+                        logging.error(
+                            f"Missing parameter-key in the given scenario timeseries: '{value_key}'"
+                        )
+                        raise Exception
+
+                    required_configs[key] = self.scenario.timeseries[value_key]
+
             # set all configurations for the component
             self.factory.set_configuration(component.key, parameters=required_configs)
+
+            # iterate over all connections to get weights from scenario
+            for input_connection in component.inputs:
+                if input_connection.weight_sink == "$parameter$":
+                    input_connection.weight_sink = self.scenario.parameters[
+                        f"{input_connection.key}/weight_sink"
+                    ]
+
+            for output_connection in component.outputs:
+                if output_connection.weight_source == "$parameter$":
+                    output_connection.weight_source = self.scenario.parameters[
+                        f"{output_connection.key}/weight_source"
+                    ]
 
     def save(self, file_path: str, *, overwrite: bool = False):
         """

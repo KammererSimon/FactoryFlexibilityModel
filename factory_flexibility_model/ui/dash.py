@@ -349,7 +349,7 @@ def create_dash(simulation):
     }
     for c in simulation.factory.components:
         options[simulation.factory.components[c].type].append(
-            simulation.factory.components[c].name
+            simulation.factory.components[c].key
         )
     for arg in options:
         if options[arg] == []:

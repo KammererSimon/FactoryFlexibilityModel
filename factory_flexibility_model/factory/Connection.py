@@ -14,10 +14,11 @@ class Connection:
         sink,
         connection_id: str,
         *,
-        to_losses: bool = None,
         from_gains: bool = None,
         flowtype: str = None,
+        key: str = None,
         name: str = None,
+        to_losses: bool = None,
         weight: float = None,
         weight_source: float = None,
         weight_sink: float = None,
@@ -25,6 +26,7 @@ class Connection:
 
         # define attributes
         self.connection_id = connection_id  # give the connection a unique id in the list of existing connections
+        self.key = key
         self.source = source
         self.sink = sink
         self.weight_sink = 1
@@ -129,7 +131,7 @@ class Connection:
         # check, if the flowtype of the source Component is already known
         if self.source.flowtype.is_unknown():
             # if no: update it as well
-            self.source.update_flow(flowtype)
+            self.source.update_flowtype(flowtype)
 
         # if yes: is it compatible with the flowtype that has just been set for the connection?
         elif not self.source.flowtype == flowtype:

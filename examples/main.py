@@ -142,18 +142,18 @@ def blueprint_development():
     import factory_flexibility_model.factory.Blueprint as bp
     import factory_flexibility_model.simulation.Scenario as sc
 
-    # import tests.testscenario as sc
-    # blueprint = tb.create_test_blueprint()
-    # blueprint.save()
-
-    scenario = sc.Scenario(parameter_file=r"examples\DRI_steel_factory\parameters.txt")
+    scenario = sc.Scenario(
+        parameter_file=r"examples\Testlayout\parameters.txt",
+        timeseries_file=r"examples\Testlayout\timeseries.txt",
+    )
 
     blueprint = bp.Blueprint()
-    blueprint.import_from_file("examples\\DRI_steel_factory\\Layout.factory")
+    blueprint.import_from_file("examples\\Testlayout\\Layout.factory")
+    logging.basicConfig(level=logging.DEBUG)
     factory = blueprint.to_factory()
 
     simulation = fs.Simulation(factory=factory, scenario=scenario)
-    simulation.simulate()
+    simulation.simulate(log_solver=False)
     simulation.create_dash()
     print("check")
 

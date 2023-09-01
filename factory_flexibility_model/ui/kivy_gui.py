@@ -44,7 +44,7 @@ import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.input_validations as iv
 import factory_flexibility_model.io.factory_import as imp
 import factory_flexibility_model.simulation.Scenario as sc
-import factory_flexibility_model.simulation.simulation as fs
+import factory_flexibility_model.simulation.Simulation as fs
 
 # IMPORT 3RD PARTY PACKAGES
 
@@ -667,7 +667,7 @@ class factory_GUIApp(MDApp):
         )
 
         # Background variables for GUI
-        self.blueprint = bp.blueprint()  # Stores the current factory layout
+        self.blueprint = bp.Blueprint()  # Stores the current factory layout
         self.connection_edit_mode = (
             False  # is set to true while the user is building a new connection
         )
@@ -1410,7 +1410,7 @@ class factory_GUIApp(MDApp):
         delta_y = height / 20
 
         i_flow = 0
-        for flow in self.blueprint.flows.values():
+        for flow in self.blueprint.flowtypes.values():
             # set line color
             canvas.add(
                 Color(

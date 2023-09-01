@@ -15,6 +15,7 @@ from factory_flexibility_model.factory import Connection as factory_connection
 from factory_flexibility_model.factory import Flowtype as ft
 from factory_flexibility_model.factory import Unit
 
+logging.basicConfig(level=logging.WARNING)
 
 # CODE START
 class Factory:
@@ -168,15 +169,11 @@ class Factory:
 
         elif component_type == "slack":
             # call slack constructor
-            self.components[key] = factory_components.Slack(
-                key, self, flowtype=flowtype
-            )
+            self.components[key] = factory_components.Slack(key, self)
 
         elif component_type == "schedule":
             # call schedule constructor
-            self.components[key] = factory_components.Schedule(
-                key, self, flowtype=flowtype
-            )
+            self.components[key] = factory_components.Schedule(key, self)
         else:
             # if we end here the given type must have been invalid! -> Throw an error
             logging.critical(
@@ -194,6 +191,7 @@ class Factory:
         origin: factory_components.Component,
         destination: factory_components.Component,
         *,
+        key: str = None,
         to_losses: bool = False,
         name: str = None,
         flowtype: str = None,
@@ -226,6 +224,7 @@ class Factory:
             self.components[origin],
             self.components[destination],
             self.next_ids["connection"],
+            key=key,
             to_losses=to_losses,
             flowtype=flowtype,
             weight=weight,
