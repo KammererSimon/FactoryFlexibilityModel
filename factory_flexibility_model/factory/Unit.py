@@ -54,16 +54,16 @@ class Unit:
         It returns a string describing the data in the correct unit and magnitude.
         F.e: 15000000 + "flow" -> "1.5GW"
         :param value: [float] a numeric value in the base unit (kW/kg)
-        :param type: [string] "Flow" or "Flowrate"
+        :param type: [string] "flow" or "flowrate"
         :param digits: [int] Requested number of digits behind the decimal point; Standard: 2
         :return: [string] Description of the value with correct magnitude and unit
         """
 
         magnitude = np.argmin(abs(value - self.magnitudes))
 
-        if quantity_type == "flow":
+        if quantity_type in ("flow", "Flow"):
             return f"{round(value/self.magnitudes[magnitude], digits)}{self.units_flow[magnitude]}"
-        elif quantity_type == "flowrate":
+        elif quantity_type in ("flowrate", "Flow"):
             return f"{round(value/self.magnitudes[magnitude], digits)}{self.units_flowrate[magnitude]}"
         else:
             logging.error(
