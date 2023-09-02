@@ -1801,7 +1801,7 @@ def create_dash(simulation):
             figure_config,
             # title_text="BILANCE SUM AT POOL",
             xaxis_title="Simulation interval",
-            yaxis_title=f"{component.flowtype.suffix} [{component.inputs[0].flowtype.unit_flow}]",
+            yaxis_title=f"{component.flowtype.suffix} [{component.inputs[0].flowtype.unit.get_unit_flow()}]",
         )
         return fig
 
@@ -1869,7 +1869,7 @@ def create_dash(simulation):
         fig.update_layout(
             figure_config,
             xaxis_title="Timesteps",
-            yaxis_title=f"{component.flowtype_description} {component.flowtype.unit_flowrate()}",
+            yaxis_title=f"{component.flowtype_description} {component.flowtype.unit.get_unit_flowrate()}",
             showlegend=False,
         )
         fig.update_xaxes(linewidth=2, linecolor=style["axis_color"])
@@ -1888,16 +1888,19 @@ def create_dash(simulation):
         fig2.update_layout(
             figure_config,
             xaxis_title="Timesteps",
-            yaxis_title=f"€ / {component.flowtype.unit_flow}",
+            yaxis_title=f"€ / {component.flowtype.unit.get_unit_flow()}",
         )
 
-        source_sum = f"## {round(sum(simulation.result[component.name]['utilization'][t0:t1]))} {component.flowtype.unit_flow}"
-        source_minmax = f"## {round(min(simulation.result[component.name]['utilization'][t0:t1]))} - {round(max(simulation.result[component.name]['utilization'][t0:t1]))} {component.flowtype.unit_flowrate}"
+        source_sum = "## " + component.flowtype.unit.get_value_expression(
+            value=round(sum(simulation.result[component.name]["utilization"][t0:t1])),
+            quantity_type="flow",
+        )
+        source_minmax = f"## {round(min(simulation.result[component.name]['utilization'][t0:t1]))} - {round(max(simulation.result[component.name]['utilization'][t0:t1]))} {component.flowtype.unit.get_unit_flowrate()}"
         source_cost = f"## {round(sum(simulation.result[component.name]['utilization'][t0:t1] * component.cost[t0:t1]))} €"
         if component.power_max_limited:
-            source_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit_flowrate} / {round(((simulation.result[component.name]['utilization'][t0:t1] + 0.000001) / (component.power_max[t0:t1] * component.availability[t0:t1] + 0.000001)).mean() * 100)}%"
+            source_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit.get_unit_flowrate()} / {round(((simulation.result[component.name]['utilization'][t0:t1] + 0.000001) / (component.power_max[t0:t1] * component.availability[t0:t1] + 0.000001)).mean() * 100)}%"
         else:
-            source_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit_flowrate}"
+            source_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit.get_unit_flowrate()}"
 
         return fig, fig2, source_sum, source_cost, source_minmax, source_avg
 
@@ -1958,15 +1961,18 @@ def create_dash(simulation):
             figure_config,
             # title_text="UTILIZATION",
             xaxis_title="Timesteps",
-            yaxis_title=f"{component.flowtype_description} [{component.flowtype.unit_flowrate}]",
+            yaxis_title=f"{component.flowtype_description} [{component.flowtype.unit.get_unit_flowrate()}]",
         )
         fig.update_xaxes(linewidth=2, linecolor=style["axis_color"])
         fig.update_yaxes(
             linewidth=2, linecolor=style["axis_color"], range=[0, max(data) * 1.05]
         )
 
-        sink_sum = f"## {round(sum(simulation.result[component.name]['utilization'][t0:t1]))} {component.flowtype.unit_flow}"
-        sink_minmax = f"## {round(min(simulation.result[component.name]['utilization'][t0:t1]))} - {round(max(simulation.result[component.name]['utilization'][t0:t1]))} {component.flowtype.unit_flowrate}"
+        sink_sum = "## " + component.flowtype.unit.get_value_expression(
+            value=round(sum(simulation.result[component.name]["utilization"][t0:t1])),
+            quantity_type="flow",
+        )
+        sink_minmax = f"## {round(min(simulation.result[component.name]['utilization'][t0:t1]))} - {round(max(simulation.result[component.name]['utilization'][t0:t1]))} {component.flowtype.unit.get_unit_flowrate()}"
 
         cost = 0
         if component.chargeable:
@@ -1982,9 +1988,9 @@ def create_dash(simulation):
         sink_cost = f"## {round(cost)} €"
 
         if component.power_max_limited:
-            sink_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit_flowrate} / {round(((simulation.result[component.name]['utilization'][t0:t1] + 0.000001) / (component.power_max[t0:t1] * component.availability[t0:t1] + 0.000001)).mean() * 100)}%"
+            sink_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit.get_unit_flowrate()} / {round(((simulation.result[component.name]['utilization'][t0:t1] + 0.000001) / (component.power_max[t0:t1] * component.availability[t0:t1] + 0.000001)).mean() * 100)}%"
         else:
-            sink_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit_flowrate}"
+            sink_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit.get_unit_flowrate()}"
 
         return fig, sink_sum, sink_cost, sink_minmax, sink_avg
 
