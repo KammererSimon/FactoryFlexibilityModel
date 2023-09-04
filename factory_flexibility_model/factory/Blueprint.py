@@ -50,15 +50,41 @@ class Blueprint:
         )
         factory.create_essentials()
 
+        # CREATE UNITS
+        for key, unit in self.units.items():
+            try:
+                factory.add_unit(
+                    key=key,
+                    quantity_type=unit["quantity_type"],
+                    conversion_factor=unit["conversion_factor"],
+                    magnitudes=unit["magnitudes"],
+                    units_flow=unit["units_flow"],
+                    units_flowrate=unit["units_flowrate"],
+                )
+            except:
+                raise TypeError(f"Definition of unit {key} is incomplete or corrupted")
+
         # CREATE FLOWS
         logging.info("Creating Flowtypes")
         for key, flowtype in self.flowtypes.items():
+            # check for optional parameters
+            if "color" in flowtype:
+                color = flowtype["color"]
+            else:
+                color = "#999999"  # grey
+
+            if "description" in flowtype:
+                description = flowtype["description"]
+            else:
+                description = None
+
             # Add new flowtype to factory with given specifications
             factory.add_flowtype(
                 key,
                 name=flowtype["name"],
                 unit=flowtype["unit"],
-                color=flowtype["color"],
+                color=color,
+                description=description,
             )
 
         # CREATE COMPONENTS
@@ -111,10 +137,10 @@ class Blueprint:
 
         return factory
 
-    def import_from_file(self, filepath: str, *, overwrite: bool = False) -> bool:
-        """ "
+    def import_from_file(self, folder: str, *, overwrite: bool = False) -> bool:
+        """
         This function imports a  blueprint stored as .factory-file and sets all attributes of the blueprint according to the specified confidurations of the file
-        :param filepath: [string] path + filename of the data to import
+        :param folder: [string] path of the folder containing the Session
         :param overwrite: [boolean] determines, if the import is conducted even if some attributes of the blueprint have already been defined.
         :return: [true] if successfull
         """
@@ -133,27 +159,64 @@ class Blueprint:
                 )
                 return False
 
+        # Import Units
+        self.__import_units(folder)
+
+        # Import Flowtypes
+        self.__import_flowtypes(folder)
+
         # open yaml-file given by the user
         try:
-            with open(filepath) as file:
+            with open(f"{folder}\\Layout.factory") as file:
                 data = yaml.load(file, Loader=yaml.UnsafeLoader)
         except:
             logging.error(
-                f"The given file is not a valid .factory - blueprint file! ({filepath}"
+                rf"The given file is not a valid .factory - blueprint file! ({folder}\Layout.factory"
             )
             raise Exception
 
         # store imported date into the object
         self.components.update(data["components"])
         self.connections.update(data["connections"])
-        self.flowtypes.update(data["flowtypes"])
         if hasattr(data, "GUI_config"):
             self.GUI_config.update(data["GUI_config"])
         self.info.update(data["info"])
-        if hasattr(data, "units"):
-            self.units.update(data["units"])
 
         logging.info("Blueprint import successfull")
+
+    def __import_flowtypes(self, session_folder: str) -> bool:
+        """
+        This function checks for the file 'flowtypes.txt' in the session folder and imports all the information regarding required flowtypes for the layout and stores it in blueprint format under self.flowtypes.
+        :param session_folder: [str] Path to the root folder of the current session
+        :return: True if successfull
+        """
+        # open yaml-file given by the user
+        try:
+            with open(f"{session_folder}\\flowtypes.txt") as file:
+                data = yaml.load(file, Loader=yaml.UnsafeLoader)
+        except:
+            logging.error(
+                f"Flowtype definition file is missing or corrupted! ({session_folder}/flowtypes.txt"
+            )
+            raise Exception
+        self.flowtypes.update(data["flowtypes"])
+
+    def __import_units(self, session_folder: str) -> bool:
+        """
+        This function checks for the file 'units.txt' in the session folder and imports all the information regarding required unit types for the layout and stores it in blueprint format under self.units.
+        :param session_folder: [str] Path to the root folder of the current session
+        :return: True if successfull
+        """
+        # open yaml-file given by the user
+        try:
+            with open(f"{session_folder}\\units.txt") as file:
+                data = yaml.load(file, Loader=yaml.UnsafeLoader)
+        except:
+            logging.error(
+                f"Unit definition file is missing or corrupted! ({session_folder}/units.txt"
+            )
+            raise Exception
+        self.units.update(data)
 
     def save(self, *, path: str = None, filename: str = None) -> bool:
         """
