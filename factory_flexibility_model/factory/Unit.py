@@ -60,11 +60,11 @@ class Unit:
         """
         return self.quantity_type == "energy"
 
-    def is_material(self) -> bool:
+    def is_mass(self) -> bool:
         """
         :return: True, if the unit describes a material value
         """
-        return self.quantity_type == "material"
+        return self.quantity_type == "mass"
 
     def get_unit_flow(self) -> str:
         """
