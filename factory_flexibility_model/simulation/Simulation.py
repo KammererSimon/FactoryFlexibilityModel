@@ -1553,17 +1553,15 @@ class Simulation:
         # iterate components and search for scenario data keys
         for key, config in self.scenario.configurations.items():
             # set parameters for components
-            if key in self.factory.component_keys:
+            if key in self.factory.components.keys():
                 self.factory.set_configuration(key, parameters=config)
 
             # set weights of connections
             if key in self.factory.connections.keys():
                 if "weight_sink" in config:
                     self.factory.connections[key].weight_sink = config["weight_sink"]
-                    print("weight sink set")
                 if "weight_source" in config:
                     self.factory.connections[key].weight_sink = config["weight_source"]
-                    print("weight source set")
 
             # set all configurations for the component
             # self.factory.set_configuration(component.key, parameters=required_configs)
