@@ -32,6 +32,13 @@ class Blueprint:
         :return: [factory.factory] -> realization of the factory object described by the blueprint
         """
 
+        # Check, if the Blueprint already contains some objects
+        if self.components == {} or self.connections == {} or self.flowtypes == {}:
+            logging.error(
+                "The Blueprint doesn't contain a valid factory architecture. No Factory was created"
+            )
+            raise Exception
+
         # create a new factory with the parameters specified in the blueprint.
         # Input validation is happening within factory()-method
         logging.info("Creating factory object")
@@ -58,25 +65,46 @@ class Blueprint:
         logging.info("Creating factory components")
         # iterate over all Component types
         for component_key, component in self.components.items():
+            # check for optional parameters:
             if "flowtype" in component:
                 flowtype = component["flowtype"]
             else:
                 flowtype = None
+            if "name" in component:
+                name = component["name"]
+            else:
+                name = None
             # Add new Component to factory
-            factory.add_component(component_key, component["type"], flowtype=flowtype)
+            factory.add_component(
+                component_key, component["type"], flowtype=flowtype, name=name
+            )
 
         # CREATE CONNECTIONS
         # iterate over all specified connections
         logging.info("Creating connections")
         for key, connection in self.connections.items():
+            # check for optional parameters:
+            if "flowtype" in connection:
+                flowtype = connection["flowtype"]
+            else:
+                flowtype = None
+            if "name" in connection:
+                name = connection["name"]
+            else:
+                name = None
+            if "to_losses" in connection:
+                to_losses = connection["to_losses"]
+            else:
+                to_losses = False
+
             # add specified connection to the factory
             factory.add_connection(
                 connection["from"],
                 connection["to"],
-                name=connection["name"],
+                name=name,
                 key=key,
-                flowtype=connection["flowtype"],
-                to_losses=connection["to_losses"],
+                flowtype=flowtype,
+                to_losses=to_losses,
             )
 
         factory.check_validity()
@@ -115,6 +143,7 @@ class Blueprint:
             )
             raise Exception
 
+        # store imported date into the object
         self.components.update(data["components"])
         self.connections.update(data["connections"])
         self.flowtypes.update(data["flowtypes"])
