@@ -15,7 +15,7 @@ from factory_flexibility_model.factory import Connection as factory_connection
 from factory_flexibility_model.factory import Flowtype as ft
 from factory_flexibility_model.factory import Unit
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.DEBUG)
 
 # CODE START
 class Factory:
@@ -31,11 +31,8 @@ class Factory:
 
         # Initialize structure variables
         self.connections = {}
-        self.connection_keys = []
         self.components = {}
-        self.component_keys = []
         self.flowtypes = {}
-        self.flowtype_keys = []
         self.units = {}
 
         # Initialize user configurable variables
@@ -54,19 +51,8 @@ class Factory:
         self, key: str, component_type: str, *, flowtype: str = None, name: str = None
     ):
 
-        # make sure that the specified name is not already taken by a Component or flowtype
-        if (
-            key in self.component_keys
-            or key in self.flowtype_keys
-            or key in self.connection_keys
-        ):
-            logging.critical(
-                f"Cannot create Component {key} because the key is already assigned"
-            )
-            raise Exception
-
-        # Add name of the new Component to the namelist
-        self.component_keys.append(key)
+        # make sure, that the key is still unused
+        self.validate_key(key)
 
         # create new object of desired Component
         if component_type == "pool":
@@ -217,6 +203,10 @@ class Factory:
         :param weight_source: [float] Specifies the weighting factor of the connection at the source
         :param weight: [float] Specifies the weighting factors of the connection both at the sink and source
         """
+
+        # make sure, that the key is still unused
+        self.validate_key(key)
+
         # check, if specified sink and source components exist
         self.check_existence(origin)
         self.check_existence(destination)
@@ -247,12 +237,118 @@ class Factory:
 
         # insert the new connection into the connection_list of the factory
         self.connections[key] = new_connection
-        self.connection_keys.append(key)
 
         # writelog
         logging.debug(
             f"        - New connection {new_connection.name} of flowtype {new_connection.flowtype.name} added between {self.components[origin].name} and {self.components[destination].name} with connection_key {key}"
         )
+
+    def add_flowtype(
+        self,
+        key: str,
+        *,
+        unit: str | Unit.Unit = "unit",
+        to_losses: bool = None,
+        description: str = None,
+        color: str | list[float] = None,
+        name: str = None,
+    ):
+        """
+        This function creates a new flowtype-object and adds it to the factory
+        :param name: [String] name identifier for the new flowtype (string)
+        :param to_losses: [Boolean] Specifies if the connection is deducting losses
+        :param description: [String] Description of the flow, just for GUI and labeling purposes
+        :param color: [String; #XXXXXX] Color code for displaying the flow in GUI and Figures
+        """
+
+        # make sure, that the key is still unused
+        self.validate_key(key)
+
+        # make sure, that "unit" contains an actual unit object
+        if isinstance(unit, str):
+            unit = self.units[unit]
+
+        # create a new flowtype with specified parameters and store it in the factory.flows - dictionary
+        self.flowtypes[key] = ft.Flowtype(
+            key,
+            unit=unit,
+            represents_losses=to_losses,
+            description=description,
+            color=color,
+            name=name,
+        )
+
+        logging.debug(f"        - New flowtype added: {self.flowtypes[key].name}")
+
+    def add_unit(
+        self,
+        key: str,
+        quantity_type: str = "energy",
+        conversion_factor: float = 1,
+        magnitudes=1,
+        units_flow="kWh",
+        units_flowrate="cxxcvbkW",
+    ):
+        """
+        This function adds a unit specification to the factory by adding it to the self.units-dict as a unit.Unit-object under the given key.
+        Handing over "energy", "mass" or "unit" will result in the initialization in the three base unittypes that are hardcoded within this package.
+
+        :param key: [str] identifier for the new unit
+        :param quantity_type: [str] "mass", "energy" or "unknown"
+        :param conversion_factor: The factor that transforms one unit of the given quantity to one unit of the base quantity of the quantity type
+        :param magnitudes: [float list] A list of magnitudes that different prefixes for the unit are resembling. f.E. [1, 10, 100, 1000]
+        :param units_flow: [str list] A list of units-descriptors that correspond to the given magnitudes when considering a flow f.e. [g, kg, t]
+        :param units_flowrate: [str list] A list of units-descriptors that correspond to the given magnitudes when considering a flowrate f.e. [g/h, kg/h, t/h]
+        :return: [bool] True if successfull
+        """
+
+        # make sure, that the key is still unused
+        self.validate_key(key)
+
+        if key == "energy":
+            self.units["energy"] = Unit.Unit(
+                key="energy",
+                quantity_type="energy",
+                conversion_factor=1,
+                magnitudes=[1, 1000, 1000000, 1000000000, 1000000000000],
+                units_flow=["kWh", "Wh", "GWh", "TWh", "PWh"],
+                units_flowrate=["kW", "MW", "GW", "TW", "PW"],
+            )
+        elif key == "mass":
+            self.units["mass"] = Unit.Unit(
+                key="mass",
+                quantity_type="mass",
+                conversion_factor=1,
+                magnitudes=[1, 1000, 1000000, 1000000000, 1000000000000],
+                units_flow=["g", "kg", "kt", "mt", "gt"],
+                units_flowrate=["kg/h", "t/h", "kt/h", "mt/h", "gt/h"],
+            )
+        elif key == "unit":
+            self.units["unit"] = Unit.Unit(
+                key="unit",
+                quantity_type="unknown",
+                conversion_factor=1,
+                magnitudes=[1, 1000, 1000000, 1000000000, 1000000000000],
+                units_flow=["Units", "k Units", "m. Units", "bn. Units", "T. Units"],
+                units_flowrate=[
+                    "Units/h",
+                    "k Units/h",
+                    "m. Units/h",
+                    "bn. Units/h",
+                    "trillion Units/h",
+                ],
+            )
+        else:
+            self.units[key] = Unit.Unit(
+                key=key,
+                quantity_type=quantity_type,
+                conversion_factor=conversion_factor,
+                magnitudes=magnitudes,
+                units_flow=units_flow,
+                units_flowrate=units_flowrate,
+            )
+
+        logging.debug(f"        - New unit added: {key}")
 
     def save(self, file_path: str, *, overwrite: bool = False):
         """
@@ -303,8 +399,8 @@ class Factory:
         :param key: [string] name/key of a Component in the factory
         :return: [Boolean]
         """
-        # check, if the name exists in self.component_keys
-        if key not in self.component_keys:
+        # check, if the name exists in self.component_s
+        if key not in self.components.keys():
             logging.critical(f"Component {key} does not exist")
             raise Exception
 
@@ -325,88 +421,46 @@ class Factory:
         """
         This creates a basic set of the most important units and flowtypes that might be used in a typical Simulation setup:
         Units:
-            - [key: "kW"]    Basic energy unit in kWh | kW
-            - [key: "kg"]   Basic material unit in kg | kg/h
+            - [key: "energy"]    Basic energy unit in kWh | kW
+            - [key: "mass"]   Basic material unit in kg | kg/h
             - [key: "unit"] Basic quantity unit in units | units/h
         Flowtypes:
-            - Heat in ["kW"]
-            - material_losses in ["kg"]
-            - energy_losses in ["kW"]
+            - material_losses in ["mass"]
+            - energy_losses in ["energy"]
+            - heat in ["energy"]
             - unknown in ["unit"]
         """
 
         # initialize basic units
-        self.units["kW"] = Unit.Unit(key="kW")
-        self.units["kg"] = Unit.Unit(key="kg")
-        self.units["units"] = Unit.Unit(key="units")
+        self.add_unit("energy")
+        self.add_unit("mass")
+        self.add_unit("unit")
 
         # initialize basic flowtypes
-        self.flowtypes["heat"] = ft.Flowtype(
-            "heat", color="#41719C", unit=self.units["kW"]
-        )
-
         self.flowtypes["material_losses"] = ft.Flowtype(
             "material_losses",
-            unit=self.units["kg"],
-            color="#444444",
-            suffix="",
+            unit=self.units["mass"],
+            color="#666666",
             represents_losses=True,
         )
         self.flowtypes["energy_losses"] = ft.Flowtype(
             "energy_losses",
-            unit=self.units["kW"],
-            color="#444444",
-            suffix="",
+            unit=self.units["energy"],
+            color="#666666",
             represents_losses=True,
+        )
+
+        self.flowtypes["heat"] = ft.Flowtype(
+            "heat",
+            unit=self.units["energy"],
+            color="#996666",
         )
 
         self.flowtypes["unknown"] = ft.Flowtype(
             "unknown",
-            suffix="",
-            unit=self.units["units"],
+            unit=self.units["unit"],
             color="#999999",
         )
-
-    def add_flowtype(
-        self,
-        key: str,
-        *,
-        unit: str | Unit.Unit = "unit",
-        to_losses: bool = None,
-        description: str = None,
-        color: str | list[float] = None,
-        name: str = None,
-    ):
-        """
-        This function creates a new flowtype-object and adds it to the factory
-        :param name: [String] name identifier for the new flowtype (string)
-        :param to_losses: [Boolean] Specifies if the connection is deducting losses
-        :param description: [String] Description of the flow, just for GUI and labeling purposes
-        :param color: [String; #XXXXXX] Color code for displaying the flow in GUI and Figures
-        """
-
-        # make sure, that the name is still unused
-        if key in self.component_keys or key in self.flowtype_keys:
-            # if not: throw an error
-            logging.critical(
-                f"Cannot create Flowtype {key} because the key is already assigned"
-            )
-            raise Exception
-
-        # create a new flowtype with specified parameters and store it in the factory.flows - dictionary
-        self.flowtypes[key] = ft.Flowtype(
-            key,
-            unit=unit,
-            represents_losses=to_losses,
-            description=description,
-            color=color,
-            name=name,
-        )
-
-        # add the new flowtype to the list of flowtype-keys
-        self.flowtype_keys.append(key)
-
-        logging.debug(f"        - New flowtype added: {self.flowtypes[key].name}")
 
     def check_validity(self):
         """
@@ -635,3 +689,15 @@ class Factory:
                 flowtype=self.components[key].flowtype,
                 weight=0.01,
             )
+
+    def validate_key(self, key):
+        if (
+            key in self.components.keys()
+            or key in self.connections.keys()
+            or key in self.flowtypes.keys()
+            or key in self.units.keys()
+        ):
+            raise AttributeError(
+                f"Redundant key detected! '{key}' is already assigned to an existing instance!"
+            )
+        return True
