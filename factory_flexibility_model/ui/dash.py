@@ -167,6 +167,8 @@ def create_dash(simulation):
     }
     interpolation = {"smoothed": "spline", "linear": "linear", "discrete": "hv"}
     T = simulation.factory.timesteps
+    component_key_list = list(simulation.factory.components.keys())
+    connection_key_list = list(simulation.factory.connections.keys())
 
     # INITIALIZE COMPONENTS
 
@@ -1251,10 +1253,10 @@ def create_dash(simulation):
                         np.array(
                             [
                                 [
-                                    simulation.factory.component_keys.index(
+                                    component_key_list.index(
                                         simulation.factory.connections[i].source.key
                                     ),
-                                    simulation.factory.component_keys.index(
+                                    component_key_list.index(
                                         simulation.factory.connections[i].sink.key
                                     ),
                                     sum(
@@ -1262,7 +1264,7 @@ def create_dash(simulation):
                                             simulation.factory.connections[i].key
                                         ]
                                     ),
-                                    simulation.factory.connection_keys.index(
+                                    connection_key_list.index(
                                         simulation.factory.connections[i].key
                                     ),
                                 ]
@@ -1281,10 +1283,10 @@ def create_dash(simulation):
                         np.array(
                             [
                                 [
-                                    simulation.factory.component_keys.index(
+                                    component_key_list.index(
                                         simulation.factory.connections[i].source.key
                                     ),
-                                    simulation.factory.component_keys.index(
+                                    component_key_list.index(
                                         simulation.factory.connections[i].sink.key
                                     ),
                                     sum(
@@ -1292,7 +1294,7 @@ def create_dash(simulation):
                                             simulation.factory.connections[i].key
                                         ]
                                     ),
-                                    simulation.factory.connection_keys.index(
+                                    simulation.factory.connections.keys().index(
                                         simulation.factory.connections[i].key
                                     ),
                                 ]
@@ -1310,14 +1312,14 @@ def create_dash(simulation):
                     np.array(
                         [
                             [
-                                simulation.factory.component_keys.index(
+                                component_key_list.index(
                                     simulation.factory.connections[i].source.key
                                 ),
-                                simulation.factory.component_keys.index(
+                                component_key_list.index(
                                     simulation.factory.connections[i].sink.key
                                 ),
                                 simulation.factory.connections[i].weight_source,
-                                simulation.factory.connection_keys.index(
+                                connection_key_list.index(
                                     simulation.factory.connections[i].key
                                 ),
                             ]
@@ -1341,10 +1343,10 @@ def create_dash(simulation):
                         np.array(
                             [
                                 [
-                                    simulation.factory.component_keys.index(
+                                    component_key_list.index(
                                         simulation.factory.connections[i].source.key
                                     ),
-                                    simulation.factory.component_keys.index(
+                                    component_key_list.index(
                                         simulation.factory.connections[i].sink.key
                                     ),
                                     sum(
@@ -1352,7 +1354,7 @@ def create_dash(simulation):
                                             simulation.factory.connections[i].key
                                         ]
                                     ),
-                                    simulation.factory.connection_keys.index(
+                                    connection_key_list.index(
                                         simulation.factory.connections[i].key
                                     ),
                                 ]
@@ -1375,10 +1377,10 @@ def create_dash(simulation):
                         np.array(
                             [
                                 [
-                                    simulation.factory.component_keys.index(
+                                    component_key_list.index(
                                         simulation.factory.connections[i].source.key
                                     ),
-                                    simulation.factory.component_keys.index(
+                                    component_key_list.index(
                                         simulation.factory.connections[i].sink.key
                                     ),
                                     sum(
@@ -1386,7 +1388,7 @@ def create_dash(simulation):
                                             simulation.factory.connections[i].key
                                         ]
                                     ),
-                                    simulation.factory.connection_keys.index(
+                                    simulation.factory.connections.keys().index(
                                         simulation.factory.connections[i].key
                                     ),
                                 ]
@@ -1508,13 +1510,13 @@ def create_dash(simulation):
         if user_input == "Energy Flows":
             title_in = "##### DISTRIBUTION OF ENERGY INPUTS"
             title_out = "##### DISTRIBUTION OF ENERGY OUTPUTS"
-            input_info = f"## {simulation.factory.units['kW'].get_value_expression(sum(values_in), 'flow')}"
-            output_info = f"## {simulation.factory.units['kW'].get_value_expression(sum(values_out), 'flow')}"
+            input_info = f"## {simulation.factory.units['energy'].get_value_expression(sum(values_in), 'flow')}"
+            output_info = f"## {simulation.factory.units['energy'].get_value_expression(sum(values_out), 'flow')}"
         elif user_input == "Material Flows":
             title_in = "##### DISTRIBUTION OF MATERIAL INPUTS"
             title_out = "##### DISTRIBUTION OF MATERIAL OUTPUTS"
-            input_info = f"## {simulation.factory.units['kg'].get_value_expression(sum(values_in), 'flow')}"
-            output_info = f"## {simulation.factory.units['kg'].get_value_expression(sum(values_out), 'flow')}"
+            input_info = f"## {simulation.factory.units['mass'].get_value_expression(sum(values_in), 'flow')}"
+            output_info = f"## {simulation.factory.units['mass'].get_value_expression(sum(values_out), 'flow')}"
         elif user_input == "Energy Losses" or user_input == "Material Losses":
             title_in = "##### ORIGINS OF LOSSES"
             title_out = ""
@@ -1825,7 +1827,7 @@ def create_dash(simulation):
             figure_config,
             # title_text="BILANCE SUM AT POOL",
             xaxis_title="Simulation interval",
-            yaxis_title=f"{component.flowtype.suffix} [{component.inputs[0].flowtype.unit.get_unit_flow()}]",
+            yaxis_title=f"{component.flowtype.name} [{component.inputs[0].flowtype.unit.get_unit_flow()}]",
         )
         return fig
 
@@ -2120,7 +2122,7 @@ def create_dash(simulation):
             config = (
                 f"\n **Capacity:** {component.capacity} {component.flowtype.unit.get_unit_flow()}\n"
                 f"\n **Base efficiency:** {component.efficiency * 100} %\n"
-                f"\n **SOC start/end:** {component.soc_start * component.capacity} {component.flowtype.unit.get_unit_flow()} ({component.soc_start * 100}%)\n"
+                f"\n **SOC start:** {component.soc_start * component.capacity} {component.flowtype.unit.get_unit_flow()} ({component.soc_start * 100}%)\n"
                 f"\n **Leakage per timestep:** \n"
                 f"\n * {component.leakage_time} % of total Capacity\n"
                 f"\n * {component.leakage_SOC} % of SOC\n"
@@ -2131,6 +2133,7 @@ def create_dash(simulation):
                 f"\n **Outputs:** \n"
                 f"\n {outputs} \n"
             )
+
             results = (
                 f"\n **Total Inflow:** {component.flowtype.unit.get_value_expression(round(input_sum), 'flow')}\n"
                 f"\n **Total Outflow:** {component.flowtype.unit.get_value_expression(round(output_sum), 'flow')}\n"
