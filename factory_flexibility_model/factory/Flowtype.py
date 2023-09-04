@@ -89,7 +89,7 @@ class Flowtype:
         :return: True/false
         """
 
-        return self.unit.is_material()
+        return self.unit.is_mass()
 
     def is_losses(self) -> bool:
         """
