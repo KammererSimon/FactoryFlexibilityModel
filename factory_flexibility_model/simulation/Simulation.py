@@ -38,7 +38,7 @@ class Simulation:
         scenario=None,
         factory=None,
         enable_time_tracking=False,
-        name="UnspecifiedSimulation",
+        name="Unspecified Simulation",
     ):
         """
         :param enable_time_tracking: Set to true if you want to track the time required for Simulation
