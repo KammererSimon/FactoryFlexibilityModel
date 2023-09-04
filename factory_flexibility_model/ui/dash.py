@@ -1251,16 +1251,20 @@ def create_dash(simulation):
                         np.array(
                             [
                                 [
-                                    simulation.factory.connections[
-                                        i
-                                    ].source.component_id,
-                                    simulation.factory.connections[i].sink.component_id,
+                                    simulation.factory.component_keys.index(
+                                        simulation.factory.connections[i].source.key
+                                    ),
+                                    simulation.factory.component_keys.index(
+                                        simulation.factory.connections[i].sink.key
+                                    ),
                                     sum(
                                         simulation.result[
-                                            simulation.factory.connections[i].name
+                                            simulation.factory.connections[i].key
                                         ]
                                     ),
-                                    simulation.factory.connections[i].connection_id,
+                                    simulation.factory.connection_keys.index(
+                                        simulation.factory.connections[i].key
+                                    ),
                                 ]
                             ]
                         ),
@@ -1277,16 +1281,20 @@ def create_dash(simulation):
                         np.array(
                             [
                                 [
-                                    simulation.factory.connections[
-                                        i
-                                    ].source.component_id,
-                                    simulation.factory.connections[i].sink.component_id,
+                                    simulation.factory.component_keys.index(
+                                        simulation.factory.connections[i].source.key
+                                    ),
+                                    simulation.factory.component_keys.index(
+                                        simulation.factory.connections[i].sink.key
+                                    ),
                                     sum(
                                         simulation.result[
-                                            simulation.factory.connections[i].name
+                                            simulation.factory.connections[i].key
                                         ]
                                     ),
-                                    simulation.factory.connections[i].connection_id,
+                                    simulation.factory.connection_keys.index(
+                                        simulation.factory.connections[i].key
+                                    ),
                                 ]
                             ]
                         ),
@@ -1302,15 +1310,22 @@ def create_dash(simulation):
                     np.array(
                         [
                             [
-                                simulation.factory.connections[i].source.component_id,
-                                simulation.factory.connections[i].sink.component_id,
+                                simulation.factory.component_keys.index(
+                                    simulation.factory.connections[i].source.key
+                                ),
+                                simulation.factory.component_keys.index(
+                                    simulation.factory.connections[i].sink.key
+                                ),
                                 simulation.factory.connections[i].weight_source,
-                                simulation.factory.connections[i].connection_id,
+                                simulation.factory.connection_keys.index(
+                                    simulation.factory.connections[i].key
+                                ),
                             ]
                         ]
                     ),
                     axis=0,
                 )
+
                 # add the color of the new connection to the colorlist
                 connection_colorlist.append(
                     simulation.factory.connections[i].flowtype.color.hex
@@ -1318,7 +1333,7 @@ def create_dash(simulation):
             elif user_input == "Energy Losses":
                 if (
                     simulation.factory.connections[i].flowtype.is_losses()
-                    and simulation.factory.connections[i].flowtype.unit.resource_type
+                    and simulation.factory.connections[i].flowtype.unit.quantity_type
                     == "energy"
                 ):
                     connection_list = np.append(
@@ -1326,16 +1341,20 @@ def create_dash(simulation):
                         np.array(
                             [
                                 [
-                                    simulation.factory.connections[
-                                        i
-                                    ].source.component_id,
-                                    simulation.factory.connections[i].sink.component_id,
+                                    simulation.factory.component_keys.index(
+                                        simulation.factory.connections[i].source.key
+                                    ),
+                                    simulation.factory.component_keys.index(
+                                        simulation.factory.connections[i].sink.key
+                                    ),
                                     sum(
                                         simulation.result[
-                                            simulation.factory.connections[i].name
+                                            simulation.factory.connections[i].key
                                         ]
                                     ),
-                                    simulation.factory.connections[i].connection_id,
+                                    simulation.factory.connection_keys.index(
+                                        simulation.factory.connections[i].key
+                                    ),
                                 ]
                             ]
                         ),
@@ -1348,23 +1367,28 @@ def create_dash(simulation):
             elif user_input == "Material Losses":
                 if (
                     simulation.factory.connections[i].flowtype.is_losses()
-                    and simulation.factory.connections[i].flowtype.type == "material"
+                    and simulation.factory.connections[i].flowtype.unit.quantity_type
+                    == "material"
                 ):
                     connection_list = np.append(
                         connection_list,
                         np.array(
                             [
                                 [
-                                    simulation.factory.connections[
-                                        i
-                                    ].source.component_id,
-                                    simulation.factory.connections[i].sink.component_id,
+                                    simulation.factory.component_keys.index(
+                                        simulation.factory.connections[i].source.key
+                                    ),
+                                    simulation.factory.component_keys.index(
+                                        simulation.factory.connections[i].sink.key
+                                    ),
                                     sum(
                                         simulation.result[
-                                            simulation.factory.connections[i].name
+                                            simulation.factory.connections[i].key
                                         ]
                                     ),
-                                    simulation.factory.connections[i].connection_id,
+                                    simulation.factory.connection_keys.index(
+                                        simulation.factory.connections[i].key
+                                    ),
                                 ]
                             ]
                         ),
@@ -1427,13 +1451,13 @@ def create_dash(simulation):
             if component.type == "source":
                 if component.flowtype.is_energy() and user_input == "Energy Flows":
                     values_in = np.append(
-                        values_in, sum(simulation.result[component.name]["utilization"])
+                        values_in, sum(simulation.result[component.key]["utilization"])
                     )
                     names_in.append(component.name)
 
                 if component.flowtype.is_material() and user_input == "Material Flows":
                     values_in = np.append(
-                        values_in, sum(simulation.result[component.name]["utilization"])
+                        values_in, sum(simulation.result[component.key]["utilization"])
                     )
                     names_in.append(component.name)
 
@@ -1441,7 +1465,7 @@ def create_dash(simulation):
                 if component.flowtype.is_energy() and user_input == "Energy Flows":
                     values_out = np.append(
                         values_out,
-                        sum(simulation.result[component.name]["utilization"]),
+                        sum(simulation.result[component.key]["utilization"]),
                     )
                     names_out.append(component.name)
 
@@ -1451,7 +1475,7 @@ def create_dash(simulation):
                 ):
                     values_out = np.append(
                         values_out,
-                        sum(simulation.result[component.name]["utilization"]),
+                        sum(simulation.result[component.key]["utilization"]),
                     )
                     names_out.append(component.name)
         if user_input == "Energy Losses":
@@ -1459,7 +1483,7 @@ def create_dash(simulation):
                 connection = simulation.factory.connections[c]
                 if connection.flowtype.is_energy() and connection.flowtype.is_losses():
                     values_in = np.append(
-                        values_in, sum(simulation.result[connection.name])
+                        values_in, sum(simulation.result[connection.key])
                     )
                     names_in.append(connection.source.name)
         if user_input == "Material Losses":
@@ -1470,7 +1494,7 @@ def create_dash(simulation):
                     and connection.flowtype.is_losses()
                 ):
                     values_in = np.append(
-                        values_in, sum(simulation.result[connection.name])
+                        values_in, sum(simulation.result[connection.key])
                     )
                     names_in.append(connection.source.name)
         df_in = {"values": values_in, "names": names_in}
@@ -1544,11 +1568,11 @@ def create_dash(simulation):
             if component.power_max_limited:
                 Pmax = int(max(component.power_max))
             else:
-                Pmax = round(max(simulation.result[component.name]["utilization"])) + 10
+                Pmax = round(max(simulation.result[component.key]["utilization"])) + 10
 
             # plot utilization
             data = (
-                simulation.result[component.name]["utilization"][t0:t1]
+                simulation.result[component.key]["utilization"][t0:t1]
                 / simulation.scenario.timefactor
                 * simulation.factory.timefactor
             )
@@ -1727,11 +1751,11 @@ def create_dash(simulation):
             results = ""
             results = (
                 results
-                + f"\n **Total Conversion**: {round(sum(simulation.result[component.name]['utilization']))} SU \n"
-                f"\n **Highest Utilization**: {round(max(simulation.result[component.name]['utilization']))} SU/Δt \n"
-                f"\n **Lowest Utilization**: {round(min(simulation.result[component.name]['utilization']))} SU/Δt \n "
-                f"\n **Average Utilization**: {round(simulation.result[component.name]['utilization'].mean())} SU/Δt \n"
-                f"\n **Activation Time**: {sum(simulation.result[component.name]['utilization'] > 0.001)} Intervals ({round(sum(simulation.result[component.name]['utilization'] > 0.001) / T *100)}% of time)\n"
+                + f"\n **Total Conversion**: {round(sum(simulation.result[component.key]['utilization']))} SU \n"
+                f"\n **Highest Utilization**: {round(max(simulation.result[component.key]['utilization']))} SU/Δt \n"
+                f"\n **Lowest Utilization**: {round(min(simulation.result[component.key]['utilization']))} SU/Δt \n "
+                f"\n **Average Utilization**: {round(simulation.result[component.key]['utilization'].mean())} SU/Δt \n"
+                f"\n **Activation Time**: {sum(simulation.result[component.key]['utilization'] > 0.001)} Intervals ({round(sum(simulation.result[component.key]['utilization'] > 0.001) / T *100)}% of time)\n"
             )
 
         else:
@@ -1760,18 +1784,18 @@ def create_dash(simulation):
             "darkmint", list(np.linspace(0.3, 1, len(component.inputs)))
         )
         for i in range(0, len(component.inputs)):
-            if max(simulation.result[component.inputs[i].name][t0:t1]) > 0:
+            if max(simulation.result[component.inputs[i].key][t0:t1]) > 0:
                 fig.add_trace(
                     go.Scatter(
                         x=x,
-                        y=np.array(simulation.result[component.inputs[i].name][t0:t1])
+                        y=np.array(simulation.result[component.inputs[i].key][t0:t1])
                         / simulation.scenario.timefactor
                         * simulation.factory.timefactor,
                         hoverinfo="x",
                         mode="lines",
                         stackgroup="one",
                         line_shape=interpolation[linestyle],
-                        name=f" Inflow from {component.inputs[i].source.name}",
+                        name=f" Inflow from {component.inputs[i].source.key}",
                         line={"color": c[i]},
                     )
                 )
@@ -1781,11 +1805,11 @@ def create_dash(simulation):
             "peach", list(np.linspace(0.3, 1, len(component.outputs)))
         )
         for i in range(0, len(component.outputs)):
-            if max(simulation.result[component.outputs[i].name][t0:t1]) > 0:
+            if max(simulation.result[component.outputs[i].key][t0:t1]) > 0:
                 fig.add_trace(
                     go.Scatter(
                         x=x,
-                        y=-np.array(simulation.result[component.outputs[i].name][t0:t1])
+                        y=-np.array(simulation.result[component.outputs[i].key][t0:t1])
                         / simulation.scenario.timefactor
                         * simulation.factory.timefactor,
                         hoverinfo="x",
@@ -1823,7 +1847,7 @@ def create_dash(simulation):
         x = np.arange(t0, t1, 1)
         component = simulation.factory.components[user_input]
         data = (
-            simulation.result[component.name]["utilization"][t0:t1]
+            simulation.result[component.key]["utilization"][t0:t1]
             / simulation.scenario.timefactor
             * simulation.factory.timefactor
         )
@@ -1892,16 +1916,15 @@ def create_dash(simulation):
         )
 
         source_sum = "## " + component.flowtype.unit.get_value_expression(
-            value=round(sum(simulation.result[component.name]["utilization"][t0:t1])),
+            value=round(sum(simulation.result[component.key]["utilization"][t0:t1])),
             quantity_type="flow",
         )
-        source_minmax = f"## {round(min(simulation.result[component.name]['utilization'][t0:t1]))} - {round(max(simulation.result[component.name]['utilization'][t0:t1]))} {component.flowtype.unit.get_unit_flowrate()}"
-        source_cost = f"## {round(sum(simulation.result[component.name]['utilization'][t0:t1] * component.cost[t0:t1]))} €"
-        if component.power_max_limited:
-            source_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit.get_unit_flowrate()} / {round(((simulation.result[component.name]['utilization'][t0:t1] + 0.000001) / (component.power_max[t0:t1] * component.availability[t0:t1] + 0.000001)).mean() * 100)}%"
-        else:
-            source_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit.get_unit_flowrate()}"
-
+        source_cost = f"## {round(sum(simulation.result[component.key]['utilization'][t0:t1] * component.cost[t0:t1]))} €"
+        source_minmax = (
+            f"## {component.flowtype.unit.get_value_expression(value=round(min(simulation.result[component.key]['utilization'][t0:t1])), quantity_type='flowrate')} "
+            f"- {component.flowtype.unit.get_value_expression(value=round(max(simulation.result[component.key]['utilization'][t0:t1])), quantity_type='flowrate')}"
+        )
+        source_avg = f"## {component.flowtype.unit.get_value_expression(value=round(simulation.result[component.key]['utilization'][t0:t1].mean()), quantity_type='flowrate')}"
         return fig, fig2, source_sum, source_cost, source_minmax, source_avg
 
     # TAB: SINK
@@ -1921,7 +1944,7 @@ def create_dash(simulation):
         x = np.arange(t0, t1, 1)
         component = simulation.factory.components[user_input]
         data = (
-            simulation.result[component.name]["utilization"][t0:t1]
+            simulation.result[component.key]["utilization"][t0:t1]
             / simulation.scenario.timefactor
             * simulation.factory.timefactor
         )
@@ -1969,28 +1992,28 @@ def create_dash(simulation):
         )
 
         sink_sum = "## " + component.flowtype.unit.get_value_expression(
-            value=round(sum(simulation.result[component.name]["utilization"][t0:t1])),
+            value=round(sum(simulation.result[component.key]["utilization"][t0:t1])),
             quantity_type="flow",
         )
-        sink_minmax = f"## {round(min(simulation.result[component.name]['utilization'][t0:t1]))} - {round(max(simulation.result[component.name]['utilization'][t0:t1]))} {component.flowtype.unit.get_unit_flowrate()}"
+        sink_minmax = f"## {round(min(simulation.result[component.key]['utilization'][t0:t1]))} - {round(max(simulation.result[component.key]['utilization'][t0:t1]))} {component.flowtype.unit.get_unit_flowrate()}"
 
         cost = 0
         if component.chargeable:
             cost += sum(
-                simulation.result[component.name]["utilization"][t0:t1]
+                simulation.result[component.key]["utilization"][t0:t1]
                 * component.cost[t0:t1]
             )
         if component.refundable:
             cost += -sum(
-                simulation.result[component.name]["utilization"][t0:t1]
+                simulation.result[component.key]["utilization"][t0:t1]
                 * component.revenue[t0:t1]
             )
         sink_cost = f"## {round(cost)} €"
 
         if component.power_max_limited:
-            sink_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit.get_unit_flowrate()} / {round(((simulation.result[component.name]['utilization'][t0:t1] + 0.000001) / (component.power_max[t0:t1] * component.availability[t0:t1] + 0.000001)).mean() * 100)}%"
+            sink_avg = f"## {round(simulation.result[component.key]['utilization'][t0:t1].mean())} {component.flowtype.unit.get_unit_flowrate()} / {round(((simulation.result[component.key]['utilization'][t0:t1] + 0.000001) / (component.power_max[t0:t1] * component.availability[t0:t1] + 0.000001)).mean() * 100)}%"
         else:
-            sink_avg = f"## {round(simulation.result[component.name]['utilization'][t0:t1].mean())} {component.flowtype.unit.get_unit_flowrate()}"
+            sink_avg = f"## {round(simulation.result[component.key]['utilization'][t0:t1].mean())} {component.flowtype.unit.get_unit_flowrate()}"
 
         return fig, sink_sum, sink_cost, sink_minmax, sink_avg
 
@@ -2011,7 +2034,7 @@ def create_dash(simulation):
             component = simulation.factory.components[user_input]
 
             data = (
-                -simulation.result[component.name]["utilization"][t0:t1]
+                -simulation.result[component.key]["utilization"][t0:t1]
                 / simulation.scenario.timefactor
                 * simulation.factory.timefactor
             )
@@ -2021,7 +2044,7 @@ def create_dash(simulation):
             fig.add_trace(
                 go.Scatter(
                     x=x,
-                    y=np.r_[simulation.result[component.name]["SOC"][t0:t1]],
+                    y=np.r_[simulation.result[component.key]["SOC"][t0:t1]],
                     line_color="rgb(200,200,200)",
                     stackgroup="one",
                     name="SOC",
@@ -2087,19 +2110,19 @@ def create_dash(simulation):
             input_sum = 0
             for i_input in component.inputs:
                 inputs += f"\n * {i_input.source.name}\n"
-                input_sum += sum(simulation.result[i_input.name])
+                input_sum += sum(simulation.result[i_input.key])
 
             outputs = ""
             output_sum = 0
             for i_output in component.outputs:
                 outputs += f"\n * {i_output.sink.name}\n"
-                output_sum += sum(simulation.result[i_output.name])
+                output_sum += sum(simulation.result[i_output.key])
 
             config = (
                 f"\n **Capacity:** {component.capacity} {component.flowtype.unit_flow}\n"
                 f"\n **Base efficiency:** {component.efficiency * 100} %\n"
                 f"\n **SOC_start:** {component.soc_start * component.capacity} {component.flowtype.unit_flow} ({component.soc_start * 100}%)\n"
-                f"\n **SOC_end:** {simulation.result[component.name]['SOC'][t1-1]} {component.flowtype.unit_flow} ({(simulation.result[component.name]['SOC'][t1 - 1] - simulation.result[component.name]['utilization'][t1 - 1]) / component.capacity * 100}%)\n"
+                f"\n **SOC_end:** {simulation.result[component.key]['SOC'][t1-1]} {component.flowtype.unit_flow} ({(simulation.result[component.key]['SOC'][t1 - 1] - simulation.result[component.key]['utilization'][t1 - 1]) / component.capacity * 100}%)\n"
                 f"\n **Leakage per timestep:** \n"
                 f"\n * {component.leakage_time} % of total Capacity\n"
                 f"\n * {component.leakage_SOC} % of SOC\n"
@@ -2113,18 +2136,18 @@ def create_dash(simulation):
             results = (
                 f"\n **Total Inflow:** {round(input_sum)} {component.flowtype.unit_flow}\n"
                 f"\n **Total Outflow:** {round(output_sum)} {component.flowtype.unit_flow}\n"
-                f"\n **Occuring Losses:** {round(sum(simulation.result[component.to_losses.name]))} {component.flowtype.unit_flow} ({round(sum(simulation.result[component.to_losses.name]) / input_sum * 100, 2)}%)\n "
-                f"\n **Max Input Power:** {-round(min(simulation.result[component.name]['utilization']))} {component.flowtype.unit_flowrate}\n "
-                f"\n **Max Output Power:** {round(max(simulation.result[component.name]['utilization']))} {component.flowtype.unit_flowrate}\n "
-                f"\n **Average SOC:** {round(simulation.result[component.name]['SOC'].mean())} {component.flowtype.unit_flow}\n "
+                f"\n **Occuring Losses:** {round(sum(simulation.result[component.to_losses.key]))} {component.flowtype.unit_flow} ({round(sum(simulation.result[component.to_losses.key]) / input_sum * 100, 2)}%)\n "
+                f"\n **Max Input Power:** {-round(min(simulation.result[component.key]['utilization']))} {component.flowtype.unit_flowrate}\n "
+                f"\n **Max Output Power:** {round(max(simulation.result[component.key]['utilization']))} {component.flowtype.unit_flowrate}\n "
+                f"\n **Average SOC:** {round(simulation.result[component.key]['SOC'].mean())} {component.flowtype.unit_flow}\n "
                 f"\n **Charging circles:** {round(input_sum / (component.capacity + 0.0001))} (Estimated) \n "
             )
 
             # f"\n **Total Cooling:** {round(total_cooling)} {Component.flowtype.unit}\n " \
-            # f"\n **Total thermal losses:** {round(sum(Simulation.result[Component.to_losses.name]))}{Component.flowtype.unit}\n" \
-            # f"\n **Max charging Power:** {round(max(Simulation.result[Component.name]['temperature']))} °C\n " \
-            # f"\n **T min:** {round(min(Simulation.result[Component.name]['temperature']))} °C\n " \
-            # f"\n **T average:** {round(Simulation.result[Component.name]['temperature'].mean())} °C\n "
+            # f"\n **Total thermal losses:** {round(sum(Simulation.result[Component.to_losses.key]))}{Component.flowtype.unit}\n" \
+            # f"\n **Max charging Power:** {round(max(Simulation.result[component.key]['temperature']))} °C\n " \
+            # f"\n **T min:** {round(min(Simulation.result[component.key]['temperature']))} °C\n " \
+            # f"\n **T average:** {round(Simulation.result[component.key]['temperature'].mean())} °C\n "
         else:
             fig = go.Figure()
             config = ""
@@ -2178,7 +2201,7 @@ def create_dash(simulation):
         fig1.add_trace(
             go.Scatter(
                 x=x,
-                y=simulation.result[component.name]["temperature"][t0:t1] - 273.15,
+                y=simulation.result[component.key]["temperature"][t0:t1] - 273.15,
                 line_color=style["main_color"],
                 hoverinfo="x+y",
                 mode="lines",
@@ -2251,7 +2274,7 @@ def create_dash(simulation):
             fig2.add_trace(
                 go.Scatter(
                     x=x,
-                    y=np.array(simulation.result[component.inputs[i].name][t0:t1])
+                    y=np.array(simulation.result[component.inputs[i].key][t0:t1])
                     / simulation.scenario.timefactor
                     * simulation.factory.timefactor,
                     hoverinfo="x+y",
@@ -2261,13 +2284,13 @@ def create_dash(simulation):
                     name=component.inputs[i].source.name,
                 )
             )
-            total_heating += sum(simulation.result[component.inputs[i].name])
+            total_heating += sum(simulation.result[component.inputs[i].key])
             inputs += f"\n * {component.inputs[i].source.name}\n"
         # add gains
         fig2.add_trace(
             go.Scatter(
                 x=x,
-                y=np.array(simulation.result[component.from_gains.name][t0:t1])
+                y=np.array(simulation.result[component.from_gains.key][t0:t1])
                 / simulation.scenario.timefactor
                 * simulation.factory.timefactor,
                 hoverinfo="x+y",
@@ -2284,7 +2307,7 @@ def create_dash(simulation):
             fig2.add_trace(
                 go.Scatter(
                     x=x,
-                    y=-np.array(simulation.result[component.outputs[i].name][t0:t1])
+                    y=-np.array(simulation.result[component.outputs[i].key][t0:t1])
                     / simulation.scenario.timefactor
                     * simulation.factory.timefactor,
                     hoverinfo="x+y",
@@ -2294,13 +2317,13 @@ def create_dash(simulation):
                     name=component.outputs[i].name,
                 )
             )
-            total_cooling += sum(simulation.result[component.outputs[i].name])
+            total_cooling += sum(simulation.result[component.outputs[i].key])
             outputs += f"\n * {component.outputs[i].source.name}\n"
         # add losses
         fig2.add_trace(
             go.Scatter(
                 x=x,
-                y=-np.array(simulation.result[component.to_losses.name][t0:t1])
+                y=-np.array(simulation.result[component.to_losses.key][t0:t1])
                 / simulation.scenario.timefactor
                 * simulation.factory.timefactor,
                 hoverinfo="x+y",
@@ -2334,10 +2357,10 @@ def create_dash(simulation):
         results = (
             f"\n **Total Heating:** {round(total_heating)} {component.flowtype.unit_flow}\n "
             f"\n **Total Cooling:** {round(total_cooling)} {component.flowtype.unit_flow}\n "
-            f"\n **Total thermal losses:** {round(sum(simulation.result[component.to_losses.name]))}{component.flowtype.unit_flow}\n"
-            f"\n **T max:** {round(max(simulation.result[component.name]['temperature'])-273.15)} °C\n "
-            f"\n **T min:** {round(min(simulation.result[component.name]['temperature'])-273.15)} °C\n "
-            f"\n **T average:** {round(simulation.result[component.name]['temperature'].mean()-273.15)} °C\n "
+            f"\n **Total thermal losses:** {round(sum(simulation.result[component.to_losses.key]))}{component.flowtype.unit_flow}\n"
+            f"\n **T max:** {round(max(simulation.result[component.key]['temperature'])-273.15)} °C\n "
+            f"\n **T min:** {round(min(simulation.result[component.key]['temperature'])-273.15)} °C\n "
+            f"\n **T average:** {round(simulation.result[component.key]['temperature'].mean()-273.15)} °C\n "
         )
 
         return fig1, fig2, config, results
@@ -2361,8 +2384,8 @@ def create_dash(simulation):
             fig = make_subplots(
                 rows=2, cols=1, subplot_titles=("PARTDEMAND FULLFILMENT", "TOTAL FLOW")
             )
-            utilization = simulation.result[component.name]["utilization"].transpose()
-            availability = simulation.result[component.name]["availability"].transpose()
+            utilization = simulation.result[component.key]["utilization"].transpose()
+            availability = simulation.result[component.key]["availability"].transpose()
 
             # Create utilization-graph
             data = (

@@ -31,14 +31,11 @@ class Factory:
 
         # Initialize structure variables
         self.connections = {}
+        self.connection_keys = []
         self.components = {}
         self.component_keys = []
         self.flowtypes = {}
         self.flowtype_keys = []
-        self.next_ids = {
-            "connection": 0,
-            "Component": 0,
-        }  # Internal counter. Everytime a Component or connection is added it gets the next value and the counter is incremented
         self.units = {}
 
         # Initialize user configurable variables
@@ -53,15 +50,18 @@ class Factory:
 
         logging.debug("        - New factory created")
 
-    def add_component(self, key: str, component_type: str, *, flowtype: str = None):
-        # validate the given inputs as strings
-        key = iv.validate(key, "str")
-        component_type = iv.validate(component_type, "str")
+    def add_component(
+        self, key: str, component_type: str, *, flowtype: str = None, name: str = None
+    ):
 
         # make sure that the specified name is not already taken by a Component or flowtype
-        if key in self.component_keys or key in self.flowtype_keys:
+        if (
+            key in self.component_keys
+            or key in self.flowtype_keys
+            or key in self.connection_keys
+        ):
             logging.critical(
-                f"Cannot create Component {key} because the namekey is already assigned"
+                f"Cannot create Component {key} because the key is already assigned"
             )
             raise Exception
 
@@ -71,22 +71,26 @@ class Factory:
         # create new object of desired Component
         if component_type == "pool":
             # call pool constructor
-            self.components[key] = factory_components.Pool(key, self, flowtype=flowtype)
+            self.components[key] = factory_components.Pool(
+                key, self, flowtype=flowtype, name=name
+            )
 
         elif component_type == "sink":
             # call sink constructor
-            self.components[key] = factory_components.Sink(key, self, flowtype=flowtype)
+            self.components[key] = factory_components.Sink(
+                key, self, flowtype=flowtype, name=name
+            )
 
         elif component_type == "source":
             # call source constructor
             self.components[key] = factory_components.Source(
-                key, self, flowtype=flowtype
+                key, self, flowtype=flowtype, name=name
             )
 
         elif component_type == "storage":
             # call storage constructor
             self.components[key] = factory_components.Storage(
-                key, self, flowtype=flowtype
+                key, self, flowtype=flowtype, name=name
             )
 
             # auto generate a connection to losses: determine, whether storage refers to energy or material and connect it to the corresponding loss sink
@@ -96,9 +100,9 @@ class Factory:
                 self.add_connection(
                     key,
                     "losses_energy",
+                    key=f"{key}_to_Elosses",
                     name=f"{key}_to_Elosses",
                     flowtype="energy_losses",
-                    weight=0.01,
                     to_losses=True,
                 )
 
@@ -108,9 +112,9 @@ class Factory:
                 self.add_connection(
                     key,
                     "losses_material",
+                    key=f"{key}_to_Mlosses",
                     name=f"{key}_to_Mlosses",
                     flowtype="material_losses",
-                    weight=0.01,
                     to_losses=True,
                 )
 
@@ -123,12 +127,13 @@ class Factory:
 
         elif component_type == "converter":
             # call converter constructor
-            self.components[key] = factory_components.Converter(key, self)
+            self.components[key] = factory_components.Converter(key, self, name=name)
 
             # connect the new converter to losses_energy
             self.add_connection(
                 key,
                 "losses_energy",
+                key=f"{key}_to_Elosses",
                 name=f"{key}_to_Elosses",
                 weight=0.01,
                 to_losses=True,
@@ -136,21 +141,21 @@ class Factory:
 
         elif component_type == "deadtime":
             # call deadtime constructor
-            self.components[key] = factory_components.Deadtime(key, self)
+            self.components[key] = factory_components.Deadtime(key, self, name=name)
 
         elif component_type == "thermalsystem":
             # call thermalsystem constructor
             self.components[key] = factory_components.Thermalsystem(
-                key, self, flowtype=flowtype
+                key, self, flowtype=flowtype, name=name
             )
 
             # connect the new thermalsystem to losses_energy
             self.add_connection(
                 key,
                 "losses_energy",
-                name=f"{key}_to_Elosses",
+                key=f"{key}_to_Elosses",
+                name=f"{self.name}_to_Elosses",
                 flowtype="energy_losses",
-                weight=0.01,
                 to_losses=True,
             )
 
@@ -159,21 +164,23 @@ class Factory:
                 "ambient_gains",
                 key,
                 name=f"ambient_gains_to_{key}",
-                weight=0.01,
+                # weight=0.01,
                 from_gains=True,
             )
 
         elif component_type == "triggerdemand":
             # call triggerdemand constructor
-            self.components[key] = factory_components.Triggerdemand(key, self)
+            self.components[key] = factory_components.Triggerdemand(
+                key, self, name=name
+            )
 
         elif component_type == "slack":
             # call slack constructor
-            self.components[key] = factory_components.Slack(key, self)
+            self.components[key] = factory_components.Slack(key, self, name=name)
 
         elif component_type == "schedule":
             # call schedule constructor
-            self.components[key] = factory_components.Schedule(key, self)
+            self.components[key] = factory_components.Schedule(key, self, name=name)
         else:
             # if we end here the given type must have been invalid! -> Throw an error
             logging.critical(
@@ -190,8 +197,8 @@ class Factory:
         self,
         origin: factory_components.Component,
         destination: factory_components.Component,
+        key: str,
         *,
-        key: str = None,
         to_losses: bool = False,
         name: str = None,
         flowtype: str = None,
@@ -223,8 +230,7 @@ class Factory:
         new_connection = factory_connection.Connection(
             self.components[origin],
             self.components[destination],
-            self.next_ids["connection"],
-            key=key,
+            key,
             to_losses=to_losses,
             flowtype=flowtype,
             weight=weight,
@@ -240,14 +246,12 @@ class Factory:
         self.components[destination].set_input(new_connection)
 
         # insert the new connection into the connection_list of the factory
-        self.connections[self.next_ids["connection"]] = new_connection
-
-        # increment the connection-id counter of the factory
-        self.next_ids["connection"] += 1
+        self.connections[key] = new_connection
+        self.connection_keys.append(key)
 
         # writelog
         logging.debug(
-            f"        - New connection {new_connection.name} of flowtype {new_connection.flowtype.name} added between {self.components[origin].name} and {self.components[destination].name} with connection_id {self.next_ids['connection']}"
+            f"        - New connection {new_connection.name} of flowtype {new_connection.flowtype.name} added between {self.components[origin].name} and {self.components[destination].name} with connection_key {key}"
         )
 
     def save(self, file_path: str, *, overwrite: bool = False):
@@ -586,7 +590,7 @@ class Factory:
         # all checks passed? -> return the pointer to the actual flowtype object
         return self.flowtypes[flowtype_name]
 
-    def __slack_component(self, component_type: str, name: str):
+    def __slack_component(self, component_type: str, key: str):
         """
         This function creates a slack for the given Component if necessary and connects it to the corresponding in- and outputs
         :param component_type: converter, pool, etc...
@@ -597,37 +601,37 @@ class Factory:
         if component_type in ["deadtime", "pool", "thermalsystem"]:
 
             # create new slack Component
-            self.add_component(f"{name}_slack", "slack")
+            self.add_component(f"{key}_slack", "slack")
 
             # connect it to the input and output of the Component
             self.add_connection(
-                f"{name}_slack",
-                name,
-                name=f"{name}_slack_neg",
-                flowtype=self.components[name].flowtype,
+                f"{key}_slack",
+                key,
+                key=f"{key}_slack_neg",
+                flowtype=self.components[key].flowtype,
                 weight=0.01,
             )
             self.add_connection(
-                name,
-                f"{name}_slack",
-                name=f"{name}_slack_pos",
-                flowtype=self.components[name].flowtype,
+                key,
+                f"{key}_slack",
+                key=f"{key}_slack_pos",
+                flowtype=self.components[key].flowtype,
                 weight=0.01,
             )
 
         # sinks get slacked on the input side if they are not the losses sink
         elif component_type == "sink" and not (
-            name == "losses_energy" or name == "losses_material"
+            key == "losses_energy" or key == "losses_material"
         ):
 
             # create new slack Component
-            self.add_component(f"{name}_slack", "slack")
+            self.add_component(f"{key}_slack", "slack")
 
             # connect it to the input of the sink
             self.add_connection(
-                f"{name}_slack",
-                name,
-                name=f"{name}_slack_neg",
-                flowtype=self.components[name].flowtype,
+                f"{key}_slack",
+                key,
+                key=f"{key}_slack_neg",
+                flowtype=self.components[key].flowtype,
                 weight=0.01,
             )

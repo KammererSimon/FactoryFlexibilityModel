@@ -18,17 +18,15 @@ class Scenario:
         # set timefactor
         self.timefactor = timefactor
 
+        self.configurations = {}
+
         # read in parameters.txt
         if parameter_file is not None:
             self.import_parameters(parameter_file)
-        else:
-            self.parameters = {}
 
         # read in timeseries.txt
         if timeseries_file is not None:
             self.import_timeseries(timeseries_file)
-        else:
-            self.timeseries = {}
 
     def import_parameters(self, parameter_file: str) -> bool:
         """
@@ -37,17 +35,20 @@ class Scenario:
         :return: [boolean] True if import was successfull
         """
 
-        # initialize self.parameters
-        self.parameters = {}
-
         try:
             # open the given file
             with open(parameter_file) as file:
                 # iterate over all lines in the file
                 for line in file:
+                    # split line into key and value
                     key, value = line.strip().split("\t")
+                    # split key into component and parameter
+                    key = key.split("/")
+                    # add a component entry in the parameters dict if this is the first setting for a component
+                    if not key[0] in self.configurations:
+                        self.configurations[key[0]] = {}
                     # add entry to parameters-dict
-                    self.parameters[key] = float(value.replace(",", "."))
+                    self.configurations[key[0]][key[1]] = float(value.replace(",", "."))
         except:
             logging.error(
                 f"The given file is not a valid parameters.txt-config file! ({parameter_file})"
@@ -61,27 +62,28 @@ class Scenario:
         :return: [boolean] True if import was successfull
         """
 
-        # initialize self.parameters
-        self.timeseries = {}
+        # try:
+        # open the given file
+        with open(timeseries_file) as file:
+            # iterate over all lines in the file
+            for line in file:
+                # parse current line
+                items = line.split("\t")
 
-        try:
-            # open the given file
-            with open(timeseries_file) as file:
-                # iterate over all lines in the file
-                for line in file:
-                    # parse current line
-                    items = line.split("\t")
+                # first item of the line is the key
+                key = items[0].split("/")
 
-                    # first item of the line is the key
-                    key = items[0]
+                # remaining line is the value array
+                values = [float(x.replace(",", ".")) for x in items[1:]]
 
-                    # remaining line is the value array
-                    values = [float(x.replace(",", ".")) for x in items[1:]]
+                # add a component entry in the parameters dict if this is the first setting for a component
+                if not key[0] in self.configurations:
+                    self.configurations[key[0]] = {}
+                # add entry to parameters-dict
+                self.configurations[key[0]][key[1]] = values
 
-                    # add entry to parameters-dict
-                    self.timeseries[key] = values
-        except:
-            logging.error(
-                f"The given file is not a valid timeseries.txt-config file! ({timeseries_file})"
-            )
-            raise Exception
+        # except:
+        #    logging.error(
+        #        f"The given file is not a valid timeseries.txt-config file! ({timeseries_file})"
+        #    )
+        #    raise Exception

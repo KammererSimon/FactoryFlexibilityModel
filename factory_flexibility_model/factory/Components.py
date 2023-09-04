@@ -14,7 +14,7 @@ import factory_flexibility_model.input_validations as iv
 
 # CODE START
 class Component:
-    def __init__(self, key: str, factory, *, flowtype: str = None):
+    def __init__(self, key: str, factory, *, flowtype: str = None, name: str = None):
         self.visualize = (
             False  # If True a Graph of the resulting timeseries of the Component
         )
@@ -22,7 +22,10 @@ class Component:
         self.factory = (
             factory  # enables callbacks to the factory the Component is assigned to
         )
-        self.name = key  # Identifier, only used for console and GUI-outputs
+        if name is None:
+            self.name = key  # Identifier, only used for console and GUI-outputs
+        else:
+            self.name = name
         self.key = key  # Identifier for internal use
         self.IS_SOURCE = (
             False  # Capability to act as source must be specified in subclass
@@ -40,7 +43,6 @@ class Component:
             []
         )  # initialize list, which stores pointers to all output connections
         self.type = "unknown"  # set keyword "unknown" if no type is specified
-        self.component_id = factory.next_ids["Component"]  # unique Component id
         self.scenario_dependent = (
             False  # is there any relevant data for the Component that has to be
         )
@@ -50,9 +52,6 @@ class Component:
         )  # empty dictionary. If the Component requires data, that will only been
         # known when the scenario is specified this will be stored here as a list
         # of attribute:value combinations
-        factory.next_ids[
-            "Component"
-        ] += 1  # Increase counter for id_definition in the parent factory
 
         # FLOWTYPE DETERMINATION
         if flowtype is not None:
@@ -354,9 +353,9 @@ class Component:
 
 
 class Converter(Component):
-    def __init__(self, name: str, factory):
+    def __init__(self, key: str, factory, name: str = None):
         # STANDARD COMPONENT ATTRIBUTES
-        super().__init__(name, factory)
+        super().__init__(key, factory, name=name)
 
         # STRUCTURAL ATTRIBUTES
         self.description = (
@@ -419,7 +418,7 @@ class Converter(Component):
             False  # standard value is False -> does nothing unless changed
         )
         logging.debug(
-            f"        - New converter {self.name} created with Component-id {self.component_id}"
+            f"        - New converter {self.name} created with Component-key{self.key}"
         )
 
     def set_input(self, connection: co.Connection):
@@ -438,6 +437,7 @@ class Converter(Component):
                 self.factory.add_connection(
                     self.key,
                     "losses_material",
+                    key=f"{self.key}_to_Mlosses",
                     name=f"{self.name}_to_Mlosses",
                     weight=0.01,
                     to_losses=True,
@@ -604,9 +604,9 @@ class Converter(Component):
 
 
 class Deadtime(Component):
-    def __init__(self, name: str, factory):
+    def __init__(self, key: str, factory, name: str = None):
         # STANDARD COMPONENT ATTRIBUTES
-        super().__init__(name, factory)
+        super().__init__(key, factory, name=name)
 
         # STRUCTURAL ATTRIBUTES
         self.type = "deadtime"  # specify Component as deadtime
@@ -619,7 +619,7 @@ class Deadtime(Component):
         )
 
         logging.debug(
-            f"        - New deadtime {self.name} created with Component-id {self.component_id}"
+            f"        - New deadtime {self.name} created with Component-key {self.key}"
         )
 
     def set_input(self, connection: co.Connection):
@@ -689,8 +689,8 @@ class Deadtime(Component):
 
 
 class Pool(Component):
-    def __init__(self, name, factory, *, flowtype=None):
-        super().__init__(name, factory, flowtype=flowtype)
+    def __init__(self, key, factory, *, flowtype=None, name: str = None):
+        super().__init__(key, factory, flowtype=flowtype, name=name)
         self.IS_SINK = True  # pools can act as a sink
         self.IS_SOURCE = True  # pools can act as a source
         self.type = "pool"  # identify Component as pool
@@ -700,7 +700,7 @@ class Pool(Component):
         )
 
         logging.debug(
-            f"        - New pool {self.name} created with Component-id {self.component_id}"
+            f"        - New pool {self.name} created with Component-key {self.key}"
         )
 
     def set_configuration(self, timesteps: str, parameters: dict):
@@ -718,8 +718,8 @@ class Pool(Component):
 
 
 class Sink(Component):
-    def __init__(self, name: str, factory, *, flowtype: str = None):
-        super().__init__(name, factory, flowtype=flowtype)
+    def __init__(self, key: str, factory, *, flowtype: str = None, name: str = None):
+        super().__init__(key, factory, flowtype=flowtype, name=name)
         self.availability = np.ones(
             factory.timesteps
         )  # used for all classes with power_max, to determine the maximum power timedependent. is initialized as all ones, so that it has no effect if not specificly adressed
@@ -757,7 +757,7 @@ class Sink(Component):
 
         logging.debug(
             f"        - New sink {self.name} of flowtype {self.flowtype.unit.resource_type} "
-            f"created with Component-id {self.component_id}"
+            f"created with Component-key {self.key}"
         )
 
     def set_configuration(self, timesteps: int, parameters: dict):
@@ -949,8 +949,8 @@ class Sink(Component):
 
 
 class Source(Component):
-    def __init__(self, name: str, factory, *, flowtype: str = None):
-        super().__init__(name, factory, flowtype=flowtype)
+    def __init__(self, key: str, factory, *, flowtype: str = None, name: str = None):
+        super().__init__(key, factory, flowtype=flowtype, name=name)
         self.availability = np.ones(
             factory.timesteps
         )  # used for all classes with power_max, to determine the maximum power timedependent. is initialized as all ones, so that it has no effect if not specificly adressed
@@ -978,7 +978,7 @@ class Source(Component):
         self.type = "source"  # specify Component as global source
 
         logging.debug(
-            f"        - New source {self.name} created with Component-id {self.component_id}"
+            f"        - New source {self.name} created with Component-key {self.key}"
         )
 
     def set_configuration(self, timesteps: int, parameters: dict) -> bool:
@@ -1133,8 +1133,8 @@ class Source(Component):
 
 
 class Storage(Component):
-    def __init__(self, name: str, factory, *, flowtype: str = None):
-        super().__init__(name, factory, flowtype=flowtype)
+    def __init__(self, key: str, factory, *, flowtype: str = None, name: str = None):
+        super().__init__(key, factory, flowtype=flowtype, name=name)
         self.capacity = 0  # Storage capacity, initialized as zero, so that the Component has no effect if not explicitly specified
         self.efficiency = (
             1  # ratio of discharged vs charged power, initialized as 1 -> no losses
@@ -1161,7 +1161,7 @@ class Storage(Component):
         self.visualize = False  # Set True, if you want the Simulation to create a plot of the charging behaviour
 
         logging.debug(
-            f"        - New storage {self.name} created with Component-id {self.component_id}"
+            f"        - New storage {self.name} created with Component-key{self.key}"
         )
 
     def set_configuration(self, timesteps: int, parameters: dict) -> bool:
@@ -1233,8 +1233,8 @@ class Storage(Component):
 
 
 class Thermalsystem(Component):
-    def __init__(self, name: str, factory):
-        super().__init__(name, factory)
+    def __init__(self, key: str, factory, name: str = None):
+        super().__init__(key, factory, name=name)
         self.C = 10  # Storage inertia
         self.description = (
             "Unspecified Thermalsystem"  # Description for better identification in UI
@@ -1389,8 +1389,8 @@ class Thermalsystem(Component):
 
 
 class Triggerdemand(Component):
-    def __init__(self, name: str, factory):
-        super().__init__(name, factory)
+    def __init__(self, key: str, factory, name: str = None):
+        super().__init__(key, factory, name=name)
         self.executions = (
             0  # total number of required executions, Initialized as 0 = no restrictions
         )
@@ -1528,8 +1528,8 @@ class Triggerdemand(Component):
 
 
 class Slack(Component):
-    def __init__(self, name: str, factory):
-        super().__init__(name, factory)
+    def __init__(self, key: str, factory, name: str = None):
+        super().__init__(key, factory, name=name)
         self.IS_SINK = True  # pools can act as a sink
         self.IS_SOURCE = True  # pools can act as a source
         self.type = "slack"  # identify Component as slack
@@ -1537,7 +1537,7 @@ class Slack(Component):
             np.ones(factory.timesteps) * 1000000000
         )  # Cost of utilization is set to a big M -> 1.000.000€/kW
         logging.debug(
-            f"        - New Slack {self.name} created with Component-id {self.component_id}"
+            f"        - New Slack {self.name} created with Component-key {self.key}"
         )
 
     def set_input(self, connection: co.Connection):
@@ -1575,8 +1575,8 @@ class Slack(Component):
 
 
 class Schedule(Component):
-    def __init__(self, name: str, factory):
-        super().__init__(name, factory)
+    def __init__(self, key: str, factory, name: str = None):
+        super().__init__(key, factory, name=name)
         self.demands = np.array(
             [[0, 0, 0, 0]]
         )  # Initialize Demand as a single partdemand with a volume of zero

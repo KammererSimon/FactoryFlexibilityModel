@@ -53,38 +53,22 @@ class Blueprint:
                 unit=flowtype["unit"],
                 color=flowtype["color"],
             )
-        print(factory.flowtypes["Electricity"])
 
         # CREATE COMPONENTS
         logging.info("Creating factory components")
         # iterate over all Component types
         for component_key, component in self.components.items():
-
             if "flowtype" in component:
                 flowtype = component["flowtype"]
             else:
                 flowtype = None
-
             # Add new Component to factory
             factory.add_component(component_key, component["type"], flowtype=flowtype)
 
-            # create a list of relevant configurations
-            parameters = {}
-            for parameter_key, parameter in component.items():
-                if (
-                    parameter_key not in ("key", "GUI", "flowtype", "type")
-                    and not parameter == ""
-                ):
-                    parameters[parameter_key] = parameter
-
-            # Set configuration for remaining parameters of the Component
-            factory.set_configuration(component_key, parameters=parameters)
-
         # CREATE CONNECTIONS
         # iterate over all specified connections
-        logging.info("Creating connection")
+        logging.info("Creating connections")
         for key, connection in self.connections.items():
-
             # add specified connection to the factory
             factory.add_connection(
                 connection["from"],
@@ -92,8 +76,6 @@ class Blueprint:
                 name=connection["name"],
                 key=key,
                 flowtype=connection["flowtype"],
-                weight_source=connection["weight_source"],
-                weight_sink=connection["weight_sink"],
                 to_losses=connection["to_losses"],
             )
 

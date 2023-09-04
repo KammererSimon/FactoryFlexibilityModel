@@ -80,46 +80,46 @@ class Simulation:
         :return: self.m is beeing extended
         """
         # create a timeseries of decision variables to represent the utilization U(t)
-        self.MVars[f"P_{component.name}"] = self.m.addMVar(
+        self.MVars[f"P_{component.key}"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"P_{component.name}"
         )
         logging.debug(
-            f"        - Variable:     P_{component.name} timeseries of the nominal power of {component.name}"
+            f"        - Variable:     P_{component.key} timeseries of the nominal power of {component.name}"
         )
 
         # add variables to express the positive and negative deviations from the nominal operating point
-        self.MVars[f"P_{component.name}_devpos"] = self.m.addMVar(
+        self.MVars[f"P_{component.key}_devpos"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"P_{component.name}_devpos"
         )
-        self.MVars[f"P_{component.name}_devneg"] = self.m.addMVar(
+        self.MVars[f"P_{component.key}_devneg"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"P_{component.name}_devneg"
         )
 
         # is the operating power of the converter limited? If yes: add power_max and power_min constraints
         if component.power_max_limited:
             self.m.addConstr(
-                self.MVars[f"P_{component.name}"]
+                self.MVars[f"P_{component.key}"]
                 <= component.power_max * component.availability
             )
             logging.debug(
-                f"        - Constraint:   P_{component.name} <= P_{component.name}_max"
+                f"        - Constraint:   P_{component.key} <= P_{component.name}_max"
             )
 
         if component.power_min_limited:
             self.m.addConstr(
-                self.MVars[f"P_{component.name}"]
+                self.MVars[f"P_{component.key}"]
                 >= component.power_min * component.availability
             )
             logging.debug(
-                f"        - Constraint:   P_{component.name} >= P_{component.name}_min"
+                f"        - Constraint:   P_{component.key} >= P_{component.key}_min"
             )
 
         # Calculate the efficiency of operation for each timestep based on the deviations
-        self.MVars[f"Eta_{component.name}"] = self.m.addMVar(
+        self.MVars[f"Eta_{component.key}"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"Eta_{component.name}"
         )
         logging.debug(
-            f"        - Variable:     Eta_{component.name}                              "
+            f"        - Variable:     Eta_{component.key}                              "
             f"(Operating efficiency of {component.name}"
         )
 
@@ -127,10 +127,10 @@ class Simulation:
             if self.problem_class["grade"] < 2:
                 self.problem_class["grade"] = 2
             self.m.addConstrs(
-                self.MVars[f"Eta_{component.name}"][t]
+                self.MVars[f"Eta_{component.key}"][t]
                 == component.eta_max
-                - self.MVars[f"P_{component.name}_devpos"][t] * component.delta_eta_high
-                - self.MVars[f"P_{component.name}_devneg"][t] * component.delta_eta_low
+                - self.MVars[f"P_{component.key}_devpos"][t] * component.delta_eta_high
+                - self.MVars[f"P_{component.key}_devneg"][t] * component.delta_eta_low
                 for t in range(self.T)
             )
             logging.debug(
@@ -138,7 +138,7 @@ class Simulation:
             )
         else:
             self.m.addConstrs(
-                self.MVars[f"Eta_{component.name}"][t] == 1 for t in range(self.T)
+                self.MVars[f"Eta_{component.key}"][t] == 1 for t in range(self.T)
             )
             logging.debug(
                 f"        - Constraint:   Eta(t) for {component.name} fixed to 100%"
@@ -149,40 +149,40 @@ class Simulation:
         if component.switchable:
             self.problem_class["type"] = "mixed integer"
             # introduce a variable representing the switching state of the converter
-            self.MVars[f"Bool_{component.name}_state"] = self.m.addMVar(
+            self.MVars[f"Bool_{component.key}_state"] = self.m.addMVar(
                 self.T, vtype=GRB.BINARY, name=f"{component.name}_state"
             )
 
             # calculate the operating point concerning the switching state
             self.m.addConstrs(
-                self.MVars[f"P_{component.name}"][t]
+                self.MVars[f"P_{component.key}"][t]
                 == (
                     component.power_nominal
-                    - self.MVars[f"P_{component.name}_devneg"][t]
-                    + self.MVars[f"P_{component.name}_devpos"][t]
+                    - self.MVars[f"P_{component.key}_devneg"][t]
+                    + self.MVars[f"P_{component.key}_devpos"][t]
                 )
-                * self.MVars[f"Bool_{component.name}_state"][t]
+                * self.MVars[f"Bool_{component.key}_state"][t]
                 for t in range(self.T)
             )
         else:
             # calculate the operating point without a switching state
             self.m.addConstr(
-                self.MVars[f"P_{component.name}"]
+                self.MVars[f"P_{component.key}"]
                 == component.power_nominal
-                - self.MVars[f"P_{component.name}_devneg"]
-                + self.MVars[f"P_{component.name}_devpos"]
+                - self.MVars[f"P_{component.key}_devneg"]
+                + self.MVars[f"P_{component.key}_devpos"]
             )
 
         # set ramping constraints if needed:
         if component.ramp_power_limited:
             self.m.addConstr(
-                self.MVars[f"P_{component.name}"][1 : self.T]
-                <= self.MVars[f"P_{component.name}"][0 : self.T - 1]
+                self.MVars[f"P_{component.key}"][1 : self.T]
+                <= self.MVars[f"P_{component.key}"][0 : self.T - 1]
                 + component.max_pos_ramp_power
             )  # restrict ramping up
             self.m.addConstr(
-                self.MVars[f"P_{component.name}"][1 : self.T]
-                >= self.MVars[f"P_{component.name}"][0 : self.T - 1]
+                self.MVars[f"P_{component.key}"][1 : self.T]
+                >= self.MVars[f"P_{component.key}"][0 : self.T - 1]
                 - component.max_neg_ramp_power
             )  # restrict ramping down
             logging.debug(
@@ -192,8 +192,8 @@ class Simulation:
         # set the flows of incoming connections
         for connection in component.inputs:
             self.m.addConstr(
-                self.MVars[connection.name]
-                == self.MVars[f"P_{component.name}"]
+                self.MVars[connection.key]
+                == self.MVars[f"P_{component.key}"]
                 * connection.weight_sink
                 * self.interval_length
             )
@@ -202,19 +202,19 @@ class Simulation:
         for connection in component.outputs:
             if connection.flowtype.is_energy():
                 self.m.addConstr(
-                    self.MVars[connection.name]
-                    == self.MVars[f"P_{component.name}"]
+                    self.MVars[connection.key]
+                    == self.MVars[f"P_{component.key}"]
                     * connection.weight_source
                     * self.interval_length
-                    * self.MVars[f"Eta_{component.name}"]
+                    * self.MVars[f"Eta_{component.key}"]
                 )
                 logging.debug(
                     f"        - added energy output calculation with losses for {connection.name}"
                 )
             else:
                 self.m.addConstr(
-                    self.MVars[connection.name]
-                    == self.MVars[f"P_{component.name}"]
+                    self.MVars[connection.key]
+                    == self.MVars[f"P_{component.key}"]
                     * connection.weight_source
                     * self.interval_length
                 )
@@ -224,20 +224,18 @@ class Simulation:
 
         # calculate the resulting energy losses: losses(t) = sum(inputs(t)) - sum(outputs(t))
         self.m.addConstr(
-            self.MVars[component.to_Elosses.name]
-            == sum(self.MVars[input_i.name] for input_i in component.inputs_energy)
-            - sum(self.MVars[output_i.name] for output_i in component.outputs_energy)
+            self.MVars[component.to_Elosses.key]
+            == sum(self.MVars[input_i.key] for input_i in component.inputs_energy)
+            - sum(self.MVars[output_i.key] for output_i in component.outputs_energy)
         )
 
         # calculate the resulting material losses: losses(t) = sum(inputs(t)) - sum(outputs(t))
         if not component.to_Mlosses == []:
             self.m.addConstr(
-                self.MVars[component.to_Mlosses.name]
-                == sum(
-                    self.MVars[input_i.name] for input_i in component.inputs_material
-                )
+                self.MVars[component.to_Mlosses.key]
+                == sum(self.MVars[input_i.key] for input_i in component.inputs_material)
                 - sum(
-                    self.MVars[output_i.name] for output_i in component.outputs_material
+                    self.MVars[output_i.key] for output_i in component.outputs_material
                 )
             )
 
@@ -261,38 +259,38 @@ class Simulation:
         if len(component.outputs) == 1:
             # no slacks...
             # set output_flow = slack for start interval
-            self.m.addConstr(self.MVars[component.outputs[0].name][0:delay] == 0)
+            self.m.addConstr(self.MVars[component.outputs[0].key][0:delay] == 0)
 
             # set output(t) = validate(t-delay) for middle interval
             self.m.addConstr(
-                self.MVars[component.outputs[0].name][delay : self.T]
-                == self.MVars[component.inputs[0].name][0 : self.T - delay]
+                self.MVars[component.outputs[0].key][delay : self.T]
+                == self.MVars[component.inputs[0].key][0 : self.T - delay]
             )
 
             # set validate(t) = slack for end interval
             self.m.addConstr(
-                self.MVars[component.inputs[0].name][self.T - delay : self.T - 1] == 0
+                self.MVars[component.inputs[0].key][self.T - delay : self.T - 1] == 0
             )
 
         else:
             # set output_flow = slack for start interval
             self.m.addConstrs(
-                self.MVars[component.outputs[1].name][t]
-                == self.MVars[component.inputs[0].name][t]
+                self.MVars[component.outputs[1].key][t]
+                == self.MVars[component.inputs[0].key][t]
                 for t in range(delay)
             )
 
             # set output(t) = validate(t-delay) for middle interval
             self.m.addConstrs(
-                self.MVars[component.outputs[1].name][t + delay]
-                == self.MVars[component.inputs[1].name][t]
+                self.MVars[component.outputs[1].key][t + delay]
+                == self.MVars[component.inputs[1].key][t]
                 for t in range(self.T - delay)
             )
 
             # set validate(t) = slack for end interval
             self.m.addConstrs(
-                self.MVars[component.inputs[1].name][self.T - t - 1]
-                == self.MVars[component.outputs[0].name][t]
+                self.MVars[component.inputs[1].key][self.T - t - 1]
+                == self.MVars[component.outputs[0].key][t]
                 for t in range(delay)
             )
 
@@ -314,10 +312,10 @@ class Simulation:
                 component.demands[row, 0], component.demands[row, 1] + 1
             ):
                 availability[column - 1, row] = 1
-        self.MVars[f"X_{component.name}_availability"] = availability
+        self.MVars[f"X_{component.key}_availability"] = availability
 
         # create decision variables for the demands
-        self.MVars[f"E_{component.name}_in"] = self.m.addMVar(
+        self.MVars[f"E_{component.key}_in"] = self.m.addMVar(
             (self.T, rows), vtype=GRB.CONTINUOUS, name=f"{component.name}_Pin"
         )
         logging.debug(
@@ -326,16 +324,15 @@ class Simulation:
 
         # define constraint: validate and output must be equal at any timestep to ensure, that the Component just does flowtype control
         self.m.addConstr(
-            self.MVars[component.outputs[0].name]
-            == self.MVars[component.inputs[0].name]
+            self.MVars[component.outputs[0].key] == self.MVars[component.inputs[0].key]
         )
         logging.debug(f"        - Constraint:   E_in == E_out for {component.name}")
         # TODO: doesnt this have to be fulfilled for every timestep??!
 
         # define constraint: taken inputs for demand fulfillment must equal the used validate in every timestep
         self.m.addConstrs(
-            gp.quicksum(self.MVars[f"E_{component.name}_in"][t][:])
-            == self.MVars[component.inputs[0].name][t]
+            gp.quicksum(self.MVars[f"E_{component.key}_in"][t][:])
+            == self.MVars[component.inputs[0].key][t]
             for t in range(self.T)
         )
         logging.debug(
@@ -344,7 +341,7 @@ class Simulation:
 
         # define constraint: each part demand d must have it's individual demand fulfilled
         self.m.addConstrs(
-            self.MVars[f"E_{component.name}_in"][0 : self.T, i]
+            self.MVars[f"E_{component.key}_in"][0 : self.T, i]
             @ availability[0 : self.T, i]
             == component.demands[i, 2]
             for i in range(rows)
@@ -355,7 +352,7 @@ class Simulation:
 
         # define constraint: adhere power_max constraints per part demand
         self.m.addConstrs(
-            self.MVars[f"E_{component.name}_in"][t, i] / self.interval_length
+            self.MVars[f"E_{component.key}_in"][t, i] / self.interval_length
             <= component.demands[i, 3]
             for t in range(self.T)
             for i in range(rows)
@@ -367,7 +364,7 @@ class Simulation:
         # define constraint: adhere power_max for total power if needed
         if component.power_max_limited:
             self.m.addConstrs(
-                gp.quicksum(self.MVars[f"E_{component.name}_in"][t][:])
+                gp.quicksum(self.MVars[f"E_{component.key}_in"][t][:])
                 / self.interval_length
                 <= component.power_max[t]
                 for t in range(self.T)
@@ -386,11 +383,11 @@ class Simulation:
         # create constraint that ensures, that the sum of inputs equals the sum of outputs in every timestep
         self.m.addConstr(
             gp.quicksum(
-                self.MVars[component.inputs[input_id].name]
+                self.MVars[component.inputs[input_id].key]
                 for input_id in range(len(component.inputs))
             )
             == gp.quicksum(
-                self.MVars[component.outputs[output_id].name]
+                self.MVars[component.outputs[output_id].key]
                 for output_id in range(len(component.outputs))
             )
         )
@@ -410,11 +407,11 @@ class Simulation:
         # In the second case a MVar reflecting the resulting inflow is created, together with a constraint to calculate it
 
         # create a timeseries of decision variables to represent the total inflow (energy/material) going into the sink
-        self.MVars[f"E_{component.name}"] = self.m.addMVar(
+        self.MVars[f"E_{component.key}"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.name}"
         )
         logging.debug(
-            f"        - Variable:     E_{component.name}                                  (timeseries of global outflows to {component.name}"
+            f"        - Variable:     E_{component.key}                                  (timeseries of global outflows to {component.name}"
         )
 
         if component.determined:
@@ -422,7 +419,7 @@ class Simulation:
             self.m.addConstr(
                 gp.quicksum(
                     component.inputs[o].weight_sink
-                    * self.MVars[component.inputs[o].name]
+                    * self.MVars[component.inputs[o].key]
                     for o in range(len(component.inputs))
                 )
                 == component.demand
@@ -434,44 +431,44 @@ class Simulation:
         # add constraints to calculate the total outflow from the system as the sum of all weighted energys of incoming connections
         self.m.addConstr(
             gp.quicksum(
-                self.MVars[component.inputs[o].name]
+                self.MVars[component.inputs[o].key]
                 for o in range(len(component.inputs))
             )
-            == self.MVars[f"E_{component.name}"]
+            == self.MVars[f"E_{component.key}"]
         )
         logging.debug(
-            f"        - Constraint:   E_{component.name} == sum of incoming flows"
+            f"        - Constraint:   E_{component.key} == sum of incoming flows"
         )
 
         # is the maximum output power of the sink limited? If yes: Add power_max constraint
         if component.power_max_limited:
             self.m.addConstr(
-                self.MVars[f"E_{component.name}"]
+                self.MVars[f"E_{component.key}"]
                 <= component.power_max * component.availability * self.interval_length
             )
             logging.debug(
-                f"        - Constraint:   P_{component.name} <= P_{component.name}_max"
+                f"        - Constraint:   P_{component.key} <= P_{component.name}_max"
             )
 
         # is the minimum output power of the source limited? If yes: Add power_min constraint
         if component.power_min_limited:
             self.m.addConstrs(
-                self.MVars[f"E_{component.name}"] / self.interval_length
+                self.MVars[f"E_{component.key}"] / self.interval_length
                 >= component.power_min[t]
                 for t in range(self.T)
             )
             logging.debug(
-                f"        - Constraint:   P_{component.name} >= P_{component.name}_min"
+                f"        - Constraint:   P_{component.key} >= P_{component.key}_min"
             )
 
         # does the utilization of the sink cost something? If yes: Add the corresponding cost factors
         if component.chargeable:
             self.C_objective.append(
-                self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"C_{component.name}")
+                self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"C_{component.key}")
             )
             self.m.addConstr(
                 self.C_objective[-1]
-                == component.cost[0 : self.T] @ self.MVars[f"E_{component.name}"]
+                == component.cost[0 : self.T] @ self.MVars[f"E_{component.key}"]
             )
             logging.debug(
                 f"        - CostFactor:   Cost for dumping into {component.name}"
@@ -480,11 +477,11 @@ class Simulation:
         # does the utilization of the sink create revenue? If yes: Add the corresponding negative cost factors
         if component.refundable:
             self.R_objective.append(
-                self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"R_{component.name}")
+                self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"R_{component.key}")
             )
             self.m.addConstr(
                 self.R_objective[-1]
-                == component.revenue[0 : self.T] @ self.MVars[f"E_{component.name}"]
+                == component.revenue[0 : self.T] @ self.MVars[f"E_{component.key}"]
             )
             logging.debug(
                 f"        - CostFactor:   Revenue for sales generated by {component.name}"
@@ -494,13 +491,13 @@ class Simulation:
             # avoided emissions
             self.R_objective.append(
                 self.m.addMVar(
-                    1, vtype=GRB.CONTINUOUS, name=f"R_{component.name}_emissions"
+                    1, vtype=GRB.CONTINUOUS, name=f"R_{component.key}_emissions"
                 )
             )
             self.m.addConstr(
                 self.R_objective[-1]
                 == component.co2_refund_per_unit[0 : self.T]
-                @ self.MVars[f"E_{component.name}"]
+                @ self.MVars[f"E_{component.key}"]
                 * self.scenario.cost_co2_per_kg
             )
             logging.debug(
@@ -510,13 +507,13 @@ class Simulation:
             # additional emissions
             self.C_objective.append(
                 self.m.addMVar(
-                    1, vtype=GRB.CONTINUOUS, name=f"C_{component.name}_emissions"
+                    1, vtype=GRB.CONTINUOUS, name=f"C_{component.key}_emissions"
                 )
             )
             self.m.addConstr(
                 self.C_objective[-1]
                 == component.co2_emission_per_unit[0 : self.T]
-                @ self.MVars[f"E_{component.name}"]
+                @ self.MVars[f"E_{component.key}"]
                 * self.scenario.cost_co2_per_kg
             )
             logging.debug(
@@ -537,26 +534,26 @@ class Simulation:
         # add a cost term for negative slack usage to the target function
         for i in range(len(component.inputs)):
             self.C_objective.append(
-                self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"C_{component.name}_neg")
+                self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"C_{component.key}_neg")
             )
             self.m.addConstr(
                 self.C_objective[-1]
                 == component.cost[0 : self.T]
-                @ self.MVars[component.inputs[i].name][0 : self.T]
+                @ self.MVars[component.inputs[i].key][0 : self.T]
             )
-            logging.debug(f"        - CostFactor:   C_{component.name}_negative")
+            logging.debug(f"        - CostFactor:   C_{component.key}_negative")
 
         # add a cost term for negative slack usage to the target function
         for i in range(len(component.outputs)):
             self.C_objective.append(
-                self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"C_{component.name}_pos")
+                self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"C_{component.key}_pos")
             )
             self.m.addConstr(
                 self.C_objective[-1]
                 == component.cost[0 : self.T]
-                @ self.MVars[component.outputs[i].name][0 : self.T]
+                @ self.MVars[component.outputs[i].key][0 : self.T]
             )
-            logging.debug(f"        - CostFactor:   C_{component.name}_positive")
+            logging.debug(f"        - CostFactor:   C_{component.key}_positive")
 
     def __add_storage(self, component):
         """
@@ -566,44 +563,44 @@ class Simulation:
         :return: self.m is beeing extended
         """
         # create  variable for initial SOC
-        self.MVars[f"SOC_{component.name}_start"] = self.m.addMVar(
-            1, vtype=GRB.CONTINUOUS, name=f"SOC_{component.name}_start"
+        self.MVars[f"SOC_{component.key}_start"] = self.m.addMVar(
+            1, vtype=GRB.CONTINUOUS, name=f"SOC_{component.key}_start"
         )
         if component.soc_start_determined:
             self.m.addConstr(
-                self.MVars[f"SOC_{component.name}_start"] == component.soc_start
+                self.MVars[f"SOC_{component.key}_start"] == component.soc_start
             )
             logging.debug(
-                f"        - Constraint:   SOC_start == {component.soc_start} for storage {component.name}"
+                f"        - Constraint:   SOC_start == {component.soc_start} for storage {component.key}"
             )
         else:
-            self.m.addConstr(self.MVars[f"SOC_{component.name}_start"] <= 1)
+            self.m.addConstr(self.MVars[f"SOC_{component.key}_start"] <= 1)
             logging.debug(
                 f"        - Variable:     SOC_start for storage {component.name}"
             )
 
         # create variable for Echarge
-        self.MVars[f"E_{component.name}_charge"] = self.m.addMVar(
-            self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.name}_charge"
+        self.MVars[f"E_{component.key}_charge"] = self.m.addMVar(
+            self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.key}_charge"
         )
         self.m.addConstr(
-            self.MVars[f"E_{component.name}_charge"]
+            self.MVars[f"E_{component.key}_charge"]
             == gp.quicksum(
-                self.MVars[component.inputs[input_id].name]
+                self.MVars[component.inputs[input_id].key]
                 for input_id in range(len(component.inputs))
             )
         )
-        logging.debug(f"        - Variable:     ECharge for storage {component.name} ")
+        logging.debug(f"        - Variable:     ECharge for storage {component.key} ")
 
         # create variable for Edischarge
-        self.MVars[f"E_{component.name}_discharge"] = self.m.addMVar(
-            self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.name}_discharge"
+        self.MVars[f"E_{component.key}_discharge"] = self.m.addMVar(
+            self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.key}_discharge"
         )
         self.m.addConstr(
-            self.MVars[f"E_{component.name}_discharge"]
+            self.MVars[f"E_{component.key}_discharge"]
             == gp.quicksum(
-                self.MVars[component.outputs[output_id].name]
-                + self.MVars[component.to_losses.name]
+                self.MVars[component.outputs[output_id].key]
+                + self.MVars[component.to_losses.key]
                 for output_id in range(len(component.outputs))
             )
         )
@@ -612,8 +609,8 @@ class Simulation:
         )
 
         # create variable for SOC
-        self.MVars[f"SOC_{component.name}"] = self.m.addMVar(
-            self.T, vtype=GRB.CONTINUOUS, name=f"SOC_{component.name}"
+        self.MVars[f"SOC_{component.key}"] = self.m.addMVar(
+            self.T, vtype=GRB.CONTINUOUS, name=f"SOC_{component.key}"
         )
         logging.debug(f"        - Variable:     SOC for storage {component.name} ")
 
@@ -622,13 +619,13 @@ class Simulation:
             np.ones(self.T)
         )  # create a matrix with ones on- and under the main diagonal to quickly perform cumsum-calculations in matrix form
         self.m.addConstr(
-            self.MVars[f"SOC_{component.name}"]
+            self.MVars[f"SOC_{component.key}"]
             == cumsum_matrix
             @ (
-                self.MVars[f"E_{component.name}_charge"]
-                - self.MVars[f"E_{component.name}_discharge"]
+                self.MVars[f"E_{component.key}_charge"]
+                - self.MVars[f"E_{component.key}_discharge"]
             )
-            + component.capacity * self.MVars[f"SOC_{component.name}_start"][0]
+            + component.capacity * self.MVars[f"SOC_{component.key}_start"][0]
         )
 
         logging.debug(
@@ -637,27 +634,27 @@ class Simulation:
 
         # set SOC_end = SOC_start
         self.m.addConstr(
-            self.MVars[f"SOC_{component.name}"][self.T - 1]
-            == self.MVars[f"SOC_{component.name}_start"][0] * component.capacity
+            self.MVars[f"SOC_{component.key}"][self.T - 1]
+            == self.MVars[f"SOC_{component.key}_start"][0] * component.capacity
         )
         logging.debug(
             f"        - Constraint:   SOC_end == SOC_start for storage {component.name}"
         )
 
         # don't violate the capacity boundary: cumsum of all inputs and outputs plus initial soc must not be more than the capacity in any timestep
-        self.m.addConstr(self.MVars[f"SOC_{component.name}"] <= component.capacity)
+        self.m.addConstr(self.MVars[f"SOC_{component.key}"] <= component.capacity)
         logging.debug(
             f"        - Constraint:   Cumsum(E) <= Capacity for {component.name} "
         )
 
         # don't take out more than stored: cumsum of all inputs and outputs plus initial soc must be more than zero in any timestep
-        self.m.addConstr(self.MVars[f"SOC_{component.name}"] >= 0)
+        self.m.addConstr(self.MVars[f"SOC_{component.key}"] >= 0)
         logging.debug(f"        - Constraint:   Cumsum(E) >= 0 for {component.name} ")
 
         # create Pcharge_max-constraint
         if component.power_max_charge > 0:
             self.m.addConstr(
-                self.MVars[f"E_{component.name}_charge"]
+                self.MVars[f"E_{component.key}_charge"]
                 <= component.power_max_charge * self.interval_length
             )
             logging.debug(
@@ -667,7 +664,7 @@ class Simulation:
         # create Pdischarge_max-constraint
         if component.power_max_discharge > 0:
             self.m.addConstr(
-                self.MVars[f"E_{component.name}_discharge"]
+                self.MVars[f"E_{component.key}_discharge"]
                 <= component.power_max_discharge * self.interval_length
             )
             logging.debug(
@@ -682,11 +679,11 @@ class Simulation:
             )
             self.m.addConstrs(
                 (
-                    self.MVars[component.to_losses.name][t]
-                    == self.MVars[f"SOC_{component.name}"][t] * soc_leakage
+                    self.MVars[component.to_losses.key][t]
+                    == self.MVars[f"SOC_{component.key}"][t] * soc_leakage
                     + lin_leakage
                     + gp.quicksum(  # TODO: BUG! This creates problems once the storage is empty! #TODO: The introduction of the timefactor in the soc-term causes a difference between 1*1h and 4*0.25h simulations
-                        self.MVars[component.outputs[output_id].name][t]
+                        self.MVars[component.outputs[output_id].key][t]
                         for output_id in range(len(component.outputs))
                     )
                     * (1 / component.efficiency - 1)
@@ -706,12 +703,12 @@ class Simulation:
         """
 
         # create a timeseries of decision variables to represent the total inflow coming from the source
-        self.MVars[f"E_{component.name}"] = self.m.addMVar(
-            self.T, vtype=GRB.CONTINUOUS, name=f"P_{component.name}"
+        self.MVars[f"E_{component.key}"] = self.m.addMVar(
+            self.T, vtype=GRB.CONTINUOUS, name=f"P_{component.key}"
         )
 
         logging.debug(
-            f"        - Variable:     E_{component.name}                              (timeseries of global inputs from E_{component.name}"
+            f"        - Variable:     E_{component.key}                              (timeseries of global inputs from E_{component.name}"
         )
 
         # set the sum of outgoing flows to meet the fixed supply
@@ -719,7 +716,7 @@ class Simulation:
             self.m.addConstr(
                 gp.quicksum(
                     component.outputs[o].weight_source
-                    * self.MVars[component.outputs[o].name]
+                    * self.MVars[component.outputs[o].key]
                     for o in range(len(component.outputs))
                 )
                 == component.determined_power
@@ -728,14 +725,14 @@ class Simulation:
         # add constraints to calculate the total inflow to the system as the sum of all flows of connected regions
         self.m.addConstr(
             gp.quicksum(
-                self.MVars[component.outputs[o].name]
+                self.MVars[component.outputs[o].key]
                 for o in range(len(component.outputs))
             )
-            == self.MVars[f"E_{component.name}"]
+            == self.MVars[f"E_{component.key}"]
         )
 
         logging.debug(
-            f"        - Constraint:   E_{component.name} == sum of outgoing flows"
+            f"        - Constraint:   E_{component.key} == sum of outgoing flows"
         )
 
         # is the maximum output power of the source limited? If yes: Add power_max constraint
@@ -743,26 +740,26 @@ class Simulation:
             self.m.addConstr(
                 gp.quicksum(
                     component.outputs[o].weight_source
-                    * self.MVars[component.outputs[o].name]
+                    * self.MVars[component.outputs[o].key]
                     for o in range(len(component.outputs))
                 )
                 / self.interval_length
                 <= component.power_max * component.availability
             )
             logging.debug(
-                f"        - Constraint:   P_{component.name} <= P_{component.name}_max"
+                f"        - Constraint:   P_{component.key} <= P_{component.key}_max"
             )
         elif self.factory.enable_slacks:
             self.m.addConstr(
                 gp.quicksum(
                     component.outputs[o].weight_source
-                    * self.MVars[component.outputs[o].name]
+                    * self.MVars[component.outputs[o].key]
                     for o in range(len(component.outputs))
                 )
                 <= 10000000
             )
             logging.debug(
-                f"        - Constraint:   P_{component.name} <= P_SECURITY                            -> Prevent Model from being unbounded"
+                f"        - Constraint:   P_{component.key} <= P_SECURITY                            -> Prevent Model from being unbounded"
             )
 
         # is the minimum output power of the source limited? If yes: Add power_min constraint
@@ -770,7 +767,7 @@ class Simulation:
             self.m.addConstr(
                 gp.quicksum(
                     component.outputs[o].weight_source
-                    * self.MVars[component.outputs[o].name]
+                    * self.MVars[component.outputs[o].key]
                     for o in range(len(component.outputs))
                 )
                 / self.interval_length
@@ -778,17 +775,17 @@ class Simulation:
             )
 
             logging.debug(
-                f"        - Constraint:   P_{component.name} >= P_{component.name}_min"
+                f"        - Constraint:   P_{component.key} >= P_{component.key}_min"
             )
 
         # does the utilization of the source cost something? If yes: Add the corresponding cost factors
         if component.chargeable:
             self.C_objective.append(
-                self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"C_{component.name}")
+                self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"C_{component.key}")
             )
             self.m.addConstr(
                 self.C_objective[-1]
-                == component.cost[0 : self.T] @ self.MVars[f"E_{component.name}"]
+                == component.cost[0 : self.T] @ self.MVars[f"E_{component.key}"]
             )
             logging.debug(f"        - CostFactor:   Cost for usage of {component.name}")
 
@@ -797,15 +794,15 @@ class Simulation:
         if component.capacity_charge > 0:
 
             # create single float Mvar
-            self.MVars[f"P_max_{component.name}"] = self.m.addMVar(
-                1, vtype=GRB.CONTINUOUS, name=f"P_max_{component.name}"
+            self.MVars[f"P_max_{component.key}"] = self.m.addMVar(
+                1, vtype=GRB.CONTINUOUS, name=f"P_max_{component.key}"
             )
 
             # define the Mvar as the maximum used output power
             self.m.addConstr(
-                self.MVars[f"P_max_{component.name}"][0]
+                self.MVars[f"P_max_{component.key}"][0]
                 == gp.max_(
-                    (self.MVars[f"E_{component.name}"][t] for t in range(self.T)),
+                    (self.MVars[f"E_{component.key}"][t] for t in range(self.T)),
                     constant=0,
                 )
             )
@@ -813,7 +810,7 @@ class Simulation:
             # create new cost term
             self.C_objective.append(
                 self.m.addMVar(
-                    1, vtype=GRB.CONTINUOUS, name=f"C_Capacity_{component.name}"
+                    1, vtype=GRB.CONTINUOUS, name=f"C_Capacity_{component.key}"
                 )
             )
 
@@ -824,7 +821,7 @@ class Simulation:
                 * self.T
                 / 8760
                 * component.capacity_charge
-                * self.MVars[f"P_max_{component.name}"]
+                * self.MVars[f"P_max_{component.key}"]
             )
 
             logging.debug(
@@ -836,7 +833,7 @@ class Simulation:
             # create new cost term for the emissions
             self.C_objective.append(
                 self.m.addMVar(
-                    1, vtype=GRB.CONTINUOUS, name=f"C_{component.name}_emissions"
+                    1, vtype=GRB.CONTINUOUS, name=f"C_{component.key}_emissions"
                 )
             )
 
@@ -844,7 +841,7 @@ class Simulation:
             self.m.addConstr(
                 self.C_objective[-1]
                 == component.co2_emissions_per_unit[0 : self.T]
-                @ self.MVars[f"E_{component.name}"]
+                @ self.MVars[f"E_{component.key}"]
                 * self.scenario.cost_co2_per_kg
             )
 
@@ -860,69 +857,69 @@ class Simulation:
         :return: self.m is beeing extended
         """
         # create a timeseries of decision variables to represent the total inflow going into the thermal demand:
-        self.MVars[f"E_{component.name}_in"] = self.m.addMVar(
-            self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.name}_in"
+        self.MVars[f"E_{component.key}_in"] = self.m.addMVar(
+            self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.key}_in"
         )
         self.m.addConstrs(
             (
-                self.MVars[f"E_{component.name}_in"][t]
+                self.MVars[f"E_{component.key}_in"][t]
                 == gp.quicksum(
-                    self.MVars[component.inputs[input_id].name][t]
+                    self.MVars[component.inputs[input_id].key][t]
                     for input_id in range(len(component.inputs))
                 )
             )
             for t in range(self.T)
         )
         logging.debug(
-            f"        - Variable:     E_{component.name}_in                                 (timeseries of incoming thermal energy at {component.name})"
+            f"        - Variable:     E_{component.key}_in                                 (timeseries of incoming thermal energy at {component.name})"
         )
 
         # create a timeseries of decision variables to represent the total outflow going out of the thermal demand:
-        self.MVars[f"E_{component.name}_out"] = self.m.addMVar(
-            self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.name}_out"
+        self.MVars[f"E_{component.key}_out"] = self.m.addMVar(
+            self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.key}_out"
         )
         self.m.addConstrs(
             (
-                self.MVars[f"E_{component.name}_out"][t]
+                self.MVars[f"E_{component.key}_out"][t]
                 == gp.quicksum(
-                    self.MVars[component.outputs[output_id].name][t]
+                    self.MVars[component.outputs[output_id].key][t]
                     for output_id in range(len(component.outputs))
                 )
             )
             for t in range(self.T)
         )
         logging.debug(
-            f"        - Variable:     E_{component.name}_out                                  (timeseries of removed thermal energy at {component.name})"
+            f"        - Variable:     E_{component.key}_out                                  (timeseries of removed thermal energy at {component.name})"
         )
 
         # create a timeseries for the internal temperature:
-        self.MVars[f"T_{component.name}"] = self.m.addMVar(
-            self.T, vtype=GRB.CONTINUOUS, name=f"T_{component.name}"
+        self.MVars[f"T_{component.key}"] = self.m.addMVar(
+            self.T, vtype=GRB.CONTINUOUS, name=f"T_{component.key}"
         )
         logging.debug(
-            f"        - Variable:     T_{component.name}                                  (Internal Temperature of {component.name})"
+            f"        - Variable:     T_{component.key}                                  (Internal Temperature of {component.name})"
         )
 
         # set the starting temperature:
         self.m.addConstr(
-            self.MVars[f"T_{component.name}"][0] == component.temperature_start
+            self.MVars[f"T_{component.key}"][0] == component.temperature_start
         )
-        logging.debug(f"        - Constraint:   T_{component.name}[0] = Tstart")
+        logging.debug(f"        - Constraint:   T_{component.key}[0] = Tstart")
 
         # add constraint for the thermal R-C-factory
         self.m.addConstrs(
             (
-                self.MVars[f"T_{component.name}"][t]
-                == self.MVars[f"T_{component.name}"][t - 1]
+                self.MVars[f"T_{component.key}"][t]
+                == self.MVars[f"T_{component.key}"][t - 1]
                 + (  # t-1 temperature
                     component.temperature_ambient[t - 1]
-                    - self.MVars[f"T_{component.name}"][t - 1]
+                    - self.MVars[f"T_{component.key}"][t - 1]
                 )
                 * self.time_reference_factor
                 / (component.R * component.C)
                 + (  # thermal inertia
-                    self.MVars[f"E_{component.name}_in"][t - 1]
-                    - self.MVars[f"E_{component.name}_out"][t - 1]
+                    self.MVars[f"E_{component.key}_in"][t - 1]
+                    - self.MVars[f"E_{component.key}_out"][t - 1]
                 )
                 * self.time_reference_factor
                 / component.C
@@ -932,49 +929,49 @@ class Simulation:
 
         # keep the temperature within the allowed boundaries during Simulation interval:
         self.m.addConstrs(
-            (self.MVars[f"T_{component.name}"][t] >= component.temperature_min[t])
+            (self.MVars[f"T_{component.key}"][t] >= component.temperature_min[t])
             for t in range(self.T)
         )
         self.m.addConstrs(
-            (self.MVars[f"T_{component.name}"][t] <= component.temperature_max[t])
+            (self.MVars[f"T_{component.key}"][t] <= component.temperature_max[t])
             for t in range(self.T)
         )
         logging.debug(
-            f"        - Constraint:   Tmin < T_{component.name} < Tmax for {component.name}"
+            f"        - Constraint:   Tmin < T_{component.key} < Tmax for {component.key}"
         )
 
         # set the end temperature:
         if component.sustainable:
             self.m.addConstr(
-                self.MVars[f"T_{component.name}"][self.T - 1]
+                self.MVars[f"T_{component.key}"][self.T - 1]
                 + (
                     component.temperature_ambient[self.T - 1]
-                    - self.MVars[f"T_{component.name}"][self.T - 1]
+                    - self.MVars[f"T_{component.key}"][self.T - 1]
                 )
                 * self.time_reference_factor
                 / (component.R * component.C)
                 + (
-                    self.MVars[f"E_{component.name}_in"][self.T - 1]
-                    - self.MVars[f"E_{component.name}_out"][self.T - 1]
+                    self.MVars[f"E_{component.key}_in"][self.T - 1]
+                    - self.MVars[f"E_{component.key}_out"][self.T - 1]
                 )
                 * self.time_reference_factor
                 / component.C
                 == component.temperature_start
             )
-            logging.debug(f"        - Constraint:   T_{component.name}[T] = Tstart")
+            logging.debug(f"        - Constraint:   T_{component.key}[T] = Tstart")
         else:
             # keep the temperature within allowed boundaries at timestep T+1
             self.m.addConstr(
-                self.MVars[f"T_{component.name}"][self.T - 1]
+                self.MVars[f"T_{component.key}"][self.T - 1]
                 + (
                     component.temperature_ambient[self.T - 1]
-                    - self.MVars[f"T_{component.name}"][self.T - 1]
+                    - self.MVars[f"T_{component.key}"][self.T - 1]
                 )
                 * self.time_reference_factor
                 / (component.R * component.C)
                 + (
-                    self.MVars[f"E_{component.name}_in"][self.T - 1]
-                    - self.MVars[f"E_{component.name}_out"][self.T - 1]
+                    self.MVars[f"E_{component.key}_in"][self.T - 1]
+                    - self.MVars[f"E_{component.key}_out"][self.T - 1]
                 )
                 * self.time_reference_factor
                 / component.C
@@ -982,16 +979,16 @@ class Simulation:
             )
 
             self.m.addConstr(
-                self.MVars[f"T_{component.name}"][self.T - 1]
+                self.MVars[f"T_{component.key}"][self.T - 1]
                 + (
                     component.temperature_ambient[self.T - 1]
-                    - self.MVars[f"T_{component.name}"][self.T - 1]
+                    - self.MVars[f"T_{component.key}"][self.T - 1]
                 )
                 * self.time_reference_factor
                 / (component.R * component.C)
                 + (
-                    self.MVars[f"E_{component.name}_in"][self.T - 1]
-                    - self.MVars[f"E_{component.name}_out"][self.T - 1]
+                    self.MVars[f"E_{component.key}_in"][self.T - 1]
+                    - self.MVars[f"E_{component.key}_out"][self.T - 1]
                 )
                 * self.time_reference_factor
                 / component.C
@@ -1000,9 +997,9 @@ class Simulation:
 
         # calculate the losses:
         self.m.addConstrs(
-            self.MVars[component.to_losses.name][t]
-            - self.MVars[component.from_gains.name][t]
-            == (self.MVars[f"T_{component.name}"][t] - component.temperature_ambient[t])
+            self.MVars[component.to_losses.key][t]
+            - self.MVars[component.from_gains.key][t]
+            == (self.MVars[f"T_{component.key}"][t] - component.temperature_ambient[t])
             * self.time_reference_factor
             / component.R
             for t in range(self.T)
@@ -1046,17 +1043,17 @@ class Simulation:
             )
 
         # create decision variable vector
-        self.MVars[f"{component.name}_executions"] = self.m.addMVar(
-            possibilities, vtype=GRB.INTEGER, name=f"{component.name}_executions"
+        self.MVars[f"{component.key}_executions"] = self.m.addMVar(
+            possibilities, vtype=GRB.INTEGER, name=f"{component.key}_executions"
         )
         logging.debug(
-            f"        - Variable:     {component.name}_executions                                 (List of triggered events at triggerdemand {component.name})"
+            f"        - Variable:     {component.key}_executions                                 (List of triggered events at triggerdemand {component.name})"
         )
 
         # guarantee the required amount of executions
         if component.executions > 0:
             self.m.addConstr(
-                sum(self.MVars[f"{component.name}_executions"]) == component.executions
+                sum(self.MVars[f"{component.key}_executions"]) == component.executions
             )
             logging.debug(
                 f"        - Constraint:     Guarantee the required amount of process executions at {component.name}"
@@ -1065,7 +1062,7 @@ class Simulation:
         # limit the number of parallel executions
         if component.max_parallel > 0:
             self.m.addConstr(
-                parallelcheck.transpose() @ self.MVars[f"{component.name}_executions"]
+                parallelcheck.transpose() @ self.MVars[f"{component.key}_executions"]
                 <= np.ones(component.Tend - component.Tstart + 1)
                 * component.max_parallel
             )
@@ -1075,32 +1072,32 @@ class Simulation:
 
         # calculate resulting load profile
         if component.input_energy:
-            self.MVars[f"{component.name}_loadprofile_energy"] = self.m.addMVar(
+            self.MVars[f"{component.key}_loadprofile_energy"] = self.m.addMVar(
                 self.T,
                 vtype=GRB.CONTINUOUS,
-                name=f"{component.name}_loadprofile_energy",
+                name=f"{component.key}_loadprofile_energy",
             )
         if component.input_material:
-            self.MVars[f"{component.name}_loadprofile_material"] = self.m.addMVar(
+            self.MVars[f"{component.key}_loadprofile_material"] = self.m.addMVar(
                 self.T,
                 vtype=GRB.CONTINUOUS,
-                name=f"{component.name}_loadprofile_material",
+                name=f"{component.key}_loadprofile_material",
             )
         logging.debug(
-            f"        - Variable:     {component.name}_loadprofile                                 (resulting load profile of triggerdemand {component.name})"
+            f"        - Variable:     {component.key}_loadprofile                                 (resulting load profile of triggerdemand {component.name})"
         )
 
         if component.Tstart > 1:
             if component.input_energy:
                 self.m.addConstr(
-                    self.MVars[f"{component.name}_loadprofile_energy"][
+                    self.MVars[f"{component.key}_loadprofile_energy"][
                         : component.Tstart - 1
                     ]
                     == 0
                 )
             if component.input_material:
                 self.m.addConstr(
-                    self.MVars[f"{component.name}_loadprofile_material"][
+                    self.MVars[f"{component.key}_loadprofile_material"][
                         : component.Tstart - 1
                     ]
                     == 0
@@ -1108,32 +1105,32 @@ class Simulation:
 
         if component.input_energy:
             self.m.addConstr(
-                self.MVars[f"{component.name}_loadprofile_energy"][
+                self.MVars[f"{component.key}_loadprofile_energy"][
                     component.Tstart - 1 : component.Tend
                 ]
                 == profiles_energy.transpose()
-                @ self.MVars[f"{component.name}_executions"]
+                @ self.MVars[f"{component.key}_executions"]
             )
         if component.input_material:
             self.m.addConstr(
-                self.MVars[f"{component.name}_loadprofile_material"][
+                self.MVars[f"{component.key}_loadprofile_material"][
                     component.Tstart - 1 : component.Tend
                 ]
                 == profiles_material.transpose()
-                @ self.MVars[f"{component.name}_executions"]
+                @ self.MVars[f"{component.key}_executions"]
             )
 
         if component.Tend < self.T:
             if component.input_energy:
                 self.m.addConstr(
-                    self.MVars[f"{component.name}_loadprofile_energy"][
+                    self.MVars[f"{component.key}_loadprofile_energy"][
                         component.Tend + 1 :
                     ]
                     == 0
                 )
             if component.input_material:
                 self.m.addConstr(
-                    self.MVars[f"{component.name}_loadprofile_material"][
+                    self.MVars[f"{component.key}_loadprofile_material"][
                         component.Tend + 1 :
                     ]
                     == 0
@@ -1145,23 +1142,23 @@ class Simulation:
         # set validate and output connection to match the load profile
         if component.input_energy:
             self.m.addConstr(
-                self.MVars[component.input_energy.name]
-                == self.MVars[f"{component.name}_loadprofile_energy"]
+                self.MVars[component.input_energy.key]
+                == self.MVars[f"{component.key}_loadprofile_energy"]
                 * self.interval_length
             )
             self.m.addConstr(
-                self.MVars[component.output_energy.name]
-                == self.MVars[f"{component.name}_loadprofile_energy"]
+                self.MVars[component.output_energy.key]
+                == self.MVars[f"{component.key}_loadprofile_energy"]
                 * self.interval_length
             )
         if component.input_material:
             self.m.addConstr(
-                self.MVars[component.input_material.name]
-                == self.MVars[f"{component.name}_loadprofile_material"]
+                self.MVars[component.input_material.key]
+                == self.MVars[f"{component.key}_loadprofile_material"]
             )
             self.m.addConstr(
-                self.MVars[component.output_material.name]
-                == self.MVars[f"{component.name}_loadprofile_material"]
+                self.MVars[component.output_material.key]
+                == self.MVars[f"{component.key}_loadprofile_material"]
             )
 
     def __add_flows(self):
@@ -1173,12 +1170,12 @@ class Simulation:
         for connection in self.factory.connections.values():
 
             # create a timeseries of decision variables for the flowtype on every connection in the graph
-            self.MVars[connection.name] = self.m.addMVar(
-                self.T, vtype=GRB.CONTINUOUS, name=connection.name
+            self.MVars[connection.key] = self.m.addMVar(
+                self.T, vtype=GRB.CONTINUOUS, name=connection.key
             )
 
             logging.debug(
-                f"        - Variable:     E_Flow_{connection.name}                                (timeseries of flowtype on connection {connection.name})"
+                f"        - Variable:     E_Flow_{connection.key}                                (timeseries of flowtype on connection {connection.name})"
             )
 
     def __collect_results(
@@ -1221,7 +1218,7 @@ class Simulation:
         for connection in self.factory.connections.values():
 
             # get the result timeseries for the current connection
-            result_i = self.MVars[connection.name].X
+            result_i = self.MVars[connection.key].X
 
             # apply threshold and round
             result_i = self.__apply_threshold_and_rounding(
@@ -1229,7 +1226,7 @@ class Simulation:
             )
 
             # write the result into the result-dictionary
-            self.result[connection.name] = result_i
+            self.result[connection.key] = result_i
 
         # prepare summing variables for differentiation of onsite and offsite generation/consumption
         self.result["energy_generated_onsite"] = np.zeros(self.T)
@@ -1246,7 +1243,7 @@ class Simulation:
                 # get the sum of the throughput as timeseries
                 utilization = sum(
                     component.inputs[input_id].weight_sink
-                    * self.MVars[component.inputs[input_id].name].X
+                    * self.MVars[component.inputs[input_id].key].X
                     for input_id in range(len(component.inputs))
                 )
 
@@ -1256,14 +1253,14 @@ class Simulation:
                 )
 
                 # write the results into the result dictionary
-                self.result[component.name] = {"utilization": utilization}
+                self.result[component.key] = {"utilization": utilization}
 
             # handle converters
             if component.type == "converter":
 
                 # get the result values, round them to the specified number of digits
-                utilization = self.MVars[f"P_{component.name}"].X
-                efficiency = self.MVars[f"Eta_{component.name}"].X
+                utilization = self.MVars[f"P_{component.key}"].X
+                efficiency = self.MVars[f"Eta_{component.key}"].X
 
                 # apply threshold and rounding on all values
                 utilization = self.__apply_threshold_and_rounding(
@@ -1274,7 +1271,7 @@ class Simulation:
                 )
 
                 # write results into the result-dictionary
-                self.result[component.name] = {
+                self.result[component.key] = {
                     "utilization": utilization,
                     "efficiency": efficiency,
                 }
@@ -1289,7 +1286,7 @@ class Simulation:
 
                 else:
                     # if no: use the Simulation result
-                    utilization = self.MVars[f"E_{component.name}"].X
+                    utilization = self.MVars[f"E_{component.key}"].X
 
                 # apply rounding and threshold
                 utilization = self.__apply_threshold_and_rounding(
@@ -1307,7 +1304,7 @@ class Simulation:
                     total_emission_cost -= emission_cost
 
                     logging.info(
-                        f"Sink {component.name} avoided total emissions of {round(sum(emissions), 2)} kgCO2, refunding {round(emission_cost, 2)}€"
+                        f"Sink {component.key} avoided total emissions of {round(sum(emissions), 2)} kgCO2, refunding {round(emission_cost, 2)}€"
                     )
 
                 elif component.causes_emissions:
@@ -1321,7 +1318,7 @@ class Simulation:
                     total_emission_cost += emission_cost
 
                     logging.info(
-                        f"Sink {component.name} caused total emissions of {round(sum(emissions), 2)} kgCO2, costing {round(emission_cost, 2)}€"
+                        f"Sink {component.key} caused total emissions of {round(sum(emissions), 2)} kgCO2, costing {round(emission_cost, 2)}€"
                     )
 
                 else:
@@ -1330,7 +1327,7 @@ class Simulation:
                     emission_cost = 0
 
                 # write the result into the result-dictionary
-                self.result[component.name] = {
+                self.result[component.key] = {
                     "utilization": utilization,
                     "emissions": emissions,
                     "emission_cost": emission_cost,
@@ -1338,12 +1335,12 @@ class Simulation:
 
                 # add the sinks contribution to onsite/offsite demand calculation
                 if component.is_onsite:
-                    self.result["energy_consumed_onsite"] += self.result[
-                        component.name
-                    ]["utilization"]
+                    self.result["energy_consumed_onsite"] += self.result[component.key][
+                        "utilization"
+                    ]
                 else:
                     self.result["energy_consumed_offsite"] += self.result[
-                        component.name
+                        component.key
                     ]["utilization"]
 
             # handle sources
@@ -1355,7 +1352,7 @@ class Simulation:
                     utilization = component.determined_power[0 : self.T]
                 else:
                     # if no: use Simulation result
-                    utilization = self.MVars[f"E_{component.name}"].X
+                    utilization = self.MVars[f"E_{component.key}"].X
 
                 # apply rounding and threshold
                 utilization = self.__apply_threshold_and_rounding(
@@ -1375,14 +1372,14 @@ class Simulation:
                     total_emission_cost += emission_cost
 
                     logging.info(
-                        f"Source {component.name} caused total emissions of {round(sum(emissions),2)} kgCO2, costing additional {round(emission_cost,2)}€"
+                        f"Source {component.key} caused total emissions of {round(sum(emissions),2)} kgCO2, costing additional {round(emission_cost,2)}€"
                     )
                 else:
                     emissions = 0
                     emission_cost = 0
 
                 # write the result into the result-dictionary
-                self.result[component.name] = {
+                self.result[component.key] = {
                     "utilization": utilization,
                     "emissions": emissions,
                     "emission_cost": emission_cost,
@@ -1391,29 +1388,29 @@ class Simulation:
                 # add the sources contribution to onsite/offsite generation calculation
                 if component.is_onsite:
                     self.result["energy_generated_onsite"] += self.result[
-                        component.name
+                        component.key
                     ]["utilization"]
                 else:
                     self.result["energy_generated_offsite"] += self.result[
-                        component.name
+                        component.key
                     ]["utilization"]
 
             # handle slacks
             elif component.type == "slack":
                 # read the result timeseries of the Simulation
                 sum_energy_pos = sum(
-                    self.MVars[i_input.name].X[0 : self.T]
+                    self.MVars[i_input.key].X[0 : self.T]
                     for i_input in component.inputs
                 )
                 sum_energy_neg = sum(
-                    self.MVars[i_output.name].X[0 : self.T]
+                    self.MVars[i_output.key].X[0 : self.T]
                     for i_output in component.outputs
                 )
                 utilization = sum(
-                    self.MVars[i_input.name].X[0 : self.T]
+                    self.MVars[i_input.key].X[0 : self.T]
                     for i_input in component.inputs
                 ) - sum(
-                    self.MVars[i_output.name].X[0 : self.T]
+                    self.MVars[i_output.key].X[0 : self.T]
                     for i_output in component.outputs
                 )
 
@@ -1429,7 +1426,7 @@ class Simulation:
                 )
 
                 # write the results to the result dictionary
-                self.result[component.name] = {
+                self.result[component.key] = {
                     "EPos": sum_energy_pos,
                     "ENeg": sum_energy_neg,
                     "utilization": utilization,
@@ -1439,13 +1436,13 @@ class Simulation:
             elif component.type == "storage":
                 # read the result timeseries from the Simulation
                 power_charge = (
-                    self.MVars[f"E_{component.name}_charge"].X / self.interval_length
+                    self.MVars[f"E_{component.key}_charge"].X / self.interval_length
                 )
                 power_discharge = (
-                    self.MVars[f"E_{component.name}_discharge"].X / self.interval_length
+                    self.MVars[f"E_{component.key}_discharge"].X / self.interval_length
                 )
-                soc = self.MVars[f"SOC_{component.name}"].X
-                soc_start = self.MVars[f"SOC_{component.name}_start"].X
+                soc = self.MVars[f"SOC_{component.key}"].X
+                soc_start = self.MVars[f"SOC_{component.key}_start"].X
 
                 # apply rounding and threshold
                 power_charge = self.__apply_threshold_and_rounding(
@@ -1462,7 +1459,7 @@ class Simulation:
                 )
 
                 # write the results to the result dictionary
-                self.result[component.name] = {
+                self.result[component.key] = {
                     "Pcharge": power_charge,
                     "Pdischarge": power_discharge,
                     "SOC": soc,
@@ -1473,8 +1470,8 @@ class Simulation:
             # handle schedulers
             elif component.type == "schedule":
                 # read the result timeseries from the Simulation
-                utilization = self.MVars[f"E_{component.name}_in"].X
-                availability = self.MVars[f"X_{component.name}_availability"]
+                utilization = self.MVars[f"E_{component.key}_in"].X
+                availability = self.MVars[f"X_{component.key}_availability"]
 
                 # apply rounding and threshold
                 utilization = self.__apply_threshold_and_rounding(
@@ -1485,7 +1482,7 @@ class Simulation:
                 )
 
                 # write the results to the result dictionary
-                self.result[component.name] = {
+                self.result[component.key] = {
                     "utilization": utilization,
                     "availability": availability,
                 }
@@ -1494,10 +1491,10 @@ class Simulation:
             elif component.type == "thermalsystem":
                 # read the result timeseries from the Simulation
                 utilization = (
-                    self.MVars[f"E_{component.name}_in"].X
-                    - self.MVars[f"E_{component.name}_out"].X
+                    self.MVars[f"E_{component.key}_in"].X
+                    - self.MVars[f"E_{component.key}_out"].X
                 )
-                temperature = self.MVars[f"T_{component.name}"].X
+                temperature = self.MVars[f"T_{component.key}"].X
 
                 # apply rounding and threshold
                 utilization = self.__apply_threshold_and_rounding(
@@ -1508,7 +1505,7 @@ class Simulation:
                 )
 
                 # write the results to the result dictionary
-                self.result[component.name] = {
+                self.result[component.key] = {
                     "utilization": utilization,
                     "temperature": temperature,
                 }
@@ -1554,58 +1551,35 @@ class Simulation:
         components with the requested parameters from self.scenario"""
 
         # iterate components and search for scenario data keys
-        for component in self.factory.components.values():
+        for key, config in self.scenario.configurations.items():
+            # set parameters for components
+            if key in self.factory.component_keys:
+                self.factory.set_configuration(key, parameters=config)
 
-            # continue with next component if component is a slack
-            if component.type == "slack":
-                continue
-
-            # prepare a dict to collect configs
-            required_configs = {}
-
-            # iterate over all attributes of the component
-            for key, value in vars(component).items():
-                # find $parameter$ - keys
-                if isinstance(value, str) and value == "$parameter$":
-                    # add required config to the dict if values are valid
-                    value_key = f"{component.key}/{key}"
-
-                    if not value_key in self.scenario.parameters:
-                        logging.error(
-                            f"Missing parameter-key in the given scenario parameters: '{value_key}'"
-                        )
-                        raise Exception
-
-                    required_configs[key] = self.scenario.parameters[value_key]
-
-                # find $timeseries$ - keys
-                if isinstance(value, str) and value == "$timeseries$":
-
-                    # add required config to the dict if values are valid
-                    value_key = f"{component.key}/{key}"
-                    if not value_key in self.scenario.timeseries:
-                        logging.error(
-                            f"Missing parameter-key in the given scenario timeseries: '{value_key}'"
-                        )
-                        raise Exception
-
-                    required_configs[key] = self.scenario.timeseries[value_key]
+            # set weights of connections
+            if key in self.factory.connections.keys():
+                if "weight_sink" in config:
+                    self.factory.connections[key].weight_sink = config["weight_sink"]
+                    print("weight sink set")
+                if "weight_source" in config:
+                    self.factory.connections[key].weight_sink = config["weight_source"]
+                    print("weight source set")
 
             # set all configurations for the component
-            self.factory.set_configuration(component.key, parameters=required_configs)
+            # self.factory.set_configuration(component.key, parameters=required_configs)
 
             # iterate over all connections to get weights from scenario
-            for input_connection in component.inputs:
-                if input_connection.weight_sink == "$parameter$":
-                    input_connection.weight_sink = self.scenario.parameters[
-                        f"{input_connection.key}/weight_sink"
-                    ]
+            # for input_connection in component.inputs:
+            #    if input_connection.weight_sink == "$parameter$":
+            #        input_connection.weight_sink = self.scenario.parameters[
+            #            f"{input_connection.key}/weight_sink"
+            #        ]
 
-            for output_connection in component.outputs:
-                if output_connection.weight_source == "$parameter$":
-                    output_connection.weight_source = self.scenario.parameters[
-                        f"{output_connection.key}/weight_source"
-                    ]
+            # for output_connection in component.outputs:
+            #    if output_connection.weight_source == "$parameter$":
+            #        output_connection.weight_source = self.scenario.parameters[
+            #            f"{output_connection.key}/weight_source"
+            #        ]
 
     def save(self, file_path: str, *, overwrite: bool = False):
         """
@@ -1957,39 +1931,39 @@ class Simulation:
                 if component.flowtype.is_energy():
                     values_energy_in = np.append(
                         values_energy_in,
-                        sum(self.result[component.name]["utilization"]),
+                        sum(self.result[component.key]["utilization"]),
                     )
-                    names_energy_in.append(component.name)
+                    names_energy_in.append(component.key)
 
                 if component.flowtype.is_material():
                     values_material_in = np.append(
                         values_material_in,
-                        sum(self.result[component.name]["utilization"]),
+                        sum(self.result[component.key]["utilization"]),
                     )
-                    names_material_in.append(component.name)
+                    names_material_in.append(component.key)
 
             if component.type == "sink":
                 if component.flowtype.is_energy():
                     values_energy_out = np.append(
                         values_energy_out,
-                        sum(self.result[component.name]["utilization"]),
+                        sum(self.result[component.key]["utilization"]),
                     )
-                    names_energy_out.append(component.name)
+                    names_energy_out.append(component.key)
 
                 if component.flowtype.is_material():
                     values_material_out = np.append(
                         values_material_out,
-                        sum(self.result[component.name]["utilization"]),
+                        sum(self.result[component.key]["utilization"]),
                     )
-                    names_material_out.append(component.name)
+                    names_material_out.append(component.key)
 
             if component.type == "slack":
                 slack_utilization = round(
-                    sum(self.result[component.name]["utilization"]), 3
+                    sum(self.result[component.key]["utilization"]), 3
                 )
                 if slack_utilization > 0:
                     values_slacks = np.append(values_slacks, slack_utilization)
-                    names_slacks.append(component.name)
+                    names_slacks.append(component.key)
                     slacks_used = True
                     self.simulation_valid = False
 
@@ -2059,15 +2033,15 @@ class Simulation:
 
             # add the total flowtype of the validate to the sum of energy balance if it is an energy-validate
             if input_i.flowtype.is_energy():
-                input_sum_energy += sum(self.result[input_i.name])
+                input_sum_energy += sum(self.result[input_i.key])
 
             # add the total flowtype of the validate to the sum of material balance if it is a material-validate
             if input_i.flowtype.is_material():
-                input_sum_material += sum(self.result[input_i.name])
+                input_sum_material += sum(self.result[input_i.key])
 
         # if the components is a thermalsystem: add the thermal-gains validate as well!
         if component.type == "thermalsystem":
-            input_sum_energy += sum(self.result[component.from_gains.name])
+            input_sum_energy += sum(self.result[component.from_gains.key])
 
         return input_sum_energy, input_sum_material
 
@@ -2087,27 +2061,27 @@ class Simulation:
 
             # add the flowtype of the output to the sum of energy outputs if it is an energy output
             if output_i.flowtype.is_energy():
-                output_sum_energy += sum(self.result[output_i.name])
+                output_sum_energy += sum(self.result[output_i.key])
 
             # add the flowtype of the output to the sum of material outputs if it is a material output
             if output_i.flowtype.is_material():
-                output_sum_material += sum(self.result[output_i.name])
+                output_sum_material += sum(self.result[output_i.key])
 
         # if the Component is a converter: add the energy and material losses as well
         if component.type == "converter":
             if not component.to_Elosses == []:
-                output_sum_energy += sum(self.result[component.to_Elosses.name])
+                output_sum_energy += sum(self.result[component.to_Elosses.key])
             if not component.to_Mlosses == []:
-                output_sum_material += sum(self.result[component.to_Mlosses.name])
+                output_sum_material += sum(self.result[component.to_Mlosses.key])
 
         # if the Component is a storage or a thermalsystem: ad the energy or material losses as well
         if component.type == "storage" or component.type == "thermalsystem":
 
             # check, if the flowtype is energy or material and add the losses to the correct bilance
             if component.flowtype.is_energy():
-                output_sum_energy += sum(self.result[component.to_losses.name])
+                output_sum_energy += sum(self.result[component.to_losses.key])
             if component.flowtype.is_material():
-                output_sum_material += sum(self.result[component.to_losses.name])
+                output_sum_material += sum(self.result[component.to_losses.key])
 
         # return calculated outputs
         return output_sum_energy, output_sum_material

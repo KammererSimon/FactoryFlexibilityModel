@@ -12,11 +12,10 @@ class Connection:
         self,
         source,
         sink,
-        connection_id: str,
+        key: str,
         *,
         from_gains: bool = None,
         flowtype: str = None,
-        key: str = None,
         name: str = None,
         to_losses: bool = None,
         weight: float = None,
@@ -25,8 +24,9 @@ class Connection:
     ):
 
         # define attributes
-        self.connection_id = connection_id  # give the connection a unique id in the list of existing connections
-        self.key = key
+        self.key = (
+            key  # give the connection a unique id in the list of existing connections
+        )
         self.source = source
         self.sink = sink
         self.weight_sink = 1
