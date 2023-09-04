@@ -142,13 +142,15 @@ def blueprint_development():
     import factory_flexibility_model.factory.Blueprint as bp
     import factory_flexibility_model.simulation.Scenario as sc
 
+    example = "Testlayout"  # "DRI_steel_factory"
+
     scenario = sc.Scenario(
-        parameter_file=r"examples\DRI_steel_factory\parameters.txt",
-        timeseries_file=r"examples\DRI_steel_factory\timeseries.txt",
+        parameter_file=rf"examples\{example}\parameters.txt",
+        timeseries_file=rf"examples\{example}\timeseries.txt",
     )
 
     blueprint = bp.Blueprint()
-    blueprint.import_from_file("examples\\DRI_steel_factory\\Layout.factory")
+    blueprint.import_from_file(f"examples\\{example}")
     logging.basicConfig(level=logging.DEBUG)
     factory = blueprint.to_factory()
 

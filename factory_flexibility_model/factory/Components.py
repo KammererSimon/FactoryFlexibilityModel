@@ -113,7 +113,7 @@ class Component:
 
         if self.flowtype.is_unknown():
             if not connection.flowtype.is_unknown():
-                self.update_flow(connection.flowtype)
+                self.update_flowtype(connection.flowtype)
         elif connection.flowtype.is_unknown():
             connection.update_flowtype(self.flowtype)
 
@@ -756,7 +756,7 @@ class Sink(Component):
         self.type = "sink"  # specify Component as a global sink
 
         logging.debug(
-            f"        - New sink {self.name} of flowtype {self.flowtype.unit.resource_type} "
+            f"        - New sink {self.name} of flowtype {self.flowtype.unit.quantity_type} "
             f"created with Component-key {self.key}"
         )
 
