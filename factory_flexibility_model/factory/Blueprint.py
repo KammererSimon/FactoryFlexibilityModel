@@ -199,7 +199,7 @@ class Blueprint:
                 f"Flowtype definition file is missing or corrupted! ({session_folder}/flowtypes.txt"
             )
             raise Exception
-        self.flowtypes.update(data["flowtypes"])
+        self.flowtypes.update(data)
 
     def __import_units(self, session_folder: str) -> bool:
         """
