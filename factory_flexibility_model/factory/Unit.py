@@ -4,47 +4,30 @@ import numpy as np
 
 
 class Unit:
-    def __init__(self, *, key: str = "unit"):
-        self.key = "unspecified_unit"
-        self.conversion_factor = 1
-        self.magnitudes = np.array([1, 1000, 1000000, 1000000000, 1000000000000])
-        self.units_flow = [" kWh", " MWh", " GWh", " TWh", " PWh"]
-        self.units_flowrate = [" kW", " MW", " GW", " TW", " PW"]
-        self.quantity_type = "energy"
-
-        if key == "kW" or key == "energy":
-            self.conversion_factor = 1
-            self.magnitudes = np.array([1, 1000, 1000000, 1000000000, 1000000000000])
-            self.units_flow = [" kWh", " MWh", " GWh", " TWh", " PWh"]
-            self.units_flowrate = [" kW", " MW", " GW", " TW", " PW"]
-            self.resource_type = "energy"
-        elif key == "kg" or key == "mass":
-            self.conversion_factor = 1
-            self.magnitudes = np.array([1, 1000, 1000000, 1000000000, 1000000000000])
-            self.units_flow = [" kg", " t", " kt", " mt", " gt"]
-            self.units_flowrate = [" kg/h", " t/h", " kt/h", " mt/h", " gt/h"]
-            self.resource_type = "material"
-        elif key == "J":
-            self.conversion_factor = 1 / 3.6
-            self.magnitudes = np.array([1, 1000, 1000000, 1000000000])
-            self.units_flow = [" MJ", " GJ", " TJ", " PJ"]
-            self.units_flowrate = [" MJ/s", " GJ/s", " TJ/s", " PJ/s"]
-            self.resource_type = "energy"
-        else:
-            if not key == "unit":
-                logging.warning(
-                    f"{key} is unknown as a unit prefix. The unit is created without further specification"
-                )
-            self.magnitudes = np.array([1, 1000, 1000000, 1000000000, 1000000000000])
-            self.units_flow = [" Units", "k Units", "m. Units", "bn. Units", "T. Units"]
-            self.units_flowrate = [
-                " Units/h",
-                "k Units/h",
-                "m. Units/h",
-                "bn. Units/h",
-                "trillion Units/h",
-            ]
-            self.resource_type = "unspecified"
+    def __init__(
+        self,
+        key: str,
+        quantity_type: str,
+        conversion_factor: float,
+        magnitudes,
+        units_flow,
+        units_flowrate,
+    ):
+        """
+        This function creates a unit-object.
+        :param key: [str] identifier for the new unit
+        :param quantity_type: [str] "mass", "energy" or "unknown"
+        :param conversion_factor: The factor that transforms one unit of the given quantity to one unit of the base quantity of the quantity type
+        :param magnitudes: [float list] A list of magnitudes that different prefixes for the unit are resembling. f.E. [1, 10, 100, 1000]
+        :param units_flow: [str list] A list of units-descriptors that correspond to the given magnitudes when considering a flow f.e. [g, kg, t]
+        :param units_flowrate: [str list] A list of units-descriptors that correspond to the given magnitudes when considering a flowrate f.e. [g/h, kg/h, t/h]
+        """
+        self.key = key
+        self.conversion_factor = conversion_factor
+        self.magnitudes = np.array(magnitudes)
+        self.units_flow = units_flow
+        self.units_flowrate = units_flowrate
+        self.quantity_type = quantity_type
 
     def get_value_expression(
         self, value: float, quantity_type: str, *, digits: int = 2
@@ -62,9 +45,9 @@ class Unit:
         magnitude = np.argmin(abs(value - self.magnitudes))
 
         if quantity_type in ("flow", "Flow"):
-            return f"{round(value/self.magnitudes[magnitude], digits)}{self.units_flow[magnitude]}"
+            return f"{round(value/self.magnitudes[magnitude], digits)} {self.units_flow[magnitude]}"
         elif quantity_type in ("flowrate", "Flow"):
-            return f"{round(value/self.magnitudes[magnitude], digits)}{self.units_flowrate[magnitude]}"
+            return f"{round(value/self.magnitudes[magnitude], digits)} {self.units_flowrate[magnitude]}"
         else:
             logging.error(
                 f"The type '{quantity_type}' is an invalid argument for the .get_value_expression()-function. Valid types are 'flow' and 'flowrate'!"
@@ -75,13 +58,13 @@ class Unit:
         """
         :return: True, if the unit describes an energy value
         """
-        return self.resource_type == "energy"
+        return self.quantity_type == "energy"
 
     def is_material(self) -> bool:
         """
         :return: True, if the unit describes a material value
         """
-        return self.resource_type == "material"
+        return self.quantity_type == "material"
 
     def get_unit_flow(self) -> str:
         """
