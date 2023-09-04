@@ -2088,18 +2088,17 @@ def create_dash(simulation):
 
             fig.update_layout(
                 figure_config,
-                # title_text="UTILIZATION",
                 xaxis_title="Timesteps",
             )
             fig.update_yaxes(
-                title_text=f"State of charge [{component.flowtype.unit_flow}]",
+                title_text=f"State of charge [{component.flowtype.unit.get_unit_flow()}]",
                 range=[0, component.capacity],
                 secondary_y=False,
                 linewidth=2,
                 linecolor=style["axis_color"],
             )
             fig.update_yaxes(
-                title_text=f"Inflow/Outflow [{component.flowtype.unit_flow}]",
+                title_text=f"Inflow/Outflow [{component.flowtype.unit.get_unit_flowrate()}]",
                 range=[min(data) * 1.1, max(data) * 1.1],
                 secondary_y=True,
                 linewidth=2,
@@ -2119,27 +2118,26 @@ def create_dash(simulation):
                 output_sum += sum(simulation.result[i_output.key])
 
             config = (
-                f"\n **Capacity:** {component.capacity} {component.flowtype.unit_flow}\n"
+                f"\n **Capacity:** {component.capacity} {component.flowtype.unit.get_unit_flow()}\n"
                 f"\n **Base efficiency:** {component.efficiency * 100} %\n"
-                f"\n **SOC_start:** {component.soc_start * component.capacity} {component.flowtype.unit_flow} ({component.soc_start * 100}%)\n"
-                f"\n **SOC_end:** {simulation.result[component.key]['SOC'][t1-1]} {component.flowtype.unit_flow} ({(simulation.result[component.key]['SOC'][t1 - 1] - simulation.result[component.key]['utilization'][t1 - 1]) / component.capacity * 100}%)\n"
+                f"\n **SOC start/end:** {component.soc_start * component.capacity} {component.flowtype.unit.get_unit_flow()} ({component.soc_start * 100}%)\n"
                 f"\n **Leakage per timestep:** \n"
                 f"\n * {component.leakage_time} % of total Capacity\n"
                 f"\n * {component.leakage_SOC} % of SOC\n"
-                f"\n **Max charging Power:** {component.power_max_charge} {component.flowtype.unit_flowrate}\n"
-                f"\n **Max discharging Power:** {component.power_max_discharge} {component.flowtype.unit_flowrate}\n"
+                f"\n **Max charging Power:** {component.power_max_charge} {component.flowtype.unit.get_unit_flowrate()}\n"
+                f"\n **Max discharging Power:** {component.power_max_discharge} {component.flowtype.unit.get_unit_flowrate()}\n"
                 f"\n **Inputs:** \n"
                 f"\n {inputs} \n"
                 f"\n **Outputs:** \n"
                 f"\n {outputs} \n"
             )
             results = (
-                f"\n **Total Inflow:** {round(input_sum)} {component.flowtype.unit_flow}\n"
-                f"\n **Total Outflow:** {round(output_sum)} {component.flowtype.unit_flow}\n"
-                f"\n **Occuring Losses:** {round(sum(simulation.result[component.to_losses.key]))} {component.flowtype.unit_flow} ({round(sum(simulation.result[component.to_losses.key]) / input_sum * 100, 2)}%)\n "
-                f"\n **Max Input Power:** {-round(min(simulation.result[component.key]['utilization']))} {component.flowtype.unit_flowrate}\n "
-                f"\n **Max Output Power:** {round(max(simulation.result[component.key]['utilization']))} {component.flowtype.unit_flowrate}\n "
-                f"\n **Average SOC:** {round(simulation.result[component.key]['SOC'].mean())} {component.flowtype.unit_flow}\n "
+                f"\n **Total Inflow:** {component.flowtype.unit.get_value_expression(round(input_sum), 'flow')}\n"
+                f"\n **Total Outflow:** {component.flowtype.unit.get_value_expression(round(output_sum), 'flow')}\n"
+                f"\n **Occuring Losses:** {component.flowtype.unit.get_value_expression(round(sum(simulation.result[component.to_losses.key])), 'flow')} ({round(sum(simulation.result[component.to_losses.key]) / input_sum * 100, 2)}%)\n "
+                f"\n **Max Input Power:** {component.flowtype.unit.get_value_expression(-round(min(simulation.result[component.key]['utilization'])), 'flowrate')}\n "
+                f"\n **Max Output Power:** {component.flowtype.unit.get_value_expression(round(max(simulation.result[component.key]['utilization'])), 'flowrate')}\n "
+                f"\n **Average SOC:** {component.flowtype.unit.get_value_expression(round(simulation.result[component.key]['SOC'].mean()), 'flow')}\n "
                 f"\n **Charging circles:** {round(input_sum / (component.capacity + 0.0001))} (Estimated) \n "
             )
 
@@ -2355,9 +2353,9 @@ def create_dash(simulation):
             f"\n {outputs} \n"
         )
         results = (
-            f"\n **Total Heating:** {round(total_heating)} {component.flowtype.unit_flow}\n "
-            f"\n **Total Cooling:** {round(total_cooling)} {component.flowtype.unit_flow}\n "
-            f"\n **Total thermal losses:** {round(sum(simulation.result[component.to_losses.key]))}{component.flowtype.unit_flow}\n"
+            f"\n **Total Heating:** {round(total_heating)} {component.flowtype.unit.get_unit_flow()}\n "
+            f"\n **Total Cooling:** {round(total_cooling)} {component.flowtype.unit.get_unit_flow()}\n "
+            f"\n **Total thermal losses:** {round(sum(simulation.result[component.to_losses.key]))}{component.flowtype.unit.get_unit_flow()}\n"
             f"\n **T max:** {round(max(simulation.result[component.key]['temperature'])-273.15)} °C\n "
             f"\n **T min:** {round(min(simulation.result[component.key]['temperature'])-273.15)} °C\n "
             f"\n **T average:** {round(simulation.result[component.key]['temperature'].mean()-273.15)} °C\n "
@@ -2462,7 +2460,7 @@ def create_dash(simulation):
                 col=1,
             )
             fig.update_yaxes(
-                title_text=f"{component.flowtype_description} [{component.flowtype.unit_flow}]",
+                title_text=f"{component.flowtype_description} [{component.flowtype.unit.get_unit_flow()}]",
                 linewidth=2,
                 range=[0, max(sum(utilization)) * 1.05],
                 linecolor=style["axis_color"],
@@ -2511,17 +2509,17 @@ def create_dash(simulation):
             if component.power_max_limited:
                 config = (
                     config
-                    + f"\n**power_max:** {max(component.power_max)} {component.flowtype.unit_flowrate}\n "
+                    + f"\n**power_max:** {max(component.power_max)} {component.flowtype.unit.get_unit_flowrate()}\n "
                 )
             else:
                 config = config + f"\n**power_max**: unlimited \n"
 
             config = (
                 config
-                + f"\n **Flow**: {component.flowtype.name} \n \n**Unit:** {component.flowtype.unit_flow}\n \n **Number of Demands:** {len(component.demands)} \n"
+                + f"\n **Flow**: {component.flowtype.name} \n \n**Unit:** {component.flowtype.unit.get_unit_flow()}\n \n **Number of Demands:** {len(component.demands)} \n"
             )
 
-            results = f"\n **Total Flow:** {round(sum(sum(utilization)))} {component.flowtype.unit_flow}\n \n **power_max:** {max(sum(utilization))}{component.flowtype.unit_flowrate}\n"
+            results = f"\n **Total Flow:** {round(sum(sum(utilization)))} {component.flowtype.unit.get_unit_flow()}\n \n **power_max:** {max(sum(utilization))}{component.flowtype.unit.get_unit_flowrate()}\n"
         else:
             fig = go.Figure()
             fig2 = go.Figure()
