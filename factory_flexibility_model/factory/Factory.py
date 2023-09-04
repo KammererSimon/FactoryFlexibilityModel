@@ -80,7 +80,7 @@ class Factory:
             )
 
             # auto generate a connection to losses: determine, whether storage refers to energy or material and connect it to the corresponding loss sink
-            if self.components[key].flowtype.is_energy():
+            if self.components[key].flowtype.unit.is_energy():
 
                 # create connection to losses_energy if flowtype is a type of energy
                 self.add_connection(
@@ -92,7 +92,7 @@ class Factory:
                     to_losses=True,
                 )
 
-            elif self.components[key].flowtype.is_material():
+            elif self.components[key].flowtype.unit.is_mass():
 
                 # create a connection to losses_material if flowtype is a type of material
                 self.add_connection(
@@ -287,7 +287,7 @@ class Factory:
         conversion_factor: float = 1,
         magnitudes=1,
         units_flow="kWh",
-        units_flowrate="cxxcvbkW",
+        units_flowrate="kW",
     ):
         """
         This function adds a unit specification to the factory by adding it to the self.units-dict as a unit.Unit-object under the given key.
@@ -320,7 +320,7 @@ class Factory:
                 quantity_type="mass",
                 conversion_factor=1,
                 magnitudes=[1, 1000, 1000000, 1000000000, 1000000000000],
-                units_flow=["g", "kg", "kt", "mt", "gt"],
+                units_flow=["kg", "t", "kt", "mt", "gt"],
                 units_flowrate=["kg/h", "t/h", "kt/h", "mt/h", "gt/h"],
             )
         elif key == "unit":
@@ -487,16 +487,17 @@ class Factory:
                 for input_i in component.inputs:
 
                     # check if the input refers to energy or material
-                    if input_i.flowtype.unit.quantity_type == "energy":
+                    if input_i.flowtype.unit.is_energy():
                         # if energy: add the weight of the incoming connection to the sum of energy input weights
                         weightsum_input_energy += input_i.weight_sink
 
-                    elif input_i.flowtype.unit.quantity_type == "material":
+                    elif input_i.flowtype.unit.is_mass():
 
                         # if material: add the weight of the incoming connection to the sum of material input weights
                         weightsum_input_material += input_i.weight_sink
 
                     else:
+
                         # otherwise the type of the flowtype remained unspecified during factory setup und therefore is invalid
                         logging.critical(
                             f"Flowtype of connection {input_i.name} is still unknown! The flowtype needs to be specified in order to correctly bilance it at {component.name}"
@@ -512,12 +513,11 @@ class Factory:
                 for output_i in component.outputs:
 
                     # if energy: add the weight of the outgoing connection to the sum of energy input weights
-                    if output_i.flowtype.unit.quantity_type == "energy":
-
+                    if output_i.flowtype.unit.is_energy():
                         # if energy:
                         weightsum_output_energy += output_i.weight_source
-                    elif output_i.flowtype.unit.quantity_type == "material":
 
+                    elif output_i.flowtype.unit.is_mass():
                         # if material: add the weight of the outgoing connection to the sum of material input weights
                         weightsum_output_material += output_i.weight_source
 
