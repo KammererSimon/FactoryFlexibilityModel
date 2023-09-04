@@ -144,7 +144,7 @@ class Connection:
         # do the same for the sink side: Check, if the flowtype of the sink Component is already known
         if self.sink.flowtype.is_unknown():
             # if no: update it as well
-            self.sink.update_flow(flowtype)
+            self.sink.update_flowtype(flowtype)
 
         # if yes: is it compatible with the flowtype that has just been set for the connection?
         elif not self.sink.flowtype == flowtype:
