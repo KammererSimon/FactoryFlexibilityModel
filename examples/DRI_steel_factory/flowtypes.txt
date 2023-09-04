@@ -1,0 +1,112 @@
+hydrogen:
+  color:
+  - 0.51
+  - 0.78
+  - 0.52
+  - 1
+  name: Hydrogen
+  unit: mass
+iron_ore:
+  color:
+  - 0.88
+  - 0.75
+  - 0.91
+  - 1
+  name: Iron Ore
+  unit: mass
+oxygen:
+  color:
+  - 0.3
+  - 0.82
+  - 0.88
+  - 1
+  name: Oxygen
+  unit: mass
+steel_scrap:
+  color:
+  - 0.11
+  - 0.13
+  - 0.16
+  - 1
+  name: Scrap
+  unit: mass
+co2:
+  color:
+  - 0.9
+  - 0.45
+  - 0.45
+  - 1
+  name: CO2
+  unit: mass
+slag:
+  color:
+  - 0.43
+  - 0.3
+  - 0.25
+  - 1
+  name: Slag and waste
+  unit: mass
+natural_gas:
+  color:
+  - 0.98
+  - 0.75
+  - 0.18
+  - 1
+  name: Natural Gas
+  unit: mass
+reduced_iron:
+  color:
+  - 0.73
+  - 0.41
+  - 0.78
+  - 1
+  name: Direct reduced iron
+  unit: mass
+hbi:
+  color:
+  - 0.61
+  - 0.15
+  - 0.69
+  - 1
+  name: HBI
+  unit: mass
+carbon:
+  color:
+  - 0.5
+  - 0.5
+  - 0.5
+  - 1
+  name: Carbon
+  unit: mass
+electricity:
+  color:
+  - 0.05
+  - 0.28
+  - 0.63
+  - 1
+  name: Electricity
+  unit: kW
+lime:
+  color:
+  - 0.63
+  - 0.53
+  - 0.5
+  - 1
+  name: Lime
+  unit: mass
+crude_steel:
+  color:
+  - 0.48
+  - 0.12
+  - 0.64
+  - 1
+  name: Crude Steel
+  unit: mass
+water:
+  color:
+  - 0.51
+  - 0.83
+  - 0.98
+  - 1
+  name: Water
+  unit: mass

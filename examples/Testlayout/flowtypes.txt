@@ -1,0 +1,5 @@
+electricity:
+  color: "#88FF88"
+  name: Electricity
+  unit: kW
+  description: "Electrical power measured in kW/KWh"

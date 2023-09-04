@@ -1,0 +1,569 @@
+components:
+  source_iron:
+    description: 'Option to buy iron ore pellets on the external market'
+    flowtype: iron_ore
+    name: Iron Ore Pellets
+    type: source
+    GUI:
+      position_x: 1.0
+      position_y: 12.0
+      icon: Assets\sources\source_deliveries.png
+  dri_restrictions:
+    name: DRI Restrictions
+    type: converter
+    GUI:
+      position_x: 20.0
+      position_y: 13.0
+      icon: Assets\components\component_gear.png
+  source_carbon:
+    description: 'Option to buy additional carbon'
+    flowtype: carbon
+    name: Source Carbon
+    type: source
+    GUI:
+      position_x: 1.0
+      position_y: 18.0
+      icon: Assets\sources\source_deliveries.png
+  source_electricity:
+    description: 'Option to buy electricity from the market'
+    flowtype: electricity
+    name: Electricity Grid
+    type: source
+    GUI:
+      icon: Assets\sources\source_powerpole.png
+      position_x: 1.0
+      position_y: 30.0
+  pool_electricity:
+    description: ''
+    flowtype: electricity
+    name: Pool Electricity
+    GUI:
+      icon: Assets\components\component_pool.png
+      position_x: 20.0
+      position_y: 30.0
+    type: pool
+  source_lime:
+    description: 'Option to buy lime on the public market'
+    flowtype: lime
+    name: Source Lime
+    type: source
+    GUI:
+      icon: Assets\sources\source_deliveries.png
+      position_x: 32.0
+      position_y: 30.0
+  crude_steel_storage:
+    description: 'Storage for finished crude steel'
+    flowtype: crude_steel
+    name: Crude Steel Storage
+    type: storage
+    GUI:
+      position_x: 38.0
+      position_y: 25.0
+      icon: Assets\components\component_storage.png
+  crude_steel_output:
+    description: ''
+    flowtype: crude_steel
+    name: Crude Steel Output
+    type: sink
+    GUI:
+      icon: Assets\sinks\sink_delivery.png
+      position_x: 41.0
+      position_y: 25.0
+  source_natural_gas:
+    description: 'Option to buy natural gas on the public market'
+    flowtype: natural_gas
+    name: Natural Gas Grid
+    type: source
+    GUI:
+      icon: Assets\sources\source_gas_grid.png
+      position_x: 1.0
+      position_y: 4.0
+  electrolysis:
+    description: 'An 800MW polymerelectrolytemembrane - electrolysis plant'
+    name: PEM
+    type: converter
+    GUI:
+      icon: Assets\components\component_electrolysis.png
+      position_x: 3.0
+      position_y: 24.0
+  source_water:
+    flowtype: water
+    name: Water Grid
+    type: source
+    GUI:
+      icon: Assets\sources\source_gas_grid.png
+      position_x: 1.0
+      position_y: 24.0
+  storage_hydrogen:
+    description: 'Storage for Hydrogen'
+    flowtype: hydrogen
+    name: Hydrogen Storage
+    type: storage
+    GUI:
+      position_x: 9.0
+      position_y: 24.0
+      icon: Assets\components\component_battery.png
+  pool_hydrogen:
+    description: ''
+    flowtype: hydrogen
+    name: Pool Hydrogen
+    type: pool
+    GUI:
+      icon: Assets\components\component_pool.png
+      position_x: 9.0
+      position_y: 21.0
+  sink_oxygen:
+    description: 'Option to sell Oxygen on the public market'
+    flowtype: oxygen
+    name: Oxygen Sales
+    type: sink
+    GUI:
+      icon: Assets\sinks\sink_sales.png
+      position_x: 12.0
+      position_y: 29.0
+  pool_oxygen:
+    description: ''
+    flowtype: oxygen
+    name: Pool Oxygen
+    type: pool
+    GUI:
+      icon: Assets\components\component_pool.png
+      position_x: 7.0
+      position_y: 26.0
+  source_scrap:
+    description: 'Option to buy steel scrap on the public market'
+    flowtype: steel_scrap
+    name: Source Scrap
+    type: source
+    GUI:
+      position_x: 27.0
+      position_y: 30.0
+      icon: Assets\sources\source_deliveries.png
+  eaf_trigger:
+    description: ''
+    name: EAF Trigger
+    type: converter
+    GUI:
+      icon: Assets\components\component_schedule.png
+      position_x: 32.0
+      position_y: 25.0
+  sink_co2:
+    description: 'Represents costs for CO2 emission allowances'
+    flowtype: co2
+    name: CO2 emissions
+    type: sink
+    GUI:
+      position_x: 40.0
+      position_y: 17.0
+      icon: Assets\sinks\sink_co2.png
+  natural_gas_dri:
+    description: ''
+    name: Natural Gas DRI
+    type: converter
+    GUI:
+      icon: Assets\components\component_dri.png
+      position_x: 10.0
+      position_y: 5.0
+  sink_water:
+    description: 'Spar Water disposal'
+    flowtype: water
+    name: Water Sink
+    type: sink
+    GUI:
+      icon: Assets\sinks\sink_electrolysis.png
+      position_x: 18.0
+      position_y: 21.0
+  source_hydrogen:
+    description: 'Option to buy additional hydrogen on an external market'
+    flowtype: hydrogen
+    name: Hydrogen Purchase
+    type: source
+    GUI:
+      position_x: 1.0
+      position_y: 21.0
+      icon: Assets\sources\source_gas_grid.png
+  hydrogen_dri:
+    description: ''
+    name: Hydrogen DRI
+    type: converter
+    GUI:
+      icon: Assets\components\component_dri.png
+      position_x: 15.0
+      position_y: 19.0
+  deadtime_eaf:
+    description: ''
+    name: deadtime_eaf
+    type: deadtime
+    GUI:
+      icon: Assets\components\component_deadtime.png
+      position_x: 35.0
+      position_y: 25.0
+  pool_dri_composition:
+    description: ''
+    flowtype: reduced_iron
+    name: DRI composition
+    type: pool
+    GUI:
+      position_x: 15.0
+      position_y: 10.0
+      icon: Assets\components\component_pool.png
+  sink_slag:
+    description: 'Disposal for slag and waste'
+    flowtype: slag
+    name: Slag disposal
+    type: sink
+    GUI:
+      icon: Assets\sinks\sink_losses.png
+      position_x: 41.0
+      position_y: 23.0
+  source_oxygen:
+    description: 'Option to buy external oxygen'
+    flowtype: oxygen
+    name: Oxygen Purchase
+    type: source
+    GUI:
+      position_x: 1.0
+      position_y: 26.0
+      icon: Assets\sources\source_gas_grid.png
+  EAF:
+    description: 'Electric Arc Furnance'
+    name: EAF
+    type: converter
+    GUI:
+      position_x: 29.0
+      position_y: 23.0
+      icon: Assets\components\component_arc_furnance.png
+  storage_hbi:
+    description: 'Storage for hot bricketted iron'
+    flowtype: hbi
+    name: HBI Storage
+    type: storage
+    GUI:
+      icon: Assets\components\component_storage.png
+      position_x: 34.0
+      position_y: 5.0
+  pool_dri:
+    flowtype: reduced_iron
+    name: Pool DRI
+    type: pool
+    GUI:
+      icon: Assets\components\component_pool.png
+      position_x: 29.0
+      position_y: 13.0
+  hbi_preheater:
+    description: 'Heating process to reheat stored HBI for processing in an EAF'
+    name: HBI Preheater
+    type: converter
+    GUI:
+      icon: Assets\components\component_heating.png
+      position_x: 37.0
+      position_y: 5.0
+  dri_compactor:
+    description: ''
+    name: DRI compactor
+    type: converter
+    GUI:
+      position_x: 27.0
+      position_y: 5.0
+      icon: Assets\components\component_gear.png
+  deadtime_hbi_preheat:
+    flowtype: hydrogen
+    name: Unspecified deadtime 1
+    type: deadtime
+    GUI:
+      icon: Assets\components\component_deadtime.png
+      position_x: 30.0
+      position_y: 5.0
+connections:
+  connection_0:
+    flowtype: electricity
+    from: pool_electricity
+    name: 'Pool Electricity -> Hydrogen DRI '
+    to: hydrogen_dri
+    to_losses: false
+    type: connection
+  connection_1:
+    flowtype: reduced_iron
+    from: hydrogen_dri
+    name: 'Hydrogen DRI -> DRI composition '
+    to: pool_dri_composition
+    to_losses: false
+    type: connection
+  connection_10:
+    flowtype: electricity
+    from: source_electricity
+    name: 'Electricity Grid -> Pool Electricity '
+    to: pool_electricity
+    to_losses: false
+    type: connection
+  connection_11:
+    flowtype: co2
+    from: hydrogen_dri
+    name: 'Hydrogen DRI -> CO2 emissions '
+    to: sink_co2
+    to_losses: false
+    type: connection
+  connection_12:
+    flowtype: electricity
+    from: pool_electricity
+    name: 'Pool Electricity -> EAF Trigger '
+    to: eaf_trigger
+    to_losses: false
+    type: connection
+  connection_13:
+    flowtype: electricity
+    from: pool_electricity
+    name: 'Pool Electricity -> Natural Gas DRI '
+    to: natural_gas_dri
+    to_losses: false
+    type: connection
+  connection_14:
+    flowtype: electricity
+    from: pool_electricity
+    name: 'Pool Electricity -> DRI compactor '
+    to: dri_compactor
+    to_losses: false
+    type: connection
+  connection_15:
+    flowtype: lime
+    from: source_lime
+    name: 'Source Lime -> EAF '
+    to: EAF
+    to_losses: false
+    type: connection
+  connection_16:
+    flowtype: crude_steel
+    from: eaf_trigger
+    name: 'EAF Trigger -> deadtime_eaf '
+    to: deadtime_eaf
+    to_losses: false
+    type: connection
+  connection_17:
+    flowtype: crude_steel
+    from: crude_steel_storage
+    name: 'Crude Steel Storage -> Crude Steel Output '
+    to: crude_steel_output
+    to_losses: false
+    type: connection
+  connection_18:
+    flowtype: reduced_iron
+    from: natural_gas_dri
+    name: 'Natural Gas DRI -> DRI composition '
+    to: pool_dri_composition
+    to_losses: false
+    type: connection
+  connection_19:
+    flowtype: hydrogen
+    from: electrolysis
+    name: 'PEM -> Pool Hydrogen '
+    to: pool_hydrogen
+    to_losses: false
+    type: connection
+  connection_2:
+    flowtype: reduced_iron
+    from: pool_dri_composition
+    name: 'DRI composition -> dri_restrictions '
+    to: dri_restrictions
+    to_losses: false
+    type: connection
+  connection_20:
+    flowtype: water
+    from: source_water
+    name: 'Water Grid -> PEM '
+    to: electrolysis
+    to_losses: false
+    type: connection
+  connection_21:
+    flowtype: hydrogen
+    from: storage_hydrogen
+    name: 'Hydrogen Storage -> Pool Hydrogen '
+    to: pool_hydrogen
+    to_losses: false
+    type: connection
+  connection_22:
+    flowtype: electricity
+    from: pool_electricity
+    name: 'Pool Electricity -> PEM '
+    to: electrolysis
+    to_losses: false
+    type: connection
+  connection_23:
+    flowtype: hydrogen
+    from: pool_hydrogen
+    name: 'Pool Hydrogen -> Hydrogen Storage '
+    to: storage_hydrogen
+    to_losses: false
+    type: connection
+  connection_24:
+    flowtype: oxygen
+    from: electrolysis
+    name: 'PEM -> Pool Oxygen '
+    to: pool_oxygen
+    to_losses: false
+    type: connection
+  connection_25:
+    flowtype: oxygen
+    from: pool_oxygen
+    name: 'Pool Oxygen -> Oxygen Sales '
+    to: sink_oxygen
+    to_losses: false
+    type: connection
+  connection_26:
+    flowtype: oxygen
+    from: pool_oxygen
+    name: 'Pool Oxygen -> EAF '
+    to: EAF
+    to_losses: false
+    type: connection
+  connection_27:
+    flowtype: steel_scrap
+    from: source_scrap
+    name: 'Source Scrap -> EAF '
+    to: EAF
+    to_losses: false
+    type: connection
+  connection_28:
+    flowtype: carbon
+    from: source_carbon
+    name: 'Source Carbon -> Hydrogen DRI '
+    to: hydrogen_dri
+    to_losses: false
+    type: connection
+  connection_29:
+    flowtype: natural_gas
+    from: source_natural_gas
+    name: 'Natural Gas Grid -> Natural Gas DRI '
+    to: natural_gas_dri
+    to_losses: false
+    type: connection
+  connection_3:
+    flowtype: reduced_iron
+    from: pool_dri
+    name: 'Pool DRI -> EAF '
+    to: EAF
+    to_losses: false
+    type: connection
+  connection_30:
+    flowtype: iron_ore
+    from: source_iron
+    name: 'Iron Ore Pellets -> Hydrogen DRI '
+    to: hydrogen_dri
+    to_losses: false
+    type: connection
+  connection_31:
+    flowtype: iron_ore
+    from: source_iron
+    name: 'Iron Ore Pellets -> Natural Gas DRI '
+    to: natural_gas_dri
+    to_losses: false
+    type: connection
+  connection_32:
+    flowtype: co2
+    from: natural_gas_dri
+    name: 'Natural Gas DRI -> CO2 emissions '
+    to: sink_co2
+    to_losses: true
+    type: connection
+  connection_33:
+    flowtype: water
+    from: hydrogen_dri
+    name: 'Hydrogen DRI -> Water Sink '
+    to: sink_water
+    to_losses: true
+    type: connection
+  connection_34:
+    flowtype: co2
+    from: EAF
+    name: 'EAF -> CO2 emissions '
+    to: sink_co2
+    to_losses: false
+    type: connection
+  connection_35:
+    flowtype: hydrogen
+    from: source_hydrogen
+    name: 'Hydrogen Purchase -> Pool Hydrogen '
+    to: pool_hydrogen
+    to_losses: false
+    type: connection
+  connection_36:
+    flowtype: hydrogen
+    from: pool_hydrogen
+    name: 'Pool Hydrogen -> Hydrogen DRI '
+    to: hydrogen_dri
+    to_losses: false
+    type: connection
+  connection_37:
+    flowtype: crude_steel
+    from: EAF
+    name: 'EAF -> EAF Trigger '
+    to: eaf_trigger
+    to_losses: false
+    type: connection
+  connection_38:
+    flowtype: crude_steel
+    from: deadtime_eaf
+    name: 'deadtime_eaf -> Crude Steel Storage '
+    to: crude_steel_storage
+    to_losses: false
+    type: connection
+  connection_39:
+    flowtype: slag
+    from: EAF
+    name: 'EAF -> Slag '
+    to: sink_slag
+    to_losses: false
+    type: connection
+  connection_4:
+    flowtype: reduced_iron
+    from: dri_restrictions
+    name: 'dri_restrictions -> Pool DRI '
+    to: pool_dri
+    to_losses: false
+    type: connection
+  connection_40:
+    flowtype: oxygen
+    from: source_oxygen
+    name: 'Oxygen Purchase -> Pool Oxygen '
+    to: pool_oxygen
+    to_losses: false
+    type: connection
+  connection_5:
+    flowtype: hbi
+    from: storage_hbi
+    name: 'HBI Storage -> HBI Preheater '
+    to: hbi_preheater
+    to_losses: false
+    type: connection
+  connection_6:
+    flowtype: reduced_iron
+    from: hbi_preheater
+    name: 'HBI Preheater -> Pool DRI '
+    to: pool_dri
+    to_losses: false
+    type: connection
+  connection_7:
+    flowtype: reduced_iron
+    from: pool_dri
+    name: 'Pool DRI -> DRI compactor '
+    to: dri_compactor
+    to_losses: false
+    type: connection
+  connection_8:
+    flowtype: hbi
+    from: dri_compactor
+    name: 'DRI compactor -> Unspecified deadtime 1 '
+    to: deadtime_hbi_preheat
+    to_losses: false
+    type: connection
+  connection_9:
+    flowtype: hbi
+    from: deadtime_hbi_preheat
+    name: 'Unspecified deadtime 1 -> HBI Storage '
+    to: storage_hbi
+    to_losses: false
+    type: connection
+info:
+  description: ''
+  enable_slacks: true
+  timesteps: 168
+  name: H-DRI + EAF

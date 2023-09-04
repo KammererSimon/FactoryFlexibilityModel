@@ -1,0 +1,124 @@
+components:
+  pool_electricity:
+    description: Bilancing point for all onsite electricity generation and consumption
+    flowtype: electricity
+    name: Pool Electricity
+    GUI:
+      position_x: 21.0
+      position_y: 13.0
+      icon: Assets\components\component_pool.png
+    type: pool
+  sink_electricity:
+    description: ''
+    flowtype: electricity
+    flow_description: ''
+    name: Electricity Demand
+    type: sink
+    GUI:
+      position_x: 34.0
+      position_y: 17.0
+      icon: Assets\sinks\sink_electricity_house.png
+  storage_electricity:
+    description: 'Battery storage'
+    name: Battery Storage
+    GUI:
+      position_x: 34.0
+      position_y: 9.0
+      icon: Assets\sinks\sink_powerpole.png
+    type: storage
+    flowtype: electricity
+  sink_grid_infeed:
+    description: ''
+    name: Grid Infeed
+    GUI:
+      position_x: 34.0
+      position_y: 9.0
+      icon: Assets\sinks\sink_powerpole.png
+    type: sink
+  grid_electricity:
+    description: Connection to the local power Grid
+    flowtype: electricity
+    name: Electricity Grid
+    GUI:
+      position_x: 8.0
+      position_y: 7.0
+      icon: Assets\sources\source_powerpole.png
+    type: source
+  source_solar:
+    description: 5114 * GreenEnergyPower GEP-410 (V1)
+    flowtype: electricity
+    flowtype_description: Electricity infeed from solar generation
+    GUI:
+      icon: Assets\sources\source_solar.png
+      position_x: 8.0
+      position_y: 13.0
+    name: Solar
+    type: source
+  source_wind:
+    description: ENERCON E-138 EP3 E2
+    flowtype: electricity
+    flowtype_description: Electricity infeed from onsite wind turbine
+    GUI:
+      icon: Assets\sources\source_wind.png
+      position_x: 8.0
+      position_y: 19.0
+    name: Wind
+    type: source
+connections:
+  connection_0:
+    from: source_solar
+    name: Solar -> Pool Electricity
+    to: pool_electricity
+    to_losses: false
+    weight_sink: 1
+    weight_source: 1
+  connection_1:
+    from: pool_electricity
+    name: Pool Electricity -> Electricity Demand
+    to: sink_electricity
+    to_losses: false
+    weight_sink: 1
+    weight_source: 1
+  connection_2:
+    from: grid_electricity
+    name: Electricity Grid -> Pool Electricity
+    to: pool_electricity
+    to_losses: false
+    weight_sink: 1
+    weight_source: 1
+  connection_3:
+    from: pool_electricity
+    name: Pool Electricity -> Grid Infeed
+    to: sink_grid_infeed
+    to_losses: false
+    weight_sink: 1
+    weight_source: 1
+  connection_4:
+    from: source_wind
+    name: Wind -> Pool Electricity
+    to: pool_electricity
+    to_losses: false
+    weight_sink: 1
+    weight_source: 1
+  connection_5:
+    flowtype: electricity
+    from: pool_electricity
+    name: Pool Electricity -> Storage
+    to: storage_electricity
+    to_losses: false
+    weight_sink: 1
+    weight_source: 1
+  connection_6:
+    flowtype: electricity
+    from: storage_electricity
+    name: Storage -> Pool Electricity
+    to: pool_electricity
+    to_losses: false
+    weight_sink: 1
+    weight_source: 1
+info:
+  description: Analysis of the planned onsite energysystem of the TU Dortmund
+  enable_log: false
+  enable_slacks: false
+  timesteps: 168
+  name: Energysystem TU Dortmund

@@ -1,0 +1,5 @@
+*flowtype_key*:
+    color: "#XXXXXX"
+    name: *str*
+    unit: *unit_key*
+    description: "*str*

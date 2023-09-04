@@ -1,0 +1,105 @@
+components:
+  battery_storage:
+    description: A 200kWh stationary lithium ion battery storage
+    flowtype: electricity
+    icon: Assets\components\component_battery.png
+    name: Battery Storage
+    position_x: 0.5
+    position_y: 0.2
+    type: storage
+  e_solar:
+    cost: '0'
+    description: Onsite generation of installed solar panels
+    flowtype: electricity
+    icon: Assets\sources\source_solar.png
+    name: Solar Panel
+    position_x: 0.1
+    position_y: 0.6
+    type: source
+  electricity_demand:
+    description: Fixed electricity demand timeseries
+    flowtype: electricity
+    icon: Assets\sinks\sink_lightbulb.png
+    name: Demand Electricity
+    position_x: 0.9
+    position_y: 0.3
+    type: sink
+  electricity_sales:
+    description: Option to sell electricity to the grid
+    flowtype: electricity
+    icon: Assets\sinks\sink_sales.png
+    name: Electricity Sales
+    position_x: 0.9
+    position_y: 0.6
+    revenue: '5'
+    type: sink
+  grid_electricity:
+    cost: '5'
+    flowtype: electricity
+    icon: Assets\sources\source_powerpole.png
+    name: Grid Electricity
+    position_x: 0.1
+    position_y: 0.2
+    type: source
+  pool_electricity:
+    description: electrical power equilibrium within the factory
+    flowtype: electricity
+    icon: Assets\components\pool_frame.png
+    name: Pool Electricity
+    position_x: 0.5
+    position_y: 0.6
+    type: pool
+connections:
+  connection_0:
+    flowtype: electricity
+    from: battery_storage
+    name: Battery Storage -> Pool Electricity
+    to: pool_electricity
+    to_losses: false
+    weight_sink: 1
+    weight_source: 1
+  connection_1:
+    flowtype: electricity
+    from: grid_electricity
+    name: Grid Electricity -> Pool Electricity
+    to: pool_electricity
+    to_losses: false
+    weight_sink: 1
+    weight_source: 1
+  connection_2:
+    flowtype: electricity
+    from: e_solar
+    name: Solar Panel -> Pool Electricity
+    to: pool_electricity
+    to_losses: false
+    weight_sink: 1
+    weight_source: 1
+  connection_3:
+    flowtype: electricity
+    from: pool_electricity
+    name: Pool Electricity -> Electricity Sales
+    to: electricity_sales
+    to_losses: false
+    weight_sink: 1
+    weight_source: 1
+  connection_4:
+    flowtype: electricity
+    from: pool_electricity
+    name: Pool Electricity -> Battery Storage
+    to: battery_storage
+    to_losses: false
+    weight_sink: 1
+    weight_source: 1
+flowtypes:
+  darkenergy:
+    color: '#000000'
+    name: Dark Energy
+    unit: kW
+  electricity:
+    color: '#FF0000'
+    name: Electricity
+    unit: kW
+info:
+  description: Undefined
+  max_timesteps: 8760
+  name: Undefined_Factory
