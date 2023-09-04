@@ -1294,7 +1294,7 @@ def create_dash(simulation):
                                             simulation.factory.connections[i].key
                                         ]
                                     ),
-                                    simulation.factory.connections.keys().index(
+                                    simulation.factory.connection_key_list.index(
                                         simulation.factory.connections[i].key
                                     ),
                                 ]
@@ -1827,7 +1827,7 @@ def create_dash(simulation):
             figure_config,
             # title_text="BILANCE SUM AT POOL",
             xaxis_title="Simulation interval",
-            yaxis_title=f"{component.flowtype.name} [{component.inputs[0].flowtype.unit.get_unit_flow()}]",
+            yaxis_title=f"{component.flowtype.name} [{component.inputs[0].flowtype.unit.get_unit_flowrate()}]",
         )
         return fig
 
@@ -1997,7 +1997,7 @@ def create_dash(simulation):
             value=round(sum(simulation.result[component.key]["utilization"][t0:t1])),
             quantity_type="flow",
         )
-        sink_minmax = f"## {round(min(simulation.result[component.key]['utilization'][t0:t1]))} - {round(max(simulation.result[component.key]['utilization'][t0:t1]))} {component.flowtype.unit.get_unit_flowrate()}"
+        sink_minmax = f"## {component.flowtype.unit.get_value_expression(round(min(simulation.result[component.key]['utilization'][t0:t1])), 'flowrate')} - {component.flowtype.unit.get_value_expression(round(max(simulation.result[component.key]['utilization'][t0:t1])), 'flowrate')}"
 
         cost = 0
         if component.chargeable:
@@ -2013,9 +2013,9 @@ def create_dash(simulation):
         sink_cost = f"## {round(cost)} €"
 
         if component.power_max_limited:
-            sink_avg = f"## {round(simulation.result[component.key]['utilization'][t0:t1].mean())} {component.flowtype.unit.get_unit_flowrate()} / {round(((simulation.result[component.key]['utilization'][t0:t1] + 0.000001) / (component.power_max[t0:t1] * component.availability[t0:t1] + 0.000001)).mean() * 100)}%"
+            sink_avg = f"## {component.flowtype.unit.get_value_expression(round(simulation.result[component.key]['utilization'][t0:t1].mean()), 'flowrate')} / {round(((simulation.result[component.key]['utilization'][t0:t1] + 0.000001) / (component.power_max[t0:t1] * component.availability[t0:t1] + 0.000001)).mean() * 100)}%"
         else:
-            sink_avg = f"## {round(simulation.result[component.key]['utilization'][t0:t1].mean())} {component.flowtype.unit.get_unit_flowrate()}"
+            sink_avg = f"## {component.flowtype.unit.get_value_expression(round(simulation.result[component.key]['utilization'][t0:t1].mean()), 'flowrate')}"
 
         return fig, sink_sum, sink_cost, sink_minmax, sink_avg
 
@@ -2120,14 +2120,14 @@ def create_dash(simulation):
                 output_sum += sum(simulation.result[i_output.key])
 
             config = (
-                f"\n **Capacity:** {component.capacity} {component.flowtype.unit.get_unit_flow()}\n"
+                f"\n **Capacity:** {component.flowtype.unit.get_value_expression(component.capacity,'flow')}\n"
                 f"\n **Base efficiency:** {component.efficiency * 100} %\n"
-                f"\n **SOC start:** {component.soc_start * component.capacity} {component.flowtype.unit.get_unit_flow()} ({component.soc_start * 100}%)\n"
+                f"\n **SOC start:** {component.flowtype.unit.get_value_expression(component.soc_start * component.capacity,'flow')} ({component.soc_start * 100}%)\n"
                 f"\n **Leakage per timestep:** \n"
                 f"\n * {component.leakage_time} % of total Capacity\n"
                 f"\n * {component.leakage_SOC} % of SOC\n"
-                f"\n **Max charging Power:** {component.power_max_charge} {component.flowtype.unit.get_unit_flowrate()}\n"
-                f"\n **Max discharging Power:** {component.power_max_discharge} {component.flowtype.unit.get_unit_flowrate()}\n"
+                f"\n **Max charging Power:** {component.flowtype.unit.get_value_expression(component.power_max_charge,'flow')}\n"
+                f"\n **Max discharging Power:** {component.flowtype.unit.get_value_expression(component.power_max_discharge,'flow')}\n"
                 f"\n **Inputs:** \n"
                 f"\n {inputs} \n"
                 f"\n **Outputs:** \n"
