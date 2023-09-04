@@ -12,11 +12,10 @@ class Flowtype:
         self,
         key,
         *,
-        unit: str | Unit.Unit = "unit",
+        unit: Unit.Unit,
         description: str = "",
         color: str | list[float] = None,
         represents_losses: bool = False,
-        suffix: str = None,
         name: str = None,
     ):
         """
@@ -34,12 +33,6 @@ class Flowtype:
         else:
             self.name = name
 
-        # set the suffix if given
-        if suffix is None:
-            self.suffix = name
-        else:
-            self.suffix = suffix
-
         self.represents_losses = represents_losses
 
         # define a color that components with flows of this kind will be displayed
@@ -51,10 +44,7 @@ class Flowtype:
             self.color = c.color("#777777")
 
         # set the unit of the flow type as a new unit or a given unit object
-        if isinstance(unit, str):
-            self.unit = Unit.Unit(key=unit)
-        else:
-            self.unit = unit
+        self.unit = unit
 
         # specify a description for the flowtype to appear in evaluation diagrams
         if description == "":
