@@ -12,6 +12,8 @@ class Unit:
         magnitudes,
         units_flow,
         units_flowrate,
+        *,
+        name: str = None,
     ):
         """
         This function creates a unit-object.
@@ -21,6 +23,7 @@ class Unit:
         :param magnitudes: [float list] A list of magnitudes that different prefixes for the unit are resembling. f.E. [1, 10, 100, 1000]
         :param units_flow: [str list] A list of units-descriptors that correspond to the given magnitudes when considering a flow f.e. [g, kg, t]
         :param units_flowrate: [str list] A list of units-descriptors that correspond to the given magnitudes when considering a flowrate f.e. [g/h, kg/h, t/h]
+        :param name: [str] Description of the Unit for use in GUI
         """
         self.key = key
         self.conversion_factor = conversion_factor
@@ -28,6 +31,10 @@ class Unit:
         self.units_flow = units_flow
         self.units_flowrate = units_flowrate
         self.quantity_type = quantity_type
+        if name is None:
+            self.name = key
+        else:
+            self.name = name
 
     def get_value_expression(
         self, value: float, quantity_type: str, *, digits: int = 2
