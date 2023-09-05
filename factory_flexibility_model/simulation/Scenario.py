@@ -8,10 +8,9 @@ import os
 class Scenario:
     def __init__(
         self,
+        session_folder: str,
         *,
-        parameter_file: str = None,
         timefactor: int = 1,
-        timeseries_file: str = None,
     ):
 
         # set timefactor
@@ -20,10 +19,12 @@ class Scenario:
         self.configurations = {}
 
         # read in parameters.txt
+        parameter_file = rf"{session_folder}\parameters.txt"
         if parameter_file is not None:
             self.import_parameters(parameter_file)
 
         # read in timeseries.txt
+        timeseries_file = rf"{session_folder}\timeseries.txt"
         if timeseries_file is not None:
             self.import_timeseries(timeseries_file)
 
