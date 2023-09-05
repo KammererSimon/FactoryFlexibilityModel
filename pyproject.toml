@@ -33,7 +33,6 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-gui = "examples.main:gui_development"
-dashboard = "examples.main:dashboard_development"
-dri = "examples.main:dri_iteration"
-simulate = "examples.main:script_based"
+gui = "examples.main:gui"
+dashboard = "examples.main:dash"
+simulate = "examples.main:simulate_session"
