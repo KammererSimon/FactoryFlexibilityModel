@@ -44,7 +44,7 @@ class Simulation:
         :param enable_time_tracking: Set to true if you want to track the time required for Simulation
         """
         # set general data for the Simulation
-        self.date_simulated = None
+        self.date_simulated = "NOT_SIMULATED"
         self.enable_time_tracking = enable_time_tracking
         self.factory = factory  # Variable to store the factory for the Simulation
         self.interval_length = None  # realtime length of one Simulation interval...to be taken out of the scenario
@@ -69,7 +69,7 @@ class Simulation:
         # create timestamp of Simulation setup
         now = datetime.now()
         self.date_created = now.strftime(
-            "%d/%m/%Y %H:%M:%S"
+            "%d.%m.%Y %H-%M-%S"
         )  # date/time of the creation of the Simulation object
 
     def __add_converter(self, component):
@@ -1579,17 +1579,24 @@ class Simulation:
             #            f"{output_connection.key}/weight_source"
             #        ]
 
-    def save(self, file_path: str, *, overwrite: bool = False):
+    def save(self, file_path: str, *, name: str = None, overwrite: bool = False):
         """
         This function saves a Simulation-object under the specified filepath as a single file.
         :param file_path: [string] Path to the file to be created
+        :param name: [sring] Option to give the saved simulation a specific name
         :param override: [boolean] Set True to allow the method to overwrite existing files.
         Otherwise an error will occur when trying to overwrite a file
         :return: Nothing
         """
 
+        # create the filename
+        if name is None:
+            filename = rf"{file_path}\{self.name} ({self.date_simulated}).sim"
+        else:
+            filename = rf"{file_path}\{name}.sim"
+
         # check, if file already exists
-        file = Path(file_path)
+        file = Path(filename)
         if file.is_file():
             if overwrite:
                 logging.warning(
@@ -1609,10 +1616,10 @@ class Simulation:
         simulation_data.R_objective = []
 
         # save the factory at the given path
-        with open(file_path, "wb") as f:
+        with open(filename, "wb") as f:
             pickle.dump(simulation_data, f)
 
-        logging.info(f"SIMULATION SAVED under{file_path}")
+        logging.info(f"SIMULATION SAVED under{filename}")
 
     def set_factory(self, factory):
         """This function sets a factory_model.factory-object as the factory for the Simulation
@@ -1663,7 +1670,7 @@ class Simulation:
 
         # Write timestamp
         now = datetime.now()
-        self.date_simulated = now.strftime("%d/%m/%Y %H:%M:%S")  # write timestamp
+        self.date_simulated = now.strftime("%d.%m.%Y %H-%M-%S")  # write timestamp
 
         # Validate factory architecture
         self.__validate_factory_architecture()
