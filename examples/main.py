@@ -28,12 +28,14 @@ def gui():
     gui.run()
 
 
-def simulate_session(session_folder=sys.argv[1]):
+def simulate_session():
     """
     This function takes the path to a session folder and conducts the simulation.
     """
 
     logging.basicConfig(level=logging.DEBUG)
+
+    session_folder = sys.argv[1]
 
     # check, that the session_folder is existing
     if not os.path.exists(session_folder):
@@ -56,14 +58,14 @@ def simulate_session(session_folder=sys.argv[1]):
     simulation.create_dash()
 
 
-def dash(simulation_data=sys.argv[1]):
+def dash():
     r"""
     This function imports a given (solved) simulation file and loads it into the plotly dashboard for analysis.
     :param simulation_data: [str] Path to a solved simulation file. Typically stored under "session_folder\simulations\*simulation_name*.sim"
     """
 
     # import simulation
-    simulation = imp.import_simulation(simulation_data)
+    simulation = imp.import_simulation(sys.argv[1])
 
     # create and run dashboard
     simulation.create_dash()
