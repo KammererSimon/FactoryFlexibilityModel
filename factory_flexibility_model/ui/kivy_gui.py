@@ -1,11 +1,15 @@
 import copy
-import os
 from collections import defaultdict
 from tkinter import filedialog
 from tkinter.messagebox import askyesno
 
+import factory_blueprint as bp
+import factory_import as imp
+import factory_simulation as fs
+import input_validations as iv
 import numpy as np
 import pandas as pd
+import scenario as sc
 import yaml
 from kivy.core.window import Window
 from kivy.graphics import Color, Ellipse, Line, Triangle
@@ -39,12 +43,6 @@ from kivymd.uix.pickers import MDColorPicker
 from kivymd.uix.snackbar import Snackbar
 from kivymd.uix.tab import MDTabsBase
 from kivymd.uix.textfield import MDTextField
-
-import factory_flexibility_model.factory.Blueprint as bp
-import factory_flexibility_model.input_validations as iv
-import factory_flexibility_model.io.factory_import as imp
-import factory_flexibility_model.simulation.Scenario as sc
-import factory_flexibility_model.simulation.Simulation as fs
 
 # IMPORT 3RD PARTY PACKAGES
 
@@ -379,8 +377,8 @@ class DragLabel(DragBehavior, Image):
 
 
 class ValidatedTextField(MDTextField):
-    validation_type = ""  # specifies which validate validation routine is performed when the user changes the text
-    value_valid = True  # Is set to false when the user gave an invalid validate
+    validation_type = ""  # specifies which input validation routine is performed when the user changes the text
+    value_valid = True  # Is set to false when the user gave an invalid input
 
 
 class ValidatedCheckBox(CheckBox):
@@ -492,28 +490,28 @@ class factory_GUIApp(MDApp):
             self.show_component_creation_menu()
             return
 
-        # make sure that there is at least one flowtype in the factory
+        # make sure that there is at least one flow in the factory
         if len(self.blueprint.flows) == 0:
             self.add_flow(instance, touch)
 
-        # assign a key to the new Component
+        # assign a key to the new component
         i = 0
         while f"component_{i}" in self.blueprint.components.keys():
             i += 1
         component_key = f"component_{i}"
 
-        # create a blueprint entry for the Component
+        # create a blueprint entry for the component
         self.blueprint.components[component_key] = defaultdict(lambda: "")
         self.blueprint.components[component_key]["position_x"] = 0
         self.blueprint.components[component_key]["position_y"] = 0
         self.blueprint.components[component_key][
             "key"
-        ] = component_key  # number of the Component which is dragged into the layout beginning by 0
-        self.blueprint.components[component_key]["flowtype"] = self.blueprint.flows[
+        ] = component_key  # number of the component which is dragged into the layout beginning by 0
+        self.blueprint.components[component_key]["flow"] = self.blueprint.flows[
             "flow_0"
         ][
             "key"
-        ]  # number of the flowtype which is added beginning by 0
+        ]  # number of the flow which is added beginning by 0
 
         # create a temporary widget on the main canvas to store the position until self.save_component_positions()
         component_framelabel = DragLabel(id=component_key)
@@ -522,28 +520,28 @@ class factory_GUIApp(MDApp):
         self.root.ids.canvas_layout.add_widget(component_framelabel)
         self.root.ids[f"frame_{component_key}"] = component_framelabel
 
-        # specify Component type, initial name and initial icon depending on the dragged dummy:
+        # specify component type, initial name and initial icon depending on the dragged dummy:
 
-        # give the Component a unique name
+        # give the component a unique name
         i = 1
         while self.get_key(f"Unspecified {instance.key} {i}"):
             i += 1
         self.blueprint.components[component_key][
             "name"
-        ] = f"Unspecified {instance.key} {i}"  # name of Component which is dragged into the layout by numbering exemplary is 'Unspecified thermal system 1'
+        ] = f"Unspecified {instance.key} {i}"  # name of component which is dragged into the layout by numbering exemplary is 'Unspecified thermal system 1'
         self.blueprint.components[component_key][
             "type"
         ] = (
             instance.key
-        )  # name of Component which is dragged into the layout exemplary thermalsystem
+        )  # name of component which is dragged into the layout exemplary thermalsystem
         self.blueprint.components[component_key]["icon"] = self.default_icons[
             instance.key
         ]
 
-        # close the Component selection menu
+        # close the component selection menu
         self.root.ids.component_shelf.set_state("closed")
 
-        # catch the position of the new Component and update the visualisation to show it in the correct place
+        # catch the position of the new component and update the visualisation to show it in the correct place
         self.save_component_positions()
         self.initialize_visualization()
 
@@ -590,7 +588,7 @@ class factory_GUIApp(MDApp):
         ] = f"{source_name} -> {sink_name}"
         self.blueprint.connections[connection_key]["from"] = source_key
         self.blueprint.connections[connection_key]["to"] = sink_key
-        self.blueprint.connections[connection_key]["flowtype"] = self.blueprint.flows[
+        self.blueprint.connections[connection_key]["flow"] = self.blueprint.flows[
             list(self.blueprint.flows.keys())[0]
         ]["key"]
         self.blueprint.connections[connection_key]["key"] = connection_key
@@ -613,7 +611,7 @@ class factory_GUIApp(MDApp):
 
     def add_flow(self, instance, touch):
         """
-        This function ads a generic new flowtype to the blueprint and selects it for configuration
+        This function ads a generic new flow to the blueprint and selects it for configuration
         """
 
         # check, if the function call actually came from an object that has been clicked/moved
@@ -626,31 +624,31 @@ class factory_GUIApp(MDApp):
             self.show_component_creation_menu()
             return
 
-        # create key for the new flowtype
+        # create key for the new flow
         flow_key = f"flow_{len(self.blueprint.flows)}"
 
         i = 1
         while self.get_key(f"Unspecified Flow {i}"):
             i += 1
 
-        # create a new flowtype:
+        # create a new flow:
         self.blueprint.flows[flow_key] = defaultdict(lambda: "")
         self.blueprint.flows[flow_key]["name"] = f"Unspecified Flow {i}"
         self.blueprint.flows[flow_key]["key"] = flow_key
         self.blueprint.flows[flow_key]["type"] = "energy"
-        self.blueprint.flows[flow_key]["unit_flow"] = ""
-        self.blueprint.flows[flow_key]["unit_flowrate"] = ""
+        self.blueprint.flows[flow_key]["unit_energy"] = ""
+        self.blueprint.flows[flow_key]["unit_power"] = ""
         self.blueprint.flows[flow_key]["color"] = [0.5, 0.5, 0.5, 1]
         self.blueprint.flows[flow_key]["conversion_factor"] = 1
 
-        # reset the Component creation menu
+        # reset the component creation menu
         self.root.ids.component_shelf.set_state("closed")
 
-        # catch the position of the new Component and update the visualisation to show it in the correct place
+        # catch the position of the new component and update the visualisation to show it in the correct place
         self.save_component_positions()
         self.initialize_visualization()
 
-        # select the new flowtype
+        # select the new flow
         self.change_selected_asset(flow_key)
 
         # set unsaved changes to true
@@ -662,12 +660,10 @@ class factory_GUIApp(MDApp):
         and initializes all functional variables for the GUI
         """
         # create root object for the app
-        screen = Builder.load_file(
-            os.path.join(os.path.dirname(__file__), "FactoryModelGUI.kv")
-        )
+        screen = Builder.load_file("FactoryModelGUI.kv")
 
         # Background variables for GUI
-        self.blueprint = bp.Blueprint()  # Stores the current factory layout
+        self.blueprint = bp.factory_blueprint()  # Stores the current factory layout
         self.connection_edit_mode = (
             False  # is set to true while the user is building a new connection
         )
@@ -686,11 +682,9 @@ class factory_GUIApp(MDApp):
             "time_factor": 1,
         }
         self.selected_timeseries = np.zeros(168)  # the currently activated timeseries
-        self.search_text = ""  # text within the Component search bar
+        self.search_text = ""  # text within the component search bar
         self.timeseries = []  # List of imported timeseries within the session
-        self.write_log = (
-            True  # sets, if a log_simulation of function calls is written or not
-        )
+        self.write_log = True  # sets, if a log of function calls is written or not
         self.version = (
             version  # version index to recognize possible conflicts with old saves
         )
@@ -941,7 +935,7 @@ class factory_GUIApp(MDApp):
 
     def change_selected_asset(self, key):
         """
-        This function takes a Component key and sets the asset adressed by the key as the currently selected asset.
+        This function takes a component key and sets the asset adressed by the key as the currently selected asset.
         """
 
         if not self.dialog == None:
@@ -969,9 +963,9 @@ class factory_GUIApp(MDApp):
 
     def click_on_component(self, instance, touch):
         """
-        This function is triggered everytime when the user clicks on the Component (or on the canvas if it is still buggy)
-        This function will select the clicked Component as the current asset.
-        If the user moves the Component the new position will be stored using self.save_component_positions
+        This function is triggered everytime when the user clicks on the component (or on the canvas if it is still buggy)
+        This function will select the clicked component as the current asset.
+        If the user moves the component the new position will be stored using self.save_component_positions
         """
 
         # check, if the function call actually came from an object that has been clicked/moved
@@ -989,8 +983,8 @@ class factory_GUIApp(MDApp):
                 self.connection_edit_mode = False
                 return
 
-        # otherwise just select the Component that has been clicked on
-        print(f"selecting Component {instance.id}")
+        # otherwise just select the component that has been clicked on
+        print(f"selecting component {instance.id}")
         self.initiate_asset_selection(instance.id)
         self.save_component_positions()
 
@@ -1090,7 +1084,7 @@ class factory_GUIApp(MDApp):
 
         self.close_dialog()
 
-        # check, which connections need to be removed along with the Component
+        # check, which connections need to be removed along with the component
         delete_list = []
         for connection in self.blueprint.connections:
             if (
@@ -1111,14 +1105,14 @@ class factory_GUIApp(MDApp):
         # inform the user
         Snackbar(text=f"{self.selected_asset['name']} has been deleted!").open()
 
-        # delete the Component out of the blueprint
+        # delete the component out of the blueprint
         del self.blueprint.components[self.selected_asset["key"]]
 
-        # now there is no more selected Component
+        # now there is no more selected component
         self.selected_asset = None
         self.root.ids.asset_config_screens.current = "welcome_screen"
 
-        # redraw the visualisation without the selected Component
+        # redraw the visualisation without the selected component
         self.initialize_visualization()
 
     def delete_connection(self, key):
@@ -1165,10 +1159,10 @@ class factory_GUIApp(MDApp):
 
     def get_key(self, given_name):
         """
-        This method takes a Component name and returns the corresponding key that the Component can be adressed with in the blueprint
+        This method takes a component name and returns the corresponding key that the component can be adressed with in the blueprint
         """
 
-        # search name in Component dict
+        # search name in component dict
         for component in self.blueprint.components.values():
             if component["name"] == given_name:
                 return component["key"]
@@ -1178,7 +1172,7 @@ class factory_GUIApp(MDApp):
             if connection["name"] == given_name:
                 return connection["key"]
 
-        # search name in flowtype dict
+        # search name in flow dict
         for flow in self.blueprint.flows.values():
             if flow["name"] == given_name:
                 return flow["key"]
@@ -1250,11 +1244,11 @@ class factory_GUIApp(MDApp):
         canvas.clear()
 
         # predefine lines for connections
-        # TODO: This step is needed to have them at the background under the Component labels
+        # TODO: This step is needed to have them at the background under the component labels
         #  ...change this if there is a better way to get this behaviour
         for connection in self.blueprint.connections.values():
             # get connection color from blueprint
-            connection_color = self.blueprint.flows[connection["flowtype"]]["color"]
+            connection_color = self.blueprint.flows[connection["flow"]]["color"]
 
             # set line color
             canvas.add(
@@ -1275,7 +1269,7 @@ class factory_GUIApp(MDApp):
             canvas.add(new_line)
 
             # inititalize small rectangles to display the directions of the flows
-            # make them a little darker than the flowtype itself
+            # make them a little darker than the flow itself
             canvas.add(
                 Color(
                     connection_color[0] * 0.6,
@@ -1314,7 +1308,7 @@ class factory_GUIApp(MDApp):
         # create assets according to the blueprint:
         for component in self.blueprint.components.values():
 
-            # create draglabel for the icon of the Component
+            # create draglabel for the icon of the component
             component_framelabel = DragLabel(
                 source=component["icon"],
                 size=(component_width[component["type"]], component_height),
@@ -1347,15 +1341,15 @@ class factory_GUIApp(MDApp):
                 + 50,
             )
 
-            # if the Component is a pool: create a circle in the correct color
+            # if the component is a pool: create a circle in the correct color
             if component["type"] == "pool":
                 # exchange the icon with an empty one
                 component_framelabel.source = "Assets\\empty_rectangle.png"
                 # determine of the color of the pool
-                if component["flowtype"] == "":
+                if component["flow"] == "":
                     canvas.add(Color(0.1137, 0.2588, 0.463, 1))
                 else:
-                    pool_color = self.blueprint.flows[component["flowtype"]]["color"]
+                    pool_color = self.blueprint.flows[component["flow"]]["color"]
                     canvas.add(
                         Color(
                             pool_color[0], pool_color[1], pool_color[2], pool_color[3]
@@ -1410,7 +1404,7 @@ class factory_GUIApp(MDApp):
         delta_y = height / 20
 
         i_flow = 0
-        for flow in self.blueprint.flowtypes.values():
+        for flow in self.blueprint.flows.values():
             # set line color
             canvas.add(
                 Color(
@@ -1435,7 +1429,7 @@ class factory_GUIApp(MDApp):
             # place it on the canvas
             canvas.add(new_line)
 
-            # create a textlabel for the flowtype
+            # create a textlabel for the flow
             flow_textlabel = MDLabel(
                 text=flow["name"].upper(),
                 halign="center",
@@ -1539,11 +1533,11 @@ class factory_GUIApp(MDApp):
         if not hasattr(data, "version") or not data["version"] == self.version:
             # warn the user if the versions dont match
             self.show_info_dialog(
-                "The imported session was created with an outdated version of the factory and may be incompatible at some points or causes unexpected crashes"
+                "The imported session was created with an outdated version of the model and may be incompatible at some points or causes unexpected crashes"
             )
 
         # create new blueprint based on the loaded data
-        self.blueprint = bp.blueprint()
+        self.blueprint = bp.factory_blueprint()
 
         # recreate components as a defaultdict
         for component in data["components"].values():
@@ -1581,7 +1575,7 @@ class factory_GUIApp(MDApp):
         self.unsaved_changes_on_session = False
         self.unsaved_changes_on_asset = False
 
-        # there is no Component selected initially
+        # there is no component selected initially
         self.selected_asset = None
 
         # update the GUI to display the data
@@ -1760,7 +1754,7 @@ class factory_GUIApp(MDApp):
             self.dialog.dismiss()
 
             # create an empty blueprint and add the given information
-            self.blueprint = bp.blueprint()
+            self.blueprint = bp.factory_blueprint()
             self.blueprint.info["name"] = session_name
             self.blueprint.info["description"] = session_description
 
@@ -1792,8 +1786,8 @@ class factory_GUIApp(MDApp):
 
     def run_simulation(self):
 
-        # prepare blueprint for execution of Simulation
-        simulation_data = bp.blueprint()
+        # prepare blueprint for execution of simulation
+        simulation_data = bp.factory_blueprint()
 
         # include components
         for component in self.blueprint.components.values():
@@ -1835,7 +1829,7 @@ class factory_GUIApp(MDApp):
 
         # include scenario_data of currently selected scenario
         for parameter in self.selected_scenario["parameters"].values():
-            simulation_data.components[parameter["Component"]][
+            simulation_data.components[parameter["component"]][
                 parameter["attribute"]
             ] = parameter["timeseries"]
 
@@ -1845,13 +1839,13 @@ class factory_GUIApp(MDApp):
 
         factory = imp.import_factory_blueprint(simulation_data)
 
-        # create a scenario object with the given Simulation parameters:
+        # create a scenario object with the given simulation parameters:
         Testscenario = sc.scenario(self.selected_scenario["name"])
         Testscenario.number_of_timesteps = self.selected_scenario["timesteps"]
         Testscenario.timefactor = self.selected_scenario["time_factor"]
 
-        # call the factory factory to conduct the Simulation
-        simulation = fs.Simulation(
+        # call the factory model to conduct the simulation
+        simulation = fs.simulation(
             factory, Testscenario, enable_simulation_log=True, enable_solver_log=True
         )
 
@@ -1872,7 +1866,7 @@ class factory_GUIApp(MDApp):
             btn_ok = MDFlatButton(text="OK")
             self.dialog = MDDialog(
                 title="Insufficient Components",
-                text="There is no factory to safe yet! Add at least one flowtype, two components and a connection before saving.",
+                text="There is no factory to safe yet! Add at least one flow, two components and a connection before saving.",
                 buttons=[btn_ok],
             )
             btn_ok.bind(on_release=self.dialog.dismiss)
@@ -1943,7 +1937,7 @@ class factory_GUIApp(MDApp):
 
     def save_changes_on_flow(self):
         """
-        This function takes the user validate from the flowtype configuration tab and stores it in the blueprint
+        This function takes the user input from the flow configuration tab and stores it in the blueprint
         """
 
         # store key of old version
@@ -1967,13 +1961,13 @@ class factory_GUIApp(MDApp):
             {
                 "name": new_name,
                 "key": flow_key,
-                "unit_flow": self.root.ids.textfield_flow_unit_energy.text,
-                "unit_flowrate": self.root.ids.textfield_flow_unit_power.text,
+                "unit_energy": self.root.ids.textfield_flow_unit_energy.text,
+                "unit_power": self.root.ids.textfield_flow_unit_power.text,
                 "conversion_factor": self.root.ids.textfield_flow_conversion_factor.text,
                 "color": self.root.ids.icon_color_flow.icon_color,
             }
         )
-        # set the flowtype type
+        # set the flow type
         if self.root.ids.checkbox_flow_energy.active:
             self.blueprint.flows[flow_key]["type"] = "energy"
         elif self.root.ids.checkbox_flow_material.active:
@@ -1996,7 +1990,7 @@ class factory_GUIApp(MDApp):
 
     def save_changes_on_converter(self):
         """
-        This function takes the user validate from the converter configuration tab and stores it in the blueprint
+        This function takes the user input from the converter configuration tab and stores it in the blueprint
         """
 
         # store key of old version
@@ -2068,7 +2062,7 @@ class factory_GUIApp(MDApp):
         """
     def save_changes_on_storage(self):
         """
-        # This function takes the user validate from the storage configuration tab and stores it in the blueprint
+        # This function takes the user input from the storage configuration tab and stores it in the blueprint
         """
 
         # store key of old version
@@ -2080,7 +2074,7 @@ class factory_GUIApp(MDApp):
                        "key": component_key,
                        "type": "storage",
                        "description": self.root.ids.textfield_storage_description.text,
-                       #"flowtype": self.get_key(self.root.ids.textfield_storage_flow.text),
+                       #"flow": self.get_key(self.root.ids.textfield_storage_flow.text),
                        "Maximum charging power": self.root.ids.textfield_storage_charge_max.text,
                        "Minimum charging power": self.root.ids.textfield_storage_charge_min.text,
                        "Maximum discharging power": self.root.ids.textfield_storage_discharge_max.text,
@@ -2113,7 +2107,7 @@ class factory_GUIApp(MDApp):
 
     def save_changes_on_deadtime(self):
         """
-        This function takes the user validate from the deadtime configuration tab and stores it in the blueprint
+        This function takes the user input from the deadtime configuration tab and stores it in the blueprint
         """
 
         # store key of old version
@@ -2132,7 +2126,7 @@ class factory_GUIApp(MDApp):
             "key": component_key,
             "type": "deadtime",
             "description": self.root.ids.textfield_deadtime_description.text,
-            # "flowtype": self.get_key(self.root.ids.textfield_deadtime_flow.text),
+            # "flow": self.get_key(self.root.ids.textfield_deadtime_flow.text),
             "Delay": self.root.ids.textfield_deadtime_delay.text,
             "icon": self.root.ids.image_deadtime_configuration.source,
             "position_x": self.selected_asset["position_x"],
@@ -2157,7 +2151,7 @@ class factory_GUIApp(MDApp):
 
     def save_changes_on_schedule(self):
         """
-        This function takes the user validate from the schedule configuration tab and stores it in the blueprint
+        This function takes the user input from the schedule configuration tab and stores it in the blueprint
         """
 
         # store key of old version
@@ -2176,8 +2170,8 @@ class factory_GUIApp(MDApp):
             "key": component_key,
             "type": "schedule",
             "description": self.root.ids.textfield_schedule_description.text,
-            # "flowtype": self.get_key(self.root.ids.textfield_schedule_flow.text),
-            "Maximum power flowtype": self.root.ids.textfield_schedule_power_max.text,
+            # "flow": self.get_key(self.root.ids.textfield_schedule_flow.text),
+            "Maximum power flow": self.root.ids.textfield_schedule_power_max.text,
             "icon": self.root.ids.image_schedule_configuration.source,
             "position_x": self.selected_asset["position_x"],
             "position_y": self.selected_asset["position_y"],
@@ -2201,9 +2195,9 @@ class factory_GUIApp(MDApp):
 
     def save_changes_on_connection(self):
         """
-        This function takes the user validate from the connection configuration tab and stores it in the blueprint
+        This function takes the user input from the connection configuration tab and stores it in the blueprint
         """
-        # saving changes to a flowtype means that there are unsaved changes in the session
+        # saving changes to a flow means that there are unsaved changes in the session
         self.unsaved_changes_on_session = True
 
         # store the connection key for reuse
@@ -2227,7 +2221,7 @@ class factory_GUIApp(MDApp):
                 "to": self.get_key(self.root.ids.textfield_connection_sink.text),
                 "weight_source": self.root.ids.textfield_connection_weight_source.text,
                 "weight_sink": self.root.ids.textfield_connection_weight_sink.text,
-                "flowtype": self.get_key(self.root.ids.textfield_connection_flow.text),
+                "flow": self.get_key(self.root.ids.textfield_connection_flow.text),
                 "to_losses": self.root.ids.checkbox_connection_losses.active,
                 "type": "connection",
             }
@@ -2248,7 +2242,7 @@ class factory_GUIApp(MDApp):
 
     def save_changes_on_pool(self):
         """
-        This function takes the user validate from the pool configuration tab and stores it in the blueprint
+        This function takes the user input from the pool configuration tab and stores it in the blueprint
         """
 
         # make sure that the given name is not taken yet
@@ -2268,7 +2262,7 @@ class factory_GUIApp(MDApp):
                 "key": self.selected_asset["key"],
                 "type": "pool",
                 "description": self.root.ids.textfield_pool_description.text,
-                "flowtype": self.get_key(self.root.ids.textfield_pool_flow.text),
+                "flow": self.get_key(self.root.ids.textfield_pool_flow.text),
                 "position_x": self.blueprint.components[self.selected_asset["key"]][
                     "position_x"
                 ],
@@ -2300,7 +2294,7 @@ class factory_GUIApp(MDApp):
 
     def save_changes_on_sink(self):
         """
-        This function takes the user validate from the sink configuration tab and stores it in the blueprint
+        This function takes the user input from the sink configuration tab and stores it in the blueprint
         """
 
         # make sure that the given name is not taken yet
@@ -2335,7 +2329,7 @@ class factory_GUIApp(MDApp):
                 "key": self.selected_asset["key"],
                 "type": "sink",
                 "description": self.root.ids.textfield_sink_description.text,
-                "flowtype": self.get_key(self.root.ids.textfield_sink_flow.text),
+                "flow": self.get_key(self.root.ids.textfield_sink_flow.text),
                 "cost": self.root.ids.textfield_sink_cost.text,
                 "power_max": self.root.ids.textfield_sink_power_max.text,
                 "power_min": self.root.ids.textfield_sink_power_min.text,
@@ -2379,7 +2373,7 @@ class factory_GUIApp(MDApp):
 
     def save_changes_on_source(self):
         """
-        This function takes the user validate from the source configuration tab and stores it in the blueprint
+        This function takes the user input from the source configuration tab and stores it in the blueprint
         """
 
         # make sure that the given name is not taken yet
@@ -2410,18 +2404,18 @@ class factory_GUIApp(MDApp):
         source_new = defaultdict(lambda: "")
         source_new.update(
             {
-                "availability": iv.validate(
+                "availability": iv.input(
                     self.root.ids.textfield_source_availability.text, "float"
                 ),
-                "capacity_charge": iv.validate(
+                "capacity_charge": iv.input(
                     self.root.ids.textfield_source_capacity_charge.text, "float"
                 ),
-                "cost": iv.validate(self.root.ids.textfield_source_cost.text, "float"),
+                "cost": iv.input(self.root.ids.textfield_source_cost.text, "float"),
                 "description": self.root.ids.textfield_source_description.text,
-                "emissions": iv.validate(
+                "emissions": iv.input(
                     self.root.ids.textfield_source_emissions.text, "float"
                 ),
-                "flowtype": self.get_key(self.root.ids.textfield_source_flow.text),
+                "flow": self.get_key(self.root.ids.textfield_source_flow.text),
                 "icon": self.root.ids.image_source_configuration.source,
                 "key": self.selected_asset["key"],
                 "name": self.root.ids.textfield_source_name.text,
@@ -2431,13 +2425,13 @@ class factory_GUIApp(MDApp):
                 "position_y": self.blueprint.components[self.selected_asset["key"]][
                     "position_y"
                 ],
-                "power_max": iv.validate(
+                "power_max": iv.input(
                     self.root.ids.textfield_source_power_max.text, "float"
                 ),
-                "power_min": iv.validate(
+                "power_min": iv.input(
                     self.root.ids.textfield_source_power_min.text, "float"
                 ),
-                "power_determined": iv.validate(
+                "power_determined": iv.input(
                     self.root.ids.textfield_source_power_determined.text, "float"
                 ),
                 "scenario_availability": self.root.ids.switch_source_availability.active,
@@ -2451,7 +2445,7 @@ class factory_GUIApp(MDApp):
         # overwrite old entry
         self.blueprint.components[self.selected_asset["key"]] = source_new
 
-        # change the selected Component:
+        # change the selected component:
         self.selected_asset = source_new
 
         # update connection names to adapt changes if the name of the source has changed
@@ -2469,7 +2463,7 @@ class factory_GUIApp(MDApp):
 
     def save_changes_on_storage(self):
         """
-        This function takes the user validate from the storage configuration tab and stores it in the blueprint
+        This function takes the user input from the storage configuration tab and stores it in the blueprint
         """
 
         # make sure that the given name is not taken yet
@@ -2503,7 +2497,7 @@ class factory_GUIApp(MDApp):
                 "capacity": self.root.ids.textfield_storage_capacity.text,
                 "description": self.root.ids.textfield_storage_description.text,
                 "efficiency": self.root.ids.textfield_storage_efficiency.text,
-                "flowtype": self.get_key(self.root.ids.textfield_storage_flow.text),
+                "flow": self.get_key(self.root.ids.textfield_storage_flow.text),
                 "icon": self.root.ids.image_storage_configuration.source,
                 "key": self.selected_asset["key"],
                 "leakage_soc": self.root.ids.textfield_storage_leakage_soc.text,
@@ -2525,7 +2519,7 @@ class factory_GUIApp(MDApp):
         # overwrite old entry
         self.blueprint.components[self.selected_asset["key"]] = storage_new
 
-        # change the selected Component:
+        # change the selected component:
         self.selected_asset = storage_new
 
         # update connection names to adapt changes if the name of the source has changed
@@ -2543,7 +2537,7 @@ class factory_GUIApp(MDApp):
 
     def save_changes_on_thermalsystem(self):
         """
-        This function takes the user validate from the thermal system configuration tab and stores it in the blueprint
+        This function takes the user input from the thermal system configuration tab and stores it in the blueprint
         """
 
         # alle textfelder der komponente durchgehen
@@ -2575,7 +2569,7 @@ class factory_GUIApp(MDApp):
             "key": component_key,
             "type": "thermalsystem",
             "description": self.root.ids.textfield_thermalsystem_description.text,
-            # "flowtype": self.get_key(self.root.ids.textfield_thermalsystem_flow.text),
+            # "flow": self.get_key(self.root.ids.textfield_thermalsystem_flow.text),
             "Start temperature": self.root.ids.textfield_thermalsystem_temperature_start.text,
             "ambient temperature": self.root.ids.textfield_thermalsystem_temperature_ambient.text,
             "maximum temperature": self.root.ids.textfield_thermalsystem_temperature_max.text,
@@ -2612,7 +2606,7 @@ class factory_GUIApp(MDApp):
 
     def save_component_positions(self):
         """
-        This function is called everytime when a Component has been moven by the user within the layout visualisation.
+        This function is called everytime when a component has been moven by the user within the layout visualisation.
         It checks the current positions of all components for deviations from their last known location.
         If a position deviates more than the expected rounding error the new position is stored in the blueprint
         """
@@ -2647,7 +2641,7 @@ class factory_GUIApp(MDApp):
 
         # iterate over all components
         for component in self.blueprint.components.values():
-            # calculate the current relative position on the canvas for the Component
+            # calculate the current relative position on the canvas for the component
             current_pos_x = round(
                 (
                     self.root.ids[f"frame_{component['key']}"].pos[0]
@@ -2671,7 +2665,7 @@ class factory_GUIApp(MDApp):
                 0,
             )
 
-            # make sure that the new position is within the grid. If not: move tho Component to the closest border
+            # make sure that the new position is within the grid. If not: move tho component to the closest border
             if current_pos_x < 0:
                 current_pos_x = 0
             if current_pos_x > self.display_grid_size[0]:
@@ -2687,7 +2681,7 @@ class factory_GUIApp(MDApp):
                 and self.root.ids.canvas_layout.height > 500
             ):
 
-                # Check, if the Component has been dragged on top of the recycle bin to delete it..
+                # Check, if the component has been dragged on top of the recycle bin to delete it..
                 if (
                     self.root.ids[f"frame_{component['key']}"].pos[0]
                     < self.root.ids.icon_delete_component.pos[0]
@@ -2706,12 +2700,12 @@ class factory_GUIApp(MDApp):
                     self.update_visualization()
 
                 else:
-                    # if x coordinate of the Component has changed more than expected rounding error:
+                    # if x coordinate of the component has changed more than expected rounding error:
                     if not current_pos_x - component["position_x"] == 0:
                         component["position_x"] = current_pos_x
                         changes_done = True
 
-                    # if y coordinate of the Component has changed more than expected rounding error: store it
+                    # if y coordinate of the component has changed more than expected rounding error: store it
                     if not current_pos_y - component["position_y"] == 0:
                         component["position_y"] = current_pos_y
                         changes_done = True
@@ -2741,7 +2735,7 @@ class factory_GUIApp(MDApp):
                 "type": "static_value",
                 "timeseries": self.selected_timeseries,
                 "unit": self.root.ids.textfield_static_value_unit.text,
-                "Component": self.selected_parameter["Component"],
+                "component": self.selected_parameter["component"],
                 "attribute": self.selected_parameter["attribute"],
             }
         if value_type == "Custom Timeseries":
@@ -2750,7 +2744,7 @@ class factory_GUIApp(MDApp):
                 "type": "custom_timeseries",
                 "timeseries": self.selected_timeseries,
                 "unit": self.root.ids.textfield_custom_timeseries_unit.text,
-                "Component": self.selected_parameter["Component"],
+                "component": self.selected_parameter["component"],
                 "attribute": self.selected_parameter["attribute"],
                 "description": self.root.ids.label_selected_timeseries.text,
             }
@@ -2766,7 +2760,7 @@ class factory_GUIApp(MDApp):
         This event is triggered when the user clicks on an image in the scenario image selection dialog.
         The selected image will be taken as the visualisation image for the current scenario
         """
-        # abort if the event has not been triggered by the touched Component
+        # abort if the event has not been triggered by the touched component
         if not instance.collide_point(*touch.pos):
             # abort if not
             return
@@ -2811,7 +2805,7 @@ class factory_GUIApp(MDApp):
                     )
                     item = TwoLineAvatarListItem(
                         text=flow["name"],
-                        secondary_text="flowtype",
+                        secondary_text="flow",
                         on_release=self.select_asset_list_item,
                     )
                     # place components correctly in the layout
@@ -2832,7 +2826,7 @@ class factory_GUIApp(MDApp):
                     icon="fast-forward",
                     icon_size=30,
                     theme_icon_color="Custom",
-                    icon_color=self.blueprint.flows[connection["flowtype"]]["color"],
+                    icon_color=self.blueprint.flows[connection["flow"]]["color"],
                 )
                 item = TwoLineIconListItem(
                     text=connection["name"],
@@ -2844,7 +2838,7 @@ class factory_GUIApp(MDApp):
                 item.add_widget(icon)
                 self.root.ids.list_assets.add_widget(item)
 
-        # iterate over all Component types
+        # iterate over all component types
         for component in self.blueprint.components.values():
             if (
                 self.search_text == ""
@@ -2880,7 +2874,7 @@ class factory_GUIApp(MDApp):
 
         # COMPONENTS
 
-        # define the Component dummys to be created
+        # define the component dummys to be created
         component_dummys = {
             "source": {
                 "id": "dummy_source",
@@ -2913,7 +2907,7 @@ class factory_GUIApp(MDApp):
             },
         }
 
-        # get available height of the Component canvas
+        # get available height of the component canvas
         canvas_height = self.root.ids.canvas_shelf.size[1]
         canvas_width = self.root.ids.canvas_shelf.size[0]
 
@@ -2921,13 +2915,13 @@ class factory_GUIApp(MDApp):
         component_height = canvas_height / (len(component_dummys) + 1)
         component_pos_x = (canvas_width - component_height * 1.5) / 2
 
-        # clear Component dummy canvas
+        # clear component dummy canvas
         self.root.ids.canvas_shelf.canvas.clear()
 
         # iterate over all specified dummys and create them
         i = 0
         for type in component_dummys:
-            # create draglabel for the icon of the Component
+            # create draglabel for the icon of the component
             component_dummy = DragLabel(
                 source=component_dummys[type]["source"],
                 id=component_dummys[type]["id"],
@@ -2944,14 +2938,14 @@ class factory_GUIApp(MDApp):
 
         # FLOW
 
-        # clear flowtype dummy canvas
+        # clear flow dummy canvas
         self.root.ids.canvas_flow.canvas.clear()
 
-        # create and position a flowtype dummy icon
+        # create and position a flow dummy icon
         flow_dummy = DragLabel(
             source="Assets\\icon_flow.png",
             id="dummy_flow",
-            key="flowtype",
+            key="flow",
             on_touch_up=lambda touch, instance: self.add_flow(touch, instance),
             pos=(
                 self.root.ids.canvas_flow.size[0] * 0.15,
@@ -2964,12 +2958,12 @@ class factory_GUIApp(MDApp):
         )
         self.root.ids.canvas_flow.add_widget(flow_dummy)
 
-        # show the Component shelf
+        # show the component shelf
         self.root.ids.component_shelf.set_state("open")
 
     def show_component_deletion_dialog(self):
 
-        # abort if there is no asset or a flowtype or connection selected
+        # abort if there is no asset or a flow or connection selected
         if self.selected_asset == None or self.selected_asset["type"] in [
             "energy",
             "material",
@@ -2983,7 +2977,7 @@ class factory_GUIApp(MDApp):
         self.dialog = MDDialog(
             title="Delete Component",
             buttons=[btn_false, btn_true],
-            text="Do you really want to delete the Component with all its adherent connections?",
+            text="Do you really want to delete the component with all its adherent connections?",
         )
         btn_false.bind(on_release=self.dialog.dismiss)
         btn_true.bind(on_release=self.delete_component)
@@ -3068,7 +3062,7 @@ class factory_GUIApp(MDApp):
     def show_flow_selection_dropdown(self, caller):
         """
         This function creates a dropdown menu giving the user the option to select one of the flows in the blueprint.
-        The name of the selected flowtype is being set as text to the Component that this function is being called from.
+        The name of the selected flow is being set as text to the component that this function is being called from.
         """
 
         def set_text(caller, text):
@@ -3104,7 +3098,7 @@ class factory_GUIApp(MDApp):
     def show_icon_selection_dropdown(self, caller):
         """
         This function creates a dropdown menu giving the user the option to select one of the predefined icons.
-        The filepath of the selected icon is being set as text to the Component that this function is being called from.
+        The filepath of the selected icon is being set as text to the component that this function is being called from.
         """
 
         def set_image(caller, path):
@@ -3410,7 +3404,7 @@ class factory_GUIApp(MDApp):
 
     def select_asset_list_item(self, list_item):
         """
-        This function is called everytime when the user selects a Component in the Component browser.
+        This function is called everytime when the user selects a component in the component browser.
         It searches for the corresponding key to the selected listitem and calls the change_selected_asset - method
         """
 
@@ -3459,7 +3453,7 @@ class factory_GUIApp(MDApp):
         parameter_key = f"{self.get_key(list_item.text)}_{list_item.secondary_text}"
         self.selected_parameter = {
             "key": parameter_key,
-            "Component": self.get_key(list_item.text),
+            "component": self.get_key(list_item.text),
             "attribute": list_item.secondary_text,
         }
 
@@ -3537,8 +3531,8 @@ class factory_GUIApp(MDApp):
 
         def append_item(frame, component_name, parameter_name):
             """
-            This subfunction creates a list entry representing a single Component parameter that has to be specified
-            for the Simulation. The Item is being attached to the list_scenario_parameters-object
+            This subfunction creates a list entry representing a single component parameter that has to be specified
+            for the simulation. The Item is being attached to the list_scenario_parameters-object
             """
 
             # create list entry with basic parameter description
@@ -3618,7 +3612,7 @@ class factory_GUIApp(MDApp):
                 "to_losses"
             ]
             self.root.ids.textfield_connection_flow.text = self.blueprint.flows[
-                self.selected_asset["flowtype"]
+                self.selected_asset["flow"]
             ]["name"]
 
             if self.selected_asset["from"] == "":
@@ -3644,10 +3638,10 @@ class factory_GUIApp(MDApp):
             # get data from blueprint and add it to the screen
             self.root.ids.textfield_flow_name.text = self.selected_asset["name"]
             self.root.ids.textfield_flow_unit_power.text = self.selected_asset[
-                "unit_flowrate"
+                "unit_power"
             ]
             self.root.ids.textfield_flow_unit_energy.text = self.selected_asset[
-                "unit_flow"
+                "unit_energy"
             ]
             self.root.ids.textfield_flow_conversion_factor.text = str(
                 self.selected_asset["conversion_factor"]
@@ -3664,7 +3658,7 @@ class factory_GUIApp(MDApp):
                 "description"
             ]
             self.root.ids.textfield_source_flow.text = self.blueprint.flows[
-                self.selected_asset["flowtype"]
+                self.selected_asset["flow"]
             ]["name"]
             self.root.ids.textfield_source_cost.text = str(self.selected_asset["cost"])
             self.root.ids.textfield_source_capacity_charge.text = str(
@@ -3707,7 +3701,7 @@ class factory_GUIApp(MDApp):
             self.root.ids.asset_config_screens.current = "pool_config"
             self.root.ids.label_pool_name.text = self.selected_asset["name"]
             self.root.ids.textfield_pool_flow.text = self.blueprint.flows[
-                self.selected_asset["flowtype"]
+                self.selected_asset["flow"]
             ]["name"]
             self.root.ids.textfield_pool_name.text = self.selected_asset["name"]
             self.root.ids.textfield_pool_description.text = self.selected_asset[
@@ -3717,7 +3711,7 @@ class factory_GUIApp(MDApp):
         elif self.selected_asset["type"] == "converter":
             # show the converter configuration screeen in the box on the bottom of the screen
             self.root.ids.asset_config_screens.current = "converter_config"
-            # read values from the blueprint and initialize the validate fields
+            # read values from the blueprint and initialize the input fields
             self.root.ids.label_converter_name.text = self.selected_asset["name"]
             self.root.ids.textfield_converter_name.text = self.selected_asset["name"]
             self.root.ids.textfield_converter_description.text = self.selected_asset[
@@ -3786,7 +3780,7 @@ class factory_GUIApp(MDApp):
                 self.selected_asset["co2_refund_per_unit"]
             )
             self.root.ids.textfield_sink_flow.text = self.blueprint.flows[
-                self.selected_asset["flowtype"]
+                self.selected_asset["flow"]
             ]["name"]
             self.root.ids.textfield_sink_power_max.text = str(
                 self.selected_asset["power_max"]
@@ -3814,13 +3808,13 @@ class factory_GUIApp(MDApp):
 
         elif self.selected_asset["type"] == "storage":
             self.root.ids.asset_config_screens.current = "storage_config"
-            # read values from the blueprint and initialize the validate fields
+            # read values from the blueprint and initialize the input fields
             self.root.ids.label_storage_name.text = self.selected_asset["name"]
             self.root.ids.textfield_storage_name.text = self.selected_asset["name"]
             self.root.ids.textfield_storage_description.text = self.selected_asset[
                 "description"
             ]
-            # self.root.ids.textfield_schedule_flow.text = self.blueprint.flows[self.selected_asset["flowtype"]]["name"]
+            # self.root.ids.textfield_schedule_flow.text = self.blueprint.flows[self.selected_asset["flow"]]["name"]
             self.root.ids.textfield_storage_power_max.text = self.selected_asset[
                 "power_max_charge"
             ]
@@ -3851,7 +3845,7 @@ class factory_GUIApp(MDApp):
         elif self.selected_asset["type"] == "thermalsystem":
             # show the thermal system configuration screeen in the box on the bottom of the screen
             self.root.ids.asset_config_screens.current = "thermalsystem_config"
-            # read values from the blueprint and initialize the validate fields
+            # read values from the blueprint and initialize the input fields
             self.root.ids.label_thermalsystem_name.text = self.selected_asset["name"]
             self.root.ids.textfield_thermalsystem_name.text = self.selected_asset[
                 "name"
@@ -3859,7 +3853,7 @@ class factory_GUIApp(MDApp):
             self.root.ids.textfield_thermalsystem_description.text = (
                 self.selected_asset["description"]
             )
-            # self.root.ids.textfield_thermalsystem_flow.text = self.blueprint.flows[self.selected_asset["flowtype"]]["name"]
+            # self.root.ids.textfield_thermalsystem_flow.text = self.blueprint.flows[self.selected_asset["flow"]]["name"]
             self.root.ids.textfield_thermalsystem_temperature_start.text = (
                 self.selected_asset["Start temperature"]
             )
@@ -3914,15 +3908,15 @@ class factory_GUIApp(MDApp):
         elif self.selected_asset["type"] == "schedule":
             # show the schedule configuration screeen in the box on the bottom of the screen
             self.root.ids.asset_config_screens.current = "schedule_config"
-            # read values from the blueprint and initialize the validate fields
+            # read values from the blueprint and initialize the input fields
             self.root.ids.label_schedule_name.text = self.selected_asset["name"]
             self.root.ids.textfield_schedule_name.text = self.selected_asset["name"]
             self.root.ids.textfield_schedule_description.text = self.selected_asset[
                 "description"
             ]
-            # self.root.ids.textfield_schedule_flow.text = self.blueprint.flows[self.selected_asset["flowtype"]]["name"]
+            # self.root.ids.textfield_schedule_flow.text = self.blueprint.flows[self.selected_asset["flow"]]["name"]
             self.root.ids.textfield_schedule_power_max.text = self.selected_asset[
-                "Maximum power flowtype"
+                "Maximum power flow"
             ]
             # display the correct icon
             self.root.ids.image_schedule_configuration.source = self.selected_asset[
@@ -3935,13 +3929,13 @@ class factory_GUIApp(MDApp):
         elif self.selected_asset["type"] == "deadtime":
             # show the deadtime configuration screeen in the box on the bottom of the screen
             self.root.ids.asset_config_screens.current = "deadtime_config"
-            # read values from the blueprint and initialize the validate fields
+            # read values from the blueprint and initialize the input fields
             self.root.ids.label_deadtime_name.text = self.selected_asset["name"]
             self.root.ids.textfield_deadtime_name.text = self.selected_asset["name"]
             self.root.ids.textfield_deadtime_description.text = self.selected_asset[
                 "description"
             ]
-            # self.root.ids.textfield_deadtime_flow.text = self.blueprint.flows[self.selected_asset["flowtype"]]["name"]
+            # self.root.ids.textfield_deadtime_flow.text = self.blueprint.flows[self.selected_asset["flow"]]["name"]
             self.root.ids.textfield_deadtime_delay.text = self.selected_asset["Delay"]
             self.validate_textfield_input(self.root.ids.textfield_deadtime_delay)
             # display the correct icon
@@ -3962,7 +3956,7 @@ class factory_GUIApp(MDApp):
         self, instance_color_picker: MDColorPicker, type_color: str, selected_color
     ):
         """
-        This function updates the color of the component_color_button in the flowtype-tab
+        This function updates the color of the component_color_button in the flow-tab
         by giving the user a colorpicker-interface
         """
         self.root.ids.icon_color_flow.icon_color = selected_color[:-1] + [1]
@@ -4137,7 +4131,7 @@ class factory_GUIApp(MDApp):
     def update_visualization(self, *args, **kwargs):
         """
         This function updates the position of connections and labels of the factory layout visualization.
-        It is being called on startup once and everytime a Component gets moved by the user
+        It is being called on startup once and everytime a component gets moved by the user
         """
 
         # Specify a scaling factor depending on the size of the canvas and the number of components to be displayed
@@ -4173,7 +4167,7 @@ class factory_GUIApp(MDApp):
 
         # store pointer to canvas to make following code better readable
 
-        # create dataset with the incoming and outgoing connections per Component, sorted by the direction
+        # create dataset with the incoming and outgoing connections per component, sorted by the direction
         # initialize a dict to store the information per direction
         connection_data = defaultdict(lambda: None)
         for component in self.blueprint.components:
@@ -4244,7 +4238,7 @@ class factory_GUIApp(MDApp):
                 i = 0
                 number_of_connections = len(component[direction])
                 for connection_end in component[direction]:
-                    # set the id of the current connection at the Component
+                    # set the id of the current connection at the component
                     i += 1
 
                     # set the offset of the connections breaking points
@@ -4262,7 +4256,7 @@ class factory_GUIApp(MDApp):
                             {"direction": "vertical", "key": connection_end[1]}
                         )
 
-                    # get the Component that the connection has to start/end from
+                    # get the component that the connection has to start/end from
                     if connection_end[2] == "in":
                         act_component = self.blueprint.components[
                             self.blueprint.connections[connection_end[1]]["to"]
@@ -4345,7 +4339,7 @@ class factory_GUIApp(MDApp):
                     connection["end_y"],
                 )
 
-                # get the widths of sink and source Component
+                # get the widths of sink and source component
                 source_width = component_width[
                     self.blueprint.components[
                         self.blueprint.connections[connection["key"]]["from"]
@@ -4471,7 +4465,7 @@ class factory_GUIApp(MDApp):
                     component_height - 4 * line_width,
                 )
 
-        # highlight the selected Component
+        # highlight the selected component
         if (
             self.selected_asset == None
             or self.selected_asset == ""
@@ -4479,7 +4473,7 @@ class factory_GUIApp(MDApp):
             or self.selected_asset["type"] == "material"
             or self.selected_asset["type"] == "connection"
         ):
-            #  if the user selected a flowtype, a connection or no Component at all: move the highlight image out of sight
+            #  if the user selected a flow, a connection or no component at all: move the highlight image out of sight
             self.root.ids["highlight"].pos = [-1000, -1000]
 
         else:
@@ -4492,7 +4486,7 @@ class factory_GUIApp(MDApp):
                 component_width[self.selected_asset["type"]] * 2,
                 component_height * 2,
             ]
-            # place it behind the selected Component
+            # place it behind the selected component
             self.root.ids["highlight"].pos = [
                 self.root.ids[f"frame_{self.selected_asset['key']}"].pos[0]
                 - component_width[self.selected_asset["type"]] / 2,
@@ -4536,6 +4530,396 @@ class factory_GUIApp(MDApp):
     #     else:
     #         print("Checkbox wurde nicht aktiviert")
 
+    # validation of components
+    def validate_thermalsystem(self, textfield):
+        print("Komponente 'thermalsystem' aufgerufen")
+
+        # check for the required validation type and perform checks accordingly
+        if textfield.validation_type in ("thermalsystem_temperature"):
+            # if (self.root.ids.checkbox_thermasystem_temperature_min.active):
+            if self.root.ids.textfield_thermalsystem_temperature_min.text == "":
+                temperature_min = -273
+                print("Temperatur -273")
+            elif self.root.ids.textfield_thermalsystem_temperature_min.text == "-":
+                temperature_min = -273
+                print("Temperatur min ist -273")
+            else:
+                temperature_min = float(
+                    self.root.ids.textfield_thermalsystem_temperature_min.text
+                )
+                print("Temperatur min eingetippt")
+
+            if self.root.ids.textfield_thermalsystem_temperature_max.text == "":
+                temperature_max = 1000000000
+                print("Temperatur maximal hoch")
+            elif self.root.ids.textfield_thermalsystem_temperature_max.text == "-":
+                temperature_max = 1000000000
+                print("Temperatur max maximal hoch")
+            else:
+                temperature_max = float(
+                    self.root.ids.textfield_thermalsystem_temperature_max.text
+                )
+                print("Temperatur max eingetippt")
+
+            if self.root.ids.textfield_thermalsystem_temperature_start.text == "":
+                temperature_start = temperature_min
+                print(
+                    "temperature start sollte temperature min entsprechen",
+                    temperature_start,
+                    temperature_min,
+                )
+            elif self.root.ids.textfield_thermalsystem_temperature_start.text == "-":
+                temperature_start = 0
+                print("temperature start ist 0")
+            else:
+                temperature_start = float(
+                    self.root.ids.textfield_thermalsystem_temperature_start.text
+                )
+                print("temperature start eingetippt")
+
+            # Eigentliche Checks durchführen
+            # tmin < tmax
+            if not temperature_min <= temperature_max:
+                textfield.helper_text = (
+                    "temperature min is not allowed to be higher than temperature max"
+                )
+                print("t_min zu niedrig bzw t_max zu hoch")
+                return False
+            else:
+                print("t_max größer als t_min")
+
+            # tstart <= tmax
+            if not temperature_start <= temperature_max:
+                textfield.helper_text = (
+                    "temperature start is not allowed to be higher temperature max"
+                )
+                print("t_start darf nicht höher sein als t_max")
+                return False
+            else:
+                print("t_max größer als t_start")
+
+            # tmin <= tstart
+            if not temperature_start >= temperature_min:
+                textfield.helper_text = (
+                    "temperature min is not allowed to be higher than temperature start"
+                )
+                print("t_start muss größer sein als t_min")
+                return False
+            else:
+                print("t_start ist größer als t_min")
+
+            # tmin >= -273
+            if not temperature_min >= -273:
+                textfield.helper_text = (
+                    "temperature should be higher than or equal to -273°C"
+                )
+                print("t_min zu klein")
+                return False
+            else:
+                print("t_min Wert ist ok")
+
+            if not temperature_max >= -273:
+                textfield.helper_text = (
+                    "temperature should be higher than or equal to -273°C"
+                )
+                print("t_max zu niedrig")
+                return False
+            else:
+                print("t_max Wert ist ok")
+
+            if not temperature_start >= -273:
+                textfield.helper_text = (
+                    "temperature should be higher than or equal to -273°C"
+                )
+                print("t_start zu niedrig")
+                return False
+            else:
+                print("t_start Wert ist ok")
+
+        # all checks passed? set value to be valid
+        textfield.value_valid = True
+        textfield.error = False
+
+    def validate_deadtime(self):
+        print("Komponente 'dedatime' aufgerufen")
+
+    def validate_schedule(self):
+        print("Kompoente 'schedule' aufgerufen")
+
+    def validate_storage(self):
+        print("Komponente 'storage' aufgerufen")
+
+    def validate_converter(self, textfield):
+        print("Komponente 'converter' aufgerufen")
+
+        if textfield.validation_type in ("converter"):
+            if self.root.ids.textfield_converter_power_max.text == "":
+                power_max = 0
+                print("max power gleich 0")
+            elif self.root.ids.textfield_converter_power_max.text == "-":
+                power_max = 0
+                print("max power gleich 0")
+            else:
+                power_max = float(self.root.ids.textfield_converter_power_max.text)
+                print("max power eingetippt")
+
+            if self.root.ids.textfield_converter_power_min.text == "":
+                power_min = 0
+                print("min power gleich 0")
+            elif self.root.ids.textfield_converter_power_min.text == "-":
+                power_min = 0
+                print("min power gleich 0")
+            else:
+                power_min = float(self.root.ids.textfield_converter_power_min.text)
+                print("min power eingetippt")
+
+            if self.root.ids.textfield_converter_power_nominal.text == "":
+                power_nominal = 0
+                print("nominal power gleich ß")
+            elif self.root.ids.textfield_converter_power_nominal.text == "-":
+                power_nominal = 0
+                print("nominal power gleich 0")
+            else:
+                power_nominal = float(
+                    self.root.ids.textfield_converter_power_nominal.text
+                )
+                print("nominal power eigetippt")
+
+            if self.root.ids.textfield_converter_eta_max.text == "":
+                eta_max = 0
+                print("eta max gleich 0")
+            elif self.root.ids.textfield_converter_eta_max.text == "-":
+                eta_max = 0
+                print("eta max gleich 0")
+            else:
+                eta_max = float(self.root.ids.textfield_converter_eta_max.text)
+                print("eta max eingetippt")
+
+            if self.root.ids.textfield_converter_availability.text == "":
+                converter_availability = 0
+                print("converter availability gleich 0")
+            elif self.root.ids.textfield_converter_availability.text == "-":
+                converter_availability = 0
+                print("converter availabiltiy gleich 0")
+            else:
+                converter_availability = float(
+                    self.root.ids.textfield_converter_availability.text
+                )
+                print("converter availability eingetippt")
+
+            if not power_max >= power_min:
+                print("max power darf nicht kleiner als min power sein")
+                textfield.helper_text = "max. operating power should be higher than or equal to min. operating power"
+                return False
+            else:
+                print("max power größer als min power")
+
+            if power_max > power_min and power_min == 0:
+                print("A.1.1")
+                self.root.ids.textfield_converter_power_min.error = True
+                self.root.ids.textfield_converter_power_min.helper_text = (
+                    "no min. operating power"
+                )
+                # textfield.helper_text = "no min. operating power"
+                # return
+            else:
+                print("B")
+
+            if power_nominal != 0 and (
+                power_nominal < power_min or power_nominal > power_max
+            ):
+                print("E.1")
+                textfield.helper_text = (
+                    "operating point is outside the limits of min. or max. power"
+                )
+                return False
+            else:
+                print("E.2")
+
+            if not (eta_max >= 0 and eta_max <= 100):
+                print("")
+                textfield.helper_text = "expected percentage value between 0-100% !"
+                return False
+            else:
+                print("I.2")
+
+            if not (converter_availability >= 0 and converter_availability <= 100):
+                print("converter availaility außerhalb der Grenzen")
+                textfield.helper_text = "expected a percentage value between 0-100% !"
+                return False
+            else:
+                print("Wert für converter availability erlaubt")
+
+        # all checks passed? set value to be valid
+        textfield.value_valid = True
+        textfield.error = False
+
+    def validate_sink(self, textfield):
+        print("sink")
+
+        # if textfield.validation_type in ("sink_power_max", "sink_power_min", "sink_demand"):
+        if textfield.validation_type in ("sink"):
+
+            if self.root.ids.textfield_sink_power_max.text == "":
+                sink_power_max = 0
+                # self.root.ids.textfield_sink_power_max.error = False
+                print("H.1")
+            elif self.root.ids.textfield_sink_power_max.text == "-":
+                sink_power_max = 0
+                # self.root.ids.textfield_sink_power_max.error = False
+                print("Fall H.2")
+            else:
+                sink_power_max = float(self.root.ids.textfield_sink_power_max.text)
+                # self.root.ids.textfield_sink_power_max.error = False
+                print("Fall H.3")
+
+            if self.root.ids.textfield_sink_power_min.text == "":
+                sink_power_min = 0
+                # self.root.ids.textfield_sink_power_min.error = False
+                print("H.1")
+            elif self.root.ids.textfield_sink_power_min.text == "-":
+                sink_power_min = 0
+                # self.root.ids.textfield_sink_power_min.error = False
+                print("Fall H.2")
+            else:
+                sink_power_min = float(self.root.ids.textfield_sink_power_min.text)
+                # self.root.ids.textfield_sink_power_min.error = False
+                print("Fall H.3")
+
+            if self.root.ids.textfield_sink_demand.text == "":
+                sink_demand = 0
+                # self.root.ids.textfield_sink_demand.error = False
+                print("H.1")
+            elif self.root.ids.textfield_sink_demand.text == "-":
+                sink_demand = 0
+                # self.root.ids.textfield_sink_demand.error = False
+                print("Fall H.2")
+            else:
+                sink_demand = float(self.root.ids.textfield_sink_demand.text)
+                # self.root.ids.textfield_sink_demand.error = False
+                print("Fall H.3")
+
+            if (sink_power_max != 0 or sink_power_min != 0) and sink_demand != 0:
+                print("M")
+                # textfield.error = True
+                textfield.helper_text = (
+                    "fixed demand with max/min input power not possible"
+                )
+                return False
+            else:
+                print("M.2")
+                textfield.helper_text = "numbers are ok"
+
+        # all checks passed? set value to be valid
+        textfield.value_valid = True
+        textfield.error = False
+
+    def validate_source(self, textfield):
+        print("source")
+
+        # if textfield.validation_type in ("source_power_max", "source_power_min", "source_availability", "source_power_determined"):
+        if textfield.validation_type in ("source"):
+
+            if self.root.ids.textfield_source_availability.text == "":
+                source_availability = 0
+                # self.root.ids.textfield_source_availability.error = False
+                print("H.1")
+            elif self.root.ids.textfield_source_availability.text == "-":
+                source_availability = 0
+                # self.root.ids.textfield_source_availability.error = False
+                print("Fall H.2")
+            else:
+                source_availability = float(
+                    self.root.ids.textfield_source_availability.text
+                )
+                # self.root.ids.textfield_source_availability.error = False
+                print("Fall H.3")
+
+            if self.root.ids.textfield_source_power_max.text == "":
+                source_power_max = 0
+                # self.root.ids.textfield_sink_demand.error = False
+                print("H.1")
+            elif self.root.ids.textfield_source_power_max.text == "-":
+                source_power_max = 0
+                # self.root.ids.textfield_sink_demand.error = False
+                print("Fall H.2")
+            else:
+                source_power_max = float(self.root.ids.textfield_source_power_max.text)
+                # self.root.ids.textfield_sink_demand.error = False
+                print("Fall H.3")
+
+            if self.root.ids.textfield_source_power_min.text == "":
+                source_power_min = 0
+                # self.root.ids.textfield_sink_power_min.error = False
+                print("H.1")
+            elif self.root.ids.textfield_source_power_min.text == "-":
+                source_power_min = 0
+                # self.root.ids.textfield_sink_power_min.error = False
+                print("Fall H.2")
+            else:
+                source_power_min = float(self.root.ids.textfield_source_power_min.text)
+                # self.root.ids.textfield_sink_power_min.error = False
+                print("Fall H.3")
+
+            if self.root.ids.textfield_source_power_determined.text == "":
+                source_power_determined = 0
+                # self.root.ids.textfield_sink_demand.error = False
+                print("H.1")
+            elif self.root.ids.textfield_source_power_determined.text == "-":
+                source_power_determined = 0
+                # self.root.ids.textfield_sink_demand.error = False
+                print("Fall H.2")
+            else:
+                source_power_determined = float(
+                    self.root.ids.textfield_source_power_determined.text
+                )
+                # self.root.ids.textfield_sink_demand.error = False
+                print("Fall H.3")
+
+            if not (source_availability >= 0 and source_availability <= 100):
+                print("K")
+                # textfield.error = True
+                textfield.helper_text = "expected percentage value between 0-100% !"
+                return False
+            else:
+                print("K.2")
+                textfield.helper_text = "numbers are ok"
+
+            # if source_power_max != "" and source_availability == 0:
+            #     print("L")
+            #     #textfield.error = True
+            #     textfield.helper_text = "availablility must be set"
+            #     return
+            # else:
+            #     print("L.2")
+            #     textfield.helper_text = "numbers are ok"
+
+            if source_power_max == 0 and source_availability != 0:
+                print("L")
+                # textfield.error = True
+                textfield.helper_text = "maximum output power must be set"
+                return False
+            else:
+                print("L.2")
+                textfield.helper_text = "numbers are ok"
+
+            if (
+                source_power_max != 0 or source_power_min != 0
+            ) and source_power_determined != 0:
+                print("N")
+                # textfield.error = True
+                textfield.helper_text = (
+                    "fixed operation level with max/min output power not possible"
+                )
+                return False
+            else:
+                print("N.2")
+                textfield.helper_text = "numbers are ok"
+
+        # all checks passed? set value to be valid
+        textfield.value_valid = True
+        textfield.error = False
+
     def validate_textfield_input(self, textfield):
         """Description...."""
 
@@ -4549,131 +4933,55 @@ class factory_GUIApp(MDApp):
             textfield.value_valid = True
             return
 
-        # assume value as invalid
+        # #assume value as invalid
         textfield.value_valid = False
-        textfield.error = True  # hier auf False setzen
+        textfield.error = True
 
-        # Make sure that the validate is a number
+        # Make sure that the input is a number
         try:
             textfield.text = textfield.text.replace(",", ".").strip()
             input = float(textfield.text)
         except:
-            textfield.text = textfield.text[:-1]
-            return
+            if not textfield.text == "-":
+                textfield.text = textfield.text[:-1]
+                return
 
+        # negative Zahlen erlauben? Grenze dann bei -273°C?
+        # keine negativen Zahlen für alle Textfelder (ausgenommen thermalsystem) ?
         if not textfield.validation_type in ("thermalsystem_temperature"):
+            if textfield.text == "-":
+                input = 0
             if input < 0:
                 textfield.text = textfield.text[1:]
                 input = input * -1
 
-        # check for the required validation type and perform checks accordingly
-        if textfield.validation_type in ("thermalsystem_temperature"):
+        if (
+            textfield.validation_type == "thermalsystem_temperature"
+            and not self.validate_thermalsystem(textfield)
+        ):
+            return
+        elif textfield.validation_type == "deadtime":
+            self.validate_deadtime()
+        elif textfield.validation_type == "schedule":
+            self.validate_schedule()
+        elif textfield.validation_type == "storage":
+            self.validate_storage()
+        elif textfield.validation_type == "converter" and not self.validate_converter(
+            textfield
+        ):
+            return
+        elif textfield.validation_type == "sink" and not self.validate_sink(textfield):
+            return
+        elif textfield.validation_type == "source" and not self.validate_source(
+            textfield
+        ):
+            return
 
-            # if (self.root.ids.checkbox_thermasystem_temperature_min.active):
-            # self.root.ids_thermalsystem_temperature_min.text = "-274"
+        # all checks passed? set value to be valid
+        textfield.value_valid = True
+        textfield.error = False
 
-            # Werte für Vergleiche bestimmen
-            if self.root.ids.textfield_thermalsystem_temperature_min.text == "":
-                temperature_min = -273
-                self.root.ids.textfield_thermalsystem_temperature_min.text = "-273"
-                self.root.ids.textfield_thermalsystem_temperature_min.error = False
-                print("Fall 1")
-            else:
-                temperature_min = float(
-                    self.root.ids.textfield_thermalsystem_temperature_min.text
-                )
-                print("Fall 2")
-
-            if self.root.ids.textfield_thermalsystem_temperature_max.text == "":
-                # temperature_max = float(self.root.ids.textfield_thermalsystem_temperature_max.text)
-                self.root.ids.textfield_thermalsystem_temperature_max.text = (
-                    "1000000000"
-                )
-                temperature_max = 1000000000
-                self.root.ids.textfield_thermalsystem_temperature_max.error = False
-                print("Fall 3")
-            else:
-                temperature_max = float(
-                    self.root.ids.textfield_thermalsystem_temperature_max.text
-                )
-                print("Fall 4")
-
-            if self.root.ids.textfield_thermalsystem_temperature_start.text == "":
-                # self.root.ids.textfield_thermalsystem_temperature_max.text = self.root.ids.textfield_thermalsystem_temperature_start.text
-                temperature_start = temperature_max
-                self.root.ids.textfield_thermalsystem_temperature_start.error = False
-                print("Fall 5")
-            else:
-                temperature_start = float(
-                    self.root.ids.textfield_thermalsystem_temperature_start.text
-                )
-                print("Fall 6")
-
-            # Eigentliche Checks durchführen
-            # tmin < tmax
-            if not temperature_min <= temperature_max:
-                textfield.helper_text = (
-                    "temperature min is not allowed to be higher than temperature max"
-                )
-                print("Fall 7")
-                return
-            else:
-                textfield.helper_text = "Werte ok"
-                print("Fall 8")
-                self.root.ids.textfield_thermalsystem_temperature_min.error = False
-
-            # tmin <= tstart
-            # tstart <= tmax
-            # tmin >= -273
-
-            if not temperature_min <= temperature_start:
-                textfield.helper_text = (
-                    "temperature min is not allowed to be higher than temperature start"
-                )
-                print("Fall 9")
-                return
-            else:
-                textfield.helper_text = "Werte ok"
-                print("Fall 10")
-                self.root.ids.textfield_thermalsystem_temperature_min.error = False
-
-            if not temperature_start <= temperature_max:
-                textfield.helper_text = (
-                    "temperature start is not allowed to be higher temperature max"
-                )
-                print("Fall 11")
-                return
-            else:
-                textfield.helper_text = "Werte ok"
-                print("Fall 12")
-                self.root.ids.textfield_thermalsystem_temperature_min.error = False
-
-            if not temperature_min >= -273:
-                textfield.helper_text = (
-                    "temperature min should be higher than or equal to -273°C"
-                )
-                print("Fall 13")
-                return
-            else:
-                textfield.helper_text = "Werte ok"
-                print("Fall 14")
-                self.root.ids.textfield_thermalsystem_temperature_min.error = False
-
-            if (
-                self.root.ids.textfield_thermalsystem_temperature_min.text == "-273"
-                or self.root.ids.textfield_thermalsystem_temperature_max.text
-                == "1000000000"
-            ):
-                print("Fall 15")
-                self.root.ids.textfield_thermalsystem_temperature_start.error = False
-                self.root.ids.textfield_thermalsystem_temperature_start.text = (
-                    self.root.ids.textfield_thermalsystem_temperature_min.text
-                )
-            # else:
-            #     temperature_min = float(self.root.ids.textfield_thermalsystem_temperature_min.text)
-            #     print("Fall 2")
-
-            # if tmin leer:
+        # if tmin leer:
         # oder checkbox:
         #     tmin = -273
         # else:
@@ -4695,44 +5003,6 @@ class factory_GUIApp(MDApp):
         # if tmin > tmax:
         #     textfield.helper_text("...")
         #     return
-
-        # if textfield.validation_type in ("thermalsystem_R", "thermalsystem_C", "deadtime_delay", "converter_rampup", "converter_rampdown", "converter_power_nominal"):
-        #      if validate < 0:
-        #          textfield.helper_text = "Input has to be greater than 0"
-        #
-        # # check for the required validation type and perform checks accordingly
-        # if textfield.validation_type in ("converter_power_max", "converter_power_min"):
-        #      if validate < 0:
-        #          textfield.helper_text = "Input has to be greater than 0"
-        #      elif self.root.ids.textfield_converter_power_max.text < self.root.ids.textfield_converter_power_min.text:
-        #           textfield.helper_text = "power max should be higher than power min"
-        #      #elif self.root.ids.textfield_converter_power_max.text > self.root.ids.textfield_converter_power_min.text:
-        #      #     textfield.helper_text = "numbers are ok"
-        #      # else:
-        #      #    textfield.error = False
-        #
-        # # check for the required validation type and perform checks accordingly
-        # if textfield.validation_type in ("converter_eta_max", "converter_availability", "source_availability"):
-        #      if validate < 0 or validate > 100:
-        #         textfield.helper_text = "0-100% required"
-        #
-        # # check for the required validation type and perform checks accordingly
-        # if textfield.validation_type in ("converter_power_nominal"):
-        #      if textfield.text > self.root.ids.textfield_converter_power_max.text or textfield.text < self.root.ids.textfield_converter_power_min.text:
-        #         textfield.helper_text = "Operating point must be between min. and max. power"
-
-        # if textfield.validation_type in (....):
-        #    if validate < 0:
-        #        textfield.helper_text = "Input has to be at least 0"
-        #        return
-
-        # elif textfield.validation_type == "%":
-        #     if validate >= 0 and validate <= 1:
-        # return
-
-        # all checks passed? set value to be valid
-        textfield.value_valid = True
-        textfield.error = False
 
     """
     def on_checkbox_active(self, checkbox, textfield, value):
@@ -4756,7 +5026,7 @@ class factory_GUIApp(MDApp):
 
         # check for the required validation type and perform checks accordingly
         if textfield.validation_type in ("thermalsystem_temperature_start", "thermalsystem_temperature_ambient", "thermalsytem_temperature_max", "thermalsystem_temperature_min"):
-            if validate < -273:
+            if input < -273:
                 textfield.helper_text = "Input has to be greater than -273°C"
                 return
             elif self.root.ids.textfield_thermalsystem_temperature_max.text < self.root.ids.textfield_thermalsystem_temperature_min.text:
