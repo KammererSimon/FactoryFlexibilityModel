@@ -1,7 +1,7 @@
 components:
   component_key:
     description: [str]
-    name: [str]ponent_pool.png
+    name: [str]Name
     type: pool/converter/source/sink/storage/deadtime/triggerdemand/schedule/thermalsystem
 connections:
   connection_key:
@@ -10,11 +10,6 @@ connections:
     name: [str]
     to: *component_key*
     to_losses: false
-flowtypes:
-  flowtype_key:
-    color:[str]
-    type: energy/material/unknown
-    unit: *unit_key*
 info:
   description: [str]
   enable_log: false
