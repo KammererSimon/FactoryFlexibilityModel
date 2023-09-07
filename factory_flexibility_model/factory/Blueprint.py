@@ -7,6 +7,8 @@ import logging
 import yaml
 
 import factory_flexibility_model.factory.Factory as fm
+import factory_flexibility_model.factory.Flowtype as ft
+import factory_flexibility_model.factory.Unit as un
 
 # IMPORTS
 
@@ -22,7 +24,8 @@ class Blueprint:
         self.info = {
             "name": "Undefined_Factory",  # Standard Information, equivalent to factory-object initialization
             "description": "Undefined",
-            "max_timesteps": 8760,
+            "timesteps": 8760,
+            "enable_slacks": False,
         }
         self.units = {}  # list of units
 
@@ -52,6 +55,11 @@ class Blueprint:
 
         # CREATE UNITS
         for key, unit in self.units.items():
+
+            # skip the basic units
+            if key in ["energy", "mass"]:
+                continue
+
             try:
                 factory.add_unit(
                     key=key,
@@ -199,7 +207,17 @@ class Blueprint:
                 f"Flowtype definition file is missing or corrupted! ({session_folder}/flowtypes.txt"
             )
             raise Exception
-        self.flowtypes.update(data)
+
+        # recreate flowtype objects
+        for key, flowtype in data.items():
+            self.flowtypes[key] = ft.Flowtype(
+                key=key,
+                unit=self.units[flowtype["unit"]],
+                description=flowtype["description"],
+                represents_losses=flowtype["represents_losses"],
+                name=flowtype["name"],
+                color=flowtype["color"],
+            )
 
     def __import_units(self, session_folder: str) -> bool:
         """
@@ -216,7 +234,18 @@ class Blueprint:
                 f"Unit definition file is missing or corrupted! ({session_folder}/units.txt"
             )
             raise Exception
-        self.units.update(data)
+
+        # recreate unit objects
+        for key, unit in data.items():
+            self.units[key] = un.Unit(
+                key=key,
+                quantity_type=unit["quantity_type"],
+                conversion_factor=unit["conversion_factor"],
+                magnitudes=unit["magnitudes"],
+                units_flow=unit["units_flow"],
+                units_flowrate=unit["units_flowrate"],
+                name=unit["name"],
+            )
 
     def save(self, *, path: str = None) -> bool:
         """
@@ -241,17 +270,36 @@ class Blueprint:
             logging.error(f"Saving blueprint under '{path}' failed!")
 
         # Create units.txt
+        units_data = {}
+        for key, unit in self.units.items():
+            units_data[key] = {}
+            units_data[key]["name"] = unit.name
+            units_data[key]["quantity_type"] = unit.quantity_type
+            units_data[key]["conversion_factor"] = unit.conversion_factor
+            units_data[key]["units_flow"] = unit.units_flow
+            units_data[key]["units_flowrate"] = unit.units_flowrate
+            units_data[key]["magnitudes"] = unit.magnitudes.tolist()
+
         try:
             with open(f"{path}\\units.txt", "w") as file:
-                yaml.dump(self.units, file)
+                yaml.dump(units_data, file)
             logging.info(f"units.txt saved under {path}")
         except:
             logging.error(f"Saving units.txt under '{path}' failed!")
 
         # Create flowtypes.txt
+        flowtypes_data = {}
+        for key, flowtype in self.flowtypes.items():
+            flowtypes_data[key] = {}
+            flowtypes_data[key]["color"] = flowtype.color.hex
+            flowtypes_data[key]["unit"] = flowtype.unit.key
+            flowtypes_data[key]["description"] = flowtype.description
+            flowtypes_data[key]["name"] = flowtype.name
+            flowtypes_data[key]["represents_losses"] = flowtype.represents_losses
+
         try:
-            with open(f"{path}\\units.txt", "w") as file:
-                yaml.dump(self.flowtypes, file)
-            logging.info(f"units.txt saved under {path}")
+            with open(f"{path}\\flowtypes.txt", "w") as file:
+                yaml.dump(flowtypes_data, file)
+            logging.info(f"flowtypes.txt saved under {path}")
         except:
-            logging.error(f"Saving units.txt under '{path}' failed!")
+            logging.error(f"Saving flowtypes.txt under '{path}' failed!")
