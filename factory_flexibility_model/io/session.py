@@ -13,6 +13,8 @@ def create_session_folder(root_folder, session_name: str = "New Session"):
 
     # Create path to the new session folder
     subfolder_path = os.path.join(root_folder, session_name)
+    if not os.path.exists(subfolder_path):
+        os.makedirs(subfolder_path)
 
     # create list of files to be initialized
     files = [
