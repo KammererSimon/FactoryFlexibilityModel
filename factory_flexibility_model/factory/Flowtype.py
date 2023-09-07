@@ -1,9 +1,7 @@
-# FACTORY FLOW
-# This package specifies a flowtype of energy/material
+# FLOWTYPE
 
+# IMPORTS
 import factory_flexibility_model.factory.Unit as Unit
-
-# IMPORT ENDOGENOUS COMPONENTS
 import factory_flexibility_model.ui.color as c
 
 
