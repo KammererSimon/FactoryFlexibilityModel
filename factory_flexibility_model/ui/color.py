@@ -27,6 +27,8 @@ class color:
             self.hex = "#000000"
             self.rgba = [0, 0, 0, 1]
 
+        self.tuple = tuple(self.rgba)
+
     def __is_valid_rgb_hex(self, value):
         """
         This function takes an input and analyzes if it is a valid color-string
