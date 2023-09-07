@@ -6,7 +6,6 @@ from tkinter.messagebox import askyesno
 
 import numpy as np
 import pandas as pd
-from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.graphics import Color, Ellipse, Line, Triangle
 from kivy.lang import Builder
@@ -48,6 +47,7 @@ import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.factory.Flowtype as ft
 import factory_flexibility_model.factory.Unit as Unit
 import factory_flexibility_model.io.session as session
+import factory_flexibility_model.ui.color as color
 
 # IMPORT 3RD PARTY PACKAGES
 
@@ -399,15 +399,11 @@ class FlowchartConnector(Widget):
     pass
 
 
+class dialog_flowtype_definition(BoxLayout):
+    pass
+
+
 class dialog_image_selection(BoxLayout):
-    pass
-
-
-class dialog_timeseries_selection(BoxLayout):
-    pass
-
-
-class dialog_unit_definition(BoxLayout):
     pass
 
 
@@ -432,6 +428,14 @@ class dialog_new_scenario(BoxLayout):
 
 
 class dialog_new_session(BoxLayout):
+    pass
+
+
+class dialog_timeseries_selection(BoxLayout):
+    pass
+
+
+class dialog_unit_definition(BoxLayout):
     pass
 
 
@@ -503,7 +507,7 @@ class factory_GUIApp(MDApp):
         component_type = instance.key
 
         # make sure that there is at least one flow in the factory
-        if len(self.flowtypes) == 0:
+        if len(self.blueprint.flowtypes) == 0:
             self.add_flowtype(instance, touch)
 
         # assign a key to the new component
@@ -529,7 +533,7 @@ class factory_GUIApp(MDApp):
             },
             "description": "",
             "type": component_type,
-            "flowtype": "flow_0",
+            "flowtype": "unknown",
         }
 
         # create a temporary widget on the main canvas to store the position until self.save_component_positions()
@@ -574,7 +578,7 @@ class factory_GUIApp(MDApp):
             # check all coinnections in the blueprint
             if connection["from"] == source_key and connection["to"] == sink_key:
                 # if current connection is equal to the one to be created: abort and warn the user
-                self.show_info_dialog(
+                self.show_info_popup(
                     f"There is already a connection from {source_name} to {sink_name}!"
                 )
                 return
@@ -592,9 +596,7 @@ class factory_GUIApp(MDApp):
         ] = f"{source_name} -> {sink_name}"
         self.blueprint.connections[connection_key]["from"] = source_key
         self.blueprint.connections[connection_key]["to"] = sink_key
-        self.blueprint.connections[connection_key]["flowtype"] = self.flowtypes[
-            list(self.flowtypes.keys())[0]
-        ].key
+        self.blueprint.connections[connection_key]["flowtype"] = "unknown"
         self.blueprint.connections[connection_key]["key"] = connection_key
         self.blueprint.connections[connection_key]["weight_source"] = 1
         self.blueprint.connections[connection_key]["weight_sink"] = 1
@@ -613,42 +615,37 @@ class factory_GUIApp(MDApp):
         # set unsaved changes to true
         self.unsaved_changes_on_session = True
 
-    def add_flowtype(self, instance, touch):
+    def add_flowtype(self, *args):
         """
-        This function ads a generic new flow to the blueprint and selects it for configuration
+        This function ads a generic new flowtype to the factory and selects it for configuration
         """
-
-        # check, if the function call actually came from an object that has been clicked/moved
-        if not instance.collide_point(*touch.pos):
-            # abort if not
-            return
-
-        # only continue if the dummy has been moved out of the right column
-        if instance.pos[0] < self.root.ids.component_shelf.width:
-            self.show_component_creation_menu()
-            return
 
         # create key for the new flow
-        flowtype_key = f"flow_{len(self.flowtypes)}"
-
-        i = 1
-        while self.get_key(f"Unspecified Flow {i}"):
+        i = 0
+        while f"flowtype_{i}" in self.blueprint.flowtypes.keys():
             i += 1
+        flowtype_key = f"flowtype_{i}"
+
+        # create initial name for the flowtype
+        i = 1
+        while self.get_key(f"Unspecified Flowtype {i}"):
+            i += 1
+        flowtype_name = f"Unspecified Flowtype {i}"
 
         # create a new flowtype:
-        self.flowtypes[flowtype_key] = ft.Flowtype(
-            flowtype_key,
-            name=f"Unspecified Flow {i}",
-            unit=self.units["energy"],
+        self.blueprint.flowtypes[flowtype_key] = ft.Flowtype(
+            key=flowtype_key,
+            name=flowtype_name,
+            unit=self.blueprint.units["energy"],
             color="#999999",
         )
 
-        # reset the component creation menu
-        self.root.ids.component_shelf.set_state("closed")
+        if not self.dialog is None:
+            # select the new type
+            self.select_flowtype(self.blueprint.flowtypes[flowtype_key])
 
-        # catch the position of the new component and update the visualisation to show it in the correct place
-        self.save_component_positions()
-        self.initialize_visualization()
+            # update list of flowtypes on screen
+            self.update_flowtype_list()
 
         # set unsaved changes to true
         self.unsaved_changes_on_session = True
@@ -662,11 +659,12 @@ class factory_GUIApp(MDApp):
             and not self.popup.content_cls.ids.textfield_magnitude_flowrate.text == ""
             and not self.popup.content_cls.ids.textfield_magnitude_dimension.text == ""
         ):
+            # get the currently selected unit
+            unit = self.blueprint.units[
+                self.get_key(self.dialog.content_cls.ids.label_unit_name.text)
+            ]
             try:
-                # get the currently selected unit
-                unit = self.units[
-                    self.get_key(self.dialog.content_cls.ids.textfield_unit_name.text)
-                ]
+
                 # add magnitude values
                 unit.magnitudes = np.append(
                     unit.magnitudes,
@@ -674,19 +672,21 @@ class factory_GUIApp(MDApp):
                         self.popup.content_cls.ids.textfield_magnitude_dimension.text
                     ),
                 )
-                unit.units_flow.append(
-                    self.popup.content_cls.ids.textfield_magnitude_flow.text
-                )
-                unit.units_flowrate.append(
-                    self.popup.content_cls.ids.textfield_magnitude_flowrate.text
-                )
-                self.popup.content_cls.ids.textfield_magnitude_dimension.error = False
-
-                # reselect the unit to display the new magnitude table
-                self.select_unit(unit)
-                self.close_popup()
             except:
                 self.popup.content_cls.ids.textfield_magnitude_dimension.error = True
+                return
+
+            unit.units_flow.append(
+                self.popup.content_cls.ids.textfield_magnitude_flow.text
+            )
+            unit.units_flowrate.append(
+                self.popup.content_cls.ids.textfield_magnitude_flowrate.text
+            )
+            self.popup.content_cls.ids.textfield_magnitude_dimension.error = False
+
+            # reselect the unit to display the new magnitude table
+            self.select_unit(unit)
+            self.close_popup()
 
     def add_unit(self, *args):
         """
@@ -695,12 +695,12 @@ class factory_GUIApp(MDApp):
 
         # assign a key to the new unit
         i = 1
-        while f"unit_{i}" in self.units.keys():
+        while f"unit_{i}" in self.blueprint.units.keys():
             i += 1
         unit_key = f"unit_{i}"
-        self.units[unit_key] = Unit.Unit(
+        self.blueprint.units[unit_key] = Unit.Unit(
             key=unit_key,
-            quantity_type="unknown",
+            quantity_type="other",
             conversion_factor=1,
             magnitudes=[],
             units_flow=[],
@@ -709,7 +709,10 @@ class factory_GUIApp(MDApp):
         )
 
         self.update_unit_list()
-        self.select_unit(self.units[unit_key])
+        self.select_unit(self.blueprint.units[unit_key])
+
+        # set unsaved changes to true
+        self.unsaved_changes_on_session = True
 
     def build(self):
         """
@@ -725,7 +728,6 @@ class factory_GUIApp(MDApp):
             False  # is set to true while the user is building a new connection
         )
         self.filepath = ""  # stores the filepath that is currently worked on
-        self.flowtypes = {}
         self.popup = None
         self.unsaved_changes_on_session = False  # indicated if there have been changes to the session since opening or saving
         self.unsaved_changes_on_asset = False  # indicates if there have been changes to the current asset since selecting or saving
@@ -744,7 +746,6 @@ class factory_GUIApp(MDApp):
         self.search_text = ""  # text within the component search bar
         self.session_path = ""  # path to the current session folder
         self.timeseries = []  # List of imported timeseries within the session
-        self.units = {}  # list of units
 
         # Style Config for GUI
         self.main_color = "#1D4276"
@@ -754,7 +755,7 @@ class factory_GUIApp(MDApp):
             45,
             30,
         ]  # number of grid points underlying the visualisation
-        self.display_scaling_factor = 0.4  # factor that determines the standard size of icons in the visualisation
+        self.display_scaling_factor = 0.6  # factor that determines the standard size of icons in the visualisation
         self.theme_cls.colors = colors
         self.theme_cls.accent_palette = "Blue"
         self.theme_cls.primary_palette = "Blue"
@@ -1006,8 +1007,8 @@ class factory_GUIApp(MDApp):
         if key in self.blueprint.connections:
             if not self.blueprint.connections[key] == None:
                 self.selected_asset = self.blueprint.connections[key]
-        if key in self.flowtypes:
-            self.selected_asset = self.flowtypes[key]
+        if key in self.blueprint.flowtypes:
+            self.selected_asset = self.blueprint.flowtypes[key]
 
         # there can't be any changes on the current asset now
         self.unsaved_changes_on_asset = False
@@ -1203,17 +1204,6 @@ class factory_GUIApp(MDApp):
         # redraw the preview without the connection
         self.initialize_visualization()
 
-    def delete_magnitudes(self):
-        def deselect_rows(*args):
-            self.dialog.content_cls.ids["table_unit"].select_all("normal")
-
-        for data in list(self.dialog.content_cls.ids["table_unit"].get_row_checks()):
-            self.dialog.content_cls.ids["table_unit"].row_data.remove(0)
-
-        Clock.schedule_once(deselect_rows)
-
-        # TODO: Dieser code stammt direkt von https://kivymd.readthedocs.io/en/latest/components/datatables/, läuft aber nicht....
-
     def delete_scenario(self, scenario_key):
         """
         This function deletes the scenario given as scenario_key
@@ -1240,13 +1230,13 @@ class factory_GUIApp(MDApp):
             return
 
         # delete it from the units dict
-        self.units.pop(unit_key)
+        self.blueprint.units.pop(unit_key)
 
         # refresh unit list
         self.update_unit_list()
 
         # select basic unit
-        self.select_unit(self.units["energy"])
+        self.select_unit(self.blueprint.units["energy"])
 
     def get_key(self, given_name):
         """
@@ -1264,12 +1254,12 @@ class factory_GUIApp(MDApp):
                 return connection["key"]
 
         # search name in flow dict
-        for flow in self.flowtypes.values():
-            if flow.name == given_name:
-                return flow.key
+        for flowtype in self.blueprint.flowtypes.values():
+            if flowtype.name == given_name:
+                return flowtype.key
 
         # search for name in unit dict
-        for unit in self.units.values():
+        for unit in self.blueprint.units.values():
             if unit.name == given_name:
                 return unit.key
 
@@ -1344,10 +1334,19 @@ class factory_GUIApp(MDApp):
         #  ...change this if there is a better way to get this behaviour
         for connection in self.blueprint.connections.values():
             # get connection color from blueprint
-            connection_color = self.flowtypes[connection["flowtype"]].color.rgba
+            connection_color = self.blueprint.flowtypes[
+                connection["flowtype"]
+            ].color.rgba
 
             # set line color
-            canvas.add(Color(connection_color))
+            canvas.add(
+                Color(
+                    connection_color[0],
+                    connection_color[1],
+                    connection_color[2],
+                    connection_color[3],
+                )
+            )
 
             # create a new line object (with random points - they will be defined correctly later)
             new_line = Line(
@@ -1438,7 +1437,9 @@ class factory_GUIApp(MDApp):
                 if component["flowtype"] == "":
                     canvas.add(Color(0.1137, 0.2588, 0.463, 1))
                 else:
-                    pool_color = self.flowtypes[component["flowtype"]]["color"]
+                    pool_color = self.blueprint.flowtypes[component["flowtype"]][
+                        "color"
+                    ]
                     canvas.add(
                         Color(
                             pool_color[0], pool_color[1], pool_color[2], pool_color[3]
@@ -1493,7 +1494,7 @@ class factory_GUIApp(MDApp):
         delta_y = height / 20
 
         i_flow = 0
-        for flow in self.flowtypes.values():
+        for flow in self.blueprint.flowtypes.values():
             # set line color
             canvas.add(Color(flow.color.tuple))
 
@@ -1580,6 +1581,91 @@ class factory_GUIApp(MDApp):
         self.root.ids["new_connection"].unbind(on_release=self.initiate_new_connection)
         self.root.ids["new_connection"].bind(on_release=self.abort_new_connection)
 
+    def initialize_units_and_flowtypes(self):
+        """
+        This function creates the basic set of units and flowtypes required
+        """
+        # initialize the basic units
+        self.blueprint.units["energy"] = Unit.Unit(
+            key="energy",
+            quantity_type="energy",
+            conversion_factor=1,
+            magnitudes=[1, 1000, 1000000, 1000000000, 1000000000000],
+            units_flow=["kWh", "MWh", "GWh", "TWh", "PWh"],
+            units_flowrate=["kW", "MW", "GW", "TW", "PW"],
+            name="Energy [kW]",
+        )
+        self.blueprint.units["joule"] = Unit.Unit(
+            key="joule",
+            quantity_type="energy",
+            conversion_factor=1 / 3600,
+            magnitudes=[1, 1000, 1000000, 1000000000],
+            units_flow=["kJ", "MJ", "GJ", "PJ"],
+            units_flowrate=["kJ/h", "MJ/h", "GJ/h", "PJ/h"],
+            name="Energy [Joule]",
+        )
+        self.blueprint.units["mmBTU"] = Unit.Unit(
+            key="mmBTU",
+            quantity_type="energy",
+            conversion_factor=293.071070,
+            magnitudes=[1],
+            units_flow=["mmBTU"],
+            units_flowrate=["mmBTU/h"],
+            name="Energy [mmBTU]",
+        )
+        self.blueprint.units["mass"] = Unit.Unit(
+            key="mass",
+            quantity_type="mass",
+            conversion_factor=1,
+            magnitudes=[1, 1000, 1000000, 1000000000, 1000000000000],
+            units_flow=["kg", "t", "kt", "mt", "gt"],
+            units_flowrate=["kg/h", "t/h", "kt/h", "mt/h", "gt/h"],
+            name="Mass [kg]",
+        )
+        self.blueprint.units["unit"] = Unit.Unit(
+            key="unit",
+            quantity_type="other",
+            conversion_factor=1,
+            magnitudes=[1],
+            units_flow=["units"],
+            units_flowrate=["units/h"],
+            name="Unspecified Unit",
+        )
+
+        # initialize basic flowtypes
+        self.blueprint.flowtypes["material_losses"] = ft.Flowtype(
+            "material_losses",
+            unit=self.blueprint.units["mass"],
+            color="#555555",
+            represents_losses=True,
+            name="Material Losses",
+            description="Built in default flowtype used to represent all kinds of material losses",
+        )
+        self.blueprint.flowtypes["energy_losses"] = ft.Flowtype(
+            "energy_losses",
+            unit=self.blueprint.units["energy"],
+            color="#555555",
+            represents_losses=True,
+            name="Energy Losses",
+            description="Built in default flowtype used to represent all kinds of energy losses",
+        )
+
+        self.blueprint.flowtypes["heat"] = ft.Flowtype(
+            "heat",
+            unit=self.blueprint.units["energy"],
+            color="#996666",
+            name="Heat",
+            description="Built in default flowtype used to represent all kinds of heat",
+        )
+
+        self.blueprint.flowtypes["unknown"] = ft.Flowtype(
+            "unknown",
+            unit=self.blueprint.units["unit"],
+            color="#999999",
+            name="Unknown Flow",
+            description="Built in default flowtype used as a fallback option for unspecified situations",
+        )
+
     def load_session(self):
         """
         This function loads a session from a file
@@ -1595,16 +1681,77 @@ class factory_GUIApp(MDApp):
                 return
 
         # ask for filename
-        filetype = [("Factory Model Session", "*.factory")]
-        filepath_new = filedialog.askopenfilename(
-            defaultextension=filetype, filetypes=filetype
-        )
+        filepath_new = filedialog.askdirectory()
 
         # make sure the user didn't abort the file selection or selected something invalid
         if filepath_new == None or filepath_new == "":
             return
 
-        # TODO: rewrite import method here!!
+        # IMPORT blueprint including flowtypes and units
+        try:
+            blueprint_new = bp.Blueprint()
+            blueprint_new.import_from_file(filepath_new)
+        except:
+            Snackbar(
+                text=f"ERROR: Importing Blueprint from {filepath_new} failed!"
+            ).open()
+            return
+
+        # IMPORT parameters
+        try:
+            # open the given file
+            with open(f"{filepath_new}\\parameters.txt") as file:
+                parameters_new = {}
+                for component_key in blueprint_new.components.keys():
+                    parameters_new[component_key] = {}
+                # iterate over all lines in the file
+                for line in file:
+                    # split line into key and value
+                    key, value = line.strip().split("\t")
+                    # split key into component and parameter
+                    key = key.split("/")
+                    # add entry to parameters-dict
+                    parameters_new[key[0]][key[1]] = float(value.replace(",", "."))
+        except:
+            Snackbar(
+                text=f"The given parameters.txt-config file is invalid, has a wrong format or is corrupted! ({filepath_new}\\parameters.txt)"
+            ).open()
+            return
+
+        # IMPORT timeseries
+        try:
+            # open the given file
+            with open(f"{filepath_new}\\timeseries.txt") as file:
+                timeseries_new = {}
+                # iterate over all lines in the file
+                for line in file:
+                    # parse current line
+                    items = line.split("\t")
+
+                    # first item of the line is the key
+                    key = items[0].split("/")
+
+                    # remaining line is the value array
+                    values = [float(x.replace(",", ".")) for x in items[1:]]
+
+                    # add a component entry in the parameters dict if this is the first setting for a component
+                    if not key[0] in timeseries_new:
+                        timeseries_new[key[0]] = {}
+                    # add entry to parameters-dict
+                    timeseries_new[key[0]][key[1]] = values
+        except:
+            Snackbar(
+                text=f"The given timeseries.txt-config file is invalid, has a wrong format or is corrupted! ({filepath_new}\\timeseries.txt)"
+            ).open()
+            return
+
+        # Did all imports work till here? -> Overwrite internal attributes
+        self.blueprint = blueprint_new
+        self.parameters = parameters_new
+        self.timeseries = timeseries_new
+
+        # set the user given path as the new session_path
+        self.session_path = filepath_new
 
         # There are no more unsaved changes now...
         self.unsaved_changes_on_session = False
@@ -1801,25 +1948,8 @@ class factory_GUIApp(MDApp):
             self.blueprint.info["name"] = session_name
             self.blueprint.info["description"] = session_description
 
-            # initialize the basic units
-            self.units["energy"] = Unit.Unit(
-                key="energy",
-                quantity_type="energy",
-                conversion_factor=1,
-                magnitudes=[1, 1000, 1000000, 1000000000, 1000000000000],
-                units_flow=["kWh", "Wh", "GWh", "TWh", "PWh"],
-                units_flowrate=["kW", "MW", "GW", "TW", "PW"],
-                name="Generic Energy",
-            )
-            self.units["mass"] = Unit.Unit(
-                key="mass",
-                quantity_type="mass",
-                conversion_factor=1,
-                magnitudes=[1, 1000, 1000000, 1000000000, 1000000000000],
-                units_flow=["kg", "t", "kt", "mt", "gt"],
-                units_flowrate=["kg/h", "t/h", "kt/h", "mt/h", "gt/h"],
-                name="Generic Mass",
-            )
+            # initialize units and flowtypes
+            self.initialize_units_and_flowtypes()
 
             # set the selected asset to none
             self.selected_asset = None
@@ -1845,25 +1975,8 @@ class factory_GUIApp(MDApp):
     def on_start(self):
         self.root.ids.label_session_name.text = "Unspecified Session"
 
-        # initialize the basic units
-        self.units["energy"] = Unit.Unit(
-            key="energy",
-            quantity_type="energy",
-            conversion_factor=1,
-            magnitudes=[1, 1000, 1000000, 1000000000, 1000000000000],
-            units_flow=["kWh", "MWh", "GWh", "TWh", "PWh"],
-            units_flowrate=["kW", "MW", "GW", "TW", "PW"],
-            name="Generic Energy",
-        )
-        self.units["mass"] = Unit.Unit(
-            key="mass",
-            quantity_type="mass",
-            conversion_factor=1,
-            magnitudes=[1, 1000, 1000000, 1000000000, 1000000000000],
-            units_flow=["kg", "t", "kt", "mt", "gt"],
-            units_flowrate=["kg/h", "t/h", "kt/h", "mt/h", "gt/h"],
-            name="Generic Mass",
-        )
+        # initialize units and flowtypes
+        self.initialize_units_and_flowtypes()
 
     def run_simulation(self):
         pass
@@ -1874,11 +1987,7 @@ class factory_GUIApp(MDApp):
         """
 
         # make sure that there is a factory to save:
-        if (
-            len(self.blueprint.components) < 2
-            or len(self.blueprint.connections) < 1
-            or len(self.flowtypes) < 1
-        ):
+        if len(self.blueprint.components) < 2 or len(self.blueprint.connections) < 1:
             # create dialog
             btn_ok = MDFlatButton(text="OK")
             self.dialog = MDDialog(
@@ -1900,61 +2009,114 @@ class factory_GUIApp(MDApp):
                     line = f"{key_outer}/{key_inner}\t{value}\n"
                     file.write(line)
 
+        # save units
+
         # There are no more unsaved changes now...
         self.unsaved_changes_on_session = False
 
         Snackbar(text=f"Session succesfully saved at {self.filepath}").open()
 
-    def save_changes_on_flow(self):
+    def save_changes_on_flowtype(self):
         """
-        This function takes the user input from the flow configuration tab and stores it in the blueprint
+        This function checks the current user inputs in the flowetype definition window for validity and writes the values
+        into the currently selected flowtype object
         """
+        # get the current flowtype
+        flowtype = self.blueprint.flowtypes[
+            self.get_key(self.dialog.content_cls.ids.label_flowtype_name.text)
+        ]
 
-        # store key of old version
-        flow_key = self.get_key(self.selected_asset["name"])
-        # store user given new name
-        new_name = self.root.ids.textfield_flow_name.text
+        # check, that the given name is unique
+        if (
+            not self.dialog.content_cls.ids.textfield_flowtype_name.text
+            == flowtype.name
+        ):
+            if self.get_key(self.dialog.content_cls.ids.textfield_flowtype_name.text):
+                self.dialog.content_cls.ids.textfield_flowtype_name.error = True
+                return
+        self.dialog.content_cls.ids.textfield_flowtype_name.error = False
 
-        # make sure that the given name is not taken yet
-        if not new_name == self.flowtypes[flow_key]["name"] and self.get_key(new_name):
-            self.show_info_dialog("The given name is already bound to another asset!")
-            return
+        # write values from GUI to the flowtype
+        flowtype.name = self.dialog.content_cls.ids.textfield_flowtype_name.text
+        flowtype.description = (
+            self.dialog.content_cls.ids.textfield_flowtype_description.text
+        )
+        flowtype.unit = self.blueprint.units[
+            self.get_key(self.dialog.content_cls.ids.textfield_flowtype_unit.text)
+        ]
+        flowtype.color = color.color(
+            self.dialog.content_cls.ids.icon_flowtype_color.icon_color
+        )
+        flowtype.represents_losses = (
+            self.dialog.content_cls.ids.checkbox_flowtype_losses.active
+        )
+
+        # update name-label of the gui
+        self.dialog.content_cls.ids.label_flowtype_name.text = (
+            self.dialog.content_cls.ids.textfield_flowtype_name.text
+        )
+
+        # no more unsaved changes on the current flow
+        self.dialog.content_cls.ids.button_flowtype_save.disabled = True
+
+        # set unsaved changes to true
+        self.unsaved_changes_on_session = True
+
+        # refresh list on screen
+        self.update_flowtype_list()
+
+        # refresh visualisation to adapt new color
+        self.initialize_visualization()
+
+        # inform the user
+        Snackbar(text=f"{flowtype.name} updated!").open()
+
+    def save_changes_on_connection(self):
+        """
+        This function takes the user input from the connection configuration tab and stores it in the blueprint
+        """
+        # saving changes to a flow means that there are unsaved changes in the session
+        self.unsaved_changes_on_session = True
+
+        # store the connection key for reuse
+        connection_key = self.selected_asset["key"]
 
         # delete the old blueprint entry
-        del self.flowtypes[flow_key]
+        del self.blueprint.connections[self.selected_asset["key"]]
+
+        # create new empty dict for connection
+        self.blueprint.connections[connection_key] = {}
+
+        # create new name:
+        new_name = f"{self.root.ids.textfield_connection_source.text} -> {self.root.ids.textfield_connection_sink.text}"
 
         # create a new blueprint entry with given values
-        self.flowtypes[flow_key] = {}
-        self.flowtypes[flow_key].update(
+        self.blueprint.connections[connection_key].update(
             {
                 "name": new_name,
-                "key": flow_key,
-                "unit_energy": self.root.ids.textfield_flow_unit_energy.text,
-                "unit_power": self.root.ids.textfield_flow_unit_power.text,
-                "conversion_factor": self.root.ids.textfield_flow_conversion_factor.text,
-                "color": self.root.ids.icon_color_flow.icon_color,
+                "key": connection_key,
+                "from": self.get_key(self.root.ids.textfield_connection_source.text),
+                "to": self.get_key(self.root.ids.textfield_connection_sink.text),
+                "weight_source": self.root.ids.textfield_connection_weight_source.text,
+                "weight_sink": self.root.ids.textfield_connection_weight_sink.text,
+                "flow": self.get_key(self.root.ids.textfield_connection_flow.text),
+                "to_losses": self.root.ids.checkbox_connection_losses.active,
+                "type": "connection",
             }
         )
-        # set the flow type
-        if self.root.ids.checkbox_flow_energy.active:
-            self.flowtypes[flow_key]["type"] = "energy"
-        elif self.root.ids.checkbox_flow_material.active:
-            self.flowtypes[flow_key]["type"] = "material"
-        else:
-            self.flowtypes[flow_key]["type"] = "unspecified"
 
         # reselect the asset to adapt changes
-        self.selected_asset = self.flowtypes[flow_key]
+        self.selected_asset = self.blueprint.connections[connection_key]
 
         # set unsaved changes parameters
         self.unsaved_changes_on_asset = False
         self.unsaved_changes_on_session = True
 
-        # redraw the visualization:
+        # redraw the preview:
         self.initialize_visualization()
 
         # inform the user
-        Snackbar(text=f"Flow {self.selected_asset['name']} updated!").open()
+        Snackbar(text=f"{self.selected_asset['name']} updated!").open()
 
     def save_changes_on_converter(self):
         """
@@ -1970,7 +2132,9 @@ class factory_GUIApp(MDApp):
         ] == self.root.ids.textfield_converter_name.text and self.get_key(
             self.root.ids.textfield_converter_name.text
         ):
-            self.show_info_dialog("The given name is already bound to another asset!")
+            self.show_info_popup(
+                "The given name is already assigned within the factory!"
+            )
             return
 
         if (
@@ -1984,7 +2148,7 @@ class factory_GUIApp(MDApp):
             and (self.root.ids.textfield_converter_delta_eta_high.value_valid)
             and (self.root.ids.textfield_converter_delta_eta_low.value_valid)
         ):
-            self.show_info_dialog(
+            self.show_info_popup(
                 "Changes can not be stored due to invalid values remaining"
             )
             return
@@ -2082,7 +2246,7 @@ class factory_GUIApp(MDApp):
         component_key = self.get_key(self.selected_asset["name"])
 
         if not (self.root.ids.textfield_deadtime_delay.value_valid):
-            self.show_info_dialog(
+            self.show_info_popup(
                 "Changes can not be stored due to invalid values remaining"
             )
             return
@@ -2126,7 +2290,7 @@ class factory_GUIApp(MDApp):
         component_key = self.get_key(self.selected_asset["name"])
 
         if not (self.root.ids.textfield_schedule_power_max.value_valid):
-            self.show_info_dialog(
+            self.show_info_popup(
                 "Changes can not be stored due to invalid values remaining"
             )
             return
@@ -2161,53 +2325,6 @@ class factory_GUIApp(MDApp):
         # inform the user
         Snackbar(text=f"{self.selected_asset['name']} updated!").open()
 
-    def save_changes_on_connection(self):
-        """
-        This function takes the user input from the connection configuration tab and stores it in the blueprint
-        """
-        # saving changes to a flow means that there are unsaved changes in the session
-        self.unsaved_changes_on_session = True
-
-        # store the connection key for reuse
-        connection_key = self.selected_asset["key"]
-
-        # delete the old blueprint entry
-        del self.blueprint.connections[self.selected_asset["key"]]
-
-        # create new empty dict for connection
-        self.blueprint.connections[connection_key] = {}
-
-        # create new name:
-        new_name = f"{self.root.ids.textfield_connection_source.text} -> {self.root.ids.textfield_connection_sink.text}"
-
-        # create a new blueprint entry with given values
-        self.blueprint.connections[connection_key].update(
-            {
-                "name": new_name,
-                "key": connection_key,
-                "from": self.get_key(self.root.ids.textfield_connection_source.text),
-                "to": self.get_key(self.root.ids.textfield_connection_sink.text),
-                "weight_source": self.root.ids.textfield_connection_weight_source.text,
-                "weight_sink": self.root.ids.textfield_connection_weight_sink.text,
-                "flow": self.get_key(self.root.ids.textfield_connection_flow.text),
-                "to_losses": self.root.ids.checkbox_connection_losses.active,
-                "type": "connection",
-            }
-        )
-
-        # reselect the asset to adapt changes
-        self.selected_asset = self.blueprint.connections[connection_key]
-
-        # set unsaved changes parameters
-        self.unsaved_changes_on_asset = False
-        self.unsaved_changes_on_session = True
-
-        # redraw the preview:
-        self.initialize_visualization()
-
-        # inform the user
-        Snackbar(text=f"{self.selected_asset['name']} updated!").open()
-
     def save_changes_on_pool(self):
         """
         This function takes the user input from the pool configuration tab and stores it in the blueprint
@@ -2219,7 +2336,9 @@ class factory_GUIApp(MDApp):
         ] == self.root.ids.textfield_pool_name.text and self.get_key(
             self.root.ids.textfield_pool_name.text
         ):
-            self.show_info_dialog("The given name is already bound to another asset!")
+            self.show_info_popup(
+                "The given name is already assigned within the factory!"
+            )
             return
 
         # create new blueprint entry
@@ -2274,7 +2393,9 @@ class factory_GUIApp(MDApp):
         ] == self.root.ids.textfield_sink_name.text and self.get_key(
             self.root.ids.textfield_sink_name.text
         ):
-            self.show_info_dialog("The given name is already bound to another asset!")
+            self.show_info_popup(
+                "The given name is already assigned within the factory!"
+            )
             return
 
         # Check, that all user inputs are valid
@@ -2287,7 +2408,7 @@ class factory_GUIApp(MDApp):
             and (self.root.ids.textfield_sink_power_min.value_valid)
             and (self.root.ids.textfield_sink_demand.value_valid)
         ):
-            self.show_info_dialog(
+            self.show_info_popup(
                 "Changes can not be stored due to invalid values remaining"
             )
             return
@@ -2362,7 +2483,9 @@ class factory_GUIApp(MDApp):
         ] == self.root.ids.textfield_source_name.text and self.get_key(
             self.root.ids.textfield_source_name.text
         ):
-            self.show_info_dialog("The given name is already bound to another asset!")
+            self.show_info_popup(
+                "The given name is already assigned within the factory!"
+            )
             return
 
             # Check, that all user inputs are valid
@@ -2375,7 +2498,7 @@ class factory_GUIApp(MDApp):
                 and (self.root.ids.textfield_source_emissions.value_valid)
                 and (self.root.ids.textfield_source_cost.value_valid)
             ):
-                self.show_info_dialog(
+                self.show_info_popup(
                     "Changes can not be stored due to invalid values remaining"
                 )
                 return
@@ -2451,7 +2574,9 @@ class factory_GUIApp(MDApp):
         ] == self.root.ids.textfield_storage_name.text and self.get_key(
             self.root.ids.textfield_storage_name.text
         ):
-            self.show_info_dialog("The given name is already bound to another asset!")
+            self.show_info_popup(
+                "The given name is already assigned within the factory!"
+            )
             return
 
             # Check, that all user inputs are valid
@@ -2464,7 +2589,7 @@ class factory_GUIApp(MDApp):
                 and (self.root.ids.textfield_storage_leakage_time.value_valid)
                 and (self.root.ids.textfield_storage_leakage_soc.value_valid)
             ):
-                self.show_info_dialog(
+                self.show_info_popup(
                     "Changes can not be stored due to invalid values remaining"
                 )
                 return
@@ -2533,7 +2658,7 @@ class factory_GUIApp(MDApp):
             and (self.root.ids.textfield_thermalsystem_R.value_valid)
             and (self.root.ids.textfield_thermalsystem_C.value_valid)
         ):
-            self.show_info_dialog(
+            self.show_info_popup(
                 "Changes can not be stored due to invalid values remaining"
             )
             return
@@ -2589,7 +2714,7 @@ class factory_GUIApp(MDApp):
         """
 
         # get the current unit
-        unit = self.units[
+        unit = self.blueprint.units[
             self.get_key(self.dialog.content_cls.ids.label_unit_name.text)
         ]
 
@@ -2617,15 +2742,20 @@ class factory_GUIApp(MDApp):
             unit.quantity_type = "energy"
         if self.dialog.content_cls.ids.switch_unit_mass.active:
             unit.quantity_type = "mass"
-        if self.dialog.content_cls.ids.switch_unit_unknown.active:
-            unit.quantity_type = "unknown"
+        if self.dialog.content_cls.ids.switch_unit_other.active:
+            unit.quantity_type = "other"
 
         self.dialog.content_cls.ids.label_unit_name.text = (
             self.dialog.content_cls.ids.textfield_unit_name.text
         )
 
+        # no more unsaved changes on the current flow
         self.dialog.content_cls.ids.button_unit_save.disabled = True
 
+        # set unsaved changes to true
+        self.unsaved_changes_on_session = True
+
+        # refresh list on screen
         self.update_unit_list()
 
         # inform the user
@@ -2753,6 +2883,68 @@ class factory_GUIApp(MDApp):
             # call the asset selection method with the key corresponding to the selected list item
             self.initiate_asset_selection(self.get_key(list_item.text))
 
+    def select_flowtype_list_item(self, list_item, touch):
+        """
+        This function is called whenever the user clicks on a flowtype within the flowtype list on the flowtypet dialog. It checks, if there are any unsaved changes on the current selection. If yes the user is asked to save or discard them. Then a new flowtype is created or another flowtype is selected based on the list item clicked by the user.
+        """
+
+        # create a subfunction to bind
+        def select(*args):
+            self.close_popup()
+            if list_item.text == "Add Flowtype":
+                self.add_flowtype()
+            else:
+                self.select_flowtype(
+                    self.blueprint.flowtypes[self.get_key(list_item.text)]
+                )
+
+        def save_and_select(*args):
+            self.save_changes_on_flowtype()
+            select()
+
+        # check, if the function call actually came from an object that has been clicked/moved
+        if not list_item.collide_point(*touch.pos):
+            # abort if not
+            return
+
+        # check if there are unsaved changes
+        if not self.dialog.content_cls.ids.button_flowtype_save.disabled:
+            # create popup
+            btn_dismiss = MDRaisedButton(text="Dismiss changes")
+            btn_save = MDRaisedButton(text="Save changes")
+            self.popup = MDDialog(
+                title="Warning",
+                buttons=[btn_dismiss, btn_save],
+                text="There are unsaved changes on the currently selected flowtype Do you want to save them?",
+            )
+            btn_dismiss.bind(on_release=select)
+            btn_save.bind(on_release=save_and_select)
+
+            self.popup.open()
+        else:
+            select()
+
+    def select_flowtype(self, flowtype):
+        """
+        This function configures the flowtype-definition gui in a way that it displays all the values of the flowtype handed over
+        """
+        # write values of unit into the gui
+        self.dialog.content_cls.ids.label_flowtype_name.text = flowtype.name
+        self.dialog.content_cls.ids.textfield_flowtype_name.text = flowtype.name
+        self.dialog.content_cls.ids.textfield_flowtype_description.text = (
+            flowtype.description
+        )
+        self.dialog.content_cls.ids.textfield_flowtype_unit.text = flowtype.unit.name
+        self.dialog.content_cls.ids.icon_flowtype_color.icon_color = (
+            flowtype.color.tuple
+        )
+        self.dialog.content_cls.ids.checkbox_flowtype_losses.active = (
+            flowtype.represents_losses
+        )
+
+        # no more unsaved changes -> disable save button
+        self.dialog.content_cls.ids.button_flowtype_save.disabled = True
+
     def select_timeseries_list_item(self, list_item, touch):
         """
         This function is called everytime when the user selects a timeseries in the scenarioparameter definition.
@@ -2794,7 +2986,7 @@ class factory_GUIApp(MDApp):
             if list_item.text == "Add Unit":
                 self.add_unit()
             else:
-                self.select_unit(self.units[self.get_key(list_item.text)])
+                self.select_unit(self.blueprint.units[self.get_key(list_item.text)])
 
         def save_and_select(*args):
             self.save_changes_on_unit()
@@ -2837,7 +3029,7 @@ class factory_GUIApp(MDApp):
         elif unit.quantity_type == "mass":
             self.dialog.content_cls.ids.switch_unit_mass.active = True
         else:
-            self.dialog.content_cls.ids.switch_unit_unknown.active = True
+            self.dialog.content_cls.ids.switch_unit_other.active = True
 
         # insert magnitude data into table
         row_data = []
@@ -3003,7 +3195,7 @@ class factory_GUIApp(MDApp):
         self.root.ids.list_assets.clear_widgets()
 
         # recreate lost based on the flows in current blueprint
-        for flow in self.flowtypes.values():
+        for flow in self.blueprint.flowtypes.values():
             if not flow == None:  # necessary because flows is a defaultdict
                 if (
                     self.search_text == ""
@@ -3040,7 +3232,9 @@ class factory_GUIApp(MDApp):
                     icon="fast-forward",
                     icon_size=30,
                     theme_icon_color="Custom",
-                    icon_color=self.flowtypes[connection["flowtype"]]["color"],
+                    icon_color=self.blueprint.flowtypes[connection["flowtype"]][
+                        "color"
+                    ],
                 )
                 item = TwoLineIconListItem(
                     text=connection["name"],
@@ -3078,9 +3272,9 @@ class factory_GUIApp(MDApp):
         self.root.ids.asset_config_screens.current = "asset_browser"
 
     def show_color_picker(self):
-        self.dialog = MDColorPicker(size_hint=(0.3, 0.5), background_color=[1, 1, 1, 1])
-        self.dialog.open()
-        self.dialog.bind(
+        self.popup = MDColorPicker(size_hint=(0.3, 0.5), background_color=[1, 1, 1, 1])
+        self.popup.open()
+        self.popup.bind(
             on_release=self.update_flow_color,
         )
 
@@ -3259,6 +3453,25 @@ class factory_GUIApp(MDApp):
         btn_true.bind(on_release=delete)
         self.dialog.open()
 
+    def show_flowtype_config_dialog(self):
+        """
+        This function oipens the dialog for configuring flowtypes.
+        """
+
+        self.dialog = MDDialog(
+            title="Flowtype Definition",
+            type="custom",
+            content_cls=dialog_flowtype_definition(),
+        )
+
+        self.dialog.size_hint = (None, None)
+        self.dialog.width = dp(850)
+        self.dialog.height = dp(700)
+
+        self.update_flowtype_list()
+        self.select_flowtype(self.blueprint.flowtypes["unknown"])
+        self.dialog.open()
+
     def show_flow_creation_dialog(self):
         # create dialog
         btn_false = MDFlatButton(text="CANCEL")
@@ -3287,7 +3500,7 @@ class factory_GUIApp(MDApp):
         # initialize empty list
         dropdown_items = []
         # iterate over all components in the blueprint
-        for flow in self.flowtypes.values():
+        for flow in self.blueprint.flowtypes.values():
             # append a dropdown item to the list
             dropdown_items.append(
                 {
@@ -3563,13 +3776,12 @@ class factory_GUIApp(MDApp):
     def show_unit_config_dialog(self):
         table = MDDataTable(
             column_data=[
-                ("Magnitude", dp(50)),
+                ("Magnitude", dp(40)),
                 ("Unit Flow", dp(20)),
                 ("Unit Flowrate", dp(20)),
             ],
             rows_num=20,
             elevation=0,
-            check=True,
         )
 
         self.dialog = MDDialog(
@@ -3577,15 +3789,51 @@ class factory_GUIApp(MDApp):
         )
 
         self.dialog.size_hint = (None, None)
-        self.dialog.width = dp(1000)
+        self.dialog.width = dp(950)
         self.dialog.height = dp(800)
         self.dialog.content_cls.ids.table_container.add_widget(table)
         self.dialog.content_cls.ids["table_unit"] = table
 
         self.update_unit_list()
 
-        self.select_unit(self.units["energy"])
+        self.select_unit(self.blueprint.units["energy"])
         self.dialog.open()
+
+    def show_unit_selection_dropdown(self, caller):
+        """
+        This function creates a dropdown menu giving the user the option to select one of the existing units.
+        The name of the selected unit is being set as text to the flow that this function is being called from.
+        """
+
+        def set_text(caller, text):
+            # this function returns the user selection to the object that the dialog has been called from
+            caller.text = text
+            self.menu.dismiss()
+
+        # initialize empty list
+        dropdown_items = []
+        # iterate over all components in the blueprint
+        for unit in self.blueprint.units.values():
+            # append a dropdown item to the list
+            dropdown_items.append(
+                {
+                    "viewclass": "OneLineListItem",
+                    "icon": "cog",
+                    "text": unit.name,
+                    "on_release": lambda x=unit.name: set_text(caller, x),
+                }
+            )
+
+        # create list widget
+        self.menu = MDDropdownMenu(
+            caller=caller,
+            items=dropdown_items,
+            position="center",
+            width_mult=4,
+        )
+        # append widget to the UI
+        self.menu.bind()
+        self.menu.open()
 
     def show_parameter_unit_selection_dialog(self):
         def set_text(text):
@@ -3746,7 +3994,7 @@ class factory_GUIApp(MDApp):
             self.root.ids.checkbox_connection_losses.active = self.selected_asset[
                 "to_losses"
             ]
-            self.root.ids.textfield_connection_flow.text = self.flowtypes[
+            self.root.ids.textfield_connection_flow.text = self.blueprint.flowtypes[
                 self.selected_asset["flowtype"]
             ].name
 
@@ -3794,7 +4042,7 @@ class factory_GUIApp(MDApp):
             self.root.ids.textfield_source_description.text = self.selected_asset[
                 "description"
             ]
-            self.root.ids.textfield_source_flow.text = self.flowtypes[
+            self.root.ids.textfield_source_flow.text = self.blueprint.flowtypes[
                 self.selected_asset["flowtype"]
             ].name
             self.root.ids.image_source_configuration.source = self.selected_asset[
@@ -3811,11 +4059,10 @@ class factory_GUIApp(MDApp):
                 "determined_power",
             ]:
                 textfield = getattr(self.root.ids, f"textfield_source_{parameter}")
-
                 if parameter in self.parameters[self.selected_asset["key"]].keys():
-                    textfield.text = self.parameters[self.selected_asset["key"]][
-                        parameter
-                    ]
+                    textfield.text = str(
+                        self.parameters[self.selected_asset["key"]][parameter]
+                    )
                 else:
                     textfield.text = ""
 
@@ -3823,7 +4070,7 @@ class factory_GUIApp(MDApp):
             # show the pool configuration screeen in the box on the bottom of the screen
             self.root.ids.asset_config_screens.current = "pool_config"
             self.root.ids.label_pool_name.text = self.selected_asset["name"]
-            self.root.ids.textfield_pool_flow.text = self.flowtypes[
+            self.root.ids.textfield_pool_flow.text = self.blueprint.flowtypes[
                 self.selected_asset["flowtype"]
             ]["name"]
             self.root.ids.textfield_pool_name.text = self.selected_asset["name"]
@@ -3894,12 +4141,14 @@ class factory_GUIApp(MDApp):
             self.root.ids.textfield_sink_description.text = self.selected_asset[
                 "description"
             ]
-            self.root.ids.textfield_sink_flow.text = self.flowtypes[
+            self.root.ids.textfield_sink_flow.text = self.blueprint.flowtypes[
                 self.selected_asset["flowtype"]
             ].name
             self.root.ids.image_sink_configuration.source = self.selected_asset["GUI"][
                 "icon"
             ]
+
+            print(self.parameters[self.selected_asset["key"]])
 
             for parameter in [
                 "cost",
@@ -3913,9 +4162,9 @@ class factory_GUIApp(MDApp):
                 textfield = getattr(self.root.ids, f"textfield_sink_{parameter}")
 
                 if parameter in self.parameters[self.selected_asset["key"]].keys():
-                    textfield.text = self.parameters[self.selected_asset["key"]][
-                        parameter
-                    ]
+                    textfield.text = str(
+                        self.parameters[self.selected_asset["key"]][parameter]
+                    )
                 else:
                     textfield.text = ""
 
@@ -3927,7 +4176,7 @@ class factory_GUIApp(MDApp):
             self.root.ids.textfield_storage_description.text = self.selected_asset[
                 "description"
             ]
-            # self.root.ids.textfield_schedule_flow.text = self.flowtypes[self.selected_asset["flowtype"]]["name"]
+            # self.root.ids.textfield_schedule_flow.text = self.blueprint.flowtypes[self.selected_asset["flowtype"]]["name"]
             self.root.ids.textfield_storage_power_max.text = self.selected_asset[
                 "power_max_charge"
             ]
@@ -3966,7 +4215,7 @@ class factory_GUIApp(MDApp):
             self.root.ids.textfield_thermalsystem_description.text = (
                 self.selected_asset["description"]
             )
-            # self.root.ids.textfield_thermalsystem_flow.text = self.flowtypes[self.selected_asset["flowtype"]]["name"]
+            # self.root.ids.textfield_thermalsystem_flow.text = self.blueprint.flowtypes[self.selected_asset["flowtype"]]["name"]
             self.root.ids.textfield_thermalsystem_temperature_start.text = (
                 self.selected_asset["Start temperature"]
             )
@@ -4027,7 +4276,7 @@ class factory_GUIApp(MDApp):
             self.root.ids.textfield_schedule_description.text = self.selected_asset[
                 "description"
             ]
-            # self.root.ids.textfield_schedule_flow.text = self.flowtypes[self.selected_asset["flowtype"]]["name"]
+            # self.root.ids.textfield_schedule_flow.text = self.blueprint.flowtypes[self.selected_asset["flowtype"]]["name"]
             self.root.ids.textfield_schedule_power_max.text = self.selected_asset[
                 "Maximum power flow"
             ]
@@ -4048,7 +4297,7 @@ class factory_GUIApp(MDApp):
             self.root.ids.textfield_deadtime_description.text = self.selected_asset[
                 "description"
             ]
-            # self.root.ids.textfield_deadtime_flow.text = self.flowtypes[self.selected_asset["flowtype"]]["name"]
+            # self.root.ids.textfield_deadtime_flow.text = self.blueprint.flowtypes[self.selected_asset["flowtype"]]["name"]
             self.root.ids.textfield_deadtime_delay.text = self.selected_asset["Delay"]
             self.validate_textfield_input(self.root.ids.textfield_deadtime_delay)
             # display the correct icon
@@ -4072,9 +4321,43 @@ class factory_GUIApp(MDApp):
         This function updates the color of the component_color_button in the flow-tab
         by giving the user a colorpicker-interface
         """
-        self.root.ids.icon_color_flow.icon_color = selected_color[:-1] + [1]
-        self.dialog.dismiss()
-        self.set_unsaved_changes_on_asset(True)
+        self.dialog.content_cls.ids.icon_flowtype_color.icon_color = selected_color[
+            :-1
+        ] + [1]
+        self.popup.dismiss()
+        self.dialog.content_cls.ids.button_flowtype_save.disabled = False
+
+    def update_flowtype_list(self):
+        # predefine icons for list entries
+        icons = {"energy": "lightning-bolt", "mass": "weight", "other": "help"}
+
+        # clear existing list
+        self.dialog.content_cls.ids.list_flowtypes.clear_widgets()
+
+        # iterate over all units
+        for flowtype in self.blueprint.flowtypes.values():
+            # create list item
+            item = TwoLineIconListItem(
+                IconLeftWidgetWithoutTouch(
+                    icon="circle",
+                    theme_icon_color="Custom",
+                    icon_color=flowtype.color.rgba,
+                ),
+                text=flowtype.name,
+                secondary_text=flowtype.unit.quantity_type,
+                on_touch_down=self.select_flowtype_list_item,
+            )
+
+            # append item to list
+            self.dialog.content_cls.ids.list_flowtypes.add_widget(item)
+
+        item = OneLineIconListItem(
+            IconLeftWidget(icon="plus"),
+            text="Add Flowtype",
+            on_touch_down=self.select_flowtype_list_item,
+        )
+        # append item to list
+        self.dialog.content_cls.ids.list_flowtypes.add_widget(item)
 
     def update_scenario_config_screen(self, instance):
         """
@@ -4639,13 +4922,13 @@ class factory_GUIApp(MDApp):
 
     def update_unit_list(self):
         # predefine icons for list entries
-        icons = {"energy": "lightning-bolt", "mass": "weight", "unknown": "help"}
+        icons = {"energy": "lightning-bolt", "mass": "weight", "other": "help"}
 
         # clear existing list
         self.dialog.content_cls.ids.list_units.clear_widgets()
 
         # iterate over all units
-        for unit in self.units.values():
+        for unit in self.blueprint.units.values():
             # create list item
             item = TwoLineIconListItem(
                 IconLeftWidgetWithoutTouch(icon=icons[unit.quantity_type]),

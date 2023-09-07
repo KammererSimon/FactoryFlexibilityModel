@@ -11,7 +11,6 @@ Screen:
                         title: "Factory Model"
                         id: main_menu_bar
                         left_action_items: [["menu", lambda x: main_menu.set_state("open")]]
-                        right_action_items: [["weight_kilogram", lambda x: app.show_unit_config_dialog()],["dots-vertical", lambda x: app.show_unit_config_dialog()]]
                         elevation: 0
 
                         MDLabel:
@@ -2224,39 +2223,38 @@ Screen:
                             size_hint_y: None
                             height: self.texture_size[1]
 
-                        ScrollView:
-                            MDList:
-                                OneLineIconListItem:
-                                    text: "New Session"
-                                    on_release: app.new_session("start")
-                                    IconLeftWidget:
-                                        icon: "new-box"
-                                OneLineIconListItem:
-                                    text: "Save Session as"
-                                    on_release: app.save_session()
-                                    IconLeftWidget:
-                                        icon: "content-save-plus"
-                                OneLineIconListItem:
-                                    text: "Save Session "
-                                    on_release: app.save_session()
-                                    IconLeftWidget:
-                                        icon: "content-save"
-                                OneLineIconListItem:
-                                    text: "Open Session"
-                                    on_release: app.load_session()
-                                    IconLeftWidget:
-                                        icon: "folder-open"
-                                OneLineIconListItem:
-                                    text: "Import Timeseries Data"
-                                    on_release: app.import_timeseries()
-                                    IconLeftWidget:
-                                        icon: "import"
-
+                        MDList:
+                            OneLineIconListItem:
+                                text: "New Session"
+                                on_release: app.new_session("start")
+                                IconLeftWidget:
+                                    icon: "new-box"
+                            OneLineIconListItem:
+                                text: "Save Session as"
+                                on_release: app.save_session()
+                                IconLeftWidget:
+                                    icon: "content-save-plus"
+                            OneLineIconListItem:
+                                text: "Save Session "
+                                on_release: app.save_session()
+                                IconLeftWidget:
+                                    icon: "content-save"
+                            OneLineIconListItem:
+                                text: "Open Session"
+                                on_release: app.load_session()
+                                IconLeftWidget:
+                                    icon: "folder-open"
+                            OneLineIconListItem:
+                                text: "Import Timeseries Data"
+                                on_release: app.import_timeseries()
+                                IconLeftWidget:
+                                    icon: "import"
                         MDRaisedButton:
                             text: "Unit Configuration"
                             on_release: app.show_unit_config_dialog()
                         MDRaisedButton:
                             text: "Flowtype Configuration"
+                            on_release: app.show_flowtype_config_dialog()
 
                         Widget
 
@@ -2325,21 +2323,6 @@ Screen:
             helper_text_mode: "on_error"
             helper_text: "Specify a destination"
             on_focus: if self.focus: app.show_component_selection_dropdown(self,["source"])
-
-#       FLOW CREATION DIALOG ###########################################################################################
-<dialog_new_flow>
-    spacing: "12dp"
-    padding: (0, 30)
-    size_hint: (None, None)
-    height: 80
-    width: 500
-    MDTextField:
-        id: textfield_new_flow_name
-        hint_text: "Flow name"
-        required: True
-        max_text_length: 30
-        helper_text_mode: "on_error"
-        helper_text: "Enter a name for the new flow"
 
 #       SESSION CREATION DIALOG ###########################################################################################
 
@@ -2483,7 +2466,7 @@ Screen:
 <dialog_unit_definition>
     size_hint: None, None
     height:dp(800)
-    width:dp(800)
+    width:dp(900)
     orientation: "vertical"
     MDBoxLayout:
         orientation: "horizontal"
@@ -2495,12 +2478,11 @@ Screen:
                 MDList:
                     id: list_units
         MDCard:
+            md_bg_color: .875, .875, .875, 1
             orientation: "vertical"
             padding: dp(20)
             spacing: dp(10)
-            size_hint_x: None
             elevation: 1
-            width: dp(550)
             MDBoxLayout:
                 orientation: "horizontal"
                 size_hint_y: None
@@ -2524,7 +2506,7 @@ Screen:
                 mode: "rectangle"
                 height: dp(30)
                 helper_text_mode: "on_error"
-                helper_text: "Name is already assigned to another unit"
+                helper_text: "Name is already assigned within the factory"
                 on_text: button_unit_save.disabled = False
             MDLabel:
                 text: "Type"
@@ -2547,11 +2529,11 @@ Screen:
                 MDLabel:
                     text: "Energy"
                 MDCheckbox:
-                    id: switch_unit_unknown
+                    id: switch_unit_other
                     group: "quantity_type"
                     on_active: button_unit_save.disabled = False
                 MDLabel:
-                    text: "Unknown"
+                    text: "other"
             MDLabel:
                 text: "Conversion Factor"
                 size_hint_y: None
@@ -2563,39 +2545,35 @@ Screen:
                 height: dp(30)
                 mode: "rectangle"
                 on_text: button_unit_save.disabled = False
-            MDLabel:
-                text: "Prefixes"
-                size_hint_y: None
-                height: dp(30)
             MDRaisedButton:
                 id: button_unit_save
                 text: "Save Changes"
                 on_release: app.save_changes_on_unit()
                 disabled: True
-
-            MDBoxLayout:
-                size_hint_y: None
-                height: dp(250)
-                id: table_container
-
-
-            MDBoxLayout:
-                orientation: "horizontal"
-                MDFillRoundFlatIconButton:
-                    id: button_magnitude_add
-                    icon: "plus"
-                    text: "Add magnitude"
-                    on_release: app.show_magnitude_creation_popup()
-                MDFillRoundFlatIconButton:
-                    id: button_magnitude_remove
-                    icon: "minus"
-                    text: "Delete selected"
-                    disabled: True
-                    on_release: app.delete_magnitudes()
+            MDCard:
+                style: "filled"
+                orientation: "vertical"
+                padding: dp(20)
+                MDBoxLayout:
+                    orientation: "horizontal"
+                    MDLabel:
+                        text: "Prefixes"
+                        size_hint_y: None
+                        height: dp(30)
+                        font_style: 'H6'
+                    MDIconButton:
+                        id: button_magnitude_add
+                        icon: "plus"
+                        on_release: app.show_magnitude_creation_popup()
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(260)
+                    id: table_container
 
     MDRaisedButton:
         text: "CONFIRM"
         on_release: app.close_dialog()
+
 
 <dialog_magnitude_definition>
     size_hint_y: None
@@ -2622,6 +2600,118 @@ Screen:
             text: "Add"
             on_release: app.add_magnitude_to_unit()
 
+#       FLOWTYPE DEFINITION DIALOG ####################################################################################
+
+<dialog_flowtype_definition>
+    size_hint: None, None
+    width:dp(800)
+    height:dp(700)
+    orientation: "vertical"
+    MDBoxLayout:
+        orientation: "horizontal"
+        spacing: dp(20)
+        MDBoxLayout:
+            size_hint_x: .6
+            orientation: "vertical"
+            ScrollView:
+                MDList:
+                    id: list_flowtypes
+        MDCard:
+            orientation: "vertical"
+            padding: dp(20)
+            spacing: dp(10)
+            elevation: 1
+            MDBoxLayout:
+                orientation: "horizontal"
+                size_hint_y: None
+                height: dp(30)
+                MDLabel:
+                    id: label_flowtype_name
+                    font_style: 'H5'
+                MDIconButton:
+                    id: button_flowtype_delete
+                    icon: "delete"
+                    halign: "right"
+                    #on_release: app.delete_flow()
+            MDLabel:
+                text: "Name"
+                size_hint_y: None
+                height: dp(30)
+            MDTextField:
+                id: textfield_flowtype_name
+                hint_text: 'Specify a name for the flowtype'
+                size_hint_y: None
+                mode: "rectangle"
+                height: dp(30)
+                helper_text_mode: "on_error"
+                helper_text: "Name is already assigned within the factory"
+                on_text: button_flowtype_save.disabled = False
+            MDLabel:
+                text: "Description"
+                size_hint_y: None
+                height: dp(30)
+            MDTextField:
+                id: textfield_flowtype_description
+                hint_text: 'Description of the flowtype'
+                size_hint_y: None
+                mode: "rectangle"
+                height: dp(30)
+                on_text: button_flowtype_save.disabled = False
+            MDBoxLayout:
+                orientation: "horizontal"
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDLabel:
+                        text: "Unit"
+                        size_hint_y: None
+                        height: dp(30)
+                    MDDropDownItem:
+                        id: textfield_flowtype_unit
+                        text: "No Unit selected"
+                        size_hint_y: None
+                        height: dp(30)
+                        hint_text: 'Represented by unit:'
+                        on_release: app.show_unit_selection_dropdown(self)
+                        on_release: button_flowtype_save.disabled = False
+                    MDBoxLayout:
+                        orientation: "horizontal"
+                        MDCheckbox:
+                            id: checkbox_flowtype_losses
+                            size_hint: None, None
+                            height: dp(30)
+                            width: dp(30)
+                            on_active: button_flowtype_save.disabled = False
+                        MDLabel:
+                            size_hint_y: None
+                            height: dp(30)
+                            text: "Flowtype represents losses"
+                    Widget:
+                MDBoxLayout:
+                    orientation: "vertical"
+                    MDLabel:
+                        text: "Color"
+                        size_hint_y: None
+                        height: dp(30)
+                    MDIconButton:
+                        id: icon_flowtype_color
+                        icon: "palette"
+                        icon_size: "100sp"
+                        theme_icon_color: "Custom"
+                        icon_color: "#1D4276"
+                        on_release: app.show_color_picker()
+                    Widget:
+            Widget:
+            MDRaisedButton:
+                id: button_flowtype_save
+                text: "Save changes"
+                on_release: app.save_changes_on_flowtype()
+                pos_hint_y: .5
+                pos_hint_x: .5
+                disabled: True
+
+    MDRaisedButton:
+        text: "CONFIRM"
+        on_release: app.close_dialog()
 
 #       SCENARIO CARD ##################################################################################################
 <ScenarioCard>:
