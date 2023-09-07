@@ -2,6 +2,7 @@ Screen:
     MDNavigationLayout:
         ScreenManager:
             Screen:
+                MDNavigationRail:
                 BoxLayout:
                     orientation: "vertical"
 # MAIN MENU BAR ########################################################################################################
@@ -10,7 +11,9 @@ Screen:
                         title: "Factory Model"
                         id: main_menu_bar
                         left_action_items: [["menu", lambda x: main_menu.set_state("open")]]
+                        right_action_items: [["weight_kilogram", lambda x: app.show_unit_config_dialog()],["dots-vertical", lambda x: app.show_unit_config_dialog()]]
                         elevation: 0
+
                         MDLabel:
                             id: label_session_name
                             font_style: "Subtitle2"
@@ -31,6 +34,7 @@ Screen:
                             BoxLayout:
                                 orientation: "horizontal"
                                 padding: 20
+
 #### LEFT SIDE #########################################################################################################
                                 BoxLayout:
                                     orientation: "vertical"
@@ -457,7 +461,7 @@ Screen:
                                                                     padding: 10, 0, 0, 0
 
                                                                     ValidatedTextField:
-                                                                        id: textfield_source_power_determined
+                                                                        id: textfield_source_determined_power
                                                                         hint_text: 'Fixed Operation Level'
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
@@ -527,7 +531,7 @@ Screen:
                                                                     padding: 10, 0, 0, 0
                                                                     height: dp(60)
                                                                     ValidatedTextField:
-                                                                        id: textfield_source_emissions
+                                                                        id: textfield_source_co2_emission_per_unit
                                                                         hint_text: "CO2 emissions per unit in [kg]"
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
@@ -685,7 +689,7 @@ Screen:
                                                                     height: dp(60)
                                                                     padding: 10, 0, 0, 0
                                                                     ValidatedTextField:
-                                                                        id: textfield_sink_refund
+                                                                        id: textfield_sink_revenue
                                                                         hint_text: "Revenue per unit of utilization in [€]"
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
@@ -709,7 +713,7 @@ Screen:
                                                                     height: dp(60)
                                                                     padding: 10, 0, 0, 0
                                                                     ValidatedTextField:
-                                                                        id: textfield_sink_co2_emission
+                                                                        id: textfield_sink_co2_emission_per_unit
                                                                         hint_text: "Emissions per unit in [kg CO2]"
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
@@ -733,7 +737,7 @@ Screen:
                                                                     height: dp(60)
                                                                     padding: 10, 0, 0, 0
                                                                     ValidatedTextField:
-                                                                        id: textfield_sink_co2_refund
+                                                                        id: textfield_sink_co2_refund_per_unit
                                                                         hint_text: "Emissions avoided per unit in [kg CO2]"
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
@@ -2229,12 +2233,12 @@ Screen:
                                         icon: "new-box"
                                 OneLineIconListItem:
                                     text: "Save Session as"
-                                    on_release: app.save_session(False)
+                                    on_release: app.save_session()
                                     IconLeftWidget:
                                         icon: "content-save-plus"
                                 OneLineIconListItem:
                                     text: "Save Session "
-                                    on_release: app.save_session(True)
+                                    on_release: app.save_session()
                                     IconLeftWidget:
                                         icon: "content-save"
                                 OneLineIconListItem:
@@ -2247,6 +2251,13 @@ Screen:
                                     on_release: app.import_timeseries()
                                     IconLeftWidget:
                                         icon: "import"
+
+                        MDRaisedButton:
+                            text: "Unit Configuration"
+                            on_release: app.show_unit_config_dialog()
+                        MDRaisedButton:
+                            text: "Flowtype Configuration"
+
                         Widget
 
                         Image:
@@ -2331,13 +2342,16 @@ Screen:
         helper_text: "Enter a name for the new flow"
 
 #       SESSION CREATION DIALOG ###########################################################################################
+
 <dialog_new_session>
     spacing: "12dp"
     padding: (0, 30)
     size_hint: (None, None)
-    height: "150dp"
+    height: "400dp"
     width: "500dp"
     orientation: "vertical"
+    background_color: 0, 0, 0, 1
+
     MDTextField:
         id: textfield_new_session_name
         hint_text: "Project name"
@@ -2345,11 +2359,32 @@ Screen:
         max_text_length: 30
         helper_text_mode: "on_error"
         helper_text: "Enter a name for the new Project"
+    MDLabel:
+        text: "Session folder path"
+        size_hint_y: None
+        height: self.texture_size[1]
+    MDBoxLayout:
+        FileChooserIconView:
+            id: filechooser_new_session
+            dirselect: True
+            path: os.getcwd()
+            Label:
+                color: 0, 0, 0, 1
     MDTextField:
         id: textfield_new_session_description
         hint_text: "Project description"
         helper_text_mode: "on_error"
         helper_text: "Enter a brief project description"
+
+
+<FileChooserListView>:
+    # --------------------
+    # ADD BACKGROUND COLOR
+    # --------------------
+    layout: layout
+    FileChooserListLayout:
+        id: layout
+        controller: root
 
 #       SCENARIO CREATION DIALOG #######################################################################################
 <dialog_new_scenario>
@@ -2443,6 +2478,150 @@ Screen:
         text: "USE"
         halign: "right"
         on_release: app.close_dialog()
+
+#       UNIT DEFINITION DIALOG ####################################################################################
+<dialog_unit_definition>
+    size_hint: None, None
+    height:dp(800)
+    width:dp(800)
+    orientation: "vertical"
+    MDBoxLayout:
+        orientation: "horizontal"
+        spacing: dp(20)
+        MDBoxLayout:
+            size_hint_x: .6
+            orientation: "vertical"
+            ScrollView:
+                MDList:
+                    id: list_units
+        MDCard:
+            orientation: "vertical"
+            padding: dp(20)
+            spacing: dp(10)
+            size_hint_x: None
+            elevation: 1
+            width: dp(550)
+            MDBoxLayout:
+                orientation: "horizontal"
+                size_hint_y: None
+                height: dp(30)
+                MDLabel:
+                    id: label_unit_name
+                    font_style: 'H5'
+                MDIconButton:
+                    id: button_unit_delete
+                    icon: "delete"
+                    halign: "right"
+                    on_release: app.delete_unit()
+            MDLabel:
+                text: "Name"
+                size_hint_y: None
+                height: dp(30)
+            MDTextField:
+                id: textfield_unit_name
+                hint_text: 'Specify a name for the unit'
+                size_hint_y: None
+                mode: "rectangle"
+                height: dp(30)
+                helper_text_mode: "on_error"
+                helper_text: "Name is already assigned to another unit"
+                on_text: button_unit_save.disabled = False
+            MDLabel:
+                text: "Type"
+                size_hint_y: None
+                height: dp(30)
+            MDBoxLayout:
+                orientation: "horizontal"
+                size_hint_y: None
+                height: dp(30)
+                MDCheckbox:
+                    id: switch_unit_mass
+                    group: "quantity_type"
+                    on_active: button_unit_save.disabled = False
+                MDLabel:
+                    text: "Mass"
+                MDCheckbox:
+                    id: switch_unit_energy
+                    group: "quantity_type"
+                    on_active: button_unit_save.disabled = False
+                MDLabel:
+                    text: "Energy"
+                MDCheckbox:
+                    id: switch_unit_unknown
+                    group: "quantity_type"
+                    on_active: button_unit_save.disabled = False
+                MDLabel:
+                    text: "Unknown"
+            MDLabel:
+                text: "Conversion Factor"
+                size_hint_y: None
+                height: dp(30)
+            MDTextField:
+                id: textfield_unit_conversion_factor
+                hint_text: 'Factor to convert the unit into kW'
+                size_hint_y: None
+                height: dp(30)
+                mode: "rectangle"
+                on_text: button_unit_save.disabled = False
+            MDLabel:
+                text: "Prefixes"
+                size_hint_y: None
+                height: dp(30)
+            MDRaisedButton:
+                id: button_unit_save
+                text: "Save Changes"
+                on_release: app.save_changes_on_unit()
+                disabled: True
+
+            MDBoxLayout:
+                size_hint_y: None
+                height: dp(250)
+                id: table_container
+
+
+            MDBoxLayout:
+                orientation: "horizontal"
+                MDFillRoundFlatIconButton:
+                    id: button_magnitude_add
+                    icon: "plus"
+                    text: "Add magnitude"
+                    on_release: app.show_magnitude_creation_popup()
+                MDFillRoundFlatIconButton:
+                    id: button_magnitude_remove
+                    icon: "minus"
+                    text: "Delete selected"
+                    disabled: True
+                    on_release: app.delete_magnitudes()
+
+    MDRaisedButton:
+        text: "CONFIRM"
+        on_release: app.close_dialog()
+
+<dialog_magnitude_definition>
+    size_hint_y: None
+    height:dp(250)
+    orientation:"vertical"
+    MDBoxLayout:
+        orientation: "horizontal"
+        MDTextField:
+            id: textfield_magnitude_dimension
+            hint_text: 'Dimension Factor'
+            helper_text: "The dimension value must be numerical!"
+        MDTextField:
+            id: textfield_magnitude_flow
+            hint_text: 'Unit of Flow'
+        MDTextField:
+            id: textfield_magnitude_flowrate
+            hint_text: 'Unit of Flowrate'
+    MDBoxLayout:
+        orientation: "horizontal"
+        MDRaisedButton:
+            text: "Cancel"
+            on_release: app.close_popup()
+        MDRaisedButton:
+            text: "Add"
+            on_release: app.add_magnitude_to_unit()
+
 
 #       SCENARIO CARD ##################################################################################################
 <ScenarioCard>:
