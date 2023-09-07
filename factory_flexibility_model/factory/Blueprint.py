@@ -218,37 +218,40 @@ class Blueprint:
             raise Exception
         self.units.update(data)
 
-    def save(self, *, path: str = None, filename: str = None) -> bool:
+    def save(self, *, path: str = None) -> bool:
         """
         This function stores the blueprint as a .factory-file under the given path.
         :param path: [string] Filepath where the file shall be saved
         :param filename: [string] Name of the file. If no name is handed over the file will be named like the factoryname defined within the blueprint
         """
-        # create a set of serializable data out of the blueprint
-        # initialize a new dict
+        # Create Layout.factory-file
         data = {
             "components": self.components,
             "connections": self.connections,
-            "flowtypes": self.flowtypes,
             "GUI_config": self.GUI_config,
             "info": self.info,
-            "units": self.units,
         }
 
-        if filename is None:
-            filename = self.info["name"]
-
-        # store the blueprint dictionary as json file
-        if path is None:
-            with open(f"{filename}.factory", "w") as file:
+        # store the Layout as json file
+        try:
+            with open(f"{path}\\Layout.factory", "w") as file:
                 yaml.dump(data, file)
-            logging.info(f"Blueprint saved as {self.info['name']}.factory")
-        else:
-            try:
-                with open(f"{path}\\{filename}.factory", "w") as file:
-                    yaml.dump(data, file)
-                logging.info(f"Blueprint saved under {path}\\{filename}.factory")
-            except:
-                logging.error(
-                    f"Saving blueprint under '{path}\\{filename}.factory' failed!"
-                )
+            logging.info(f"Blueprint saved under {path}")
+        except:
+            logging.error(f"Saving blueprint under '{path}' failed!")
+
+        # Create units.txt
+        try:
+            with open(f"{path}\\units.txt", "w") as file:
+                yaml.dump(self.units, file)
+            logging.info(f"units.txt saved under {path}")
+        except:
+            logging.error(f"Saving units.txt under '{path}' failed!")
+
+        # Create flowtypes.txt
+        try:
+            with open(f"{path}\\units.txt", "w") as file:
+                yaml.dump(self.flowtypes, file)
+            logging.info(f"units.txt saved under {path}")
+        except:
+            logging.error(f"Saving units.txt under '{path}' failed!")
