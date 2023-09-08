@@ -102,141 +102,13 @@ Screen:
                                                 Screen:
                                                     name: "welcome_screen"
                                                     BoxLayout:
+                                                        orientation: "vertical"
                                                         padding: (50, 50)
                                                         Image:
                                                             source: "Assets\\logo_big.png"
-
-        # FLOW CONFIG SCREEN ###########################################################################################
-                                                Screen:
-                                                    name: "flow_config"
-
-                                                    MDBoxLayout:
-                                                        orientation: "vertical"
-                                                        padding: dp(20)
-                                                        spacing: dp(20)
-
-                                                        MDBoxLayout:
-                                                            size_hint_y: None
-                                                            height: dp(70)
-                                                            orientation: "horizontal"
-
-                                                            MDLabel:
-                                                                text: "Flow Configuration"
-                                                                font_style: "H5"
-                                                                size_hint_y: None
-                                                                height: dp(70)
-                                                            MDIcon:
-                                                                icon: "waves"
-                                                                icon_size: dp(50)
-
-                                                        MDLabel:
-                                                            text: "Name"
-                                                            font_style: "H6"
-                                                            size_hint_y: None
-                                                            height: dp(30)
-
-                                                        MDBoxLayout:
-                                                            orientation: "vertical"
-                                                            padding: 10, 0, 0, 0
-                                                            spacing: dp(10)
-                                                            size_hint_y: None
-                                                            height: dp(70)
-                                                            MDTextField:
-                                                                id: textfield_flow_name
-                                                                hint_text: "Name of the Flow"
-                                                                on_text: app.set_unsaved_changes_on_asset(True)
-                                                                size_hint_x: .75
-
-                                                        MDLabel:
-                                                            text: "Unit Definition"
-                                                            font_style: "H6"
-                                                            size_hint_y: None
-                                                            height: dp(30)
-
-                                                        MDBoxLayout:
-                                                            orientation: "vertical"
-                                                            padding: 10, 0, 0, 0
-                                                            spacing: dp(10)
-                                                            size_hint_y: None
-                                                            height: dp(170)
-                                                            MDTextField:
-                                                                id: textfield_flow_unit_energy
-                                                                hint_text: "Unit of the flow when referring to energy, mass or volume"
-                                                                on_text: app.set_unsaved_changes_on_asset(True)
-                                                                size_hint_x: .75
-
-                                                            MDTextField:
-                                                                id: textfield_flow_unit_power
-                                                                hint_text: "Unit of the flow when referring to power or volume flow"
-                                                                on_text: app.set_unsaved_changes_on_asset(True)
-                                                                size_hint_x: .75
-
-                                                            MDTextField:
-                                                                id: textfield_flow_conversion_factor
-                                                                hint_text: "Conversion factor between one of the specified units and one kW / kg / l"
-                                                                on_text: app.set_unsaved_changes_on_asset(True)
-                                                                size_hint_x: .75
-
-                                                        MDLabel:
-                                                            text: "Flow Type"
-                                                            font_style: "H6"
-                                                            size_hint_y: None
-                                                            height: dp(30)
-
-                                                        MDBoxLayout:
-                                                            orientation: "horizontal"
-                                                            padding: 10, 0, 0, 0
-                                                            spacing: dp(10)
-                                                            size_hint_y: None
-                                                            height: dp(60)
-                                                            MDCheckbox:
-                                                                id: checkbox_flow_energy
-                                                                active: True
-                                                                group: "flow_type"
-                                                                on_active: app.set_unsaved_changes_on_asset(True)
-                                                                size_hint_x: .2
-                                                            MDLabel:
-                                                                text: "Energy"
-                                                                size_hint_x: .55
-
-                                                            MDCheckbox:
-                                                                id: checkbox_flow_material
-                                                                group: "flow_type"
-                                                                on_active: app.set_unsaved_changes_on_asset(True)
-                                                                size_hint_x: .2
-                                                            MDLabel:
-                                                                text: "Material"
-                                                                size_hint_x: .55
-                                                            Widget:
-                                                                size_hint_x: .25
-
-                                                        MDLabel:
-                                                            text: "Flow Color"
-                                                            font_style: "H6"
-                                                            size_hint_y: None
-                                                            height: dp(30)
-
-                                                        MDIconButton:
-                                                            id: icon_color_flow
-                                                            icon: "palette"
-                                                            icon_size: "100sp"
-                                                            theme_icon_color: "Custom"
-                                                            icon_color: "#1D4276"
-                                                            on_release: app.show_color_picker()
-                                                        Widget:
-
-                                                    BoxLayout:
-                                                        padding: dp(10)
-                                                        orientation: "horizontal"
-                                                        Widget:
-
-                                                        MDFlatButton:
-                                                            text: "Dismiss Changes"
-                                                            on_release: app.update_config_tab()
-
-                                                        MDRaisedButton:
-                                                            text: "Save Changes"
-                                                            on_release: app.save_changes_on_flow()
+                                                        ScrollView:
+                                                            MDList:
+                                                                id: list_flowtypes
 
 
         #CONNECTION CONFIG SCREEN ######################################################################################
@@ -257,7 +129,7 @@ Screen:
                                                                 size_hint: (None, None)
                                                                 height: dp(50)
                                                                 width: dp(70)
-                                                                source: "Assets\\icon_flow.png"
+                                                                source: "Assets\\icon_flowtype.png"
 
 
                                                         MDLabel:
@@ -314,11 +186,11 @@ Screen:
                                                             spacing: dp(10)
 
                                                             MDTextField:
-                                                                id: textfield_connection_flow
+                                                                id: textfield_connection_flowtype
                                                                 hint_text: 'Flow on the connection'
                                                                 icon_right: "arrow-down-drop-circle-outline"
                                                                 size_hint_x: .75
-                                                                on_focus: if self.focus: app.show_flow_selection_dropdown(self)
+                                                                on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
 
                                                         MDBoxLayout:
                                                             orientation: "horizontal"
@@ -417,10 +289,10 @@ Screen:
                                                                         on_text: app.set_unsaved_changes_on_asset(True)
                                                                     MDTextField:
                                                                         size_hint_x: .75
-                                                                        id: textfield_source_flow
+                                                                        id: textfield_source_flowtype
                                                                         hint_text: 'Delivered Flow'
                                                                         icon_right: "arrow-down-drop-circle-outline"
-                                                                        on_focus: if self.focus: app.show_flow_selection_dropdown(self)
+                                                                        on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
 
                                                                 MDLabel:
                                                                     text: "Operating Constraints"
@@ -645,11 +517,11 @@ Screen:
                                                                         on_text: app.set_unsaved_changes_on_asset(True)
                                                                         size_hint_x: .75
                                                                     MDTextField:
-                                                                        id: textfield_sink_flow
+                                                                        id: textfield_sink_flowtype
                                                                         hint_text: 'Accepted Flow'
                                                                         icon_right: "arrow-down-drop-circle-outline"
                                                                         size_hint_x: .75
-                                                                        on_focus: if self.focus: app.show_flow_selection_dropdown(self)
+                                                                        on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
 
                                                                 MDLabel:
                                                                     text: "Cost of utilization"
@@ -1058,10 +930,10 @@ Screen:
                                                                         on_text: app.set_unsaved_changes_on_asset(True)
                                                                     MDTextField:
                                                                         size_hint_x: .75
-                                                                        id: textfield_thermalsystem_flow
+                                                                        id: textfield_thermalsystem_flowtype
                                                                         hint_text: 'Flow'
                                                                         icon_right: "arrow-down-drop-circle-outline"
-                                                                        on_focus: if self.focus: app.show_flow_selection_dropdown(self)
+                                                                        on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
                                                                         on_text: app.set_unsaved_changes_on_asset(True)
 
         # THERMALSYSTEM: Position of boxlayout 'Operating Constraints' with input fields and checkboxes for timeseries #
@@ -1534,14 +1406,11 @@ Screen:
                                                                         hint_text: "Description of the storage"
 #>>>>>>> origin/master
                                                                         on_text: app.set_unsaved_changes_on_asset(True)
-                                                                    MDTextField:
+                                                                    MDDropDownItem:
                                                                         size_hint_x: .75
-                                                                        id: textfield_storage_flow
-#<<<<<<< HEAD
-                                                                        hint_text: 'Flow'
-                                                                        icon_right: "arrow-down-drop-circle-outline"
-                                                                        on_focus: if self.focus: app.show_flow_selection_dropdown(self)
-                                                                        on_text: app.set_unsaved_changes_on_asset(True)
+                                                                        id: textfield_storage_flowtype
+                                                                        on_release: app.show_flowtype_selection_dropdown(self)
+                                                                        on_release: app.set_unsaved_changes_on_asset(True)
 
         # STORAGE: Position of boxlayout 'Operating Constraints' with input fields #####################################
                                                                 MDLabel:
@@ -1613,7 +1482,7 @@ Screen:
 #=======
                                                                      #   hint_text: 'Stored Flow'
                                                                       #  icon_right: "arrow-down-drop-circle-outline"
-                                                                       # on_focus: if self.focus: app.show_flow_selection_dropdown(self)
+                                                                       # on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
 
                                                                 #MDLabel:
                                                                  #   text: "Operating Constraints"
@@ -1669,7 +1538,7 @@ Screen:
 
                                                                     ValidatedTextField:
                                                                         size_hint_x: .75
-                                                                        id: textfield_storage_power_max
+                                                                        id: textfield_storage_power_max_charge
                                                                         hint_text: 'Maximum Discharging Power'
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
@@ -1678,7 +1547,7 @@ Screen:
 
                                                                     ValidatedTextField:
                                                                         size_hint_x: .75
-                                                                        id: textfield_storage_power_min
+                                                                        id: textfield_storage_power_max_discharge
                                                                         hint_text: 'Maximum Charging Power'
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
@@ -1791,10 +1660,10 @@ Screen:
                                                                 on_text: app.set_unsaved_changes_on_asset(True)
 
                                                             MDTextField:
-                                                                id: textfield_pool_flow
+                                                                id: textfield_pool_flowtype
                                                                 hint_text: 'Flow'
                                                                 icon_right: "arrow-down-drop-circle-outline"
-                                                                on_focus: if self.focus: app.show_flow_selection_dropdown(self)
+                                                                on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
                                                                 on_text: app.set_unsaved_changes_on_asset(True)
                                                         Widget:
 
@@ -2187,7 +2056,7 @@ Screen:
                             height: self.texture_size[1]
                             font_style: 'H5'
                         CanvasWidget:
-                            id: canvas_flow
+                            id: canvas_flowtype
                             size_hint_y: .1
 
                         MDLabel:
@@ -2310,7 +2179,7 @@ Screen:
             on_focus: if self.focus: app.show_component_selection_dropdown(self, ["sink"])
 
         Image:
-            source: "Assets\\icon_flow.png"
+            source: "Assets\\icon_flowtype.png"
             height: 70
             width: 70
 
@@ -2586,7 +2455,7 @@ Screen:
             hint_text: 'Dimension Factor'
             helper_text: "The dimension value must be numerical!"
         MDTextField:
-            id: textfield_magnitude_flow
+            id: textfield_magnitude_flowtype
             hint_text: 'Unit of Flow'
         MDTextField:
             id: textfield_magnitude_flowrate
@@ -2609,109 +2478,95 @@ Screen:
     orientation: "vertical"
     MDBoxLayout:
         orientation: "horizontal"
-        spacing: dp(20)
+        size_hint_y: None
+        height: dp(30)
+        MDLabel:
+            id: label_flowtype_name
+            font_style: 'H5'
+        MDIconButton:
+            id: button_flowtype_delete
+            icon: "delete"
+            halign: "right"
+            #on_release: app.delete_flowtype()
+    MDLabel:
+        text: "Name"
+        size_hint_y: None
+        height: dp(30)
+    MDTextField:
+        id: textfield_flowtype_name
+        hint_text: 'Specify a name for the flowtype'
+        size_hint_y: None
+        mode: "rectangle"
+        height: dp(30)
+        helper_text_mode: "on_error"
+        helper_text: "Name is already assigned within the factory"
+        on_text: button_flowtype_save.disabled = False
+    MDLabel:
+        text: "Description"
+        size_hint_y: None
+        height: dp(30)
+    MDTextField:
+        id: textfield_flowtype_description
+        hint_text: 'Description of the flowtype'
+        size_hint_y: None
+        mode: "rectangle"
+        height: dp(30)
+        on_text: button_flowtype_save.disabled = False
+    MDBoxLayout:
+        orientation: "horizontal"
         MDBoxLayout:
-            size_hint_x: .6
             orientation: "vertical"
-            ScrollView:
-                MDList:
-                    id: list_flowtypes
-        MDCard:
-            orientation: "vertical"
-            padding: dp(20)
-            spacing: dp(10)
-            elevation: 1
-            MDBoxLayout:
-                orientation: "horizontal"
+            MDLabel:
+                text: "Unit"
                 size_hint_y: None
                 height: dp(30)
+            MDDropDownItem:
+                id: textfield_flowtype_unit
+                text: "No Unit selected"
+                size_hint_y: None
+                height: dp(30)
+                hint_text: 'Represented by unit:'
+                on_release: app.show_unit_selection_dropdown(self)
+                on_release: button_flowtype_save.disabled = False
+            MDBoxLayout:
+                orientation: "horizontal"
+                MDCheckbox:
+                    id: checkbox_flowtype_losses
+                    size_hint: None, None
+                    height: dp(30)
+                    width: dp(30)
+                    on_active: button_flowtype_save.disabled = False
                 MDLabel:
-                    id: label_flowtype_name
-                    font_style: 'H5'
-                MDIconButton:
-                    id: button_flowtype_delete
-                    icon: "delete"
-                    halign: "right"
-                    #on_release: app.delete_flow()
-            MDLabel:
-                text: "Name"
-                size_hint_y: None
-                height: dp(30)
-            MDTextField:
-                id: textfield_flowtype_name
-                hint_text: 'Specify a name for the flowtype'
-                size_hint_y: None
-                mode: "rectangle"
-                height: dp(30)
-                helper_text_mode: "on_error"
-                helper_text: "Name is already assigned within the factory"
-                on_text: button_flowtype_save.disabled = False
-            MDLabel:
-                text: "Description"
-                size_hint_y: None
-                height: dp(30)
-            MDTextField:
-                id: textfield_flowtype_description
-                hint_text: 'Description of the flowtype'
-                size_hint_y: None
-                mode: "rectangle"
-                height: dp(30)
-                on_text: button_flowtype_save.disabled = False
-            MDBoxLayout:
-                orientation: "horizontal"
-                MDBoxLayout:
-                    orientation: "vertical"
-                    MDLabel:
-                        text: "Unit"
-                        size_hint_y: None
-                        height: dp(30)
-                    MDDropDownItem:
-                        id: textfield_flowtype_unit
-                        text: "No Unit selected"
-                        size_hint_y: None
-                        height: dp(30)
-                        hint_text: 'Represented by unit:'
-                        on_release: app.show_unit_selection_dropdown(self)
-                        on_release: button_flowtype_save.disabled = False
-                    MDBoxLayout:
-                        orientation: "horizontal"
-                        MDCheckbox:
-                            id: checkbox_flowtype_losses
-                            size_hint: None, None
-                            height: dp(30)
-                            width: dp(30)
-                            on_active: button_flowtype_save.disabled = False
-                        MDLabel:
-                            size_hint_y: None
-                            height: dp(30)
-                            text: "Flowtype represents losses"
-                    Widget:
-                MDBoxLayout:
-                    orientation: "vertical"
-                    MDLabel:
-                        text: "Color"
-                        size_hint_y: None
-                        height: dp(30)
-                    MDIconButton:
-                        id: icon_flowtype_color
-                        icon: "palette"
-                        icon_size: "100sp"
-                        theme_icon_color: "Custom"
-                        icon_color: "#1D4276"
-                        on_release: app.show_color_picker()
-                    Widget:
+                    size_hint_y: None
+                    height: dp(30)
+                    text: "Flowtype represents losses"
             Widget:
-            MDRaisedButton:
-                id: button_flowtype_save
-                text: "Save changes"
-                on_release: app.save_changes_on_flowtype()
-                pos_hint_y: .5
-                pos_hint_x: .5
-                disabled: True
-
-    MDRaisedButton:
-        text: "CONFIRM"
-        on_release: app.close_dialog()
+        MDBoxLayout:
+            orientation: "vertical"
+            MDLabel:
+                text: "Color"
+                size_hint_y: None
+                height: dp(30)
+            MDIconButton:
+                id: icon_flowtype_color
+                icon: "palette"
+                icon_size: "100sp"
+                theme_icon_color: "Custom"
+                icon_color: "#1D4276"
+                on_release: app.show_color_picker()
+            Widget:
+    Widget:
+    MDBoxLayout:
+        orientation: "horizontal"
+        MDRaisedButton:
+            id: button_flowtype_save
+            text: "Save changes"
+            on_release: app.save_changes_on_flowtype()
+            on_release: app.close_dialog()
+            disabled: True
+        MDRaisedButton:
+            text: "CONFIRM"
+            on_release: app.close_dialog()
 
 #       SCENARIO CARD ##################################################################################################
 <ScenarioCard>:
