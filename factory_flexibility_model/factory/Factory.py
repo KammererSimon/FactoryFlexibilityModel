@@ -280,6 +280,39 @@ class Factory:
 
         logging.debug(f"        - New flowtype added: {self.flowtypes[key].name}")
 
+    def add_flowtype_object(self, flowtype, *, overwrite: bool = False):
+        """
+        Adds a new flowtype object to the factory's collection of flowtype objects.
+        Initially checks if a flowtype object with the same key already exists in the factory. If it does, depending on the value of the `overwrite` parameter, it either logs a warning and exits the method or overwrites the existing object.
+        :param flowtype: flowtype-object
+        :param overwrite: A boolean indicating whether to overwrite an existing flowtype object with the same key.
+        Defaults to False, meaning flowtype objects will not be overwritten and a warning will be issued if a flowtype with the same key already exists.
+        :return: None
+        """
+
+        # make sure, that the key is not used for anything else but a flowtype
+        if (
+            flowtype.key in self.components.keys()
+            or flowtype.key in self.connections.keys()
+            or flowtype.key in self.units.keys()
+        ):
+            raise AttributeError(
+                f"Redundant key detected! '{flowtype.key}' is already assigned to an existing instance!"
+            )
+
+        # check, if the factory already has a flowtype of the given key
+        if flowtype.key in self.flowtypes.keys():
+            # if yes: check if overwriting is allowed
+            if not overwrite:
+                # warn the user if the given flowtype could not be used
+                logging.warning(
+                    f"The factory already contains a flowtype with key {flowtype.key}"
+                )
+            return
+        else:
+            # add flowtype to the list of the factory
+            self.flowtypes[flowtype.key] = flowtype
+
     def add_unit(
         self,
         key: str,
@@ -349,6 +382,51 @@ class Factory:
             )
 
         logging.debug(f"        - New unit added: {key}")
+
+    def add_unit_object(self, unit, key, *, overwrite: bool = False):
+        """
+        Adds a new unit object to the factory's collection of unit objects.
+
+        Initially, it checks if the unit's key is already assigned to any component, connection, or flowtype. If it is, it raises an AttributeError. Then it checks if a unit with the same key exists in the factory's unit collection. Depending on the `overwrite` parameter, it either logs a warning and exits the method or adds the unit to the factory's unit collection.
+
+        Parameters:
+        unit: object
+            The unit object to be added. This object must have a `key` attribute, which is used to identify it in the collection.
+
+        overwrite: bool, optional
+            A boolean indicating whether to overwrite an existing unit object with the same key.
+            Defaults to False, meaning unit objects will not be overwritten and a warning will be logged if a unit with the same key already exists.
+
+        Returns:
+        None
+
+        Raises:
+        AttributeError
+            If the unit object's key is already assigned to an existing component, connection, or flowtype.
+        """
+
+        # make sure, that the key is not used for anything else but a flowtype
+        if (
+            unit.key in self.components.keys()
+            or unit.key in self.connections.keys()
+            or unit.key in self.flowtypes.keys()
+        ):
+            raise AttributeError(
+                f"Redundant key detected! '{unit.key}' is already assigned to an existing instance!"
+            )
+
+        # check, if the factory already has a flowtype of the given key
+        if unit.key in self.units.keys():
+            # if yes: check if overwriting is allowed
+            if not overwrite:
+                # warn the user if the given flowtype could not be used
+                logging.warning(
+                    f"The factory already contains a flowtype with key {unit.key}"
+                )
+            return
+        else:
+            # add flowtype to the list of the factory
+            self.units[unit.key] = unit
 
     def save(self, file_path: str, *, overwrite: bool = False):
         """
