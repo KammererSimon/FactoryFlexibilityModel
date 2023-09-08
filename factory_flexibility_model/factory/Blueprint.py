@@ -55,45 +55,17 @@ class Blueprint:
 
         # CREATE UNITS
         for key, unit in self.units.items():
-
             # skip the basic units
             if key in ["energy", "mass"]:
                 continue
 
-            try:
-                factory.add_unit(
-                    key=key,
-                    quantity_type=unit["quantity_type"],
-                    conversion_factor=unit["conversion_factor"],
-                    magnitudes=unit["magnitudes"],
-                    units_flow=unit["units_flow"],
-                    units_flowrate=unit["units_flowrate"],
-                )
-            except:
-                raise TypeError(f"Definition of unit {key} is incomplete or corrupted")
+            factory.add_unit_object(unit, key)
 
         # CREATE FLOWS
         logging.info("Creating Flowtypes")
         for key, flowtype in self.flowtypes.items():
-            # check for optional parameters
-            if "color" in flowtype:
-                color = flowtype["color"]
-            else:
-                color = "#999999"  # grey
-
-            if "description" in flowtype:
-                description = flowtype["description"]
-            else:
-                description = None
-
             # Add new flowtype to factory with given specifications
-            factory.add_flowtype(
-                key,
-                name=flowtype["name"],
-                unit=flowtype["unit"],
-                color=color,
-                description=description,
-            )
+            factory.add_flowtype_object(flowtype)
 
         # CREATE COMPONENTS
         logging.info("Creating factory components")
@@ -183,6 +155,13 @@ class Blueprint:
             )
             raise Exception
 
+        # exchange flowtype keys with their objects
+        for component in data["components"].values():
+            if "flowtype" in component.keys():
+                component["flowtype"] = self.flowtypes[component["flowtype"]]
+        for connection in data["connections"].values():
+            connection["flowtype"] = self.flowtypes[connection["flowtype"]]
+
         # store imported date into the object
         self.components.update(data["components"])
         self.connections.update(data["connections"])
@@ -236,16 +215,19 @@ class Blueprint:
             raise Exception
 
         # recreate unit objects
-        for key, unit in data.items():
-            self.units[key] = un.Unit(
-                key=key,
-                quantity_type=unit["quantity_type"],
-                conversion_factor=unit["conversion_factor"],
-                magnitudes=unit["magnitudes"],
-                units_flow=unit["units_flow"],
-                units_flowrate=unit["units_flowrate"],
-                name=unit["name"],
-            )
+        try:
+            for key, unit in data.items():
+                self.units[key] = un.Unit(
+                    key=key,
+                    quantity_type=unit["quantity_type"],
+                    conversion_factor=unit["conversion_factor"],
+                    magnitudes=unit["magnitudes"],
+                    units_flow=unit["units_flow"],
+                    units_flowrate=unit["units_flowrate"],
+                    name=unit["name"],
+                )
+        except:
+            raise TypeError(f"Definition of unit {key} is incomplete or corrupted")
 
     def save(self, *, path: str = None) -> bool:
         """
@@ -260,6 +242,13 @@ class Blueprint:
             "GUI_config": self.GUI_config,
             "info": self.info,
         }
+
+        # exchange flowtype objects with their keys
+        for component in data["components"].values():
+            component["flowtype"] = component["flowtype"].key
+
+        for connection in data["connections"].values():
+            connection["flowtype"] = connection["flowtype"].key
 
         # store the Layout as json file
         try:
