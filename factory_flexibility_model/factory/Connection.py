@@ -76,7 +76,10 @@ class Connection:
             if (
                 not (source.flowtype.is_unknown())
                 and not (sink.flowtype.is_losses())
-                and not (source.flowtype == self.flowtype or self.flowtype.is_unknown())
+                and not (
+                    source.flowtype.key == self.flowtype.key
+                    or self.flowtype.is_unknown()
+                )
             ):
                 logging.critical(
                     f"incompatible flowtypes between connection {self.name} and Component {source.name}: {self.flowtype.name} vs {source.flowtype.name}"
@@ -86,7 +89,7 @@ class Connection:
             # check if it is compatible with the flowtype of the sink
             if not (sink.flowtype.is_unknown()) and not (
                 sink.flowtype.is_losses()
-                or sink.flowtype == self.flowtype
+                or sink.flowtype.key == self.flowtype.key
                 or self.flowtype.is_unknown()
             ):
                 logging.critical(
