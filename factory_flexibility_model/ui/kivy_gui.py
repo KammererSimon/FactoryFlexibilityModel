@@ -50,6 +50,7 @@ import factory_flexibility_model.factory.Flowtype as ft
 import factory_flexibility_model.factory.Unit as Unit
 import factory_flexibility_model.io.session as session
 import factory_flexibility_model.ui.color as color
+import factory_flexibility_model.ui.flowtype_determination as fd
 
 # IMPORT 3RD PARTY PACKAGES
 
@@ -515,6 +516,15 @@ class factory_GUIApp(MDApp):
             self.show_component_creation_menu()
             return
 
+        # abort if there is no session yet
+        if self.session_path is None:
+            self.show_info_popup(
+                "Cannot create components before initializing or importing a session!"
+            )
+            # close the component selection menu
+            self.root.ids.component_shelf.set_state("closed")
+            return
+
         # determine component_type
         component_type = instance.key
 
@@ -567,7 +577,7 @@ class factory_GUIApp(MDApp):
         # set unsaved changes to true
         self.unsaved_changes_on_session = True
 
-    def add_connection(self, sink_key):
+    def add_connection(self, destination_key):
         """
         This function is being called when the user confirms the creation of a new connection within the new_connection_dialog.
         """
@@ -576,20 +586,49 @@ class factory_GUIApp(MDApp):
         self.connection_edit_mode = False
         Window.unbind(mouse_pos=self.update_visualization)
 
-        # get the source
-        source_name = self.selected_asset["name"]
-        source_key = self.get_key(source_name)
-        sink_name = self.blueprint.components[sink_key]["name"]
+        # get the origin
+        origin_name = self.selected_asset["name"]
+        origin_key = self.get_key(origin_name)
+        origin_flowtype = self.blueprint.components[origin_key]["flowtype"]
+        destination_name = self.blueprint.components[destination_key]["name"]
+        destination_flowtype = self.blueprint.components[destination_key]["flowtype"]
 
         # make sure that the connection is not already existing:
         for connection in self.blueprint.connections.values():
-            # check all coinnections in the blueprint
-            if connection["from"] == source_key and connection["to"] == sink_key:
+            # check all connections in the blueprint
+            if connection["from"] == origin_key and connection["to"] == destination_key:
                 # if current connection is equal to the one to be created: abort and warn the user
                 self.show_info_popup(
-                    f"There is already a connection from {source_name} to {sink_name}!"
+                    f"There is already a connection from {origin_name} to {destination_name}!"
                 )
                 return
+
+        # check flowtype compatibility of origin and destination
+        connection_flowtype = self.blueprint.flowtypes["unknown"]
+        if origin_flowtype.is_unknown():
+            # if the origin flowtype is unknown: check the destination flowtype
+            if not destination_flowtype.is_unknown():
+                #  if the destination has a flowtype set: adapt it!
+                connection_flowtype = destination_flowtype
+                fd.set_component_flowtype(
+                    self.blueprint, origin_key, destination_flowtype
+                )
+        else:
+            connection_flowtype = origin_flowtype
+            # if the origin flowtype is known: check compatibility with destination flowtype
+            if destination_flowtype.is_unknown():
+                # if destination flowtype is unknown -> define it as origin flowtype
+                fd.set_component_flowtype(
+                    self.blueprint, destination_key, origin_flowtype
+                )
+            elif not destination_flowtype.key == origin_flowtype.key:
+                # if destination flowtype diverges from origin flowtype -> abort and show an error
+                self.show_info_popup(
+                    f"Cannot create this connection, because {origin_name} and {destination_name} already have different flowtypes assigned!"
+                )
+                return
+
+        print(f"connection flowtype: {connection_flowtype.name}")
 
         # create adressing key for new connection
         i = 0
@@ -601,12 +640,10 @@ class factory_GUIApp(MDApp):
         self.blueprint.connections[connection_key] = {}
         self.blueprint.connections[connection_key][
             "name"
-        ] = f"{source_name} -> {sink_name}"
-        self.blueprint.connections[connection_key]["from"] = source_key
-        self.blueprint.connections[connection_key]["to"] = sink_key
-        self.blueprint.connections[connection_key][
-            "flowtype"
-        ] = self.blueprint.flowtypes["unknown"]
+        ] = f"{origin_name} -> {destination_name}"
+        self.blueprint.connections[connection_key]["from"] = origin_key
+        self.blueprint.connections[connection_key]["to"] = destination_key
+        self.blueprint.connections[connection_key]["flowtype"] = connection_flowtype
         self.blueprint.connections[connection_key]["key"] = connection_key
         self.blueprint.connections[connection_key]["weight_source"] = 1
         self.blueprint.connections[connection_key]["weight_sink"] = 1
@@ -749,7 +786,7 @@ class factory_GUIApp(MDApp):
         }
         self.selected_timeseries = np.zeros(168)  # the currently activated timeseries
         self.search_text = ""  # text within the component search bar
-        self.session_path = ""  # path to the current session folder
+        self.session_path = None  # path to the current session folder
         self.timeseries = []  # List of imported timeseries within the session
 
         # Style Config for GUI
@@ -1047,7 +1084,6 @@ class factory_GUIApp(MDApp):
                 return
 
         # otherwise just select the component that has been clicked on
-        print(f"selecting component {instance.id}")
         self.initiate_asset_selection(instance.id)
         self.save_component_positions()
 
@@ -1872,6 +1908,7 @@ class factory_GUIApp(MDApp):
 
         if state == "getname":  # create a new session
             # close the previous dialog
+            print("check")
             if hasattr(self, "dialog"):
                 if not self.dialog == None:
                     self.dialog.dismiss()
@@ -1938,13 +1975,6 @@ class factory_GUIApp(MDApp):
                 text=f"New Session '{session_name}' created under '{self.session_path}'"
             ).open()
 
-    def on_start(self):
-        self.root.ids.label_session_name.text = "Unspecified Session"
-
-        # initialize units and flowtypes
-        self.initialize_units_and_flowtypes()
-        self.update_flowtype_list()
-
     def run_simulation(self):
         pass
 
@@ -1966,6 +1996,8 @@ class factory_GUIApp(MDApp):
             self.dialog.open()
             return
 
+        print(self.session_path)
+
         # save current blueprint
         self.blueprint.save(path=self.session_path)
 
@@ -1982,6 +2014,23 @@ class factory_GUIApp(MDApp):
         self.unsaved_changes_on_session = False
 
         Snackbar(text=f"Session succesfully saved at {self.filepath}").open()
+
+    def save_session_as(self):
+        """
+        This function is used to create a copy of a session. First the user is asked to provide a directory where the new session shall be created. Then the regular save_session() method is being called
+        """
+        # ask for filepath
+        filepath_new = filedialog.askdirectory()
+
+        # make sure the user didn't abort the file selection or selected something invalid
+        if filepath_new == None or filepath_new == "":
+            return
+
+        # set the filepath as the new session_path
+        self.session_path = filepath_new
+
+        # call the regular safe session routine
+        self.save_session()
 
     def save_changes_on_flowtype(self):
         """
@@ -2316,11 +2365,15 @@ class factory_GUIApp(MDApp):
             {
                 "name": self.root.ids.textfield_pool_name.text,
                 "description": self.root.ids.textfield_pool_description.text,
-                "flowtype": self.blueprint.flowtypes[
-                    self.get_key(self.root.ids.textfield_pool_flowtype.text)
-                ],
             }
         )
+
+        # change the flowtype if the user specified a new one
+        flowtype_key = self.get_key(self.root.ids.textfield_pool_flowtype.text)
+        if not self.blueprint.components[key]["flowtype"].key == flowtype_key:
+            fd.set_component_flowtype(
+                self.blueprint, key, self.blueprint.flowtypes[flowtype_key]
+            )
 
         # update connection names to adapt changes if the name of the pool has changed
         self.update_connection_names()
@@ -2376,14 +2429,18 @@ class factory_GUIApp(MDApp):
             {
                 "name": self.root.ids.textfield_sink_name.text,
                 "description": self.root.ids.textfield_sink_description.text,
-                "flowtype": self.blueprint.flowtypes[
-                    self.get_key(self.root.ids.textfield_sink_flowtype.text)
-                ],
             }
         )
         self.blueprint.components[key]["GUI"].update(
             {"icon": self.root.ids.image_sink_configuration.source}
         )
+
+        # change the flowtype if the user specified a new one
+        flowtype_key = self.get_key(self.root.ids.textfield_sink_flowtype.text)
+        if not self.blueprint.components[key]["flowtype"].key == flowtype_key:
+            fd.set_component_flowtype(
+                self.blueprint, key, self.blueprint.flowtypes[flowtype_key]
+            )
 
         # update parameter list
         # costs
@@ -2470,14 +2527,18 @@ class factory_GUIApp(MDApp):
             {
                 "name": self.root.ids.textfield_source_name.text,
                 "description": self.root.ids.textfield_source_description.text,
-                "flowtype": self.blueprint.flowtypes[
-                    self.get_key(self.root.ids.textfield_source_flowtype.text)
-                ],
             }
         )
         self.blueprint.components[key]["GUI"].update(
             {"icon": self.root.ids.image_source_configuration.source}
         )
+
+        # change the flowtype if the user specified a new one
+        flowtype_key = self.get_key(self.root.ids.textfield_source_flowtype.text)
+        if not self.blueprint.components[key]["flowtype"].key == flowtype_key:
+            fd.set_component_flowtype(
+                self.blueprint, key, self.blueprint.flowtypes[flowtype_key]
+            )
 
         # update parameter list
         # costs
@@ -2823,17 +2884,6 @@ class factory_GUIApp(MDApp):
             self.unsaved_changes_on_session = True
             self.initialize_visualization()
 
-    def select_asset_list_item(self, list_item):
-        """
-        This function is called everytime when the user selects a component in the component browser.
-        It searches for the corresponding key to the selected listitem and calls the change_selected_asset - method
-        """
-
-        # make sure that there is something selected:
-        if not list_item == ():
-            # call the asset selection method with the key corresponding to the selected list item
-            self.initiate_asset_selection(self.get_key(list_item.text))
-
     def select_flowtype_list_item(self, list_item, touch):
         """
         This function is called whenever the user clicks on a flowtype within the flowtype list on the flowtypet dialog. It checks, if there are any unsaved changes on the current selection. If yes the user is asked to save or discard them. Then a new flowtype is created or another flowtype is selected based on the list item clicked by the user.
@@ -3112,91 +3162,6 @@ class factory_GUIApp(MDApp):
     def set_unsaved_changes_on_asset(self, boolean):
         self.unsaved_changes_on_asset = boolean
 
-    def show_asset_list(self):
-        """
-        This function creates a list of all existing assets and presents them to the user in the right info card
-        """
-
-        # clear existing list
-        self.root.ids.list_assets.clear_widgets()
-
-        # recreate lost based on the flows in current blueprint
-        for flow in self.blueprint.flowtypes.values():
-            if not flow == None:  # necessary because flows is a defaultdict
-                if (
-                    self.search_text == ""
-                    or (self.search_text.upper() in flow.name.upper())
-                    or (self.search_text.upper() in "FLOW")
-                ):
-                    # define image and item
-                    icon = IconLeftWidget(
-                        icon="waves",
-                        icon_size=30,
-                        theme_icon_color="Custom",
-                        icon_color=flow.color.rgba,
-                    )
-                    item = TwoLineAvatarListItem(
-                        text=flow.name,
-                        secondary_text="flow",
-                        on_release=self.select_asset_list_item,
-                    )
-                    # place components correctly in the layout
-                    item.add_widget(icon)
-                    self.root.ids.list_assets.add_widget(item)
-
-        # recreate list based on the connections in current blueprint
-        for connection in self.blueprint.connections.values():
-
-            if (
-                self.search_text == ""
-                or (self.search_text.upper() in connection["name"].upper())
-                or (self.search_text.upper() in "CONNECTION")
-            ):
-
-                # define icon and item
-                icon = IconLeftWidget(
-                    icon="fast-forward",
-                    icon_size=30,
-                    theme_icon_color="Custom",
-                    icon_color=self.blueprint.flowtypes[connection["flowtype"]][
-                        "color"
-                    ],
-                )
-                item = TwoLineIconListItem(
-                    text=connection["name"],
-                    secondary_text="connection",
-                    on_release=self.select_asset_list_item,
-                )
-
-                # place components correctly in the layout
-                item.add_widget(icon)
-                self.root.ids.list_assets.add_widget(item)
-
-        # iterate over all component types
-        for component in self.blueprint.components.values():
-            if (
-                self.search_text == ""
-                or (self.search_text.upper() in component["type"].upper())
-                or (self.search_text.upper() in component["name"].upper())
-            ):
-                # search the correct image
-                image = ImageLeftWidgetWithoutTouch(source=component["GUI"]["icon"])
-
-                # create list item
-                item = TwoLineAvatarListItem(
-                    text=component["name"],
-                    id=f"listitem_{component['name']}",
-                    secondary_text=component["type"],
-                    on_release=self.select_asset_list_item,
-                )
-
-                # place components correctly
-                item.add_widget(image)
-                self.root.ids.list_assets.add_widget(item)
-
-        # show the asset browser
-        self.root.ids.asset_config_screens.current = "asset_browser"
-
     def show_color_picker(self):
         self.popup = MDColorPicker(size_hint=(0.3, 0.5), background_color=[1, 1, 1, 1])
         self.popup.open()
@@ -3210,34 +3175,34 @@ class factory_GUIApp(MDApp):
 
         # define the component dummys to be created
         component_dummys = {
-            "source": {
-                "id": "dummy_source",
-                "source": "Assets\\sources\\source_default.png",
-            },
-            "sink": {"id": "dummy_sink", "source": "Assets\\sinks\\sink_default.png"},
-            "pool": {
-                "id": "dummy_pool",
-                "source": "Assets\\components\\component_pool.png",
-            },
-            "converter": {
-                "id": "dummy_converter",
-                "source": "Assets\\components\\component_gear.png",
-            },
-            "storage": {
-                "id": "dummy_storage",
-                "source": "Assets\\components\\component_battery.png",
-            },
-            "schedule": {
-                "id": "dummy_schedule",
-                "source": "Assets\\components\\component_schedule.png",
+            "thermalsystem": {
+                "id": "dummy_thermalsystem",
+                "source": "Assets\\components\\component_temperature.png",
             },
             "deadtime": {
                 "id": "dummy_deadtime",
                 "source": "Assets\\components\\component_deadtime.png",
             },
-            "thermalsystem": {
-                "id": "dummy_thermalsystem",
-                "source": "Assets\\components\\component_temperature.png",
+            "schedule": {
+                "id": "dummy_schedule",
+                "source": "Assets\\components\\component_schedule.png",
+            },
+            "storage": {
+                "id": "dummy_storage",
+                "source": "Assets\\components\\component_battery.png",
+            },
+            "converter": {
+                "id": "dummy_converter",
+                "source": "Assets\\components\\component_gear.png",
+            },
+            "pool": {
+                "id": "dummy_pool",
+                "source": "Assets\\components\\component_pool.png",
+            },
+            "sink": {"id": "dummy_sink", "source": "Assets\\sinks\\sink_default.png"},
+            "source": {
+                "id": "dummy_source",
+                "source": "Assets\\sources\\source_default.png",
             },
         }
 
@@ -3246,7 +3211,7 @@ class factory_GUIApp(MDApp):
         canvas_width = self.root.ids.canvas_shelf.size[0]
 
         # calculate height for components
-        component_height = canvas_height / (len(component_dummys) + 1)
+        component_height = canvas_height / (len(component_dummys) + 3)
         component_pos_x = (canvas_width - component_height * 1.5) / 2
 
         # clear component dummy canvas
@@ -3264,33 +3229,11 @@ class factory_GUIApp(MDApp):
             )
             component_dummy.pos = (
                 component_pos_x + component_height * 0.25,
-                canvas_height / len(component_dummys) * i,
+                canvas_height / len(component_dummys) * i + canvas_height * 0.15,
             )
             component_dummy.size = (component_height * 1.5, component_height)
             self.root.ids.canvas_shelf.add_widget(component_dummy)
             i += 1
-
-        # FLOW
-
-        # clear flow dummy canvas
-        self.root.ids.canvas_flowtype.canvas.clear()
-
-        # create and position a flow dummy icon
-        flow_dummy = DragLabel(
-            source="Assets\\icon_flowtype.png",
-            id="dummy_flow",
-            key="flow",
-            on_touch_up=lambda touch, instance: self.add_flowtype(touch, instance),
-            pos=(
-                self.root.ids.canvas_flowtype.size[0] * 0.15,
-                self.root.ids.canvas_flowtype.pos[1],
-            ),
-            size=(
-                self.root.ids.canvas_flowtype.size[0] * 0.7,
-                self.root.ids.canvas_flowtype.size[1],
-            ),
-        )
-        self.root.ids.canvas_flowtype.add_widget(flow_dummy)
 
         # show the component shelf
         self.root.ids.component_shelf.set_state("open")
@@ -3688,6 +3631,17 @@ class factory_GUIApp(MDApp):
         self.dialog.open()
 
     def show_unit_config_dialog(self):
+        """
+        This function opens the popup-dialog for unit configuration
+        """
+
+        # abort if there is no session yet
+        if self.session_path is None:
+            self.show_info_popup(
+                "Cannot configure units before creating or importing a session!"
+            )
+            return
+
         table = MDDataTable(
             column_data=[
                 ("Magnitude", dp(40)),

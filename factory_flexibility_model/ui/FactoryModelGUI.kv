@@ -84,11 +84,6 @@ Screen:
                                                 icon: "magnify-minus"
                                                 on_release: app.decrease_scaling_factor()
                                                 icon_size: sp(30)
-                                            MDIconButton:
-                                                icon: "format-list-checkbox"
-                                                on_release: app.show_asset_list()
-                                                icon_size: sp(30)
-
                                             Widget:
 
 ##### ASSET CONFIG CARD ################################################################################################
@@ -700,7 +695,7 @@ Screen:
                                                                 text: "Save Changes"
                                                                 on_release: app.save_changes_on_sink()
 
-        #  CONFIG SCREEN ######################################################################################
+        # CONVERTER CONFIG SCREEN ######################################################################################
                                                 Screen:
                                                     name: "converter_config"
                                                     MDBoxLayout:
@@ -963,15 +958,7 @@ Screen:
                                                                         helper_text: "Eingaben plausibel"
                                                                         helper_text_mode: "on_error"
                                                                         validation_type: "thermalsystem_temperature"
-                                                                        #hint_text_color_focus: "green"
-                                                                        #line_color_focus: "green"
-                                                                        #pos_hint:{"center_x": .5, "center_y": .5}
-                                                                        #size_hint_x: .5
                                                                         on_text: app.validate_textfield_input(self)
-                                                                        #app.validate_thermalsystem(self)
-                                                                        #on_text: app.validate_thermalsystem(self)
-                                                                        #on_text_validate: app.on_text_validate(textfield_thermalsystem_temperature_start)
-
                                                                 MDBoxLayout:
                                                                     orientation: "horizontal"
                                                                     size_hint_y: None
@@ -1044,7 +1031,6 @@ Screen:
                                                                         helper_text_mode: "on_error"
                                                                         validation_type: "thermalsystem_temperature"
                                                                         on_text: app.validate_textfield_input(self)
-                                                                        #on_text: app.validate_thermalsystem(self)
                                                                         size_hint_x: .7
                                                                     MDCheckbox:
                                                                         id: switch_thermalsystem_temperature_min
@@ -1692,34 +1678,6 @@ Screen:
                                                                 text: "Save Changes"
                                                                 on_release: app.save_changes_on_pool()
                                                                 valign: "top"
-        # ASSET BROWSER SCREEN ###########################################################################################
-                                                Screen:
-                                                    name: "asset_browser"
-                                                    BoxLayout:
-                                                        orientation:"vertical"
-                                                        padding: dp(20)
-                                                        spacing: dp(10)
-                                                        MDLabel:
-                                                            text: "Existing Assets"
-                                                            font_style: "H6"
-                                                            size_hint_y: None
-                                                            height: dp(50)
-
-                                                        MDBoxLayout:
-                                                            spacing: 20
-                                                            adaptive_height: True
-                                                            MDIconButton:
-                                                                icon: 'magnify'
-                                                            MDTextField:
-                                                                id: search_field_assets
-                                                                hint_text: 'Search Assets'
-                                                                on_text_validate: app.switch_search_text(self.text)
-
-                                                        ScrollView:
-                                                            MDList:
-                                                                id: list_assets
-
-
 ### TAB SCENARIO  ######################################################################################################
                         MDBottomNavigationItem:
                             name: "tab_scenario"
@@ -2047,35 +2005,29 @@ Screen:
                     opening_time: 0
                     closing_time: 0
                     enable_swiping: False
+                    elevation: 1
                     BoxLayout:
                         orientation: "vertical"
-                        Image:
-                            source: "Assets\\swipe_instruction.png"
-                            height: 200
-                            size_hint_y: None
-                        MDLabel:
-                            text: "Drag assets on layout to add"
-                            size_hint_y: None
-                            height: self.texture_size[1]
-                            font_style: 'Caption'
-                        MDLabel:
-                            text: "Add Flow"
-                            size_hint_y: None
-                            height: self.texture_size[1]
-                            font_style: 'H5'
-                        CanvasWidget:
-                            id: canvas_flowtype
-                            size_hint_y: .1
-
                         MDLabel:
                             text: "Add Component"
-                            size_hint_y: None
-                            height: self.texture_size[1]
+                            size_hint_y: .05
+                            #height: dp(30)
                             font_style: 'H5'
+                            halign: "center"
                         CanvasWidget:
-                            pos_hint:{"center_x": .5, "center_y": .5}
                             id: canvas_shelf
-                            size_hint_y: .7
+                            size_hint_y: .6
+                        Image:
+                            source: "Assets\\swipe_instruction.png"
+                            size_hint_y: .05
+                            #height: dp(80)
+                            pos_hint:{"center_x": .5, "center_y": .5}
+                        MDLabel:
+                            text: "Drag assets on layout to add"
+                            size_hint_y: .02
+                            font_style: 'Caption'
+                            #height: dp(30)
+                            halign: "center"
 
 ## LEFT MAIN MENU ######################################################################################################
                 MDNavigationDrawer:
@@ -2108,7 +2060,7 @@ Screen:
                                     icon: "new-box"
                             OneLineIconListItem:
                                 text: "Save Session as"
-                                on_release: app.save_session()
+                                on_release: app.save_session_as()
                                 IconLeftWidget:
                                     icon: "content-save-plus"
                             OneLineIconListItem:
@@ -2231,9 +2183,6 @@ Screen:
 
 
 <FileChooserListView>:
-    # --------------------
-    # ADD BACKGROUND COLOR
-    # --------------------
     layout: layout
     FileChooserListLayout:
         id: layout
