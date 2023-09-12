@@ -649,12 +649,8 @@ class factory_GUIApp(MDApp):
             color="#999999",
         )
 
-        if not self.dialog is None:
-            # select the new type
-            self.select_flowtype(self.blueprint.flowtypes[flowtype_key])
-
-            # update list of flowtypes on screen
-            self.update_flowtype_list()
+        # update list of flowtypes on screen
+        self.update_flowtype_list()
 
         # set unsaved changes to true
         self.unsaved_changes_on_session = True
@@ -1502,56 +1498,6 @@ class factory_GUIApp(MDApp):
                     touch, instance
                 )
             )
-
-        # DRAW A LEGEND OF ALL EXISTING FLOWS
-
-        # get width of canvas
-        width = self.root.ids.canvas_layout.size[0]
-        height = self.root.ids.canvas_layout.size[1]
-        pos_y = self.root.ids.canvas_layout.pos[1]
-        delta_y = height / 20
-
-        i_flow = 0
-        for flow in self.blueprint.flowtypes.values():
-            # set line color
-            canvas.add(Color(flow.color.tuple))
-
-            # create a new line object
-            new_line = Line(
-                points=(
-                    width,
-                    height + pos_y - delta_y * i_flow,
-                    width * 1.05,
-                    height + pos_y - delta_y * i_flow,
-                ),
-                width=8 * scaling_factor,
-            )
-
-            # place it on the canvas
-            canvas.add(new_line)
-
-            # create a textlabel for the flow
-            flow_textlabel = MDLabel(
-                text=flow.name.upper(),
-                halign="center",
-                pos=(
-                    width * 0.95,
-                    height
-                    + pos_y
-                    - 40 * self.display_scaling_factor
-                    - delta_y * i_flow,
-                ),
-                font_size=14 * self.display_scaling_factor,
-                size=(width * 0.15, 30 * self.display_scaling_factor),
-                on_touch_up=lambda touch, instance: self.click_on_component(
-                    touch, instance
-                ),
-                id=flow.key,
-            )
-            self.root.ids.canvas_layout.add_widget(flow_textlabel)
-
-            # increment number of already shown flows
-            i_flow += 1
 
         # add the new-connection-button
         new_connection_button = MDFillRoundFlatIconButton(
@@ -3465,15 +3411,16 @@ class factory_GUIApp(MDApp):
 
         # initialize empty list
         dropdown_items = []
-        # iterate over all components in the blueprint
-        for flow in self.blueprint.flowtypes.values():
+        # iterate over all flowtypes in the blueprint
+        for flowtype in self.blueprint.flowtypes.values():
             # append a dropdown item to the list
             dropdown_items.append(
                 {
                     "viewclass": "IconListItem",
-                    "icon": "waves-arrow-right",
-                    "text": flow.name,
-                    "on_release": lambda x=flow.name: set_text(caller, x),
+                    "icon": "circle",
+                    "icon_color": flowtype.color.rgba,
+                    "text": flowtype.name,
+                    "on_release": lambda x=flowtype.name: set_text(caller, x),
                 }
             )
 
@@ -3484,6 +3431,7 @@ class factory_GUIApp(MDApp):
             position="center",
             width_mult=4,
         )
+
         # append widget to the UI
         self.menu.bind()
         self.menu.open()

@@ -103,13 +103,21 @@ Screen:
                                                     name: "welcome_screen"
                                                     BoxLayout:
                                                         orientation: "vertical"
-                                                        padding: (50, 50)
-                                                        Image:
-                                                            source: "Assets\\logo_big.png"
+                                                        padding: (20, 20)
+                                                        MDLabel:
+                                                            text: "Flowtypes"
+                                                            font_style: "H5"
+                                                            size_hint_y: None
+                                                            height:  dp(40)
                                                         ScrollView:
                                                             MDList:
                                                                 id: list_flowtypes
-
+                                                        MDRectangleFlatIconButton:
+                                                            text: "Unit Definitions"
+                                                            icon: "cog"
+                                                            line_color: 1, 1, 1, 1
+                                                            on_release: app.show_unit_config_dialog()
+                                                            pos_hint: {"center_x": .5, "center_y": .5}
 
         #CONNECTION CONFIG SCREEN ######################################################################################
                                                 Screen:
@@ -2118,13 +2126,6 @@ Screen:
                                 on_release: app.import_timeseries()
                                 IconLeftWidget:
                                     icon: "import"
-                        MDRaisedButton:
-                            text: "Unit Configuration"
-                            on_release: app.show_unit_config_dialog()
-                        MDRaisedButton:
-                            text: "Flowtype Configuration"
-                            on_release: app.show_flowtype_config_dialog()
-
                         Widget
 
                         Image:
@@ -2565,7 +2566,7 @@ Screen:
             on_release: app.close_dialog()
             disabled: True
         MDRaisedButton:
-            text: "CONFIRM"
+            text: "Cancel"
             on_release: app.close_dialog()
 
 #       SCENARIO CARD ##################################################################################################
