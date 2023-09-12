@@ -71,7 +71,7 @@ class Flowtype:
         :return: True/False
         """
 
-        return self.name == "unknown"
+        return self.key == "unknown"
 
     def is_energy(self) -> bool:
         """
