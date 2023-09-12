@@ -628,8 +628,6 @@ class factory_GUIApp(MDApp):
                 )
                 return
 
-        print(f"connection flowtype: {connection_flowtype.name}")
-
         # create adressing key for new connection
         i = 0
         while f"connection_{i}" in self.blueprint.connections.keys():
@@ -650,12 +648,7 @@ class factory_GUIApp(MDApp):
         self.blueprint.connections[connection_key]["to_losses"] = False
         self.blueprint.connections[connection_key]["type"] = "connection"
 
-        # select the new connection for editing:
-        self.selected_asset = self.blueprint.connections[connection_key]
-        self.root.ids.asset_config_screens.current = "connection_config"
-
         # update the configuration card, visualisation and asset list
-        self.update_config_tab()
         self.initialize_visualization()
 
         # set unsaved changes to true
@@ -846,14 +839,6 @@ class factory_GUIApp(MDApp):
 
         # paths to used .png-assets
         self.component_icons = {
-            "pool": "Assets\\icon_pool.png",
-            "converter": "Assets\\icon_converter.png",
-            "deadtime": "Assets\\icon_deadtime.png",
-            "source": "Assets\\icon_source.png",
-            "sink": "Assets\\icon_sink.png",
-            "thermalsystem": "Assets\\icon_thermalsystem.png",
-            "scheduler": "Assets\\icon_schedule.png",
-            "storage": "Assets\\icon_storage.png",
             "Air Conditioning": "Assets\\components\\component_airconditioning.png",
             "Battery": "Assets\\components\\component_battery.png",
             "Battery Empty": "Assets\\components\\component_battery_empty.png",
@@ -1975,9 +1960,6 @@ class factory_GUIApp(MDApp):
                 text=f"New Session '{session_name}' created under '{self.session_path}'"
             ).open()
 
-    def run_simulation(self):
-        pass
-
     def save_session(self):
         """
         This function saves the current session within the session_path
@@ -2087,63 +2069,16 @@ class factory_GUIApp(MDApp):
         # inform the user
         Snackbar(text=f"{flowtype.name} updated!").open()
 
-    def save_changes_on_connection(self):
-        """
-        This function takes the user input from the connection configuration tab and stores it in the blueprint
-        """
-        # saving changes to a flow means that there are unsaved changes in the session
-        self.unsaved_changes_on_session = True
-
-        # store the connection key for reuse
-        connection_key = self.selected_asset["key"]
-
-        # delete the old blueprint entry
-        del self.blueprint.connections[self.selected_asset["key"]]
-
-        # create new empty dict for connection
-        self.blueprint.connections[connection_key] = {}
-
-        # create new name:
-        new_name = f"{self.root.ids.textfield_connection_source.text} -> {self.root.ids.textfield_connection_sink.text}"
-
-        # create a new blueprint entry with given values
-        self.blueprint.connections[connection_key].update(
-            {
-                "name": new_name,
-                "key": connection_key,
-                "from": self.get_key(self.root.ids.textfield_connection_source.text),
-                "to": self.get_key(self.root.ids.textfield_connection_sink.text),
-                "weight_source": self.root.ids.textfield_connection_weight_source.text,
-                "weight_sink": self.root.ids.textfield_connection_weight_sink.text,
-                "flow": self.get_key(self.root.ids.textfield_connection_flowtype.text),
-                "to_losses": self.root.ids.checkbox_connection_losses.active,
-                "type": "connection",
-            }
-        )
-
-        # reselect the asset to adapt changes
-        self.selected_asset = self.blueprint.connections[connection_key]
-
-        # set unsaved changes parameters
-        self.unsaved_changes_on_asset = False
-        self.unsaved_changes_on_session = True
-
-        # redraw the preview:
-        self.initialize_visualization()
-
-        # inform the user
-        Snackbar(text=f"{self.selected_asset['name']} updated!").open()
-
     def save_changes_on_converter(self):
         """
         This function takes the user input from the converter configuration tab and stores it in the blueprint
         """
 
         # store key of old version
-        component_key = self.get_key(self.selected_asset["name"])
+        key = self.selected_asset["key"]
 
         # make sure that the given name is not taken yet
-        if not self.blueprint.components[component_key][
+        if not self.blueprint.components[key][
             "name"
         ] == self.root.ids.textfield_converter_name.text and self.get_key(
             self.root.ids.textfield_converter_name.text
@@ -2169,32 +2104,34 @@ class factory_GUIApp(MDApp):
             )
             return
 
-        # create a new blueprint entry with given values
-        converter_new = {}
-        converter_new = {
-            "name": self.root.ids.textfield_converter_name.text,
-            "key": component_key,
-            "type": "converter",
-            "description": self.root.ids.textfield_converter_description.text,
-            "power_max": self.root.ids.textfield_converter_power_max.text,
-            "power_min": self.root.ids.textfield_converter_power_min.text,
-            "availability": self.root.ids.textfield_converter_availability.text,
-            "max_pos_ramp_power": self.root.ids.textfield_converter_rampup.text,
-            "max_neg_ramp_power": self.root.ids.textfield_converter_rampdown.text,
-            "eta_max": self.root.ids.textfield_converter_eta_max.text,
-            "power_nominal": self.root.ids.textfield_converter_power_nominal.text,
-            "delta_eta_high": self.root.ids.textfield_converter_delta_eta_high.text,
-            "delta_eta_low": self.root.ids.textfield_converter_delta_eta_low.text,
-            "icon": self.root.ids.image_converter_configuration.source,
-            "position_x": self.selected_asset["GUI"]["position_x"],
-            "position_y": self.selected_asset["GUI"]["position_y"],
-        }
+        self.blueprint.components[key].update(
+            {
+                "name": self.root.ids.textfield_converter_name.text,
+                "description": self.root.ids.textfield_converter_description.text,
+            }
+        )
+        self.blueprint.components[key]["GUI"].update(
+            {"icon": self.root.ids.image_converter_configuration.source}
+        )
 
-        # overwrite old entry
-        self.blueprint.components[component_key] = converter_new
-
-        # set selected asset to the updated converter
-        self.selected_asset = converter_new
+        # go through all numerical parameters
+        for parameter in [
+            "power_max",
+            "power_min",
+            "availability",
+            "max_pos_ramp_power",
+            "max_neg_ramp_power",
+            "eta_max",
+            "power_nominal",
+            "delta_eta_high",
+            "delta_eta_low",
+        ]:
+            # get the pointer to the corresponding textfield
+            textfield = getattr(self.root.ids, f"textfield_converter_{parameter}")
+            # check if the user specified it
+            if not textfield.text == "":
+                # if yes: safe the value in the parameters dict
+                self.parameters[key][parameter] = float(textfield.text)
 
         # set unsaved changes parameters
         self.unsaved_changes_on_asset = False
@@ -3849,58 +3786,11 @@ class factory_GUIApp(MDApp):
             self.root.ids.button_run_simulation.disabled = True
 
     def update_config_tab(self):
+        """
+        This function is called, when the user clicks on a component. It openes the corresponding configuration-screen in the card on the right and fills in all the values from the selected asset into the textfields and labels.
+        """
 
-        if self.selected_asset["type"] == "connection":
-            self.root.ids.asset_config_screens.current = "connection_config"
-            # get data from blueprint and add it to the screen
-            self.root.ids.textfield_connection_weight_source.text = str(
-                self.selected_asset["weight_source"]
-            )
-            self.root.ids.textfield_connection_weight_sink.text = str(
-                self.selected_asset["weight_sink"]
-            )
-            self.root.ids.checkbox_connection_losses.active = self.selected_asset[
-                "to_losses"
-            ]
-            self.root.ids.textfield_connection_flowtype.text = self.selected_asset[
-                "flowtype"
-            ].name
-
-            if self.selected_asset["from"] == "":
-                self.root.ids.textfield_connection_source.text = ""
-            else:
-                self.root.ids.textfield_connection_source.text = (
-                    self.blueprint.components[self.selected_asset["from"]]["name"]
-                )
-
-            if self.selected_asset["to"] == "":
-                self.root.ids.textfield_connection_sink.text = ""
-            else:
-                self.root.ids.textfield_connection_sink.text = (
-                    self.blueprint.components[self.selected_asset["to"]]["name"]
-                )
-
-        elif (
-            self.selected_asset["type"] == "energy"
-            or self.selected_asset["type"] == "material"
-        ):
-            # open the correct screen within the configuration tab:
-            self.root.ids.asset_config_screens.current = "flow_config"
-            # get data from blueprint and add it to the screen
-            self.root.ids.textfield_flowtype_name.text = self.selected_asset["name"]
-            self.root.ids.textfield_flowtype_unit_power.text = self.selected_asset[
-                "unit_power"
-            ]
-            self.root.ids.textfield_flowtype_unit_energy.text = self.selected_asset[
-                "unit_energy"
-            ]
-            self.root.ids.textfield_flowtype_conversion_factor.text = str(
-                self.selected_asset["conversion_factor"]
-            )
-            self.root.ids.icon_color_flowtype.icon_color = self.selected_asset["color"]
-            self.unsaved_changes_on_asset = False
-
-        elif self.selected_asset["type"] == "source":
+        if self.selected_asset["type"] == "source":
             # switch to the correct screen of the component tab
             self.root.ids.asset_config_screens.current = "source_config"
 
@@ -3947,45 +3837,51 @@ class factory_GUIApp(MDApp):
             ]
 
         elif self.selected_asset["type"] == "converter":
-            # show the converter configuration screeen in the box on the bottom of the screen
+            # show the converter configuration screen
             self.root.ids.asset_config_screens.current = "converter_config"
-            # read values from the blueprint and initialize the input fields
+
+            # get data from blueprint and add it to the screen
             self.root.ids.label_converter_name.text = self.selected_asset["name"]
             self.root.ids.textfield_converter_name.text = self.selected_asset["name"]
+            print(self.selected_asset["description"])
             self.root.ids.textfield_converter_description.text = self.selected_asset[
                 "description"
             ]
-            self.root.ids.textfield_converter_power_max.text = str(
-                self.selected_asset["power_max"]
-            )
-            self.root.ids.textfield_converter_power_min.text = str(
-                self.selected_asset["power_min"]
-            )
-            self.root.ids.textfield_converter_availability.text = str(
-                self.selected_asset["availability"]
-            )
-            self.root.ids.textfield_converter_rampup.text = str(
-                self.selected_asset["max_pos_ramp_power"]
-            )
-            self.root.ids.textfield_converter_rampdown.text = str(
-                self.selected_asset["max_neg_ramp_power"]
-            )
-            self.root.ids.textfield_converter_eta_max.text = str(
-                self.selected_asset["eta_max"]
-            )
-            self.root.ids.textfield_converter_power_nominal.text = str(
-                self.selected_asset["power_nominal"]
-            )
-            self.root.ids.textfield_converter_delta_eta_high.text = str(
-                self.selected_asset["delta_eta_high"]
-            )
-            self.root.ids.textfield_converter_delta_eta_low.text = str(
-                self.selected_asset["delta_eta_low"]
-            )
+            self.root.ids.image_converter_configuration.source = self.selected_asset[
+                "GUI"
+            ]["icon"]
+
+            # go through all numerical parameters
+            for parameter in [
+                "power_max",
+                "power_min",
+                "availability",
+                "max_pos_ramp_power",
+                "max_neg_ramp_power",
+                "eta_max",
+                "power_nominal",
+                "delta_eta_high",
+                "delta_eta_low",
+            ]:
+                # get the pointer to the corresponding textfield
+                textfield = getattr(self.root.ids, f"textfield_converter_{parameter}")
+                # check if there is a value for the parameter in the parameters dict
+                if parameter in self.parameters[self.selected_asset["key"]].keys():
+                    # if yes: write value into the textfield
+                    textfield.text = str(
+                        self.parameters[self.selected_asset["key"]][parameter]
+                    )
+                else:
+                    textfield.text = ""
+
             self.validate_textfield_input(self.root.ids.textfield_converter_power_min)
             self.validate_textfield_input(self.root.ids.textfield_converter_power_max)
-            self.validate_textfield_input(self.root.ids.textfield_converter_rampup)
-            self.validate_textfield_input(self.root.ids.textfield_converter_rampdown)
+            self.validate_textfield_input(
+                self.root.ids.textfield_converter_max_pos_ramp_power
+            )
+            self.validate_textfield_input(
+                self.root.ids.textfield_converter_max_neg_ramp_power
+            )
             self.validate_textfield_input(self.root.ids.textfield_converter_eta_max)
             self.validate_textfield_input(
                 self.root.ids.textfield_converter_power_nominal
@@ -3993,11 +3889,6 @@ class factory_GUIApp(MDApp):
             self.validate_textfield_input(
                 self.root.ids.textfield_converter_availability
             )
-
-            # display the correct icon
-            self.root.ids.image_converter_configuration.source = self.selected_asset[
-                "icon"
-            ]
 
         elif self.selected_asset["type"] == "sink":
             # switch to the correct screen of the component tab

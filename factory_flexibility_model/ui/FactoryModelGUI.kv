@@ -114,123 +114,6 @@ Screen:
                                                             on_release: app.show_unit_config_dialog()
                                                             pos_hint: {"center_x": .5, "center_y": .5}
 
-        #CONNECTION CONFIG SCREEN ######################################################################################
-                                                Screen:
-                                                    name: "connection_config"
-                                                    BoxLayout:
-                                                        orientation: "vertical"
-                                                        padding: dp(20)
-
-                                                        MDBoxLayout:
-                                                            size_hint_y: None
-                                                            height: dp(70)
-                                                            orientation: "horizontal"
-                                                            MDLabel:
-                                                                text: "Connection Configuration"
-                                                                font_style: "H5"
-                                                            Image:
-                                                                size_hint: (None, None)
-                                                                height: dp(50)
-                                                                width: dp(70)
-                                                                source: "Assets\\icon_flowtype.png"
-
-
-                                                        MDLabel:
-                                                            text: "Source"
-                                                            font_style: "H6"
-                                                            size_hint_y: None
-                                                            height: dp(30)
-
-                                                        MDBoxLayout:
-                                                            orientation: "vertical"
-                                                            padding: 10, 0, 0, 0
-                                                            spacing: dp(10)
-                                                            MDTextField:
-                                                                id: textfield_connection_source
-                                                                hint_text: 'Source component'
-                                                                size_hint_x: .75
-                                                                icon_right: "arrow-down-drop-circle-outline"
-                                                                on_focus: if self.focus: app.show_component_selection_dropdown(self, ["sink"])
-                                                            MDTextField:
-                                                                id: textfield_connection_weight_source
-                                                                size_hint_x: .75
-                                                                hint_text: 'Weight of the connection at Source component'
-                                                                on_text: app.set_unsaved_changes_on_asset(True)
-                                                        MDLabel:
-                                                            text: "Sink"
-                                                            font_style: "H6"
-                                                            size_hint_y: None
-                                                            height: dp(30)
-
-                                                        MDBoxLayout:
-                                                            orientation: "vertical"
-                                                            padding: 10, 0, 0, 0
-                                                            spacing: dp(10)
-                                                            MDTextField:
-                                                                id: textfield_connection_sink
-                                                                hint_text: 'Sink component'
-                                                                size_hint_x: .75
-                                                                icon_right: "arrow-down-drop-circle-outline"
-                                                                on_focus: if self.focus: app.show_component_selection_dropdown(self, ["source"])
-                                                            MDTextField:
-                                                                id: textfield_connection_weight_sink
-                                                                size_hint_x: .75
-                                                                hint_text: 'Weight of the connection at Sink component'
-                                                                on_text: app.set_unsaved_changes_on_asset(True)
-                                                        MDLabel:
-                                                            text: "Flow"
-                                                            font_style: "H6"
-                                                            size_hint_y: None
-                                                            height: dp(30)
-
-                                                        MDBoxLayout:
-                                                            orientation: "vertical"
-                                                            padding: 10, 0, 0, 0
-                                                            spacing: dp(10)
-
-                                                            MDTextField:
-                                                                id: textfield_connection_flowtype
-                                                                hint_text: 'Flow on the connection'
-                                                                icon_right: "arrow-down-drop-circle-outline"
-                                                                size_hint_x: .75
-                                                                on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
-
-                                                        MDBoxLayout:
-                                                            orientation: "horizontal"
-                                                            padding: 10, 0, 0, 0
-                                                            spacing: dp(10)
-                                                            size_hint_y: None
-                                                            height: dp(70)
-
-                                                            MDSwitch:
-                                                                id: checkbox_connection_losses
-                                                                size_hint_x: .1
-                                                                on_active: app.set_unsaved_changes_on_asset(True)
-
-                                                            MDLabel:
-                                                                text: "Connection transports losses"
-                                                        Widget:
-
-
-                                                        BoxLayout:
-                                                            padding: dp(20)
-                                                            orientation: "horizontal"
-                                                            Widget:
-
-                                                            MDIconButton:
-                                                                icon: "delete"
-                                                                on_release: app.show_connection_deletion_dialog()
-
-                                                            MDFlatButton:
-                                                                text: "Revert Changes"
-                                                                halign: "right"
-                                                                on_release: app.update_config_tab()
-
-                                                            MDRaisedButton:
-                                                                text: "Save Changes"
-                                                                on_release: app.save_changes_on_connection()
-                                                                valign: "top"
-
         # SOURCE CONFIG SCREEN #########################################################################################
                                                 Screen:
                                                     name: "source_config"
@@ -793,7 +676,7 @@ Screen:
 
                                                                     ValidatedTextField:
                                                                         size_hint_x: .75
-                                                                        id: textfield_converter_rampup
+                                                                        id: textfield_converter_max_pos_ramp_power
                                                                         hint_text: "Maximum ramp up power"
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
@@ -802,7 +685,7 @@ Screen:
 
                                                                     ValidatedTextField:
                                                                         size_hint_x: .75
-                                                                        id: textfield_converter_rampdown
+                                                                        id: textfield_converter_max_neg_ramp_power
                                                                         hint_text: "Maximum ramp down power"
                                                                         helper_text: "mistake"
                                                                         helper_text_mode: "on_error"
@@ -2107,44 +1990,6 @@ Screen:
     drag_rectangle: self.x, self.y, self.width, self.height
     drag_timeout: 10000000
     drag_distance: 0
-
-
-#       CONNECTION CREATION DIALOG #####################################################################################
-<dialog_new_connection>
-    spacing: "12dp"
-    padding: (0, 30)
-    size_hint: (None, None)
-    height: 100
-    width: 500
-    MDBoxLayout:
-        orientation: "horizontal"
-        size_hint: (None, None)
-        width: 500
-        height: 70
-        MDTextField:
-            id: textfield_new_connection_source
-            height: 70
-            width: 200
-            hint_text: "From"
-            required: True
-            helper_text_mode: "on_error"
-            helper_text: "Specify an origin"
-            on_focus: if self.focus: app.show_component_selection_dropdown(self, ["sink"])
-
-        Image:
-            source: "Assets\\icon_flowtype.png"
-            height: 70
-            width: 70
-
-        MDTextField:
-            id: textfield_new_connection_sink
-            height: 70
-            width: 200
-            hint_text: "To"
-            required: True
-            helper_text_mode: "on_error"
-            helper_text: "Specify a destination"
-            on_focus: if self.focus: app.show_component_selection_dropdown(self,["source"])
 
 #       SESSION CREATION DIALOG ###########################################################################################
 
