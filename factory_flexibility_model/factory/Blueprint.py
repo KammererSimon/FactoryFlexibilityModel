@@ -235,20 +235,39 @@ class Blueprint:
         :param path: [string] Filepath where the file shall be saved
         :param filename: [string] Name of the file. If no name is handed over the file will be named like the factoryname defined within the blueprint
         """
+
         # Create Layout.factory-file
         data = {
-            "components": self.components,
-            "connections": self.connections,
+            "components": {},
+            "connections": {},
             "GUI_config": self.GUI_config,
             "info": self.info,
         }
 
         # exchange flowtype objects with their keys
-        for component in data["components"].values():
-            component["flowtype"] = component["flowtype"].key
+        # copying the full dict while just taking the flowtype key instead of the flowtype object to avoid using deepcopy
+        for component in self.components.values():
+            data["components"][component["key"]] = {
+                "GUI": component["GUI"],
+                "name": component["name"],
+                "key": component["key"],
+                "description": component["description"],
+                "type": component["type"],
+                "flowtype": component["flowtype"].key,
+            }
 
-        for connection in data["connections"].values():
-            connection["flowtype"] = connection["flowtype"].key
+        for connection in self.connections.values():
+            data["connections"][connection["key"]] = {
+                "name": connection["name"],
+                "from": connection["from"],
+                "to": connection["to"],
+                "flowtype": connection["flowtype"].key,
+                "key": connection["key"],
+                "weight_source": connection["weight_source"],
+                "weight_sink": connection["weight_sink"],
+                "to_losses": connection["to_losses"],
+                "type": connection["type"],
+            }
 
         # store the Layout as json file
         try:
