@@ -6,6 +6,7 @@ from tkinter.messagebox import askyesno
 
 import numpy as np
 import pandas as pd
+import yaml
 from kivy.core.window import Window
 from kivy.graphics import Color, Ellipse, Line, Triangle
 from kivy.lang import Builder
@@ -515,7 +516,7 @@ class factory_GUIApp(MDApp):
             return
 
         # abort if there is no session yet
-        if self.session_path is None:
+        if self.session_data["session_path"] is None:
             self.show_info_popup(
                 "Cannot create components before initializing or importing a session!"
             )
@@ -760,13 +761,11 @@ class factory_GUIApp(MDApp):
         self.connection_edit_mode = (
             False  # is set to true while the user is building a new connection
         )
-        self.filepath = ""  # stores the filepath that is currently worked on
         self.popup = None
         self.unsaved_changes_on_session = False  # indicated if there have been changes to the session since opening or saving
         self.unsaved_changes_on_asset = False  # indicates if there have been changes to the current asset since selecting or saving
         self.scenarios = {}  # List of existing scenarios in the current session
         self.selected_asset = None  # the asset that the user has currently selected
-        self.selected_asset_class = "Flows"  # class of the selected asset
         self.selected_parameter = (
             ""  # the scenarioparameter that the user has currently selected
         )
@@ -776,8 +775,10 @@ class factory_GUIApp(MDApp):
             "time_factor": 1,
         }
         self.selected_timeseries = np.zeros(168)  # the currently activated timeseries
-        self.search_text = ""  # text within the component search bar
-        self.session_path = None  # path to the current session folder
+        self.session_data = {
+            "display_scaling_factor": 0.6,
+            "session_path": None,
+        }
         self.timeseries = []  # List of imported timeseries within the session
 
         # Style Config for GUI
@@ -788,52 +789,10 @@ class factory_GUIApp(MDApp):
             45,
             30,
         ]  # number of grid points underlying the visualisation
-        self.display_scaling_factor = 0.6  # factor that determines the standard size of icons in the visualisation
         self.theme_cls.colors = colors
         self.theme_cls.accent_palette = "Blue"
         self.theme_cls.primary_palette = "Blue"
         self.theme_cls.theme_style = "Light"
-        # self.screen.ids.textfield_thermalsystem_temperature_start.bind(on_text=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_thermalsystem_temperature_ambient.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_thermalsystem_temperature_max.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_thermalsystem_temperature_min.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_thermalsystem_sustainable.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_thermalsystem_R.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_thermalsystem_C.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_deadtime_delay.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_schedule_power_max.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_storage_charge_max.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_storage_charge_min.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_storage_discharge_max.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_storage_discharge_min.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_storage_capacity.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_storage_start.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_storage_leakage_time.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_storage_leakage_SoC.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_storage_efficiency_max.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_converter_power_max.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_converter_power_min.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_converter_availability.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_converter_rampup.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_converter_rampdown.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_converter_eta_max.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_converter_power_nominal.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_converter_delta_eta_high.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_converter_delta_eta_low.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_sink_cost.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_sink_refund.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_sink_co2_emission.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_sink_co2_refund.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_sink_power_max.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_sink_power_min.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_sink_demand.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_source_power_max.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_source_power_min.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_source_determined_power.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_source_availability.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_source_capacity_charge.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_source_emissions.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
-        # self.screen.ids.textfield_source_cost.bind(on_text_validate=self.set_error_message, on_focus=self.set_error_message,)
 
         # paths to used .png-assets
         self.component_icons = {
@@ -1166,7 +1125,9 @@ class factory_GUIApp(MDApp):
         master.add_widget(self.button_create_demo_session)
 
     def decrease_scaling_factor(self):
-        self.display_scaling_factor = self.display_scaling_factor * 0.95
+        self.session_data["display_scaling_factor"] = (
+            self.session_data["display_scaling_factor"] * 0.95
+        )
         self.initialize_visualization()
 
     def delete_component(self, *args):
@@ -1326,7 +1287,9 @@ class factory_GUIApp(MDApp):
         Snackbar(text=f"{len(self.timeseries.keys())} new timeseries imported").open()
 
     def increase_scaling_factor(self):
-        self.display_scaling_factor = self.display_scaling_factor * 1.05
+        self.session_data["display_scaling_factor"] = (
+            self.session_data["display_scaling_factor"] * 1.05
+        )
         self.initialize_visualization()
 
     def initialize_visualization(self, *args):
@@ -1335,7 +1298,7 @@ class factory_GUIApp(MDApp):
         """
 
         scaling_factor = (
-            self.display_scaling_factor
+            self.session_data["display_scaling_factor"]
             * self.root.ids.canvas_layout.size[0]
             / 1000
             / (len(self.blueprint.components) + 1) ** (0.25)
@@ -1386,7 +1349,8 @@ class factory_GUIApp(MDApp):
 
             # create a new line object (with random points - they will be defined correctly later)
             new_line = Line(
-                points=(0, 0, 1000, 1000), width=8 * self.display_scaling_factor
+                points=(0, 0, 1000, 1000),
+                width=8 * self.session_data["display_scaling_factor"],
             )  #
 
             # place it on the canvas
@@ -1415,7 +1379,8 @@ class factory_GUIApp(MDApp):
         # add a line to be used for connection preview while creating new connections
         canvas.add(Color(0.5, 0.5, 0.5, 1))
         new_line = Line(
-            points=(-10, -10, -10, -10), width=8 * self.display_scaling_factor
+            points=(-10, -10, -10, -10),
+            width=8 * self.session_data["display_scaling_factor"],
         )
         canvas.add(new_line)
         self.root.ids[f"line_preview"] = new_line
@@ -1488,8 +1453,10 @@ class factory_GUIApp(MDApp):
                 inner_circle = Ellipse(
                     pos=(820, 820),
                     size=(
-                        component_height - 32 * self.display_scaling_factor,
-                        component_height - 32 * self.display_scaling_factor,
+                        component_height
+                        - 32 * self.session_data["display_scaling_factor"],
+                        component_height
+                        - 32 * self.session_data["display_scaling_factor"],
                     ),
                 )
                 canvas.add(inner_circle)
@@ -1503,8 +1470,10 @@ class factory_GUIApp(MDApp):
                     f"outer_circle_{component['key']}"
                 ].pos = component_framelabel.pos
                 self.root.ids[f"inner_circle_{component['key']}"].pos = (
-                    component_framelabel.pos[0] + 16 * self.display_scaling_factor,
-                    component_framelabel.pos[1] + 16 * self.display_scaling_factor,
+                    component_framelabel.pos[0]
+                    + 16 * self.session_data["display_scaling_factor"],
+                    component_framelabel.pos[1]
+                    + 16 * self.session_data["display_scaling_factor"],
                 )
 
         # assign callback to all icons (this line calls update_visualization each time as well)
@@ -1664,26 +1633,33 @@ class factory_GUIApp(MDApp):
                 return
 
         # ask for filename
-        filepath_new = filedialog.askdirectory()
+        filetype = [("ffm", "*.ffm")]
+        filepath = filedialog.askopenfilename(
+            defaultextension=filetype, filetypes=filetype
+        )
 
         # make sure the user didn't abort the file selection or selected something invalid
-        if filepath_new == None or filepath_new == "":
+        if filepath == None or filepath == "":
             return
+
+        # IMPORT session data
+        with open(filepath) as file:
+            self.session_data = yaml.load(file, Loader=yaml.SafeLoader)
 
         # IMPORT blueprint including flowtypes and units
         try:
             blueprint_new = bp.Blueprint()
-            blueprint_new.import_from_file(filepath_new)
+            blueprint_new.import_from_file(self.session_data["session_path"])
         except:
             Snackbar(
-                text=f"ERROR: Importing Blueprint from {filepath_new} failed!"
+                text=f"ERROR: Importing Blueprint from {self.session_data['session_path']} failed!"
             ).open()
             return
 
         # IMPORT parameters
         try:
             # open the given file
-            with open(f"{filepath_new}\\parameters.txt") as file:
+            with open(f"{self.session_data['session_path']}\\parameters.txt") as file:
                 parameters_new = {}
                 for component_key in blueprint_new.components.keys():
                     parameters_new[component_key] = {}
@@ -1697,14 +1673,14 @@ class factory_GUIApp(MDApp):
                     parameters_new[key[0]][key[1]] = float(value.replace(",", "."))
         except:
             Snackbar(
-                text=f"The given parameters.txt-config file is invalid, has a wrong format or is corrupted! ({filepath_new}\\parameters.txt)"
+                text=f"The given parameters.txt-config file is invalid, has a wrong format or is corrupted! ({self.session_data['session_path']}\\parameters.txt)"
             ).open()
             return
 
         # IMPORT timeseries
         try:
             # open the given file
-            with open(f"{filepath_new}\\timeseries.txt") as file:
+            with open(f"{self.session_data['session_path']}\\timeseries.txt") as file:
                 timeseries_new = {}
                 # iterate over all lines in the file
                 for line in file:
@@ -1724,7 +1700,7 @@ class factory_GUIApp(MDApp):
                     timeseries_new[key[0]][key[1]] = values
         except:
             Snackbar(
-                text=f"The given timeseries.txt-config file is invalid, has a wrong format or is corrupted! ({filepath_new}\\timeseries.txt)"
+                text=f"The given timeseries.txt-config file is invalid, has a wrong format or is corrupted! ({self.session_data['session_path']}\\timeseries.txt)"
             ).open()
             return
 
@@ -1732,9 +1708,6 @@ class factory_GUIApp(MDApp):
         self.blueprint = blueprint_new
         self.parameters = parameters_new
         self.timeseries = timeseries_new
-
-        # set the user given path as the new session_path
-        self.session_path = filepath_new
 
         # There are no more unsaved changes now...
         self.unsaved_changes_on_session = False
@@ -1925,7 +1898,7 @@ class factory_GUIApp(MDApp):
 
             # create the new session directory
             session.create_session_folder(path, session_name=session_name)
-            self.session_path = rf"{path}\{session_name}"
+            self.session_data["session_path"] = rf"{path}\{session_name}"
 
             # create an empty blueprint and add the given information
             self.blueprint = bp.Blueprint()
@@ -1954,7 +1927,7 @@ class factory_GUIApp(MDApp):
 
             # inform the user
             Snackbar(
-                text=f"New Session '{session_name}' created under '{self.session_path}'"
+                text=f"New Session '{session_name}' created under '{self.session_data['session_path']}'"
             ).open()
 
     def save_session(self):
@@ -1974,11 +1947,18 @@ class factory_GUIApp(MDApp):
             self.dialog.open()
             return
 
+        # save session data
+        with open(
+            f"{self.session_data['session_path']}\\{self.blueprint.info['name']}.ffm",
+            "w",
+        ) as file:
+            yaml.dump(self.session_data, file)
+
         # save current blueprint
-        self.blueprint.save(path=self.session_path)
+        self.blueprint.save(path=self.session_data["session_path"])
 
         # save parameters
-        with open(f"{self.session_path}\\parameters.txt", "w") as file:
+        with open(f"{self.session_data['session_path']}\\parameters.txt", "w") as file:
             for key_outer, inner_dict in self.parameters.items():
                 for key_inner, value in inner_dict.items():
                     line = f"{key_outer}/{key_inner}\t{value}\n"
@@ -1987,7 +1967,9 @@ class factory_GUIApp(MDApp):
         # There are no more unsaved changes now...
         self.unsaved_changes_on_session = False
 
-        Snackbar(text=f"Session successfully saved at {self.session_path}").open()
+        Snackbar(
+            text=f"Session successfully saved at {self.session_data['session_path']}"
+        ).open()
 
     def save_session_as(self):
         """
@@ -2001,7 +1983,7 @@ class factory_GUIApp(MDApp):
             return
 
         # set the filepath as the new session_path
-        self.session_path = filepath_new
+        self.session_data["session_path"] = filepath_new
 
         # call the regular safe session routine
         self.save_session()
@@ -2734,7 +2716,7 @@ class factory_GUIApp(MDApp):
         # create a factor that determines the size of displayed components depending on the canvas size and the number
         # of elements to be displayed. The concrete function is try and error and my be changed during development
         scaling_factor = (
-            self.display_scaling_factor
+            self.session_data["display_scaling_factor"]
             * self.root.ids.canvas_layout.size[0]
             / 1000
             / (len(self.blueprint.components) + 1) ** (0.3)
@@ -3049,7 +3031,9 @@ class factory_GUIApp(MDApp):
             self.update_timeseries_preview("Static Value")
 
     def set_display_scaling_factor(self, *args):
-        self.display_scaling_factor = self.root.ids.layout_size_slider.value / 100 + 0.4
+        self.session_data["display_scaling_factor"] = (
+            self.root.ids.layout_size_slider.value / 100 + 0.4
+        )
         self.initialize_visualization()
         self.update_visualization()
 
@@ -3582,7 +3566,7 @@ class factory_GUIApp(MDApp):
         """
 
         # abort if there is no session yet
-        if self.session_path is None:
+        if self.session_data["session_path"] is None:
             self.show_info_popup(
                 "Cannot configure units before creating or importing a session!"
             )
@@ -4329,7 +4313,7 @@ class factory_GUIApp(MDApp):
         # Specify a scaling factor depending on the size of the canvas and the number of components to be displayed
         # scaling factor = width_of_canvas / sqrt(number_of_components+1) / adjustment_factor
         scaling_factor = (
-            self.display_scaling_factor
+            self.session_data["display_scaling_factor"]
             * self.root.ids.canvas_layout.size[0]
             / 1000
             / (len(self.blueprint.components) + 1) ** (0.25)

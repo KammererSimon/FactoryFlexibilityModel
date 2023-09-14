@@ -15,16 +15,13 @@ import factory_flexibility_model.factory.Unit as un
 
 class Blueprint:
     def __init__(self):
-        self.GUI_config = {
-            "display_scaling_factor": 1
-        }  # sets the size of displayed icons within the preview of the factory in the gui
         self.components = {}  # dict with all components of the factory
         self.connections = {}  # dict of connections
         self.flowtypes = {}  # list of flowtypes
         self.info = {
             "name": "Undefined_Factory",  # Standard Information, equivalent to factory-object initialization
             "description": "Undefined",
-            "timesteps": 8760,
+            "timesteps": 168,
             "enable_slacks": False,
         }
         self.units = {}  # list of units
@@ -127,13 +124,7 @@ class Blueprint:
 
         # Check, if some specifications will be overwritten
         if not overwrite:
-            if not (
-                self.components
-                or self.connections
-                or self.flowtypes
-                or self.GUI_config
-                or self.units
-            ):
+            if self.components or self.connections or self.flowtypes or self.units:
                 logging.error(
                     f"Cannot import blueprint-file into blueprint {self.info['name']}, because it is not in its initialize-state anymore and overwriting is deactivated"
                 )
@@ -165,8 +156,6 @@ class Blueprint:
         # store imported date into the object
         self.components.update(data["components"])
         self.connections.update(data["connections"])
-        if hasattr(data, "GUI_config"):
-            self.GUI_config.update(data["GUI_config"])
         self.info.update(data["info"])
 
         logging.info("Blueprint import successfull")
@@ -240,7 +229,6 @@ class Blueprint:
         data = {
             "components": {},
             "connections": {},
-            "GUI_config": self.GUI_config,
             "info": self.info,
         }
 
