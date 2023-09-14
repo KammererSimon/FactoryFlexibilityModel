@@ -177,6 +177,57 @@ Screen:
                                                                     size_hint_y: None
                                                                     height: dp(30)
 
+                                                                ParameterConfigItem:
+                                                                    id: config_source_power_max
+                                                                    text: "Maximum Output"
+                                                                    secondary_text: "10kW"
+                                                                    tertiary_text: "Static Value"
+                                                                    IconLeftWidgetWithoutTouch:
+                                                                        icon: "numeric"
+                                                                ParameterConfigItem:
+                                                                    id: config_source_power_min
+                                                                    text: "Minimum Output"
+                                                                    secondary_text: "0-10kW"
+                                                                    tertiary_text: "Timeseries"
+                                                                    IconLeftWidgetWithoutTouch:
+                                                                        icon: "chart-line"
+                                                                ParameterConfigItem:
+                                                                    id: config_source_determined_power
+                                                                    text: "Fixed Output"
+                                                                    secondary_text: "0-10kW"
+                                                                    tertiary_text: "Timeseries"
+                                                                    IconLeftWidgetWithoutTouch:
+                                                                        icon: "chart-line"
+                                                                ParameterConfigItem:
+                                                                    id: config_source_availability
+                                                                    text: "Availability"
+                                                                    secondary_text: "0-10kW"
+                                                                    tertiary_text: "Timeseries"
+                                                                    IconLeftWidgetWithoutTouch:
+                                                                        icon: "chart-line"
+                                                                ParameterConfigItem:
+                                                                    id: config_source_capacity_charge
+                                                                    text: "Capacity Charge"
+                                                                    secondary_text: "0-10kW"
+                                                                    tertiary_text: "Timeseries"
+                                                                    IconLeftWidgetWithoutTouch:
+                                                                        icon: "chart-line"
+                                                                ParameterConfigItem:
+                                                                    id: config_source_co2_emission_per_unit
+                                                                    text: "Emissions"
+                                                                    secondary_text: "0-10kW"
+                                                                    tertiary_text: "Timeseries"
+                                                                    IconLeftWidgetWithoutTouch:
+                                                                        icon: "chart-line"
+                                                                ParameterConfigItem:
+                                                                    id: config_source_cost
+                                                                    text: "Cost"
+                                                                    secondary_text: "0-10kW"
+                                                                    tertiary_text: "Timeseries"
+                                                                    IconLeftWidgetWithoutTouch:
+                                                                        icon: "chart-line"
+
+
                                                                 ValidatedTextField:
                                                                     id: textfield_source_power_max
                                                                     hint_text: 'Maximum Output Power'
@@ -208,6 +259,7 @@ Screen:
                                                                     helper_text_mode: "on_error"
                                                                     validation_type: "source"
                                                                     on_text: app.validate_textfield_input(self)
+
 
 
                                                                 MDLabel:
@@ -1141,7 +1193,7 @@ Screen:
                                                                 size_hint: (None, None)
                                                                 height: dp(70)
                                                                 width: dp(70)
-                                                                source: "Assets\\icon_pool.png"
+                                                                source: "Assets\\defaults\\pool.png"
 
                                                         MDLabel:
                                                             text: "General"

@@ -35,6 +35,7 @@ from kivymd.uix.list import (
     OneLineAvatarListItem,
     OneLineIconListItem,
     OneLineListItem,
+    ThreeLineIconListItem,
     TwoLineAvatarIconListItem,
     TwoLineAvatarListItem,
     TwoLineIconListItem,
@@ -459,6 +460,11 @@ class connection_source_dropdown(DropDown):
     pass
 
 
+class ParameterConfigItem(ThreeLineIconListItem):
+    def on_release(self):
+        print("JO")
+
+
 class RightButton(IRightBodyTouch, MDRaisedButton):
     """Custom right container."""
 
@@ -794,176 +800,22 @@ class factory_GUIApp(MDApp):
         self.theme_cls.primary_palette = "Blue"
         self.theme_cls.theme_style = "Light"
 
-        # paths to used .png-assets
-        self.component_icons = {
-            "Air Conditioning": "Assets\\components\\component_airconditioning.png",
-            "Battery": "Assets\\components\\component_battery.png",
-            "Battery Empty": "Assets\\components\\component_battery_empty.png",
-            "Car": "Assets\\components\\component_car.png",
-            "Car Charging": "Assets\\components\\component_car_charging.png",
-            "Computer": "Assets\\components\\component_computer.png",
-            "Cooling": "Assets\\components\\component_cooling.png",
-            "Deadtime": "Assets\\components\\component_deadtime.png",
-            "Delivery": "Assets\\components\\component_delivery.png",
-            "DRI": "Assets\\components\\component_dri.png",
-            "Electric Arc Furnance": "Assets\\components\\component_arc_furnance.png",
-            "Electricity": "Assets\\components\\component_electricity.png",
-            "Electricity House": "Assets\\components\\component_electricity_house.png",
-            "Electrolysis": "Assets\\components\\component_electrolysis.png",
-            "Emissions": "Assets\\components\\component_emissions.png",
-            "Factory Electricity": "Assets\\components\\component_factory_electricity.png",
-            "Fluxcompensator": "Assets\\components\\component_fluxcompensator.png",
-            "Process Heating": "Assets\\components\\component_factory_heating.png",
-            "Fan": "Assets\\components\\component_fan.png",
-            "Flame": "Assets\\components\\component_flame.png",
-            "Gauge": "Assets\\components\\component_gauge.png",
-            "Gear": "Assets\\components\\component_gear.png",
-            "Heating": "Assets\\components\\component_heating.png",
-            "Heatpump": "Assets\\components\\component_heatpump.png",
-            "Lightbulb": "Assets\\components\\component_lightbulb.png",
-            "Nicer Dicer": "Assets\\components\\component_nicerdicer.png",
-            "Production": "Assets\\components\\component_production.png",
-            "Sales": "Assets\\components\\component_sales.png",
-            "Schedule": "Assets\\components\\component_schedule.png",
-            "Storage": "Assets\\components\\component_storage.png",
-            "Temperature": "Assets\\components\\component_temperature.png",
-            "Thermal Storage": "Assets\\components\\component_thermal_storage.png",
-            "Transport": "Assets\\components\\component_transport.png",
-            "Warning": "Assets\\components\\component_warning.png",
-            "Weather": "Assets\\components\\component_weather.png",
-        }
         self.parameters = {}
-        self.icon_list = {
-            "Default": "Assets\\icons\\default.png",
-            "Battery": "Assets\\icons\\battery.png",
-            "Flame": "Assets\\icons\\flame.png",
-            "Gear": "Assets\\icons\\gear.png",
-            "Airconditioning": "Assets\\icons\\airconditioning.png",
-            "BatteryEmpty": "Assets\\icons\\battery_empty.png",
-            "Car": "Assets\\icons\\car.png",
-            "CarCharging": "Assets\\icons\\car_charging.png",
-            "CO2": "Assets\\icons\\co2.png",
-            "Computer": "Assets\\icons\\computer.png",
-            "Cooling": "Assets\\icons\\cooling.png",
-            "Deadtime": "Assets\\icons\\deadtime.png",
-            "Delivery": "Assets\\icons\\delivery.png",
-            "Electricity": "Assets\\icons\\electricity.png",
-            "ElectricityHouse": "Assets\\icons\\electricity_house.png",
-            "Electrolysis": "Assets\\icons\\electrolysis.png",
-            "Emissions": "Assets\\icons\\emissions.png",
-            "Fan": "Assets\\icons\\fan.png",
-            "GasGrid": "Assets\\icons\\gas_grid.png",
-            "GaugeEmpty": "Assets\\icons\\gauge_empty.png",
-            "HeatStorage": "Assets\\icons\\heat_storage.png",
-            "Heating": "Assets\\icons\\heating.png",
-            "Heatpump": "Assets\\icons\\heatpump.png",
-            "Hydrogen": "Assets\\icons\\hydrogen.png",
-            "Lightbulb": "Assets\\icons\\lightbulb.png",
-            "Losses": "Assets\\icons\\losses.png",
-            "Powerpole": "Assets\\icons\\powerpole.png",
-            "PressureGauge": "Assets\\icons\\pressure_gauge.png",
-            "Production": "Assets\\icons\\production.png",
-            "RoomTemperature": "Assets\\icons\\room_temperature.png",
-            "Sales": "Assets\\icons\\sales.png",
-            "Schedule": "Assets\\icons\\schedule.png",
-            "Solar": "Assets\\icons\\solar.png",
-            "SolarHeating": "Assets\\icons\\solar_heating.png",
-            "Storage": "Assets\\icons\\storage.png",
-            "Thermometer": "Assets\\icons\\thermometer.png",
-            "Transport": "Assets\\icons\\transport.png",
-            "Warning": "Assets\\icons\\warning.png",
-            "Weather": "Assets\\icons\\weather.png",
-            "Wind": "Assets\\icons\\windmill.png",
-        }
-        self.source_icons = {
-            "Car Charging": "Assets\\sources\\source_car_charging.png",
-            "CO2": "Assets\\sources\\source_co2.png",
-            "Cooling": "Assets\\sources\\source_cooling.png",
-            "Default": "Assets\\sources\\source_default.png",
-            "Deliveries": "Assets\\sources\\source_deliveries.png",
-            "Electricity": "Assets\\sources\\source_electricity.png",
-            "Electrolysis": "Assets\\sources\\source_electrolysis.png",
-            "Fan": "Assets\\sources\\source_fan.png",
-            "Flame": "Assets\\sources\\source_flame.png",
-            "Gas Grid": "Assets\\sources\\source_gas_grid.png",
-            "Gauge": "Assets\\sources\\source_gauge.png",
-            "Gauge Empty": "Assets\\sources\\source_gauge_empty.png",
-            "Heating": "Assets\\sources\\source_heating.png",
-            "Hydrogen": "Assets\\sources\\source_hydrogen.png",
-            "Limestone": "Assets\\sources\\source_limestone.png",
-            "Oxygen": "Assets\\sources\\source_oxygen.png",
-            "Powerpole": "Assets\\sources\\source_powerpole.png",
-            "Production": "Assets\\sources\\source_production.png",
-            "Purchase": "Assets\\sources\\source_purchase.png",
-            "Solar": "Assets\\sources\\source_solar.png",
-            "Temperature": "Assets\\sources\\source_temperature.png",
-            "Transport": "Assets\\sources\\source_transport.png",
-            "Warehouse": "Assets\\sources\\source_warehouse.png",
-            "Weather": "Assets\\sources\\source_weather.png",
-            "Wind": "Assets\\sources\\source_wind.png",
-        }
-        self.sink_icons = {
-            "Airconditioning": "Assets\\sinks\\sink_airconditioning.png",
-            "Battery": "Assets\\sinks\\sink_battery.png",
-            "Car Charging": "Assets\\sinks\\sink_car_charging.png",
-            "CO2": "Assets\\sinks\\sink_co2.png",
-            "Cooling": "Assets\\sinks\\sink_cooling.png",
-            "Default": "Assets\\sinks\\sink_default.png",
-            "Delivery": "Assets\\sinks\\sink_delivery.png",
-            "Electricity": "Assets\\sinks\\sink_electricity.png",
-            "Electricity House": "Assets\\sinks\\sink_electricity_house.png",
-            "Electrolysis": "Assets\\sinks\\sink_electrolysis.png",
-            "Emissions": "Assets\\sinks\\sink_emissions.png",
-            "Process Heat": "Assets\\sinks\\sink_factory_heating.png",
-            "Fan": "Assets\\sinks\\sink_fan.png",
-            "Flame": "Assets\\sinks\\sink_Flame.png",
-            "Gas Grid": "Assets\\sinks\\sink_gas_grid.png",
-            "Gauge": "Assets\\sinks\\sink_gauge.png",
-            "Gear": "Assets\\sinks\\sink_gear.png",
-            "Hydrogen": "Assets\\sinks\\sink_hydrogen.png",
-            "Lightbulb": "Assets\\sinks\\sink_lightbulb.png",
-            "Losses": "Assets\\sinks\\sink_losses.png",
-            "Powerpole": "Assets\\sinks\\sink_powerpole.png",
-            "Production": "Assets\\sinks\\sink_production.png",
-            "Sales": "Assets\\sinks\\sink_sales.png",
-            "Transport": "Assets\\sinks\\sink_transport.png",
-            "Warehouse": "Assets\\sinks\\sink_warehouse.png",
-            "Warning": "Assets\\sinks\\sink_warning.png",
-        }
-        self.highlight_icons = {
-            "source": "Assets\\sources\\highlight_source.png",
-            "sink": "Assets\\sinks\\highlight_sink.png",
-            "pool": "Assets\\components\\highlight_pool.png",
-            "converter": "Assets\\components\\highlight_component.png",
-            "deadtime": "Assets\\components\\highlight_component.png",
-            "thermalsystem": "Assets\\components\\highlight_component.png",
-            "triggerdemand": "Assets\\components\\highlight_component.png",
-            "schedule": "Assets\\components\\highlight_component.png",
-            "storage": "Assets\\components\\highlight_component.png",
-        }
-        self.scenario_images = {
-            "changing_weather": "Assets\\scenarios\\changing_weather.png",
-            "cheap_hydrogen": "Assets\\scenarios\\cheap_hydrogen.png",
-            "cloudy": "Assets\\scenarios\\cloudy.png",
-            "market": "Assets\\scenarios\\market.png",
-            "market_2": "Assets\\scenarios\\market_2.png",
-            "market_3": "Assets\\scenarios\\market_3.png",
-            "rising_prices": "Assets\\scenarios\\rising_prices.png",
-            "scenario_default": "Assets\\scenarios\\scenario_default.jpg",
-            "sunny": "Assets\\scenarios\\sunny.png",
-            "windstill": "Assets\\scenarios\\windstill.png",
-            "windy": "Assets\\scenarios\\windy.png",
-        }
-        self.default_icons = {
-            "pool": "Assets\\components\\component_pool.png",
-            "source": "Assets\\sources\\source_default.png",
-            "sink": "Assets\\sinks\\sink_default.png",
-            "converter": "Assets\\components\\component_gear.png",
-            "thermalsystem": "Assets\\components\\component_temperature.png",
-            "deadtime": "Assets\\components\\component_deadtime.png",
-            "storage": "Assets\\components\\component_battery.png",
-            "schedule": "Assets\\components\\component_schedule.png",
-        }
+
+        # paths to used .png-assets
+        def get_files_in_directory(directory_path):
+            files_dict = {}
+            for root, dirs, files in os.walk(directory_path):
+                for file in files:
+                    filename, extension = os.path.splitext(file)
+                    files_dict[filename] = os.path.join(root, file)
+            return files_dict
+
+        self.component_icons = get_files_in_directory("Assets\\components")
+        self.source_icons = get_files_in_directory("Assets\\sources")
+        self.sink_icons = get_files_in_directory("Assets\\sinks")
+        self.highlight_icons = get_files_in_directory("Assets\\highlights")
+        self.default_icons = get_files_in_directory("Assets\\defaults")
 
         # set window configuration
         Window.maximize()
@@ -3112,32 +2964,32 @@ class factory_GUIApp(MDApp):
         component_dummys = {
             "thermalsystem": {
                 "id": "dummy_thermalsystem",
-                "source": "Assets\\components\\component_temperature.png",
+                "source": "Assets\\defaults\\thermalsystem.png",
             },
             "deadtime": {
                 "id": "dummy_deadtime",
-                "source": "Assets\\components\\component_deadtime.png",
+                "source": "Assets\\defaults\\deadtime.png",
             },
             "schedule": {
                 "id": "dummy_schedule",
-                "source": "Assets\\components\\component_schedule.png",
+                "source": "Assets\\defaults\\schedule.png",
             },
             "storage": {
                 "id": "dummy_storage",
-                "source": "Assets\\components\\component_battery.png",
+                "source": "Assets\\defaults\\storage.png",
             },
             "converter": {
                 "id": "dummy_converter",
-                "source": "Assets\\components\\component_gear.png",
+                "source": "Assets\\defaults\\converter.png",
             },
             "pool": {
                 "id": "dummy_pool",
-                "source": "Assets\\components\\component_pool.png",
+                "source": "Assets\\defaults\\pool.png",
             },
-            "sink": {"id": "dummy_sink", "source": "Assets\\sinks\\sink_default.png"},
+            "sink": {"id": "dummy_sink", "source": "Assets\\defaults\\sink.png"},
             "source": {
                 "id": "dummy_source",
-                "source": "Assets\\sources\\source_default.png",
+                "source": "Assets\\defaults\\source.png",
             },
         }
 
@@ -3633,7 +3485,7 @@ class factory_GUIApp(MDApp):
         self.menu.bind()
         self.menu.open()
 
-    def show_parameter_unit_selection_dialog(self):
+    def show_parameter_unit_selection_dialog(self, *args):
         def set_text(text):
             # this function returns the user selection to the object that the dialog has been called from
             self.root.ids.textfield_custom_timeseries_unit.text = text
