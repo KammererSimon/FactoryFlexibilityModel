@@ -129,9 +129,9 @@ Screen:
                                                             orientation: "horizontal"
 
                                                             MDLabel:
-                                                                size_hint_y: None
                                                                 id: label_source_name
                                                                 font_style: "H5"
+                                                                size_hint_y: None
                                                                 height: dp(50)
 
                                                             Image:
@@ -140,202 +140,111 @@ Screen:
                                                                 height: dp(50)
                                                                 width: dp(70)
                                                                 on_touch_down:  if self.collide_point(*args[1].pos): app.show_icon_selection_dropdown(self)
-
                                                         ScrollView:
                                                             do_scroll_y: True
+                                                            do_scroll_x: False
                                                             scroll_type:['bars', 'content']
-
                                                             GridLayout:
                                                                 cols: 1
                                                                 size_hint_y: None
-                                                                height: dp(1000)
+                                                                size_hint_x: .8
+                                                                height: dp(900)
                                                                 spacing: dp(10)
 
                                                                 MDLabel:
                                                                     text: "General"
                                                                     font_style: "H6"
                                                                     size_hint_y: None
-                                                                    height: dp(100)
+                                                                    height: dp(30)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "vertical"
-                                                                    padding: 10, 0, 0, 0
-                                                                    spacing: dp(10)
-                                                                    size_hint_y: None
-                                                                    height: dp(150)
-                                                                    MDTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_source_name
-                                                                        hint_text: "Name of the source"
-                                                                        on_text: app.set_unsaved_changes_on_asset(True)
-                                                                    MDTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_source_description
-                                                                        hint_text: "Description of the source"
-                                                                        on_text: app.set_unsaved_changes_on_asset(True)
-                                                                    MDTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_source_flowtype
-                                                                        hint_text: 'Delivered Flow'
-                                                                        icon_right: "arrow-down-drop-circle-outline"
-                                                                        on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
+                                                                MDTextField:
+                                                                    id: textfield_source_name
+                                                                    hint_text: "Name of the source"
+                                                                    on_text: app.set_unsaved_changes_on_asset(True)
+                                                                MDTextField:
+                                                                    id: textfield_source_description
+                                                                    hint_text: "Description of the source"
+                                                                    on_text: app.set_unsaved_changes_on_asset(True)
+                                                                MDTextField:
+                                                                    id: textfield_source_flowtype
+                                                                    hint_text: 'Delivered Flow'
+                                                                    icon_right: "arrow-down-drop-circle-outline"
+                                                                    on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
 
                                                                 MDLabel:
                                                                     text: "Operating Constraints"
                                                                     font_style: "H6"
                                                                     size_hint_y: None
-                                                                    height: dp(100)
+                                                                    height: dp(30)
 
-                                                                MDBoxLayout:
-                                                                    padding: 10, 0, 0, 0
-                                                                    orientation: "vertical"
-                                                                    spacing: dp(10)
-                                                                    size_hint_y: None
-                                                                    height: dp(100)
+                                                                ValidatedTextField:
+                                                                    id: textfield_source_power_max
+                                                                    hint_text: 'Maximum Output Power'
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "source"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_source_power_max
-                                                                        hint_text: 'Maximum Output Power'
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "source"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_source_power_min
+                                                                    hint_text: 'Minimum Output Power'
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "source"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_source_power_min
-                                                                        hint_text: 'Minimum Output Power'
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "source"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_source_determined_power
+                                                                    hint_text: 'Fixed Operation Level'
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "source"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "horizontal"
-                                                                    size_hint_y: None
-                                                                    height: dp(60)
-                                                                    padding: 10, 0, 0, 0
+                                                                ValidatedTextField:
+                                                                    id: textfield_source_availability
+                                                                    hint_text: 'Availability [%]'
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "source"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    ValidatedTextField:
-                                                                        id: textfield_source_determined_power
-                                                                        hint_text: 'Fixed Operation Level'
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "source"
-                                                                        on_text: app.validate_textfield_input(self)
-                                                                        size_hint_x: .7
-                                                                    MDCheckbox:
-                                                                        id: switch_source_determined
-                                                                        on_active: app.set_unsaved_changes_on_asset(True)
-                                                                        size_hint_x: .1
-                                                                    MDIcon:
-                                                                        icon: "chart-line"
-                                                                        pos_hint: {"center_x": .5, "center_y": .5}
-                                                                        size_hint_x: .2
-                                                                    Widget:
-                                                                        size_hint_x: .05
-
-                                                                MDBoxLayout:
-                                                                    orientation: "horizontal"
-                                                                    size_hint_y: None
-                                                                    height: dp(60)
-                                                                    padding: 10, 0, 0, 0
-                                                                    ValidatedTextField:
-                                                                        id: textfield_source_availability
-                                                                        hint_text: 'Availability'
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "source"
-                                                                        on_text: app.validate_textfield_input(self)
-                                                                        size_hint_x: .7
-                                                                    MDCheckbox:
-                                                                        id: switch_source_availability
-                                                                        on_active: app.set_unsaved_changes_on_asset(True)
-                                                                        size_hint_x: .1
-                                                                    MDIcon:
-                                                                        icon: "chart-line"
-                                                                        pos_hint: {"center_x": .5, "center_y": .5}
-                                                                        size_hint_x: .2
-                                                                    Widget:
-                                                                        size_hint_x: .05
 
                                                                 MDLabel:
                                                                     text: "Price of utilization"
                                                                     font_style: "H6"
                                                                     size_hint_y: None
-                                                                    height: dp(50)
+                                                                    height: dp(30)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "vertical"
-                                                                    padding: 10, 0, 0, 0
-                                                                    size_hint_y: None
-                                                                    height: dp(50)
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        size_hint_y: None
-                                                                        height: dp(60)
-                                                                        id: textfield_source_capacity_charge
-                                                                        hint_text: "Capacity charge [€/unit peak]"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "source_capacity_charge"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_source_capacity_charge
+                                                                    hint_text: "Capacity charge [€/unit peak]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "source_capacity_charge"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "horizontal"
-                                                                    size_hint_y: None
-                                                                    padding: 10, 0, 0, 0
-                                                                    height: dp(60)
-                                                                    ValidatedTextField:
-                                                                        id: textfield_source_co2_emission_per_unit
-                                                                        hint_text: "CO2 emissions per unit in [kg]"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "source_emissions"
-                                                                        on_text: app.validate_textfield_input(self)
-                                                                        size_hint_x: .7
-                                                                    MDCheckbox:
-                                                                        id: switch_source_emissions
-                                                                        size_hint_x: .1
-                                                                        on_active: app.set_unsaved_changes_on_asset(True)
-                                                                    MDIcon:
-                                                                        icon: "chart-line"
-                                                                        pos_hint: {"center_x": .5, "center_y": .5}
-                                                                        size_hint_x: .2
-                                                                    Widget:
-                                                                        size_hint_x: .05
+                                                                ValidatedTextField:
+                                                                    id: textfield_source_co2_emission_per_unit
+                                                                    hint_text: "CO2 emissions per unit in [kg]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "source_emissions"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "horizontal"
-                                                                    size_hint_y: None
-                                                                    padding: 10, 0, 0, 0
-                                                                    height: dp(60)
-                                                                    ValidatedTextField:
-                                                                        id: textfield_source_cost
-                                                                        hint_text: "Cost per unit in [€]"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "source_cost"
-                                                                        on_text: app.validate_textfield_input(self)
-                                                                        size_hint_x: .7
-                                                                    MDCheckbox:
-                                                                        id: switch_source_cost
-                                                                        on_active: app.set_unsaved_changes_on_asset(True)
-                                                                        size_hint_x: .1
-                                                                    MDIcon:
-                                                                        icon: "chart-line"
-                                                                        size_hint_x: .2
-                                                                        pos_hint: {"center_x": .5, "center_y": .5}
-                                                                    Widget:
-                                                                        size_hint_x: .05
-                                                                Widget:
+                                                                ValidatedTextField:
+                                                                    id: textfield_source_cost
+                                                                    hint_text: "Cost per unit in [€]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "source_cost"
+                                                                    on_text: app.validate_textfield_input(self)
 
                                                         BoxLayout:
                                                             padding: (10,10)
                                                             size_hint_y: None
+                                                            height: dp(50)
                                                             orientation: "horizontal"
-                                                            height:dp(50)
                                                             Widget:
                                                             MDFlatButton:
                                                                 text: "Revert Changes"
@@ -375,10 +284,13 @@ Screen:
 
                                                         ScrollView:
                                                             do_scroll_y: True
+                                                            do_scroll_x: False
                                                             scroll_type:['bars', 'content']
+
                                                             GridLayout:
                                                                 cols: 1
                                                                 size_hint_y: None
+                                                                size_hint_x: .8
                                                                 height: dp(900)
                                                                 spacing: dp(10)
 
@@ -388,26 +300,20 @@ Screen:
                                                                     size_hint_y: None
                                                                     height: dp(30)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "vertical"
-                                                                    padding: 10, 0, 0, 0
-                                                                    spacing: dp(10)
-                                                                    MDTextField:
-                                                                        id: textfield_sink_name
-                                                                        hint_text: "Name of the sink"
-                                                                        on_text: app.set_unsaved_changes_on_asset(True)
-                                                                        size_hint_x: .75
-                                                                    MDTextField:
-                                                                        id: textfield_sink_description
-                                                                        hint_text: "Description of the sink"
-                                                                        on_text: app.set_unsaved_changes_on_asset(True)
-                                                                        size_hint_x: .75
-                                                                    MDTextField:
-                                                                        id: textfield_sink_flowtype
-                                                                        hint_text: 'Accepted Flow'
-                                                                        icon_right: "arrow-down-drop-circle-outline"
-                                                                        size_hint_x: .75
-                                                                        on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
+                                                                MDTextField:
+                                                                    id: textfield_sink_name
+                                                                    hint_text: "Name"
+                                                                    on_text: app.set_unsaved_changes_on_asset(True)
+                                                                MDTextField:
+                                                                    id: textfield_sink_description
+                                                                    hint_text: "Description"
+                                                                    on_text: app.set_unsaved_changes_on_asset(True)
+                                                                MDTextField:
+                                                                    id: textfield_sink_flowtype
+                                                                    hint_text: 'Flowtype'
+                                                                    icon_right: "arrow-down-drop-circle-outline"
+                                                                    on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
+                                                                    on_text: app.set_unsaved_changes_on_asset(True)
 
                                                                 MDLabel:
                                                                     text: "Cost of utilization"
@@ -415,102 +321,37 @@ Screen:
                                                                     size_hint_y: None
                                                                     height: dp(30)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "horizontal"
-                                                                    size_hint_y: None
-                                                                    padding: 10, 0, 0, 0
-                                                                    height: dp(60)
+                                                                ValidatedTextField:
+                                                                    id: textfield_sink_cost
+                                                                    hint_text: "Cost per unit of utilization in [€]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "sink_cost"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    ValidatedTextField:
-                                                                        id: textfield_sink_cost
-                                                                        hint_text: "Cost per unit of utilization in [€]"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "sink_cost"
-                                                                        on_text: app.validate_textfield_input(self)
-                                                                        size_hint_x: .7
-                                                                    MDCheckbox:
-                                                                        id: switch_sink_cost
-                                                                        on_active: app.set_unsaved_changes_on_asset(True)
-                                                                        size_hint_x: .1
-                                                                    MDIcon:
-                                                                        icon: "chart-line"
-                                                                        pos_hint: {"center_x": .5, "center_y": .5}
-                                                                        size_hint_x: .2
-                                                                    Widget:
-                                                                        size_hint_x: .05
+                                                                ValidatedTextField:
+                                                                    id: textfield_sink_revenue
+                                                                    hint_text: "Revenue per unit of utilization in [€]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "sink_refund"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "horizontal"
-                                                                    size_hint_y: None
-                                                                    height: dp(60)
-                                                                    padding: 10, 0, 0, 0
-                                                                    ValidatedTextField:
-                                                                        id: textfield_sink_revenue
-                                                                        hint_text: "Revenue per unit of utilization in [€]"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "sink_refund"
-                                                                        on_text: app.validate_textfield_input(self)
-                                                                        size_hint_x: .7
-                                                                    MDCheckbox:
-                                                                        id: switch_sink_refund
-                                                                        on_active: app.set_unsaved_changes_on_asset(True)
-                                                                        size_hint_x: .1
-                                                                    MDIcon:
-                                                                        icon: "chart-line"
-                                                                        pos_hint: {"center_x": .5, "center_y": .5}
-                                                                        size_hint_x: .2
-                                                                    Widget:
-                                                                        size_hint_x: .05
+                                                                ValidatedTextField:
+                                                                    id: textfield_sink_co2_emission_per_unit
+                                                                    hint_text: "Emissions per unit in [kg CO2]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "sink_co2_emission"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "horizontal"
-                                                                    size_hint_y: None
-                                                                    height: dp(60)
-                                                                    padding: 10, 0, 0, 0
-                                                                    ValidatedTextField:
-                                                                        id: textfield_sink_co2_emission_per_unit
-                                                                        hint_text: "Emissions per unit in [kg CO2]"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "sink_co2_emission"
-                                                                        on_text: app.validate_textfield_input(self)
-                                                                        size_hint_x: .7
-                                                                    MDCheckbox:
-                                                                        id: switch_sink_co2_emission
-                                                                        on_active: app.set_unsaved_changes_on_asset(True)
-                                                                        size_hint_x: .1
-                                                                    MDIcon:
-                                                                        icon: "chart-line"
-                                                                        pos_hint: {"center_x": .5, "center_y": .5}
-                                                                        size_hint_x: .2
-                                                                    Widget:
-                                                                        size_hint_x: .05
-
-                                                                MDBoxLayout:
-                                                                    orientation: "horizontal"
-                                                                    size_hint_y: None
-                                                                    height: dp(60)
-                                                                    padding: 10, 0, 0, 0
-                                                                    ValidatedTextField:
-                                                                        id: textfield_sink_co2_refund_per_unit
-                                                                        hint_text: "Emissions avoided per unit in [kg CO2]"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "sink_co2_refund"
-                                                                        on_text: app.validate_textfield_input(self)
-                                                                        size_hint_x: .7
-                                                                    MDCheckbox:
-                                                                        id: switch_sink_co2_refund
-                                                                        on_active: app.set_unsaved_changes_on_asset(True)
-                                                                        size_hint_x: .1
-                                                                    MDIcon:
-                                                                        icon: "chart-line"
-                                                                        pos_hint: {"center_x": .5, "center_y": .5}
-                                                                        size_hint_x: .2
-                                                                    Widget:
-                                                                        size_hint_x: .05
+                                                                ValidatedTextField:
+                                                                    id: textfield_sink_co2_refund_per_unit
+                                                                    hint_text: "Emissions avoided per unit in [kg CO2]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "sink_co2_refund"
+                                                                    on_text: app.validate_textfield_input(self)
 
                                                                 MDLabel:
                                                                     text: "Operating Constraints"
@@ -518,51 +359,29 @@ Screen:
                                                                     size_hint_y: None
                                                                     height: dp(30)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "vertical"
-                                                                    spacing: dp(10)
-                                                                    padding: 10, 0, 0, 0
-                                                                    ValidatedTextField:
-                                                                        id: textfield_sink_power_max
-                                                                        size_hint_x: .75
-                                                                        hint_text: 'Maximum Input Power'
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "sink"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_sink_power_max
+                                                                    hint_text: 'Maximum Input Power'
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "sink"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    ValidatedTextField:
-                                                                        id: textfield_sink_power_min
-                                                                        size_hint_x: .75
-                                                                        hint_text: 'Minimum Input Power'
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "sink"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_sink_power_min
+                                                                    hint_text: 'Minimum Input Power'
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "sink"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "horizontal"
-                                                                    size_hint_y: None
-                                                                    height: dp(60)
-                                                                    padding: 10, 0, 0, 0
-                                                                    ValidatedTextField:
-                                                                        id: textfield_sink_demand
-                                                                        hint_text: 'Fixed Demand'
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "sink"
-                                                                        on_text: app.validate_textfield_input(self)
-                                                                        size_hint_x: .7
-                                                                    MDCheckbox:
-                                                                        id: switch_sink_determined
-                                                                        on_active: app.set_unsaved_changes_on_asset(True)
-                                                                        size_hint_x: .1
-                                                                    MDIcon:
-                                                                        icon: "chart-line"
-                                                                        pos_hint: {"center_x": .5, "center_y": .5}
-                                                                        size_hint_x: .2
-                                                                    Widget:
-                                                                        size_hint_x: .05
+                                                                ValidatedTextField:
+                                                                    id: textfield_sink_demand
+                                                                    hint_text: 'Fixed Demand'
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "sink"
+                                                                    on_text: app.validate_textfield_input(self)
 
                                                         BoxLayout:
                                                             padding: (10,10)
@@ -581,9 +400,11 @@ Screen:
         # CONVERTER CONFIG SCREEN ######################################################################################
                                                 Screen:
                                                     name: "converter_config"
+
                                                     MDBoxLayout:
                                                         orientation: "vertical"
                                                         padding: dp(20)
+                                                        spacing: dp(20)
 
                                                         MDBoxLayout:
                                                             size_hint_y: None
@@ -591,25 +412,27 @@ Screen:
                                                             orientation: "horizontal"
 
                                                             MDLabel:
-                                                                size_hint_y: None
                                                                 id: label_converter_name
                                                                 font_style: "H5"
+                                                                size_hint_y: None
                                                                 height: dp(50)
 
                                                             Image:
                                                                 id: image_converter_configuration
                                                                 size_hint: (None, None)
                                                                 height: dp(50)
-                                                                width: dp(75)
+                                                                width: dp(70)
                                                                 on_touch_down: if self.collide_point(*args[1].pos):  app.show_icon_selection_dropdown(self)
 
                                                         ScrollView:
                                                             do_scroll_y: True
+                                                            do_scroll_x: False
                                                             scroll_type:['bars', 'content']
 
                                                             GridLayout
                                                                 cols: 1
                                                                 size_hint_y: None
+                                                                size_hint_x: .8
                                                                 height: dp(1000)
                                                                 spacing: dp(10)
 
@@ -617,148 +440,118 @@ Screen:
                                                                     text: "General"
                                                                     font_style: "H6"
                                                                     size_hint_y: None
-                                                                    height: dp(70)
+                                                                    height: dp(30)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "vertical"
-                                                                    padding: 10, 0, 0, 0
-                                                                    spacing: dp(10)
-                                                                    size_hint_y: None
-                                                                    height: dp(100)
-                                                                    MDTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_converter_name
-                                                                        hint_text: "Name"
-                                                                        on_text: app.set_unsaved_changes_on_asset(True)
-                                                                    MDTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_converter_description
-                                                                        hint_text: "Description"
-                                                                        on_text: app.set_unsaved_changes_on_asset(True)
+                                                                MDTextField:
+                                                                    id: textfield_converter_name
+                                                                    hint_text: "Name"
+                                                                    on_text: app.set_unsaved_changes_on_asset(True)
+                                                                MDTextField:
+                                                                    id: textfield_converter_description
+                                                                    hint_text: "Description"
+                                                                    on_text: app.set_unsaved_changes_on_asset(True)
 
                                                                 MDLabel:
                                                                     text: "Operating Constraints"
-                                                                    height: dp(70)
                                                                     font_style: "H6"
                                                                     size_hint_y: None
+                                                                    height: dp(30)
 
-                                                                MDBoxLayout:
-                                                                    padding: 10, 0, 0, 0
-                                                                    orientation: "vertical"
-                                                                    size_hint_y: None
-                                                                    height: dp(250)
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_converter_power_max
-                                                                        hint_text: "Maximum operating power"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "converter"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_converter_power_max
+                                                                    hint_text: "Maximum Operating Point [Conversions/h]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "converter"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_converter_power_min
-                                                                        hint_text: "Minimum operating power"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "converter"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_converter_power_min
+                                                                    hint_text: "Minimum Operating Point [Conversions/h]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "converter"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_converter_availability
-                                                                        hint_text: "Availability"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "converter"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_converter_availability
+                                                                    hint_text: "Availability [%]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "converter"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_converter_max_pos_ramp_power
-                                                                        hint_text: "Maximum ramp up power"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "converter_rampup"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_converter_max_pos_ramp_power
+                                                                    hint_text: "Maximum Ramp Up [Conversions/h²]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "converter_rampup"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_converter_max_neg_ramp_power
-                                                                        hint_text: "Maximum ramp down power"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "converter_rampdown"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_converter_max_neg_ramp_power
+                                                                    hint_text: "Maximum Ramp Down [Conversions/h²]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "converter_rampdown"
+                                                                    on_text: app.validate_textfield_input(self)
 
                                                                 MDLabel:
                                                                     text: "Efficiency"
-                                                                    height: dp(70)
                                                                     font_style: "H6"
                                                                     size_hint_y: None
+                                                                    height: dp(30)
 
-                                                                MDBoxLayout:
-                                                                    padding: 10, 0, 0, 0
-                                                                    orientation: "vertical"
-                                                                    spacing: dp(10)
-                                                                    size_hint_y: None
-                                                                    height: dp(200)
+                                                                ValidatedTextField:
+                                                                    id: textfield_converter_eta_max
+                                                                    hint_text: "Maximum Efficiency [%]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "converter"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_converter_eta_max
-                                                                        hint_text: "Maximum efficiency [%]"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "converter"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_converter_power_nominal
+                                                                    hint_text: "Operating Point of Max Efficiency [Conversions/h]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "converter"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_converter_power_nominal
-                                                                        hint_text: "Operating of max efficiency"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "converter"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_converter_delta_eta_high
+                                                                    hint_text: "Rate of efficiency drop when exceeding nominal operating point"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "converter_delta_eta_high"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_converter_delta_eta_high
-                                                                        hint_text: "Rate of efficiency drop when exceeding nominal operating point"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "converter_delta_eta_high"
-                                                                        on_text: app.validate_textfield_input(self)
-
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_converter_delta_eta_low
-                                                                        hint_text: "Rate of efficiency drop when operating below nominal power"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "converter_delta_eta_low"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_converter_delta_eta_low
+                                                                    hint_text: "Rate of efficiency drop when operating below nominal power"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "converter_delta_eta_low"
+                                                                    on_text: app.validate_textfield_input(self)
 
                                                         BoxLayout:
                                                             padding: (10,10)
-                                                            size_hint_y: None
                                                             orientation: "horizontal"
-                                                            height:50
+                                                            size_hint_y: None
+                                                            height: dp(50)
                                                             Widget:
                                                             MDFlatButton:
                                                                 text: "Revert Changes"
-                                                                halign: "right"
                                                                 on_release: app.update_config_tab()
 
                                                             MDRaisedButton:
                                                                 text: "Save Changes"
                                                                 on_release: app.save_changes_on_converter()
-                                                                valign: "top"
         # THERMALSYSTEM CONFIG SCREEN ##################################################################################
                                                 Screen:
                                                     name: "thermalsystem_config"
+
                                                     MDBoxLayout:
                                                         orientation: "vertical"
                                                         padding: dp(20)
@@ -783,6 +576,7 @@ Screen:
 
                                                         ScrollView:
                                                             do_scroll_y: True
+                                                            do_scroll_x: False
                                                             scroll_type:['bars', 'content']
 
                                                             GridLayout
@@ -1024,6 +818,7 @@ Screen:
 
                                                         ScrollView:
                                                             do_scroll_y: True
+                                                            do_scroll_x: False
                                                             scroll_type:['bars', 'content']
 
                                                             GridLayout
@@ -1056,7 +851,6 @@ Screen:
                                                                         hint_text: "Description"
                                                                         on_text: app.set_unsaved_changes_on_asset(True)
 
-        # SCHEDULE: Position of boxlayout 'Operating Constraints' with input field #####################################
                                                                 MDLabel:
                                                                     text: "Operating Constraints"
                                                                     height: dp(70)
@@ -1076,8 +870,6 @@ Screen:
                                                                         helper_text_mode: "on_error"
                                                                         validation_type: "schedule_power_max"
                                                                         on_text: app.validate_textfield_input(self)
-
-        # SCHEDULE: Button creation for saving and revert changes ######################################################
                                                         BoxLayout:
                                                             padding: (10,10)
                                                             size_hint_y: None
@@ -1097,10 +889,12 @@ Screen:
         # DEADTIME CONFIG SCREEN #######################################################################################
                                                 Screen:
                                                     name: "deadtime_config"
+
                                                     MDBoxLayout:
                                                         orientation: "vertical"
                                                         padding: dp(20)
-        # DEADTIME: Position of header with image in screen ############################################################
+                                                        spacing: dp(20)
+
                                                         MDBoxLayout:
                                                             size_hint_y: None
                                                             height: dp(70)
@@ -1110,6 +904,7 @@ Screen:
                                                                 size_hint_y: None
                                                                 id: label_deadtime_name
                                                                 font_style: "H5"
+                                                                size_hint_y: None
                                                                 height: dp(50)
 
                                                             Image:
@@ -1118,64 +913,51 @@ Screen:
                                                                 height: dp(50)
                                                                 width: dp(75)
                                                                 on_touch_down: if self.collide_point(*args[1].pos):  app.show_icon_selection_dropdown(self)
-
                                                         ScrollView:
                                                             do_scroll_y: True
+                                                            do_scroll_x: False
                                                             scroll_type:['bars', 'content']
-
-                                                            GridLayout
+                                                            GridLayout:
                                                                 cols: 1
                                                                 size_hint_y: None
-                                                                height: dp(1000)
+                                                                size_hint_x: .8
+                                                                height: dp(900)
                                                                 spacing: dp(10)
-
-        # DEADTIME: Position of boxlayout with textfields ##############################################################
 
                                                                 MDLabel:
                                                                     text: "General"
                                                                     font_style: "H6"
                                                                     size_hint_y: None
-                                                                    height: dp(70)
+                                                                    height: dp(30)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "vertical"
-                                                                    padding: 10, 0, 0, 0
-                                                                    spacing: dp(10)
-                                                                    size_hint_y: None
-                                                                    height: dp(100)
-                                                                    MDTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_deadtime_name
-                                                                        hint_text: "Name"
-                                                                        on_text: app.set_unsaved_changes_on_asset(True)
-                                                                    MDTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_deadtime_description
-                                                                        hint_text: "Description"
-                                                                        on_text: app.set_unsaved_changes_on_asset(True)
+                                                                MDTextField:
+                                                                    id: textfield_deadtime_name
+                                                                    hint_text: "Name"
+                                                                    on_text: app.set_unsaved_changes_on_asset(True)
+                                                                MDTextField:
+                                                                    id: textfield_deadtime_description
+                                                                    hint_text: "Description"
+                                                                    on_text: app.set_unsaved_changes_on_asset(True)
+                                                                MDTextField:
+                                                                    id: textfield_deadtime_flowtype
+                                                                    hint_text: 'Flowtype'
+                                                                    icon_right: "arrow-down-drop-circle-outline"
+                                                                    on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
 
-        # DEADTIME: Position of boxlayout 'Operating Constraints' with input field #####################################
                                                                 MDLabel:
                                                                     text: "Operating Constraints"
-                                                                    height: dp(70)
+                                                                    height: dp(30)
                                                                     font_style: "H6"
                                                                     size_hint_y: None
 
-                                                                MDBoxLayout:
-                                                                    padding: 10, 0, 0, 0
-                                                                    orientation: "vertical"
-                                                                    size_hint_y: None
-                                                                    height: dp(50)
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_deadtime_delay
-                                                                        hint_text: "Delay"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "deadtime_delay"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_deadtime_delay
+                                                                    hint_text: "Delay"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "deadtime_delay"
+                                                                    on_text: app.validate_textfield_input(self)
 
-        # DEADTIME: Button creation for saving and revert changes ######################################################
                                                         BoxLayout:
                                                             padding: (10,10)
                                                             size_hint_y: None
@@ -1192,318 +974,146 @@ Screen:
                                                                 on_release: app.save_changes_on_deadtime()
                                                                 valign: "top"
 
+
         # STORAGE CONFIG SCREEN ######################################################################################
                                                 Screen:
                                                     name: "storage_config"
+
                                                     MDBoxLayout:
                                                         orientation: "vertical"
                                                         padding: dp(20)
-#<<<<<<< HEAD
-        # STORAGE: Position of header with image in screen #############################################################
-#=======
                                                         spacing: dp(20)
 
-#>>>>>>> origin/master
                                                         MDBoxLayout:
                                                             size_hint_y: None
                                                             height: dp(70)
                                                             orientation: "horizontal"
 
                                                             MDLabel:
-                                                                size_hint_y: None
                                                                 id: label_storage_name
                                                                 font_style: "H5"
+                                                                size_hint_y: None
                                                                 height: dp(50)
 
                                                             Image:
                                                                 id: image_storage_configuration
                                                                 size_hint: (None, None)
                                                                 height: dp(50)
-#<<<<<<< HEAD
-                                                                #width: dp(75)
-                                                                #on_touch_down: if self.collide_point(*args[1].pos):  app.show_icon_selection_dropdown(self)
-#=======
                                                                 width: dp(70)
                                                                 on_touch_down:  if self.collide_point(*args[1].pos): app.show_icon_selection_dropdown(self)
-#>>>>>>> origin/master
 
                                                         ScrollView:
                                                             do_scroll_y: True
+                                                            do_scroll_x: False
                                                             scroll_type:['bars', 'content']
 
-#<<<<<<< HEAD
-                                                            #GridLayout
-#=======
                                                             GridLayout:
-#>>>>>>> origin/master
                                                                 cols: 1
                                                                 size_hint_y: None
+                                                                size_hint_x: .8
                                                                 height: dp(1000)
                                                                 spacing: dp(10)
 
-#<<<<<<< HEAD
-        # STORAGE: Position of boxlayout with textfields ###############################################################
-#=======
-#>>>>>>> origin/master
                                                                 MDLabel:
                                                                     text: "General"
                                                                     font_style: "H6"
                                                                     size_hint_y: None
-#<<<<<<< HEAD
-                                                                    #height: dp(70)
-#=======
-                                                                    height: dp(100)
-#>>>>>>> origin/master
+                                                                    height: dp(30)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "vertical"
-                                                                    padding: 10, 0, 0, 0
-                                                                    spacing: dp(10)
-                                                                    size_hint_y: None
-#<<<<<<< HEAD
-                                                                    height: dp(200)
-                                                                    #MDTextField:
-                                                                     #   size_hint_x: .75
-                                                                      #  id: textfield_storage_name
-                                                                       # hint_text: "Name"
-#=======
-                                                                    height: dp(150)
-                                                                    MDTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_storage_name
-                                                                        hint_text: "Name of the storage"
-#>>>>>>> origin/master
-                                                                        on_text: app.set_unsaved_changes_on_asset(True)
-                                                                    MDTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_storage_description
-#<<<<<<< HEAD
-                                                                        #hint_text: "Description"
-#=======
-                                                                        hint_text: "Description of the storage"
-#>>>>>>> origin/master
-                                                                        on_text: app.set_unsaved_changes_on_asset(True)
-                                                                    MDDropDownItem:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_storage_flowtype
-                                                                        on_release: app.show_flowtype_selection_dropdown(self)
-                                                                        on_release: app.set_unsaved_changes_on_asset(True)
+                                                                MDTextField:
+                                                                    id: textfield_storage_name
+                                                                    hint_text: "Name of the storage"
+                                                                    on_text: app.set_unsaved_changes_on_asset(True)
+                                                                MDTextField:
+                                                                    id: textfield_storage_description
+                                                                    hint_text: "Description of the storage"
+                                                                    on_text: app.set_unsaved_changes_on_asset(True)
+                                                                MDTextField:
+                                                                    id: textfield_storage_flowtype
+                                                                    hint_text: 'Flowtype'
+                                                                    icon_right: "arrow-down-drop-circle-outline"
+                                                                    on_focus: app.show_flowtype_selection_dropdown(self)
+                                                                    on_text: app.set_unsaved_changes_on_asset(True)
 
-        # STORAGE: Position of boxlayout 'Operating Constraints' with input fields #####################################
                                                                 MDLabel:
                                                                     text: "Operating Constraints"
-                                                                    height: dp(70)
                                                                     font_style: "H6"
                                                                     size_hint_y: None
+                                                                    height: dp(30)
 
-                                                                MDBoxLayout:
-                                                                    padding: 10, 0, 0, 0
-                                                                    orientation: "vertical"
-                                                                    size_hint_y: None
-                                                                    height: dp(350)
+                                                                ValidatedTextField:
+                                                                    id: textfield_storage_capacity
+                                                                    hint_text: 'Capacity'
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "storage_capacity"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    #MDTextField:
-                                                                     #   size_hint_x: .75
-                                                                      #  id: textfield_storage_charge_max
-                                                                       # hint_text: "Maximum charging power"
-                                                                        #helper_text: "mistake"
-                                                                        #helper_text_mode: "on_error"
-                                                                        #on_text: app.set_unsaved_changes_on_asset(True)
+                                                                ValidatedTextField:
+                                                                    id: textfield_storage_power_max_charge
+                                                                    hint_text: 'Maximum Charging Power'
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "storage_power_max"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    #MDTextField:
-                                                                     #   size_hint_x: .75
-                                                                      #  id: textfield_storage_charge_min
-                                                                       # hint_text: "Minimum charging power"
-                                                                        #helper_text: "mistake"
-                                                                        #helper_text_mode: "on_error"
-                                                                        #on_text: app.set_unsaved_changes_on_asset(True)
+                                                                ValidatedTextField:
+                                                                    id: textfield_storage_power_max_discharge
+                                                                    hint_text: 'Maximum Discharging Power'
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "storage_power_min"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                    #MDTextField:
-                                                                     #   size_hint_x: .75
-                                                                      #  id: textfield_storage_discharge_max
-                                                                       # hint_text: "Maximum discharging power"
-                                                                        #helper_text: "mistake"
-                                                                        #helper_text_mode: "on_error"
-                                                                        #on_text: app.set_unsaved_changes_on_asset(True)
-
-                                                                    #MDTextField:
-                                                                     #   size_hint_x: .75
-                                                                      #  id: textfield_storage_discharge_min
-                                                                       # hint_text: "Minimum discharging power"
-                                                                        #helper_text: "mistake"
-                                                                        #helper_text_mode: "on_error"
-                                                                        #on_text: app.set_unsaved_changes_on_asset(True)
-
-                                                                    #MDTextField:
-                                                                     #   size_hint_x: .75
-                                                                      #  id: textfield_storage_capacity
-                                                                       # hint_text: "Capacity"
-                                                                        #helper_text: "mistake"
-                                                                        #helper_text_mode: "on_error"
-                                                                        #on_text: app.set_unsaved_changes_on_asset(True)
-
-                                                                    #MDTextField:
-                                                                     #   size_hint_x: .75
-                                                                      #  id: textfield_storage_start
-                                                                       # hint_text: "SoC Start"
-                                                                        #helper_text: "mistake"
-                                                                        #helper_text_mode: "on_error"
-                                                                        #on_text: app.set_unsaved_changes_on_asset(True)
-
-        # STORAGE: Position of boxlayout 'Efficiency' with input fields ################################################
-                                                                #MDLabel:
-                                                                 #   text: "Efficiency"
-                                                                  #  height: dp(100)
-                                                                   # font_style: "H6"
-                                                                    #size_hint_y: None
-#=======
-                                                                     #   hint_text: 'Stored Flow'
-                                                                      #  icon_right: "arrow-down-drop-circle-outline"
-                                                                       # on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
-
-                                                                #MDLabel:
-                                                                 #   text: "Operating Constraints"
-                                                                 #   font_style: "H6"
-                                                                  #  size_hint_y: None
-                                                                   # height: dp(100)
-#>>>>>>> origin/master
-
-                                                                #MDBoxLayout:
-                                                                 #   padding: 10, 0, 0, 0
-                                                                  #  orientation: "vertical"
-                                                                   # spacing: dp(10)
-                                                                    #size_hint_y: None
-#<<<<<<< HEAD
-                                                                    #height: dp(150)
-
-                                                                    #MDTextField:
-                                                                     #   size_hint_x: .75
-                                                                      #  id: textfield_storage_leakage_time
-                                                                       # hint_text: "leakage time"
-                                                                        #helper_text: "mistake"
-                                                                        #helper_text_mode: "on_error"
-                                                                        #on_text: app.set_unsaved_changes_on_asset(True)
-
-                                                                    #MDTextField:
-                                                                     #   size_hint_x: .75
-                                                                      #  id: textfield_storage_leakage_SoC
-                                                                       # hint_text: "leakage SoC"
-                                                                        #helper_text: "mistake"
-                                                                        #helper_text_mode: "on_error"
-                                                                        #on_text: app.set_unsaved_changes_on_asset(True)
-
-                                                                    #MDTextField:
-                                                                     #   size_hint_x: .75
-                                                                      #  id: textfield_storage_efficiency_max
-                                                                       # hint_text: "Maximum efficiency"
-                                                                        #helper_text: "mistake"
-                                                                        #helper_text_mode: "on_error"
-                                                                        #on_text: app.set_unsaved_changes_on_asset(True)
-
-        # STORAGE: Button creation for saving and revert changes #######################################################
-#=======
-                                                                    #height: dp(200)
-
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_storage_capacity
-                                                                        hint_text: 'Capacity'
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "storage_capacity"
-                                                                        on_text: app.validate_textfield_input(self)
-
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_storage_power_max_charge
-                                                                        hint_text: 'Maximum Discharging Power'
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "storage_power_max"
-                                                                        on_text: app.validate_textfield_input(self)
-
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_storage_power_max_discharge
-                                                                        hint_text: 'Maximum Charging Power'
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "storage_power_min"
-                                                                        on_text: app.validate_textfield_input(self)
-
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        id: textfield_storage_soc_start
-                                                                        hint_text: 'SOC Start [%]'
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "storage_soc_start"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_storage_soc_start
+                                                                    hint_text: 'SOC Start [%]'
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "storage_soc_start"
+                                                                    on_text: app.validate_textfield_input(self)
 
                                                                 MDLabel:
                                                                     text: "Efficiency"
                                                                     font_style: "H6"
                                                                     size_hint_y: None
-                                                                    height: dp(100)
+                                                                    height: dp(30)
 
-                                                                MDBoxLayout:
-                                                                    orientation: "vertical"
-                                                                    padding: 10, 0, 0, 0
-                                                                    size_hint_y: None
-                                                                    height: dp(150)
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        size_hint_y: None
-                                                                        height: dp(60)
-                                                                        id: textfield_storage_efficiency
-                                                                        hint_text: "Base efficiency"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "storage_efficiency"
-                                                                        on_text: app.validate_textfield_input(self)
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        size_hint_y: None
-                                                                        height: dp(60)
-                                                                        id: textfield_storage_leakage_time
-                                                                        hint_text: "Absolute leakage"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "storage_leakage_time"
-                                                                        on_text: app.validate_textfield_input(self)
-                                                                    ValidatedTextField:
-                                                                        size_hint_x: .75
-                                                                        size_hint_y: None
-                                                                        height: dp(60)
-                                                                        id: textfield_storage_leakage_soc
-                                                                        hint_text: "SOC based leakage"
-                                                                        helper_text: "mistake"
-                                                                        helper_text_mode: "on_error"
-                                                                        validation_type: "storage_leakage_soc"
-                                                                        on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_storage_efficiency
+                                                                    hint_text: "Base Efficiency [%]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "storage_efficiency"
+                                                                    on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_storage_leakage_time
+                                                                    hint_text: "Absolute Leakage"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "storage_leakage_time"
+                                                                    on_text: app.validate_textfield_input(self)
+                                                                ValidatedTextField:
+                                                                    id: textfield_storage_leakage_soc
+                                                                    hint_text: "SOC Based Leakage [%/h]"
+                                                                    helper_text: "mistake"
+                                                                    helper_text_mode: "on_error"
+                                                                    validation_type: "storage_leakage_soc"
+                                                                    on_text: app.validate_textfield_input(self)
 
-                                                                #Widget:
-
-#>>>>>>> origin/master
                                                         BoxLayout:
                                                             padding: (10,10)
                                                             size_hint_y: None
                                                             orientation: "horizontal"
-#<<<<<<< HEAD
-                                                            height:50
-#=======
-                                                            #height:dp(50)
-#>>>>>>> origin/master
+                                                            height: dp(50)
                                                             Widget:
                                                             MDFlatButton:
                                                                 text: "Revert Changes"
-                                                                halign: "right"
                                                                 on_release: app.update_config_tab()
 
                                                             MDRaisedButton:
                                                                 text: "Save Changes"
                                                                 on_release: app.save_changes_on_storage()
-                                                                valign: "top"
 #<<<<<<< HEAD
 
 #=======
@@ -1512,55 +1122,61 @@ Screen:
                                                 Screen:
                                                     name: "pool_config"
 
-                                                    BoxLayout:
+                                                    MDBoxLayout:
                                                         orientation: "vertical"
                                                         padding: dp(20)
                                                         spacing: dp(20)
 
+                                                        MDBoxLayout:
+                                                            size_hint_y: None
+                                                            height: dp(70)
+                                                            orientation: "horizontal"
+
+                                                            MDLabel:
+                                                                id: label_pool_name
+                                                                font_style: "H5"
+                                                                size_hint_y: None
+                                                                height: dp(50)
+                                                            Image:
+                                                                size_hint: (None, None)
+                                                                height: dp(70)
+                                                                width: dp(70)
+                                                                source: "Assets\\icon_pool.png"
+
                                                         MDLabel:
-                                                            id: label_pool_name
+                                                            text: "General"
                                                             font_style: "H6"
                                                             size_hint_y: None
-                                                            height: dp(50)
+                                                            height: dp(30)
 
-                                                        GridLayout:
-                                                            cols: 1
-                                                            padding: 10, 0, 0, 20
-                                                            MDTextField:
-                                                                id: textfield_pool_name
-                                                                hint_text: 'Name'
-                                                                on_text: app.set_unsaved_changes_on_asset(True)
+                                                        MDTextField:
+                                                            id: textfield_pool_name
+                                                            hint_text: 'Name'
+                                                            on_text: app.set_unsaved_changes_on_asset(True)
+                                                        MDTextField:
+                                                            id: textfield_pool_description
+                                                            hint_text: 'Description'
+                                                            on_text: app.set_unsaved_changes_on_asset(True)
+                                                        MDTextField:
+                                                            id: textfield_pool_flowtype
+                                                            hint_text: 'Flow'
+                                                            icon_right: "arrow-down-drop-circle-outline"
+                                                            on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
 
-                                                            MDTextField:
-                                                                id: textfield_pool_description
-                                                                hint_text: 'Description'
-                                                                on_text: app.set_unsaved_changes_on_asset(True)
-
-                                                            MDTextField:
-                                                                id: textfield_pool_flowtype
-                                                                hint_text: 'Flow'
-                                                                icon_right: "arrow-down-drop-circle-outline"
-                                                                on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
-                                                                on_text: app.set_unsaved_changes_on_asset(True)
                                                         Widget:
-
                                                         BoxLayout:
                                                             padding: (10,10)
                                                             size_hint_y: None
                                                             orientation: "horizontal"
-                                                            height:50
-
+                                                            height: dp(50)
                                                             Widget:
-
                                                             MDFlatButton:
                                                                 text: "Revert Changes"
-                                                                halign: "right"
                                                                 on_release: app.update_config_tab()
 
                                                             MDRaisedButton:
                                                                 text: "Save Changes"
                                                                 on_release: app.save_changes_on_pool()
-                                                                valign: "top"
 ### TAB SCENARIO  ######################################################################################################
                         MDBottomNavigationItem:
                             name: "tab_scenario"
@@ -2282,7 +1898,6 @@ Screen:
             id: button_flowtype_delete
             icon: "delete"
             halign: "right"
-            #on_release: app.delete_flowtype()
     MDLabel:
         text: "Name"
         size_hint_y: None

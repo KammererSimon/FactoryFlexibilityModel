@@ -485,9 +485,7 @@ class CanvasWidget(Widget):
         if self.collide_point(*touch.pos):
             if not any(child.collide_point(*touch.pos) for child in self.children):
                 app = MDApp.get_running_app()
-                app.root.ids.asset_config_screens.current = "welcome_screen"
-                app.selected_asset = None
-                app.initialize_visualization()
+                app.initiate_asset_selection(None)
 
     def update_rect(self, *args):
         self.rect.pos = self.pos
@@ -1027,13 +1025,13 @@ class factory_GUIApp(MDApp):
         if not self.dialog == None:
             self.dialog.dismiss()
 
+        if key is None:
+            self.selected_asset = None
+
         # get the asset adressed by the key and store it in self.selected_asset
         if key in self.blueprint.components:
             if not self.blueprint.components[key] == None:
                 self.selected_asset = self.blueprint.components[key]
-        if key in self.blueprint.connections:
-            if not self.blueprint.connections[key] == None:
-                self.selected_asset = self.blueprint.connections[key]
         if key in self.blueprint.flowtypes:
             self.selected_asset = self.blueprint.flowtypes[key]
 
@@ -1893,7 +1891,6 @@ class factory_GUIApp(MDApp):
 
         if state == "getname":  # create a new session
             # close the previous dialog
-            print("check")
             if hasattr(self, "dialog"):
                 if not self.dialog == None:
                     self.dialog.dismiss()
@@ -1964,7 +1961,6 @@ class factory_GUIApp(MDApp):
         """
         This function saves the current session within the session_path
         """
-
         # make sure that there is a factory to save:
         if len(self.blueprint.components) < 2 or len(self.blueprint.connections) < 1:
             # create dialog
@@ -1978,8 +1974,6 @@ class factory_GUIApp(MDApp):
             self.dialog.open()
             return
 
-        print(self.session_path)
-
         # save current blueprint
         self.blueprint.save(path=self.session_path)
 
@@ -1990,12 +1984,10 @@ class factory_GUIApp(MDApp):
                     line = f"{key_outer}/{key_inner}\t{value}\n"
                     file.write(line)
 
-        # save units
-
         # There are no more unsaved changes now...
         self.unsaved_changes_on_session = False
 
-        Snackbar(text=f"Session succesfully saved at {self.filepath}").open()
+        Snackbar(text=f"Session successfully saved at {self.session_path}").open()
 
     def save_session_as(self):
         """
@@ -2133,6 +2125,9 @@ class factory_GUIApp(MDApp):
                 # if yes: safe the value in the parameters dict
                 self.parameters[key][parameter] = float(textfield.text)
 
+        # update connection names to adapt changes if the name of the converter has changed
+        self.update_connection_names()
+
         # set unsaved changes parameters
         self.unsaved_changes_on_asset = False
         self.unsaved_changes_on_session = True
@@ -2195,8 +2190,19 @@ class factory_GUIApp(MDApp):
         This function takes the user input from the deadtime configuration tab and stores it in the blueprint
         """
 
-        # store key of old version
-        component_key = self.get_key(self.selected_asset["name"])
+        # get component_key
+        key = self.selected_asset["key"]
+
+        # make sure that the given name is not taken yet
+        if not self.blueprint.components[key][
+            "name"
+        ] == self.root.ids.textfield_sink_name.text and self.get_key(
+            self.root.ids.textfield_sink_name.text
+        ):
+            self.show_info_popup(
+                "The given name is already assigned within the factory!"
+            )
+            return
 
         if not (self.root.ids.textfield_deadtime_delay.value_valid):
             self.show_info_popup(
@@ -2204,25 +2210,27 @@ class factory_GUIApp(MDApp):
             )
             return
 
-        # create a new blueprint entry with given values
-        deadtime_new = {}
-        deadtime_new = {
-            "name": self.root.ids.textfield_deadtime_name.text,
-            "key": component_key,
-            "type": "deadtime",
-            "description": self.root.ids.textfield_deadtime_description.text,
-            # "flow": self.get_key(self.root.ids.textfield_deadtime_flowtype.text),
-            "Delay": self.root.ids.textfield_deadtime_delay.text,
-            "icon": self.root.ids.image_deadtime_configuration.source,
-            "position_x": self.selected_asset["GUI"]["position_x"],
-            "position_y": self.selected_asset["GUI"]["position_y"],
-        }
+        # update general attributes and icon
+        self.blueprint.components[key].update(
+            {
+                "name": self.root.ids.textfield_deadtime_name.text,
+                "description": self.root.ids.textfield_deadtime_description.text,
+            }
+        )
+        self.blueprint.components[key]["GUI"].update(
+            {"icon": self.root.ids.image_deadtime_configuration.source}
+        )
+        # change the flowtype if the user specified a new one
+        flowtype_key = self.get_key(self.root.ids.textfield_deadtime_flowtype.text)
+        if not self.blueprint.components[key]["flowtype"].key == flowtype_key:
+            fd.set_component_flowtype(
+                self.blueprint, key, self.blueprint.flowtypes[flowtype_key]
+            )
 
-        # overwrite old entry
-        self.blueprint.components[component_key] = deadtime_new
-
-        # set selected asset to the updated deadtime
-        self.selected_asset = deadtime_new
+        if not self.root.ids.textfield_deadtime_delay.text == "":
+            self.parameters[key]["delay"] = int(
+                self.root.ids.textfield_deadtime_delay.text
+            )
 
         # set unsaved changes parameters
         self.unsaved_changes_on_asset = False
@@ -2379,36 +2387,22 @@ class factory_GUIApp(MDApp):
                 self.blueprint, key, self.blueprint.flowtypes[flowtype_key]
             )
 
-        # update parameter list
-        # costs
-        if not self.root.ids.textfield_sink_cost.text == "":
-            self.parameters[key]["cost"] = self.root.ids.textfield_sink_cost.text
-        # power_max
-        if not self.root.ids.textfield_sink_power_max.text == "":
-            self.parameters[key][
-                "power_max"
-            ] = self.root.ids.textfield_sink_power_max.text
-        # power_min
-        if not self.root.ids.textfield_sink_power_min.text == "":
-            self.parameters[key][
-                "power_min"
-            ] = self.root.ids.textfield_sink_power_min.text
-        # demand
-        if not self.root.ids.textfield_sink_demand.text == "":
-            self.parameters[key]["demand"] = self.root.ids.textfield_sink_demand.text
-        # revenue
-        if not self.root.ids.textfield_sink_revenue.text == "":
-            self.parameters[key]["revenue"] = self.root.ids.textfield_sink_revenue.text
-        # co2_emission_per_unit
-        if not self.root.ids.textfield_sink_co2_emission_per_unit.text == "":
-            self.parameters[key][
-                "co2_emission_per_unit"
-            ] = self.root.ids.textfield_sink_co2_emission_per_unit.text
-        # co2_refund_per_unit
-        if not self.root.ids.textfield_sink_co2_refund_per_unit.text == "":
-            self.parameters[key][
-                "co2_refund_per_unit"
-            ] = self.root.ids.textfield_sink_co2_refund_per_unit.text
+        # go through all numerical parameters
+        for parameter in [
+            "cost",
+            "power_max",
+            "power_min",
+            "demand",
+            "revenue",
+            "co2_emission_per_unit",
+            "co2_refund_per_unit",
+        ]:
+            # get the pointer to the corresponding textfield
+            textfield = getattr(self.root.ids, f"textfield_sink_{parameter}")
+            # check if the user specified it
+            if not textfield.text == "":
+                # if yes: safe the value in the parameters dict
+                self.parameters[key][parameter] = float(textfield.text)
 
         # set unsaved changes parameters
         self.unsaved_changes_on_asset = False
@@ -2548,7 +2542,7 @@ class factory_GUIApp(MDApp):
 
         # Check, that all user inputs are valid
         if (
-            not (self.root.ids.textfield_storage_capacity_valid)
+            not (self.root.ids.textfield_storage_capacity.value_valid)
             and (self.root.ids.textfield_storage_power_max_charge.value_valid)
             and (self.root.ids.textfield_storage_power_max_discharge.value_valid)
             and (self.root.ids.textfield_storage_soc_start.value_valid)
@@ -2565,15 +2559,35 @@ class factory_GUIApp(MDApp):
         self.blueprint.components[key].update(
             {
                 "description": self.root.ids.textfield_storage_description.text,
-                "flowtype": self.blueprint.flowtypes[
-                    self.get_key(self.root.ids.textfield_storage_flowtype.text)
-                ],
                 "name": self.root.ids.textfield_storage_name.text,
             }
         )
         self.blueprint.components[key]["GUI"].update(
             {"icon": self.root.ids.image_storage_configuration.source}
         )
+        # change the flowtype if the user specified a new one
+        flowtype_key = self.get_key(self.root.ids.textfield_storage_flowtype.text)
+        if not self.blueprint.components[key]["flowtype"].key == flowtype_key:
+            fd.set_component_flowtype(
+                self.blueprint, key, self.blueprint.flowtypes[flowtype_key]
+            )
+
+        # go through all numerical parameters
+        for parameter in [
+            "capacity",
+            "power_max_charge",
+            "power_max_discharge",
+            "soc_start",
+            "efficiency",
+            "leakage_time",
+            "leakage_soc",
+        ]:
+            # get the pointer to the corresponding textfield
+            textfield = getattr(self.root.ids, f"textfield_storage_{parameter}")
+            # check if the user specified it
+            if not textfield.text == "":
+                # if yes: safe the value in the parameters dict
+                self.parameters[key][parameter] = float(textfield.text)
 
         # update connection names to adapt changes if the name of the storage has changed
         self.update_connection_names()
@@ -3323,19 +3337,13 @@ class factory_GUIApp(MDApp):
         """
 
         def set_image(caller, path):
-            # change icon in the selected asset
-            # self.selected_asset["icon"] = path
-
             # return the selected icon to the iconlabel in the config-tab
             caller.source = path
-            self.selected_asset["icon"] = path
+            self.selected_asset["GUI"]["icon"] = caller.source
             self.initialize_visualization()
 
             # close icon selection dialog
             self.menu.dismiss()
-
-        # initialize empty list
-        dropdown_items = []
 
         # determine which selection of icons is displayed
         if self.selected_asset["type"] == "source":
@@ -3345,18 +3353,19 @@ class factory_GUIApp(MDApp):
         else:
             icon_list = self.component_icons
 
+        # initialize empty list
+        dropdown_items = []
+
         # iterate over all icons in the list
-        for icon_name in icon_list:
-            # append a dropdown item to the list with the current icon
+        for icon_name, icon_source in icon_list.items():
             dropdown_items.append(
                 {
                     "viewclass": "ImageDropDownItem",
-                    "source": "Assets\\sinks\\sink_airconditioning.png",
+                    "source": icon_source,
                     "text": icon_name,
-                    "on_release": lambda x=icon_list[icon_name]: set_image(caller, x),
+                    "on_release": lambda x=icon_source: set_image(caller, x),
                 }
             )
-
         # create list widget
         self.menu = MDDropdownMenu(
             caller=caller,
@@ -3508,7 +3517,7 @@ class factory_GUIApp(MDApp):
         btn_true.bind(on_release=self.new_scenario)
         self.dialog.open()
 
-    def show_scenario_deletion_dialog(self, instance):
+    def show_scenario_seletion_dialog(self, instance):
         """
         This function creates a dialog that asks the user to confirm the deletion of a scenario
 
@@ -3697,13 +3706,6 @@ class factory_GUIApp(MDApp):
         self.menu.bind()
         self.menu.open()
 
-    def switch_search_text(self, text=""):
-        # set the search text to the value selected in the search widget
-        self.search_text = text
-
-        # update the displayed list
-        self.show_asset_list()
-
     def update_scenario_parameter_list(self):
         """
         This function creates a list of all parameters that the user has to specify during scenario setup
@@ -3790,7 +3792,10 @@ class factory_GUIApp(MDApp):
         This function is called, when the user clicks on a component. It openes the corresponding configuration-screen in the card on the right and fills in all the values from the selected asset into the textfields and labels.
         """
 
-        if self.selected_asset["type"] == "source":
+        if self.selected_asset is None:
+            # if no asset is selected: show the standard screen
+            self.root.ids.asset_config_screens.current = "welcome_screen"
+        elif self.selected_asset["type"] == "source":
             # switch to the correct screen of the component tab
             self.root.ids.asset_config_screens.current = "source_config"
 
@@ -3824,10 +3829,18 @@ class factory_GUIApp(MDApp):
                 else:
                     textfield.text = ""
 
+            # Adapt hint texts to the specified flowtype-unit
+            self.root.ids.textfield_source_power_max.hint_text = f"Maximum Output Flowrate [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
+            self.root.ids.textfield_source_power_min.hint_text = f"Minimum Output Flowrate [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
+            self.root.ids.textfield_source_determined_power.hint_text = f"Fixed Output Level [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
+            self.root.ids.textfield_source_cost.hint_text = f"Cost per Unit [€/{self.selected_asset['flowtype'].unit.get_unit_flow()}]"
+            self.root.ids.textfield_source_capacity_charge.hint_text = f"Capacity Charge [€/{self.selected_asset['flowtype'].unit.get_unit_flowrate()}_peak]"
+            self.root.ids.textfield_source_co2_emission_per_unit.hint_text = f"CO2 Emissions per Unit [kgCO2/{self.selected_asset['flowtype'].unit.get_unit_flow()}]"
+
         elif self.selected_asset["type"] == "pool":
             # show the pool configuration screen
             self.root.ids.asset_config_screens.current = "pool_config"
-            self.root.ids.label_pool_name.text = self.selected_asset["name"]
+            self.root.ids.label_pool_name.text = self.selected_asset["name"].upper()
             self.root.ids.textfield_pool_flowtype.text = self.selected_asset[
                 "flowtype"
             ].name
@@ -3841,7 +3854,9 @@ class factory_GUIApp(MDApp):
             self.root.ids.asset_config_screens.current = "converter_config"
 
             # get data from blueprint and add it to the screen
-            self.root.ids.label_converter_name.text = self.selected_asset["name"]
+            self.root.ids.label_converter_name.text = self.selected_asset[
+                "name"
+            ].upper()
             self.root.ids.textfield_converter_name.text = self.selected_asset["name"]
             print(self.selected_asset["description"])
             self.root.ids.textfield_converter_description.text = self.selected_asset[
@@ -3895,7 +3910,7 @@ class factory_GUIApp(MDApp):
             self.root.ids.asset_config_screens.current = "sink_config"
 
             # get data from blueprint and add it to the screen
-            self.root.ids.label_sink_name.text = self.selected_asset["name"]
+            self.root.ids.label_sink_name.text = self.selected_asset["name"].upper()
             self.root.ids.textfield_sink_name.text = self.selected_asset["name"]
             self.root.ids.textfield_sink_description.text = self.selected_asset[
                 "description"
@@ -3925,12 +3940,21 @@ class factory_GUIApp(MDApp):
                 else:
                     textfield.text = ""
 
+            # Adapt hint texts to the specified flowtype-unit
+            self.root.ids.textfield_sink_cost.hint_text = f"Cost of Utilization [€/{self.selected_asset['flowtype'].unit.get_unit_flow()}]"
+            self.root.ids.textfield_sink_revenue.hint_text = f"Revenue of Utilization [€/{self.selected_asset['flowtype'].unit.get_unit_flow()}]"
+            self.root.ids.textfield_sink_co2_emission_per_unit.hint_text = f"CO2 Emissions [kgCO2/{self.selected_asset['flowtype'].unit.get_unit_flow()}]"
+            self.root.ids.textfield_sink_co2_refund_per_unit.hint_text = f"CO2 Compensation [kgCO2/{self.selected_asset['flowtype'].unit.get_unit_flow()}]"
+            self.root.ids.textfield_sink_power_max.hint_text = f"Maximum Input Power [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
+            self.root.ids.textfield_sink_power_min.hint_text = f"Minimum Input Power [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
+            self.root.ids.textfield_sink_demand.hint_text = f"Fixed Demand [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
+
         elif self.selected_asset["type"] == "storage":
             # switch to the correct screen of the component tab
             self.root.ids.asset_config_screens.current = "storage_config"
 
             # get data from blueprint and add it to the screen
-            self.root.ids.label_storage_name.text = self.selected_asset["name"]
+            self.root.ids.label_storage_name.text = self.selected_asset["name"].upper()
             self.root.ids.textfield_storage_name.text = self.selected_asset["name"]
             self.root.ids.textfield_storage_description.text = self.selected_asset[
                 "description"
@@ -3938,6 +3962,9 @@ class factory_GUIApp(MDApp):
             self.root.ids.textfield_storage_flowtype.text = self.selected_asset[
                 "flowtype"
             ].name
+            self.root.ids.image_storage_configuration.source = self.selected_asset[
+                "GUI"
+            ]["icon"]
 
             for parameter in [
                 "power_max_charge",
@@ -3957,21 +3984,25 @@ class factory_GUIApp(MDApp):
                 else:
                     textfield.text = ""
 
-            # display the correct icon
-            # self.root.ids.image_storage_configuration.source = self.selected_asset["icon"]
+            # Adapt hint texts to the specified flowtype-unit
+            self.root.ids.textfield_storage_capacity.hint_text = f"Storage Capacity [{self.selected_asset['flowtype'].unit.get_unit_flow()}]"
+            self.root.ids.textfield_storage_power_max_charge.hint_text = f"Maximum Charging Power [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
+            self.root.ids.textfield_storage_power_max_discharge.hint_text = f"Maximum Discharging Power [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
+            self.root.ids.textfield_storage_leakage_time.hint_text = f"Fixed Absolute Leakage [{self.selected_asset['flowtype'].unit.get_unit_flow()}/h]"
 
         elif self.selected_asset["type"] == "thermalsystem":
             # show the thermal system configuration screeen in the box on the bottom of the screen
             self.root.ids.asset_config_screens.current = "thermalsystem_config"
             # read values from the blueprint and initialize the input fields
-            self.root.ids.label_thermalsystem_name.text = self.selected_asset["name"]
+            self.root.ids.label_thermalsystem_name.text = self.selected_asset[
+                "name"
+            ].upper()
             self.root.ids.textfield_thermalsystem_name.text = self.selected_asset[
                 "name"
             ]
             self.root.ids.textfield_thermalsystem_description.text = (
                 self.selected_asset["description"]
             )
-            # self.root.ids.textfield_thermalsystem_flowtype.text = self.blueprint.flowtypes[self.selected_asset["flowtype"]]["name"]
             self.root.ids.textfield_thermalsystem_temperature_start.text = (
                 self.selected_asset["Start temperature"]
             )
@@ -4020,19 +4051,18 @@ class factory_GUIApp(MDApp):
 
             # display the correct icon
             self.root.ids.image_thermalsystem_configuration.source = (
-                self.selected_asset["icon"]
+                self.selected_asset["GUI"]["icon"]
             )
 
         elif self.selected_asset["type"] == "schedule":
             # show the schedule configuration screeen in the box on the bottom of the screen
             self.root.ids.asset_config_screens.current = "schedule_config"
             # read values from the blueprint and initialize the input fields
-            self.root.ids.label_schedule_name.text = self.selected_asset["name"]
+            self.root.ids.label_schedule_name.text = self.selected_asset["name"].upper()
             self.root.ids.textfield_schedule_name.text = self.selected_asset["name"]
             self.root.ids.textfield_schedule_description.text = self.selected_asset[
                 "description"
             ]
-            # self.root.ids.textfield_schedule_flowtype.text = self.blueprint.flowtypes[self.selected_asset["flowtype"]]["name"]
             self.root.ids.textfield_schedule_power_max.text = self.selected_asset[
                 "Maximum power flow"
             ]
@@ -4045,21 +4075,30 @@ class factory_GUIApp(MDApp):
             pass
 
         elif self.selected_asset["type"] == "deadtime":
-            # show the deadtime configuration screeen in the box on the bottom of the screen
+            # switch to the correct screen of the component tab
             self.root.ids.asset_config_screens.current = "deadtime_config"
+
             # read values from the blueprint and initialize the input fields
-            self.root.ids.label_deadtime_name.text = self.selected_asset["name"]
+            self.root.ids.label_deadtime_name.text = self.selected_asset["name"].upper()
             self.root.ids.textfield_deadtime_name.text = self.selected_asset["name"]
             self.root.ids.textfield_deadtime_description.text = self.selected_asset[
                 "description"
             ]
-            # self.root.ids.textfield_deadtime_flowtype.text = self.blueprint.flowtypes[self.selected_asset["flowtype"]]["name"]
-            self.root.ids.textfield_deadtime_delay.text = self.selected_asset["Delay"]
-            self.validate_textfield_input(self.root.ids.textfield_deadtime_delay)
+            self.root.ids.textfield_deadtime_flowtype.text = self.selected_asset[
+                "flowtype"
+            ].name
+
             # display the correct icon
             self.root.ids.image_deadtime_configuration.source = self.selected_asset[
-                "icon"
-            ]
+                "GUI"
+            ]["icon"]
+
+            if "delay" in self.parameters[self.selected_asset["key"]].keys():
+                self.root.ids.textfield_deadtime_delay.text = str(
+                    self.parameters[self.selected_asset["key"]]["delay"]
+                )
+            else:
+                self.root.ids.textfield_deadtime_delay.text = ""
 
         # since the asset just got updated there are no unsaved changes anymore
         self.unsaved_changes_on_asset = False
