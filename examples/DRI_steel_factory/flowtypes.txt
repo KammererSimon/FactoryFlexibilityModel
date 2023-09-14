@@ -1,4 +1,5 @@
 hydrogen:
+  represents_losses: false
   color:
   - 0.51
   - 0.78
@@ -6,7 +7,9 @@ hydrogen:
   - 1
   name: Hydrogen
   unit: mass
+  description: New Flowtype
 iron_ore:
+  represents_losses: false
   color:
   - 0.88
   - 0.75
@@ -14,7 +17,10 @@ iron_ore:
   - 1
   name: Iron Ore
   unit: mass
+  description: New Flowtype
 oxygen:
+  represents_losses: false
+  description: New Flowtype
   color:
   - 0.3
   - 0.82
@@ -23,6 +29,8 @@ oxygen:
   name: Oxygen
   unit: mass
 steel_scrap:
+  represents_losses: false
+  description: New Flowtype
   color:
   - 0.11
   - 0.13
@@ -31,6 +39,8 @@ steel_scrap:
   name: Scrap
   unit: mass
 co2:
+  represents_losses: false
+  description: New Flowtype
   color:
   - 0.9
   - 0.45
@@ -39,6 +49,8 @@ co2:
   name: CO2
   unit: mass
 slag:
+  represents_losses: false
+  description: New Flowtype
   color:
   - 0.43
   - 0.3
@@ -47,6 +59,8 @@ slag:
   name: Slag and waste
   unit: mass
 natural_gas:
+  represents_losses: false
+  description: New Flowtype
   color:
   - 0.98
   - 0.75
@@ -55,6 +69,8 @@ natural_gas:
   name: Natural Gas
   unit: mass
 reduced_iron:
+  represents_losses: false
+  description: New Flowtype
   color:
   - 0.73
   - 0.41
@@ -63,6 +79,8 @@ reduced_iron:
   name: Direct reduced iron
   unit: mass
 hbi:
+  represents_losses: false
+  description: New Flowtype
   color:
   - 0.61
   - 0.15
@@ -71,6 +89,8 @@ hbi:
   name: HBI
   unit: mass
 carbon:
+  represents_losses: false
+  description: New Flowtype
   color:
   - 0.5
   - 0.5
@@ -79,6 +99,8 @@ carbon:
   name: Carbon
   unit: mass
 electricity:
+  represents_losses: false
+  description: New Flowtype
   color:
   - 0.05
   - 0.28
@@ -87,6 +109,8 @@ electricity:
   name: Electricity
   unit: kW
 lime:
+  represents_losses: false
+  description: New Flowtype
   color:
   - 0.63
   - 0.53
@@ -95,6 +119,8 @@ lime:
   name: Lime
   unit: mass
 crude_steel:
+  represents_losses: false
+  description: New Flowtype
   color:
   - 0.48
   - 0.12
@@ -103,6 +129,8 @@ crude_steel:
   name: Crude Steel
   unit: mass
 water:
+  represents_losses: false
+  description: New Flowtype
   color:
   - 0.51
   - 0.83

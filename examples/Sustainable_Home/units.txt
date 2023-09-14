@@ -20,28 +20,6 @@ energy:
   - GW
   - TW
   - PW
-kW:
-  conversion_factor: 1
-  magnitudes:
-  - 1
-  - 1000
-  - 1000000
-  - 1000000000
-  - 1000000000000
-  name: Energy [kW]
-  quantity_type: energy
-  units_flow:
-  - kWh
-  - MWh
-  - GWh
-  - TWh
-  - PWh
-  units_flowrate:
-  - kW
-  - MW
-  - GW
-  - TW
-  - PW
 joule:
   conversion_factor: 0.0002777777777777778
   magnitudes:
@@ -93,3 +71,13 @@ mmBTU:
   - mmBTU
   units_flowrate:
   - mmBTU/h
+unit:
+  conversion_factor: 1
+  magnitudes:
+  - 1
+  name: Unspecified Unit
+  quantity_type: other
+  units_flow:
+  - units
+  units_flowrate:
+  - units/h
