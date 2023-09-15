@@ -1391,14 +1391,22 @@ class factory_GUIApp(MDApp):
                 parameters_new = {}
                 for component_key in blueprint_new.components.keys():
                     parameters_new[component_key] = {}
+
+                # initialize a counter that ensures, that every parameter within the factory gets a unique key assigned
+                value_key = 0
                 # iterate over all lines in the file
                 for line in file:
                     # split line into key and value
                     key, value = line.strip().split("\t")
                     # split key into component and parameter
                     key = key.split("/")
+                    # make sure that the parameters dict has an entry for the component and parameter
+                    if key[1] not in parameters_new[key[0]].keys():
+                        parameters_new[key[0]][key[1]] = {}
                     # add entry to parameters-dict
-                    parameters_new[key[0]][key[1]] = float(value.replace(",", "."))
+                    parameters_new[key[0]][key[1]][value_key] = float(value.replace(",", "."))
+                    # increment value_key to prevent double usage of keys
+                    value_key += 1
         except:
             Snackbar(
                 text=f"The given parameters.txt-config file is invalid, has a wrong format or is corrupted! ({self.session_data['session_path']}\\parameters.txt)"
@@ -1688,9 +1696,10 @@ class factory_GUIApp(MDApp):
         # save parameters
         with open(f"{self.session_data['session_path']}\\parameters.txt", "w") as file:
             for key_outer, inner_dict in self.parameters.items():
-                for key_inner, value in inner_dict.items():
-                    line = f"{key_outer}/{key_inner}\t{value}\n"
-                    file.write(line)
+                for key_inner, values in inner_dict.items():
+                    for value in values.values():
+                        line = f"{key_outer}/{key_inner}\t{value}\n"
+                        file.write(line)
 
         # There are no more unsaved changes now...
         self.unsaved_changes_on_session = False
