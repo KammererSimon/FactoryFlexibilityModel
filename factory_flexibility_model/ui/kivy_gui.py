@@ -11,18 +11,12 @@ from kivy.core.window import Window
 from kivy.graphics import Color, Ellipse, Line, Triangle
 from kivy.lang import Builder
 from kivy.metrics import dp
-from kivy.properties import StringProperty
-from kivy.uix.behaviors import DragBehavior
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
-from kivy.uix.checkbox import CheckBox
-from kivy.uix.dropdown import DropDown
 from kivy.uix.image import Image
-from kivy.uix.widget import Widget
 from kivy_garden.graph import LinePlot
 from kivymd.app import MDApp
 from kivymd.uix.button import MDFillRoundFlatIconButton, MDFlatButton, MDRaisedButton
-from kivymd.uix.card import MDCard
 from kivymd.uix.datatables import MDDataTable
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.label import MDLabel
@@ -31,11 +25,8 @@ from kivymd.uix.list import (
     IconLeftWidgetWithoutTouch,
     IconRightWidget,
     ImageLeftWidgetWithoutTouch,
-    IRightBodyTouch,
-    OneLineAvatarListItem,
     OneLineIconListItem,
     OneLineListItem,
-    ThreeLineIconListItem,
     TwoLineAvatarIconListItem,
     TwoLineAvatarListItem,
     TwoLineIconListItem,
@@ -44,8 +35,6 @@ from kivymd.uix.list import (
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.pickers import MDColorPicker
 from kivymd.uix.snackbar import Snackbar
-from kivymd.uix.tab import MDTabsBase
-from kivymd.uix.textfield import MDTextField
 
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.factory.Flowtype as ft
@@ -53,9 +42,10 @@ import factory_flexibility_model.factory.Unit as Unit
 import factory_flexibility_model.io.session as session
 import factory_flexibility_model.ui.color as color
 import factory_flexibility_model.ui.flowtype_determination as fd
+from factory_flexibility_model.ui.dialogs.parameter_config_dialog import *
+from factory_flexibility_model.ui.utility.custom_widget_classes import *
 
 # IMPORT 3RD PARTY PACKAGES
-
 
 main_color = "#1D4276"
 colors = {
@@ -380,125 +370,6 @@ colors = {
 }
 
 
-class DragLabel(DragBehavior, Image):
-    id = StringProperty("")
-    key = StringProperty("")
-
-
-class ValidatedTextField(MDTextField):
-    validation_type = ""  # specifies which input validation routine is performed when the user changes the text
-    value_valid = True  # Is set to false when the user gave an invalid input
-
-
-class ValidatedCheckBox(CheckBox):
-    validation_type = ""
-    value = True
-
-
-class dialog_connection_config(BoxLayout):
-    pass
-
-
-class FlowchartConnector(Widget):
-    pass
-
-
-class dialog_flowtype_definition(BoxLayout):
-    pass
-
-
-class dialog_image_selection(BoxLayout):
-    pass
-
-
-class dialog_magnitude_definition(BoxLayout):
-    pass
-
-
-class dialog_new_component(BoxLayout):
-    pass
-
-
-class dialog_new_connection(BoxLayout):
-    pass
-
-
-class dialog_new_flow(BoxLayout):
-    pass
-
-
-class dialog_new_scenario(BoxLayout):
-    pass
-
-
-class dialog_new_session(BoxLayout):
-    pass
-
-
-class dialog_timeseries_selection(BoxLayout):
-    pass
-
-
-class dialog_unit_definition(BoxLayout):
-    pass
-
-
-class dialog_update_scenario(BoxLayout):
-    pass
-
-
-class IconListItem(TwoLineAvatarListItem):
-    icon = StringProperty()
-
-
-class ImageDropDownItem(OneLineAvatarListItem):
-    source = StringProperty()
-    text = StringProperty()
-
-
-class connection_source_dropdown(DropDown):
-    pass
-
-
-class ParameterConfigItem(ThreeLineIconListItem):
-    def on_release(self):
-        print("JO")
-
-
-class RightButton(IRightBodyTouch, MDRaisedButton):
-    """Custom right container."""
-
-
-class ScenarioCard(MDCard):
-    scenario_key = StringProperty("")
-
-
-class Tab(BoxLayout, MDTabsBase):
-    pass
-
-
-class CanvasWidget(Widget):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        with self.canvas:
-            Color("#1D4276")
-            Color(0.5, 0.3, 0.8, 1)
-
-    def on_touch_up(self, touch):
-        """
-        This function identifies when the user clicken on the canvas without touching any objects. This is interpreted as thw wish to deselect any component and to return to the basis screen
-        """
-        if self.collide_point(*touch.pos):
-            if not any(child.collide_point(*touch.pos) for child in self.children):
-                app = MDApp.get_running_app()
-                app.initiate_asset_selection(None)
-
-    def update_rect(self, *args):
-        self.rect.pos = self.pos
-        self.rect.size = self.size
-
-
 class factory_GUIApp(MDApp):
     # TODO: checken ob das hier notwendig ist
     def __init__(self, **kwargs):
@@ -753,6 +624,9 @@ class factory_GUIApp(MDApp):
 
         # set unsaved changes to true
         self.unsaved_changes_on_session = True
+
+    def app_add_static_parameter_value(self):
+        add_static_parameter_value(self)
 
     def build(self):
         """
@@ -1497,6 +1371,8 @@ class factory_GUIApp(MDApp):
         # IMPORT session data
         with open(filepath) as file:
             self.session_data = yaml.load(file, Loader=yaml.SafeLoader)
+
+        self.session_data["session_path"] = os.path.dirname(filepath)
 
         # IMPORT blueprint including flowtypes and units
         try:
@@ -3256,6 +3132,9 @@ class factory_GUIApp(MDApp):
         )
         self.popup.open()
 
+    def show_parameter_config_dialog(self, caller):
+        parameter_config_dialog(self, caller)
+
     def show_scaling_selection_dialog(self, *args):
         def set_text(text):
             # this function returns the user selection to the object that the dialog has been called from
@@ -3485,63 +3364,6 @@ class factory_GUIApp(MDApp):
         self.menu.bind()
         self.menu.open()
 
-    def show_parameter_unit_selection_dialog(self, *args):
-        def set_text(text):
-            # this function returns the user selection to the object that the dialog has been called from
-            self.root.ids.textfield_custom_timeseries_unit.text = text
-            self.menu.dismiss()
-
-        # initialize empty list
-        dropdown_items = []
-
-        # append a dropdown item to the list
-        dropdown_items.append(
-            {
-                "viewclass": "OneLineListItem",
-                "text": "kW",
-                "on_release": lambda x="kW": set_text(x),
-            }
-        )
-        dropdown_items.append(
-            {
-                "viewclass": "OneLineListItem",
-                "text": "€",
-                "on_release": lambda x="€": set_text(x),
-            }
-        )
-        dropdown_items.append(
-            {
-                "viewclass": "OneLineListItem",
-                "text": "kWh",
-                "on_release": lambda x="kWh": set_text(x),
-            }
-        )
-        dropdown_items.append(
-            {
-                "viewclass": "OneLineListItem",
-                "text": "°C",
-                "on_release": lambda x="°C": set_text(x),
-            }
-        )
-        dropdown_items.append(
-            {
-                "viewclass": "OneLineListItem",
-                "text": "kg",
-                "on_release": lambda x="kg": set_text(x),
-            }
-        )
-
-        # create list widget
-        self.menu = MDDropdownMenu(
-            caller=self.root.ids.textfield_custom_timeseries_unit,
-            items=dropdown_items,
-            position="center",
-            width_mult=4,
-        )
-        # append widget to the UI
-        self.menu.bind()
-        self.menu.open()
-
     def update_scenario_parameter_list(self):
         """
         This function creates a list of all parameters that the user has to specify during scenario setup
@@ -3694,7 +3516,6 @@ class factory_GUIApp(MDApp):
                 "name"
             ].upper()
             self.root.ids.textfield_converter_name.text = self.selected_asset["name"]
-            print(self.selected_asset["description"])
             self.root.ids.textfield_converter_description.text = self.selected_asset[
                 "description"
             ]

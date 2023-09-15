@@ -1,0 +1,48 @@
+# This file defines the dialog window that pops up when the user clicks on a configurable parameter in the component configuration window
+
+<dialog_parameter_config>
+    size_hint: None, None
+    width:dp(800)
+    height:dp(700)
+    BoxLayout:
+        padding: 10
+        spacing: 10
+        orientation: "vertical"
+        MDLabel:
+            text: "Static Value"
+            font_style: "H6"
+            size_hint_y: None
+            height: dp(45)
+        MDTextField:
+            id: textfield_value
+            hint_text: "parameter value"
+        MDRaisedButton:
+            text: "Add"
+            on_release: app.app_add_static_parameter_value()
+
+        MDLabel:
+            text: "Timeseries"
+            font_style: "H6"
+            size_hint_y: None
+            height: dp(45)
+        MDLabel:
+            text: "COMING SOON"
+            size_hint_y: None
+            height: dp(45)
+
+        Widget:
+        MDRaisedButton:
+            text: "OK"
+            on_release: app.close_dialog()
+    MDCard:
+        elevation: 2
+        padding: 10
+        orientation: "vertical"
+        MDLabel:
+            text: "Parameter variations"
+            font_style: 'H5'
+            size_hint_y: None
+            height: dp(45)
+        ScrollView:
+            MDList:
+                id: list_parameter_variations

@@ -180,8 +180,11 @@ Screen:
                                                                 ParameterConfigItem:
                                                                     id: config_source_power_max
                                                                     text: "Maximum Output"
+                                                                    parameter: "power_max"
+                                                                    value_description: "Maximum Output Flowrate"
                                                                     secondary_text: "10kW"
                                                                     tertiary_text: "Static Value"
+                                                                    on_release: app.show_parameter_config_dialog(self)
                                                                     IconLeftWidgetWithoutTouch:
                                                                         icon: "numeric"
                                                                 ParameterConfigItem:
@@ -734,8 +737,7 @@ Screen:
                                                                         on_text: app.validate_textfield_input(self)
                                                                         #on_text: app.validate_thermalsystem(self)
                                                                         size_hint_x: .7
-                                                                    #MDCheckbox:
-                                                                    ValidatedCheckBox:
+                                                                    MDCheckbox:
                                                                         id: switch_thermalsystem_temperature_max
                                                                         validation_type: "thermalsystem_temperature"
                                                                         on_active: app.on_checkbox_active(*args)
@@ -1521,7 +1523,6 @@ Screen:
                                                                 width: dp(100)
                                                                 text: "Unit"
                                                                 pos_hint_y: .5
-                                                                on_release: app.show_parameter_unit_selection_dialog()
                                                             Widget
                                                         Widget
 
