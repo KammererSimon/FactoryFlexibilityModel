@@ -43,6 +43,7 @@ import factory_flexibility_model.io.session as session
 import factory_flexibility_model.ui.color as color
 import factory_flexibility_model.ui.flowtype_determination as fd
 from factory_flexibility_model.ui.dialogs.parameter_config_dialog import *
+from factory_flexibility_model.ui.dialogs.converter_ratio_dialog import *
 from factory_flexibility_model.ui.utility.custom_widget_classes import *
 
 # IMPORT 3RD PARTY PACKAGES
@@ -628,6 +629,8 @@ class factory_GUIApp(MDApp):
     def app_add_static_parameter_value(self):
         add_static_parameter_value(self)
 
+    def app_show_converter_ratio_dialog(self):
+        show_converter_ratio_dialog(self)
     def build(self):
         """
         This function is the main function that is called when creating a new instance of the GUI. It creates the Screen
@@ -2994,6 +2997,8 @@ class factory_GUIApp(MDApp):
         btn_true.bind(on_release=delete)
         self.dialog.open()
 
+
+
     def show_flowtype_config_dialog(self):
         """
         This function oipens the dialog for configuring flowtypes.
@@ -3003,6 +3008,7 @@ class factory_GUIApp(MDApp):
             title="Flowtype Definition",
             type="custom",
             content_cls=dialog_flowtype_definition(),
+            auto_dismiss=False
         )
 
         self.dialog.size_hint = (None, None)
@@ -3323,7 +3329,10 @@ class factory_GUIApp(MDApp):
         )
 
         self.dialog = MDDialog(
-            title="Unit definition", type="custom", content_cls=dialog_unit_definition()
+            title="Unit definition",
+        type="custom",
+        content_cls=dialog_unit_definition(),
+        auto_dismiss=False
         )
 
         self.dialog.size_hint = (None, None)
@@ -3490,6 +3499,7 @@ class factory_GUIApp(MDApp):
             ]:
                 textfield = getattr(self.root.ids, f"textfield_source_{parameter}")
                 if parameter in self.parameters[self.selected_asset["key"]].keys():
+
                     textfield.text = str(
                         self.parameters[self.selected_asset["key"]][parameter]
                     )
