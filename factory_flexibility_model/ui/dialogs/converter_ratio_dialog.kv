@@ -1,0 +1,81 @@
+# This file defines the dialog window that pops up when the user selects the ratio-config button within the converter config tab.
+# The dives an overview of incoming and outgoing connections to/from the selected converter and allows the user to specify all the weights of involved flowtypes
+
+<dialog_converter_ratios>
+    size_hint: None, None
+    width:dp(800)
+    height:dp(700)
+    orientation: "vertical"
+
+    MDLabel:
+        text: "ENERGY CONVERSION"
+        font_style: "H6"
+        size_hint_y: None
+        height: dp(50)
+    BoxLayout:
+        orientation: "horizontal"
+        ScrollView:
+            MDList:
+                id: list_converter_inputs_energy
+        Image:
+            id: image_converter_top
+            size_hint: (None, None)
+            height: dp(100)
+            width: dp(140)
+            pos_hint: {'center_y': 0.5}
+        ScrollView:
+            MDList:
+                id: list_converter_outputs_energy
+
+    MDLabel:
+        text: "MASS CONVERSION"
+        font_style: "H6"
+        size_hint_y: None
+        height: dp(50)
+    BoxLayout:
+        orientation: "horizontal"
+        ScrollView:
+            MDList:
+                id: list_converter_inputs_mass
+        Image:
+            id: image_converter_bottom
+            size_hint: (None, None)
+            height: dp(100)
+            width: dp(140)
+            pos_hint: {'center_y': 0.5}
+        ScrollView:
+            MDList:
+                id: list_converter_outputs_mass
+
+    BoxLayout:
+        padding: (10,10)
+        orientation: "horizontal"
+        size_hint_y: None
+        height: dp(50)
+        Widget:
+        MDFlatButton:
+            text: "Cancel"
+            on_release: app.close_dialog()
+        MDRaisedButton:
+            text: "Save Changes"
+            on_release: app.app_save_converter_ratios()
+            on_release: app.close_dialog()
+
+<TextfieldLeftIconListItem>
+    MDTextField:
+        id: list_item_textfield
+        pos_hint: {"center_y": .5, "right": .2}
+        size_hint: None, None
+        height: self.minimum_height
+        width: dp(60)
+        mode: "round"
+        helper_text_mode: "persistent"
+<TextfieldRightIconListItem>
+    MDTextField:
+        id: list_item_textfield
+        pos_hint: {"center_y": .5, "right": 1}
+        size_hint: None, None
+        height: self.minimum_height
+        width: dp(60)
+        mode: "round"
+        helper_text_mode: "persistent"
