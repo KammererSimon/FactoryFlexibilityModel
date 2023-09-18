@@ -631,6 +631,10 @@ class factory_GUIApp(MDApp):
 
     def app_show_converter_ratio_dialog(self):
         show_converter_ratio_dialog(self)
+
+    def app_save_converter_ratios(self):
+        save_converter_ratios(self)
+
     def build(self):
         """
         This function is the main function that is called when creating a new instance of the GUI. It creates the Screen
