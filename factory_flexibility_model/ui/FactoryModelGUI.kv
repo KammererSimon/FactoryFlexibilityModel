@@ -140,6 +140,30 @@ Screen:
                                                                 height: dp(50)
                                                                 width: dp(70)
                                                                 on_touch_down:  if self.collide_point(*args[1].pos): app.show_icon_selection_dropdown(self)
+                                                        MDLabel:
+                                                            text: "General"
+                                                            font_style: "H6"
+                                                            size_hint_y: None
+                                                            height: dp(30)
+                                                        MDTextField:
+                                                            id: textfield_source_name
+                                                            hint_text: "Name of the source"
+                                                            on_text: app.set_unsaved_changes_on_asset(True)
+                                                        MDTextField:
+                                                            id: textfield_source_description
+                                                            hint_text: "Description of the source"
+                                                            on_text: app.set_unsaved_changes_on_asset(True)
+                                                        MDTextField:
+                                                            id: textfield_source_flowtype
+                                                            hint_text: 'Delivered Flow'
+                                                            icon_right: "arrow-down-drop-circle-outline"
+                                                            on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
+                                                        MDLabel:
+                                                            text: "Operating Constraints"
+                                                            font_style: "H6"
+                                                            size_hint_y: None
+                                                            height: dp(30)
+
                                                         ScrollView:
                                                             do_scroll_y: True
                                                             do_scroll_x: False
@@ -150,32 +174,6 @@ Screen:
                                                                 size_hint_x: .8
                                                                 height: dp(900)
                                                                 spacing: dp(10)
-
-                                                                MDLabel:
-                                                                    text: "General"
-                                                                    font_style: "H6"
-                                                                    size_hint_y: None
-                                                                    height: dp(30)
-
-                                                                MDTextField:
-                                                                    id: textfield_source_name
-                                                                    hint_text: "Name of the source"
-                                                                    on_text: app.set_unsaved_changes_on_asset(True)
-                                                                MDTextField:
-                                                                    id: textfield_source_description
-                                                                    hint_text: "Description of the source"
-                                                                    on_text: app.set_unsaved_changes_on_asset(True)
-                                                                MDTextField:
-                                                                    id: textfield_source_flowtype
-                                                                    hint_text: 'Delivered Flow'
-                                                                    icon_right: "arrow-down-drop-circle-outline"
-                                                                    on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
-
-                                                                MDLabel:
-                                                                    text: "Operating Constraints"
-                                                                    font_style: "H6"
-                                                                    size_hint_y: None
-                                                                    height: dp(30)
 
                                                                 ParameterConfigItem:
                                                                     id: config_source_power_max
@@ -230,7 +228,6 @@ Screen:
                                                                     IconLeftWidgetWithoutTouch:
                                                                         icon: "chart-line"
 
-
                                                                 ValidatedTextField:
                                                                     id: textfield_source_power_max
                                                                     hint_text: 'Maximum Output Power'
@@ -262,8 +259,6 @@ Screen:
                                                                     helper_text_mode: "on_error"
                                                                     validation_type: "source"
                                                                     on_text: app.validate_textfield_input(self)
-
-
 
                                                                 MDLabel:
                                                                     text: "Price of utilization"
@@ -479,38 +474,60 @@ Screen:
                                                                 width: dp(70)
                                                                 on_touch_down: if self.collide_point(*args[1].pos):  app.show_icon_selection_dropdown(self)
 
+                                                        MDLabel:
+                                                            text: "General"
+                                                            font_style: "H6"
+                                                            size_hint_y: None
+                                                            height: dp(30)
+
+                                                        MDTextField:
+                                                            id: textfield_converter_name
+                                                            hint_text: "Name"
+                                                            on_text: app.set_unsaved_changes_on_asset(True)
+                                                        MDTextField:
+                                                            id: textfield_converter_description
+                                                            hint_text: "Description"
+                                                            on_text: app.set_unsaved_changes_on_asset(True)
+
+                                                        BoxLayout:
+                                                            padding: (10,10)
+                                                            orientation: "horizontal"
+                                                            size_hint_y: None
+                                                            height: dp(50)
+                                                            Widget:
+                                                            MDFlatButton:
+                                                                text: "Revert Changes"
+                                                                on_release: app.update_config_tab()
+                                                            MDRaisedButton:
+                                                                text: "Save Changes"
+                                                                on_release: app.save_changes_on_converter()
+
+                                                        MDLabel:
+                                                            text: "Conversion Ratios"
+                                                            font_style: "H6"
+                                                            size_hint_y: None
+                                                            height: dp(30)
+                                                        OneLineIconListItem:
+                                                            text: "Show Input/Output Ratios"
+                                                            on_release: app.app_show_converter_ratio_dialog()
+                                                            IconLeftWidget:
+                                                                icon: "cog"
+
+                                                        MDLabel:
+                                                            text: "Operating Constraints"
+                                                            font_style: "H6"
+                                                            size_hint_y: None
+                                                            height: dp(30)
                                                         ScrollView:
                                                             do_scroll_y: True
                                                             do_scroll_x: False
                                                             scroll_type:['bars', 'content']
-
                                                             GridLayout
                                                                 cols: 1
                                                                 size_hint_y: None
                                                                 size_hint_x: .8
                                                                 height: dp(1000)
                                                                 spacing: dp(10)
-
-                                                                MDLabel:
-                                                                    text: "General"
-                                                                    font_style: "H6"
-                                                                    size_hint_y: None
-                                                                    height: dp(30)
-
-                                                                MDTextField:
-                                                                    id: textfield_converter_name
-                                                                    hint_text: "Name"
-                                                                    on_text: app.set_unsaved_changes_on_asset(True)
-                                                                MDTextField:
-                                                                    id: textfield_converter_description
-                                                                    hint_text: "Description"
-                                                                    on_text: app.set_unsaved_changes_on_asset(True)
-
-                                                                MDLabel:
-                                                                    text: "Operating Constraints"
-                                                                    font_style: "H6"
-                                                                    size_hint_y: None
-                                                                    height: dp(30)
 
                                                                 ValidatedTextField:
                                                                     id: textfield_converter_power_max
@@ -552,12 +569,6 @@ Screen:
                                                                     validation_type: "converter_rampdown"
                                                                     on_text: app.validate_textfield_input(self)
 
-                                                                MDLabel:
-                                                                    text: "Efficiency"
-                                                                    font_style: "H6"
-                                                                    size_hint_y: None
-                                                                    height: dp(30)
-
                                                                 ValidatedTextField:
                                                                     id: textfield_converter_eta_max
                                                                     hint_text: "Maximum Efficiency [%]"
@@ -590,19 +601,7 @@ Screen:
                                                                     validation_type: "converter_delta_eta_low"
                                                                     on_text: app.validate_textfield_input(self)
 
-                                                        BoxLayout:
-                                                            padding: (10,10)
-                                                            orientation: "horizontal"
-                                                            size_hint_y: None
-                                                            height: dp(50)
-                                                            Widget:
-                                                            MDFlatButton:
-                                                                text: "Revert Changes"
-                                                                on_release: app.update_config_tab()
 
-                                                            MDRaisedButton:
-                                                                text: "Save Changes"
-                                                                on_release: app.save_changes_on_converter()
         # THERMALSYSTEM CONFIG SCREEN ##################################################################################
                                                 Screen:
                                                     name: "thermalsystem_config"
