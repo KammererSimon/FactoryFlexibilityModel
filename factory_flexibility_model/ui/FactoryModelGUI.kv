@@ -111,7 +111,7 @@ Screen:
                                                             text: "Unit Definitions"
                                                             icon: "cog"
                                                             line_color: 1, 1, 1, 1
-                                                            on_release: app.show_unit_config_dialog()
+                                                            on_release: app.app_show_unit_config_dialog()
                                                             pos_hint: {"center_x": .5, "center_y": .5}
 
         # SOURCE CONFIG SCREEN #########################################################################################
@@ -1583,72 +1583,73 @@ Screen:
 ## LEFT MAIN MENU ######################################################################################################
                 MDNavigationDrawer:
                     id: main_menu
-                    BoxLayout:
-                        orientation: "vertical"
-                        spacing: "8dp"
-                        padding: "8dp"
-                        Image:
-                            source: "Assets\\logo_small.png"
-                            height: 200
-                            size_hint_y: None
 
-                        MDLabel:
-                            text: "Factory Model"
-                            font_style: 'H5'
-                            size_hint_y: None
-                            height: self.texture_size[1]
-                        MDLabel:
-                            text: "Main Menu"
-                            font_style: 'Caption'
-                            size_hint_y: None
-                            height: self.texture_size[1]
-
-                        MDList:
-                            OneLineIconListItem:
-                                text: "New Session"
-                                on_release: app.new_session("start")
-                                IconLeftWidget:
-                                    icon: "new-box"
-                            OneLineIconListItem:
-                                text: "Save Session as"
-                                on_release: app.save_session_as()
-                                IconLeftWidget:
-                                    icon: "content-save-plus"
-                            OneLineIconListItem:
-                                text: "Save Session "
-                                on_release: app.save_session()
-                                IconLeftWidget:
-                                    icon: "content-save"
-                            OneLineIconListItem:
-                                text: "Open Session"
-                                on_release: app.load_session()
-                                IconLeftWidget:
-                                    icon: "folder-open"
-                            OneLineIconListItem:
-                                text: "Import Timeseries Data"
-                                on_release: app.import_timeseries()
-                                IconLeftWidget:
-                                    icon: "import"
-                        Widget
-
-                        Image:
-                            source: "Assets\\logo_grk.png"
-                            height: 100
-                            size_hint_y: None
-
-                        Image:
-                            source: "Assets\\ie3.png"
-                            height: 200
-                            size_hint_y: None
-
-                        MDLabel:
-                            id: label_version
-                            size_hint_y: None
-                            height: dp(50)
-                        MDLabel:
-                            size_hint_y: None
-                            height: dp(50)
-                            text: "simon.kammerer@tu-dortmund.de"
+#                    BoxLayout:
+#                        orientation: "vertical"
+#                        spacing: "8dp"
+#                        padding: "8dp"
+#                        Image:
+#                            source: "Assets\\logo_small.png"
+#                            height: 200
+#                            size_hint_y: None
+#
+#                        MDLabel:
+#                            text: "Factory Model"
+#                            font_style: 'H5'
+#                            size_hint_y: None
+#                            height: self.texture_size[1]
+#                        MDLabel:
+#                            text: "Main Menu"
+#                            font_style: 'Caption'
+#                            size_hint_y: None
+#                            height: self.texture_size[1]
+#
+#                        MDList:
+#                            OneLineIconListItem:
+#                                text: "New Session"
+#                                on_release: app.new_session("start")
+#                                IconLeftWidget:
+#                                    icon: "new-box"
+#                            OneLineIconListItem:
+#                                text: "Save Session as"
+#                                on_release: app.save_session_as()
+#                                IconLeftWidget:
+#                                    icon: "content-save-plus"
+#                            OneLineIconListItem:
+#                                text: "Save Session "
+#                                on_release: app.save_session()
+#                                IconLeftWidget:
+#                                    icon: "content-save"
+#                            OneLineIconListItem:
+#                                text: "Open Session"
+#                                on_release: app.load_session()
+#                                IconLeftWidget:
+#                                    icon: "folder-open"
+#                            OneLineIconListItem:
+#                                text: "Import Timeseries Data"
+#                                on_release: app.import_timeseries()
+#                                IconLeftWidget:
+#                                    icon: "import"
+#                        Widget
+#
+#                        Image:
+#                            source: "Assets\\logo_grk.png"
+#                            height: 100
+#                            size_hint_y: None
+#
+#                        Image:
+#                            source: "Assets\\ie3.png"
+#                            height: 200
+#                            size_hint_y: None
+#
+#                        MDLabel:
+#                            id: label_version
+#                            size_hint_y: None
+#                            height: dp(50)
+#                        MDLabel:
+#                            size_hint_y: None
+#                            height: dp(50)
+#                            text: "simon.kammerer@tu-dortmund.de"
 
 
 # ADDITIONAL LAYOUTS ###################################################################################################
@@ -1793,144 +1794,6 @@ Screen:
         text: "USE"
         halign: "right"
         on_release: app.close_dialog()
-
-#       UNIT DEFINITION DIALOG ####################################################################################
-<dialog_unit_definition>
-    size_hint: None, None
-    height:dp(800)
-    width:dp(900)
-    orientation: "vertical"
-    MDBoxLayout:
-        orientation: "horizontal"
-        spacing: dp(20)
-        MDBoxLayout:
-            size_hint_x: .6
-            orientation: "vertical"
-            ScrollView:
-                MDList:
-                    id: list_units
-        MDCard:
-            md_bg_color: .875, .875, .875, 1
-            orientation: "vertical"
-            padding: dp(20)
-            spacing: dp(10)
-            elevation: 1
-            MDBoxLayout:
-                orientation: "horizontal"
-                size_hint_y: None
-                height: dp(30)
-                MDLabel:
-                    id: label_unit_name
-                    font_style: 'H5'
-                MDIconButton:
-                    id: button_unit_delete
-                    icon: "delete"
-                    halign: "right"
-                    on_release: app.delete_unit()
-            MDLabel:
-                text: "Name"
-                size_hint_y: None
-                height: dp(30)
-            MDTextField:
-                id: textfield_unit_name
-                hint_text: 'Specify a name for the unit'
-                size_hint_y: None
-                mode: "rectangle"
-                height: dp(30)
-                helper_text_mode: "on_error"
-                helper_text: "Name is already assigned within the factory"
-                on_text: button_unit_save.disabled = False
-            MDLabel:
-                text: "Type"
-                size_hint_y: None
-                height: dp(30)
-            MDBoxLayout:
-                orientation: "horizontal"
-                size_hint_y: None
-                height: dp(30)
-                MDCheckbox:
-                    id: switch_unit_mass
-                    group: "quantity_type"
-                    on_active: button_unit_save.disabled = False
-                MDLabel:
-                    text: "Mass"
-                MDCheckbox:
-                    id: switch_unit_energy
-                    group: "quantity_type"
-                    on_active: button_unit_save.disabled = False
-                MDLabel:
-                    text: "Energy"
-                MDCheckbox:
-                    id: switch_unit_other
-                    group: "quantity_type"
-                    on_active: button_unit_save.disabled = False
-                MDLabel:
-                    text: "other"
-            MDLabel:
-                text: "Conversion Factor"
-                size_hint_y: None
-                height: dp(30)
-            MDTextField:
-                id: textfield_unit_conversion_factor
-                hint_text: 'Factor to convert the unit into kW'
-                size_hint_y: None
-                height: dp(30)
-                mode: "rectangle"
-                on_text: button_unit_save.disabled = False
-            MDRaisedButton:
-                id: button_unit_save
-                text: "Save Changes"
-                on_release: app.save_changes_on_unit()
-                disabled: True
-            MDCard:
-                style: "filled"
-                orientation: "vertical"
-                padding: dp(20)
-                MDBoxLayout:
-                    orientation: "horizontal"
-                    MDLabel:
-                        text: "Prefixes"
-                        size_hint_y: None
-                        height: dp(30)
-                        font_style: 'H6'
-                    MDIconButton:
-                        id: button_magnitude_add
-                        icon: "plus"
-                        on_release: app.show_magnitude_creation_popup()
-                MDBoxLayout:
-                    size_hint_y: None
-                    height: dp(260)
-                    id: table_container
-
-    MDRaisedButton:
-        text: "CONFIRM"
-        on_release: app.close_dialog()
-
-
-<dialog_magnitude_definition>
-    size_hint_y: None
-    height:dp(250)
-    orientation:"vertical"
-    MDBoxLayout:
-        orientation: "horizontal"
-        MDTextField:
-            id: textfield_magnitude_dimension
-            hint_text: 'Dimension Factor'
-            helper_text: "The dimension value must be numerical!"
-        MDTextField:
-            id: textfield_magnitude_flowtype
-            hint_text: 'Unit of Flow'
-        MDTextField:
-            id: textfield_magnitude_flowrate
-            hint_text: 'Unit of Flowrate'
-    MDBoxLayout:
-        orientation: "horizontal"
-        MDRaisedButton:
-            text: "Cancel"
-            on_release: app.close_popup()
-        MDRaisedButton:
-            text: "Add"
-            on_release: app.add_magnitude_to_unit()
 
 #       FLOWTYPE DEFINITION DIALOG ####################################################################################
 
