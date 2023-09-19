@@ -1,52 +1,28 @@
 import copy
-import os
 from collections import defaultdict
-from tkinter import filedialog
-from tkinter.messagebox import askyesno
 
-import numpy as np
 import pandas as pd
-import yaml
 from kivy.core.window import Window
-from kivy.graphics import Color, Ellipse, Line, Triangle
-from kivy.lang import Builder
-from kivy.metrics import dp
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.uix.image import Image
+from kivy.graphics import Ellipse, Line, Triangle
 from kivy_garden.graph import LinePlot
-from kivymd.app import MDApp
-from kivymd.uix.button import MDFillRoundFlatIconButton, MDFlatButton, MDRaisedButton
-from kivymd.uix.datatables import MDDataTable
-from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDFillRoundFlatIconButton
 from kivymd.uix.label import MDLabel
 from kivymd.uix.list import (
-    IconLeftWidget,
-    IconLeftWidgetWithoutTouch,
-    IconRightWidget,
     ImageLeftWidgetWithoutTouch,
-    OneLineIconListItem,
     OneLineListItem,
-    TwoLineAvatarIconListItem,
-    TwoLineAvatarListItem,
-    TwoLineIconListItem,
     TwoLineListItem,
 )
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.pickers import MDColorPicker
-from kivymd.uix.snackbar import Snackbar
 
-import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.factory.Flowtype as ft
-import factory_flexibility_model.factory.Unit as Unit
-import factory_flexibility_model.io.session as session
 import factory_flexibility_model.ui.color as color
 import factory_flexibility_model.ui.flowtype_determination as fd
+from factory_flexibility_model.ui.dialogs.converter_ratio_dialog import *
 from factory_flexibility_model.ui.dialogs.parameter_config_dialog import *
-from factory_flexibility_model.ui.dialogs.unit_definition_dialog import *
-from factory_flexibility_model.ui.dialogs.left_main_menu import *
+from factory_flexibility_model.ui.layouts.main_menu import *
+from factory_flexibility_model.ui.utility.basic_session_functions import *
 from factory_flexibility_model.ui.utility.custom_widget_classes import *
-
 
 # IMPORT 3RD PARTY PACKAGES
 
@@ -379,7 +355,13 @@ class factory_GUIApp(MDApp):
         super().__init__(**kwargs)
 
     def on_start(self):
-        self.root.ids.main_menu.add_widget(left_main_menu())
+        """
+        This function is automatically called by the __init_ method of the app class.
+        In the context of this app it is used to add custom layouts to some widgets of the Screen.
+        Added layouts include:
+        - left_main_menu() into the navigation drawer in the main screen
+        """
+        self.root.ids.main_menu.add_widget(main_menu())
 
     def abort_new_connection(self, touch):
         self.connection_edit_mode = False
@@ -597,6 +579,24 @@ class factory_GUIApp(MDApp):
     def app_add_unit(self, *args):
         add_unit(self, *args)
 
+    def app_load_session(self):
+        """
+        This function calls the "load_session" method from main_menu.py
+        """
+        load_session(self)
+
+    def app_new_session(self):
+        """
+        This function calls the "new_session" method from main_menu.py
+        """
+        new_session(self, "start")
+
+    def app_save_session(self):
+        """
+        This function calls the "save_session" method from main_menu.py
+        """
+        save_session(self)
+
     def app_update_unit_list(self):
         update_unit_list(self)
 
@@ -801,32 +801,6 @@ class factory_GUIApp(MDApp):
 
         # session contains unsaved chaanges now
         self.unsaved_changes_on_session = True
-
-    # def create_main_menu(self, master):
-    #     # TODO: auslagern in .kv file
-    #     self.button_new_session = Button(
-    #         text="New Session", background_color=self.main_color
-    #     )
-    #     self.button_new_session.bind(on_press=self.new_session)
-    #     master.add_widget(self.button_new_session)
-    #
-    #     self.button_open_session = Button(
-    #         text="Open Session", background_color=self.main_color
-    #     )
-    #     self.button_open_session.bind(on_press=self.load_session)
-    #     master.add_widget(self.button_open_session)
-    #
-    #     self.button_save_session = Button(
-    #         text="Save Session", background_color=self.main_color
-    #     )
-    #     self.button_save_session.bind(on_press=self.save_session)
-    #     master.add_widget(self.button_save_session)
-    #
-    #     self.button_create_demo_session = Button(
-    #         text="Create Demo Session", background_color=self.main_color
-    #     )
-    #     self.button_create_demo_session.bind(on_press=self.create_demo_session)
-    #     master.add_widget(self.button_create_demo_session)
 
     def decrease_scaling_factor(self):
         self.session_data["display_scaling_factor"] = (
@@ -1306,121 +1280,6 @@ class factory_GUIApp(MDApp):
             description="Built in default flowtype used as a fallback option for unspecified situations",
         )
 
-    # def load_session(self):
-    #     """
-    #     This function loads a session from a file
-    #     """
-    #
-    #     # ask for user confirmation if there are unsaved changes to the currently opened factory
-    #     if self.unsaved_changes_on_session:
-    #         if not askyesno(
-    #             title="Unsaved Changes",
-    #             message="There are unsaved changes in the currently opened factory which will be deleted. "
-    #             "Do you want to continue?",
-    #         ):
-    #             return
-    #
-    #     # ask for filename
-    #     filetype = [("ffm", "*.ffm")]
-    #     filepath = filedialog.askopenfilename(
-    #         defaultextension=filetype, filetypes=filetype
-    #     )
-    #
-    #     # make sure the user didn't abort the file selection or selected something invalid
-    #     if filepath == None or filepath == "":
-    #         return
-    #
-    #     # IMPORT session data
-    #     with open(filepath) as file:
-    #         self.session_data = yaml.load(file, Loader=yaml.SafeLoader)
-    #
-    #     self.session_data["session_path"] = os.path.dirname(filepath)
-    #
-    #     # IMPORT blueprint including flowtypes and units
-    #     try:
-    #         blueprint_new = bp.Blueprint()
-    #         blueprint_new.import_from_file(self.session_data["session_path"])
-    #     except:
-    #         Snackbar(
-    #             text=f"ERROR: Importing Blueprint from {self.session_data['session_path']} failed!"
-    #         ).open()
-    #         return
-    #
-    #     # IMPORT parameters
-    #     try:
-    #         # open the given file
-    #         with open(f"{self.session_data['session_path']}\\parameters.txt") as file:
-    #             parameters_new = {}
-    #             for component_key in blueprint_new.components.keys():
-    #                 parameters_new[component_key] = {}
-    #
-    #             # initialize a counter that ensures, that every parameter within the factory gets a unique key assigned
-    #             value_key = 0
-    #             # iterate over all lines in the file
-    #             for line in file:
-    #                 # split line into key and value
-    #                 key, value = line.strip().split("\t")
-    #                 # split key into component and parameter
-    #                 key = key.split("/")
-    #                 # make sure that the parameters dict has an entry for the component and parameter
-    #                 if key[1] not in parameters_new[key[0]].keys():
-    #                     parameters_new[key[0]][key[1]] = {}
-    #                 # add entry to parameters-dict
-    #                 parameters_new[key[0]][key[1]][value_key] = float(value.replace(",", "."))
-    #                 # increment value_key to prevent double usage of keys
-    #                 value_key += 1
-    #     except:
-    #         Snackbar(
-    #             text=f"The given parameters.txt-config file is invalid, has a wrong format or is corrupted! ({self.session_data['session_path']}\\parameters.txt)"
-    #         ).open()
-    #         return
-    #
-    #     # IMPORT timeseries
-    #     try:
-    #         # open the given file
-    #         with open(f"{self.session_data['session_path']}\\timeseries.txt") as file:
-    #             timeseries_new = {}
-    #             # iterate over all lines in the file
-    #             for line in file:
-    #                 # parse current line
-    #                 items = line.split("\t")
-    #
-    #                 # first item of the line is the key
-    #                 key = items[0].split("/")
-    #
-    #                 # remaining line is the value array
-    #                 values = [float(x.replace(",", ".")) for x in items[1:]]
-    #
-    #                 # add a component entry in the parameters dict if this is the first setting for a component
-    #                 if not key[0] in timeseries_new:
-    #                     timeseries_new[key[0]] = {}
-    #                 # add entry to parameters-dict
-    #                 timeseries_new[key[0]][key[1]] = values
-    #     except:
-    #         Snackbar(
-    #             text=f"The given timeseries.txt-config file is invalid, has a wrong format or is corrupted! ({self.session_data['session_path']}\\timeseries.txt)"
-    #         ).open()
-    #         return
-    #
-    #     # Did all imports work till here? -> Overwrite internal attributes
-    #     self.blueprint = blueprint_new
-    #     self.parameters = parameters_new
-    #     self.timeseries = timeseries_new
-    #
-    #     # There are no more unsaved changes now...
-    #     self.unsaved_changes_on_session = False
-    #     self.unsaved_changes_on_asset = False
-    #
-    #     # there is no component selected initially
-    #     self.selected_asset = None
-    #
-    #     # update the GUI to display the data
-    #     self.root.ids.scenario_screens.current = "scenario_selection_screen"
-    #     self.root.ids.asset_config_screens.current = "welcome_screen"
-    #     self.root.ids.label_session_name.text = self.blueprint.info["name"]
-    #     self.initialize_visualization()
-    #     self.update_flowtype_list()
-
     def new_scenario(self, *args, **kwargs):
         """
         This function creates a new empty scenario within the current session
@@ -1502,173 +1361,6 @@ class factory_GUIApp(MDApp):
 
         # session contains unsaved changes now:
         self.unsaved_changes_on_session = True
-
-    # def new_session(self, state):
-    #     """
-    #     This function contains everything related to the procedure of creating a new session.
-    #     There are different paths that the function can take whoch are specified by "state".
-    #     Some paths end up showing user selection screens that then call the function again with a different path.
-    #     """
-    #
-    #     # create partial functions for self recalls (necessary to suppres initial callbacks on .bind())
-    #     def create(instance):
-    #         self.new_session("create")
-    #
-    #     def safe(instance):
-    #         self.new_session("safe")
-    #
-    #     def getname(instance):
-    #         self.new_session("getname")
-    #
-    #     # Case distinction...
-    #     if state == "start":  # user clicked on "new session"
-    #         # First: Ask for user confirmation if there are unsaved changes to the currently opened factory
-    #         if self.unsaved_changes_on_session:
-    #             # create dialog
-    #             btn_cancel = MDFlatButton(text="Cancel")
-    #             btn_dismiss = MDRaisedButton(
-    #                 text="Dismiss changes and continue", md_bg_color="red"
-    #             )
-    #             btn_save = MDRaisedButton(text="Save changes and continue")
-    #             self.dialog = MDDialog(
-    #                 title="Unsaved changes on session",
-    #                 text="There are unsaved changes within the current session which will be deleted. ",
-    #                 buttons=[btn_cancel, btn_dismiss, btn_save],
-    #             )
-    #             # bind callbacks to buttons
-    #             btn_cancel.bind(on_release=self.dialog.dismiss)  # abort the procedure
-    #             btn_dismiss.bind(
-    #                 on_release=getname
-    #             )  # recall the function with the advice to directly create a new factory this time
-    #             btn_save.bind(
-    #                 on_release=safe
-    #             )  # recall the function with the advice to first safe the session
-    #             self.dialog.open()
-    #         else:
-    #             self.new_session("getname")
-    #
-    #     if (
-    #         state == "safe"
-    #     ):  # user wants the current layout to be saved first before continuing with new session
-    #         # close the warn dialog
-    #         if hasattr(self, "dialog"):
-    #             self.dialog.dismiss()
-    #
-    #         # safe the session
-    #         self.save_session()
-    #
-    #         # recall the function with the advice to create new session
-    #         self.new_session("getname")
-    #
-    #     if state == "getname":  # create a new session
-    #         # close the previous dialog
-    #         if hasattr(self, "dialog"):
-    #             if not self.dialog == None:
-    #                 self.dialog.dismiss()
-    #
-    #         # create dialog
-    #         btn_false = MDFlatButton(text="CANCEL")
-    #         btn_true = MDRaisedButton(text="CREATE NEW SESSION")
-    #         self.dialog = MDDialog(
-    #             title="New Session",
-    #             buttons=[btn_false, btn_true],
-    #             type="custom",
-    #             content_cls=dialog_new_session(),
-    #         )
-    #         # bind callbacks to buttons
-    #         btn_true.bind(on_release=create)
-    #         btn_false.bind(on_release=self.dialog.dismiss)
-    #         self.dialog.open()
-    #
-    #     if state == "create":  # create a new session
-    #         # get requested name, description and directory
-    #         session_name = self.dialog.content_cls.ids.textfield_new_session_name.text
-    #         session_description = (
-    #             self.dialog.content_cls.ids.textfield_new_session_description.text
-    #         )
-    #         try:
-    #             path = self.dialog.content_cls.ids.filechooser_new_session.selection[0]
-    #         except:
-    #             path = rf"{os.getcwd()}\sessions"
-    #
-    #         # close the previous dialog
-    #         self.dialog.dismiss()
-    #
-    #         # create the new session directory
-    #         session.create_session_folder(path, session_name=session_name)
-    #         self.session_data["session_path"] = rf"{path}\{session_name}"
-    #
-    #         # create an empty blueprint and add the given information
-    #         self.blueprint = bp.Blueprint()
-    #         self.blueprint.info["name"] = session_name
-    #         self.blueprint.info["description"] = session_description
-    #
-    #         # initialize units and flowtypes
-    #         self.initialize_units_and_flowtypes()
-    #
-    #         # set the selected asset to none
-    #         self.selected_asset = None
-    #
-    #         # initialize the GUI
-    #         self.initialize_visualization()
-    #         self.update_flowtype_list()
-    #         self.root.ids.asset_config_screens.current = "welcome_screen"
-    #         self.root.ids.label_session_name.text = session_name
-    #
-    #         # New session has not been saved yet
-    #         self.unsaved_changes_on_session = True
-    #         self.unsaved_changes_on_asset = False
-    #
-    #         # reset scenarios
-    #         self.scenarios = {}
-    #         self.root.ids.grid_scenarios.clear_widgets()
-    #
-    #         # inform the user
-    #         Snackbar(
-    #             text=f"New Session '{session_name}' created under '{self.session_data['session_path']}'"
-    #         ).open()
-    #
-    # def save_session(self):
-    #     """
-    #     This function saves the current session within the session_path
-    #     """
-    #     # make sure that there is a factory to save:
-    #     if len(self.blueprint.components) < 2 or len(self.blueprint.connections) < 1:
-    #         # create dialog
-    #         btn_ok = MDFlatButton(text="OK")
-    #         self.dialog = MDDialog(
-    #             title="Insufficient Components",
-    #             text="There is no factory to safe yet! Add at least one flow, two components and a connection before saving.",
-    #             buttons=[btn_ok],
-    #         )
-    #         btn_ok.bind(on_release=self.dialog.dismiss)
-    #         self.dialog.open()
-    #         return
-    #
-    #     # save session data
-    #     with open(
-    #         f"{self.session_data['session_path']}\\{self.blueprint.info['name']}.ffm",
-    #         "w",
-    #     ) as file:
-    #         yaml.dump(self.session_data, file)
-    #
-    #     # save current blueprint
-    #     self.blueprint.save(path=self.session_data["session_path"])
-    #
-    #     # save parameters
-    #     with open(f"{self.session_data['session_path']}\\parameters.txt", "w") as file:
-    #         for key_outer, inner_dict in self.parameters.items():
-    #             for key_inner, values in inner_dict.items():
-    #                 for value in values.values():
-    #                     line = f"{key_outer}/{key_inner}\t{value}\n"
-    #                     file.write(line)
-    #
-    #     # There are no more unsaved changes now...
-    #     self.unsaved_changes_on_session = False
-    #
-    #     Snackbar(
-    #         text=f"Session successfully saved at {self.session_data['session_path']}"
-    #     ).open()
 
     def save_session_as(self):
         """
@@ -2843,7 +2535,7 @@ class factory_GUIApp(MDApp):
             title="Flowtype Definition",
             type="custom",
             content_cls=dialog_flowtype_definition(),
-            auto_dismiss=False
+            auto_dismiss=False,
         )
 
         self.dialog.size_hint = (None, None)
@@ -2962,6 +2654,7 @@ class factory_GUIApp(MDApp):
             image_tile.bind()
             self.dialog.content_cls.ids.image_grid.add_widget(image_tile)
         self.dialog.open()
+
     def show_image_selection_dialog(self):
         """
         This function displays a dialog with all predefined scenario artworks for the user
@@ -4671,50 +4364,3 @@ class factory_GUIApp(MDApp):
         # if tmin > tmax:
         #     textfield.helper_text("...")
         #     return
-
-    """
-    def on_checkbox_active(self, checkbox, textfield, value):
-        # pass
-        # Set unsaved changes on asset to True
-        self.unsaved_changes_on_asset = True
-
-        # assume value as invalid
-        #textfield.value_valid = False
-        #textfield.error = True
-        #checkbox.active = False
-
-        #textfield.helper_text = "ok"
-
-        self.root.ids.textfield_thermalsystem_temperature_max.helper_text = "ok"
-        print(self.root.ids.textfield_thermalsystem_temperature_max.helper_text)
-        value = False
-        #print(textfield.helper_text)
-        #checkbox.active = False
-
-
-        # check for the required validation type and perform checks accordingly
-        if textfield.validation_type in ("thermalsystem_temperature_start", "thermalsystem_temperature_ambient", "thermalsytem_temperature_max", "thermalsystem_temperature_min"):
-            if input < -273:
-                textfield.helper_text = "Input has to be greater than -273°C"
-                return
-            elif self.root.ids.textfield_thermalsystem_temperature_max.text < self.root.ids.textfield_thermalsystem_temperature_min.text:
-                textfield.helper_text = "temperature max should be higher than temperature min"
-                return
-            elif self.root.ids.textfield_thermalsystem_temperature_start.text < self.root.ids.textfield_thermalsystem_temperature_min.text or self.root.ids.textfield_thermalsystem_temperature_start.text > self.root.ids.textfield_thermalsystem_temperature_max.text:
-                textfield.helper_text = "temperature start should be in between of temperatrure max and min"
-                return
-
-        # check for the required validation type and perform checks accordingly
-        if checkbox.validation_type in ("thermalsystem_temperature_max"):
-             if value:
-                self.root.ids.textfield_thermalsystem_temperature_max.helper_text = "Checkbox is active"
-             elif value:
-                self.root.ids.textfield_thermalsystem_temperature_max.helper_text = "Checkbox is not active"
-        else:
-           self.root.ids.textfield_thermalsystem_temperature_max.helper_text = "Checkbox is not active"
-
-        # all checks passed? set value to be valid
-        self.root.ids.textfield_thermalsystem_temperature_min.value_valid = True
-        self.root.ids.textfield_thermalsystem_temperature_min.error = False
-        #print(self.root.ids.switch_thermalsystem_temperature_min.active)
-    """
