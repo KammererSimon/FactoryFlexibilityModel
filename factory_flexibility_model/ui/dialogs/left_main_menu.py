@@ -1,49 +1,13 @@
 # IMPORTS
-import copy
 import os
-from collections import defaultdict
 from tkinter import filedialog
 from tkinter.messagebox import askyesno
 
-import numpy as np
-import pandas as pd
 import yaml
-from kivy.core.window import Window
-from kivy.graphics import Color, Ellipse, Line, Triangle
-from kivy.lang import Builder
-from kivy.metrics import dp
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.uix.image import Image
-from kivy_garden.graph import LinePlot
-from kivymd.app import MDApp
-from kivymd.uix.button import MDFillRoundFlatIconButton, MDFlatButton, MDRaisedButton
-from kivymd.uix.datatables import MDDataTable
-from kivymd.uix.dialog import MDDialog
-from kivymd.uix.label import MDLabel
-from kivymd.uix.list import (
-    IconLeftWidget,
-    IconLeftWidgetWithoutTouch,
-    IconRightWidget,
-    ImageLeftWidgetWithoutTouch,
-    OneLineIconListItem,
-    OneLineListItem,
-    TwoLineAvatarIconListItem,
-    TwoLineAvatarListItem,
-    TwoLineIconListItem,
-    TwoLineListItem,
-)
-from kivymd.uix.menu import MDDropdownMenu
-from kivymd.uix.pickers import MDColorPicker
-from kivymd.uix.snackbar import Snackbar
+from kivymd.uix.button import MDFlatButton
 
 import factory_flexibility_model.factory.Blueprint as bp
-import factory_flexibility_model.factory.Flowtype as ft
-import factory_flexibility_model.factory.Unit as Unit
 import factory_flexibility_model.io.session as session
-import factory_flexibility_model.ui.color as color
-import factory_flexibility_model.ui.flowtype_determination as fd
-from factory_flexibility_model.ui.dialogs.parameter_config_dialog import *
 from factory_flexibility_model.ui.dialogs.unit_definition_dialog import *
 from factory_flexibility_model.ui.utility.custom_widget_classes import *
 

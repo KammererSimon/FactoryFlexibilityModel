@@ -16,8 +16,8 @@ from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.pickers import MDColorPicker
 
 import factory_flexibility_model.factory.Flowtype as ft
-import factory_flexibility_model.ui.color as color
-import factory_flexibility_model.ui.flowtype_determination as fd
+import factory_flexibility_model.ui.utility.color as color
+import factory_flexibility_model.ui.utility.flowtype_determination as fd
 from factory_flexibility_model.ui.dialogs.converter_ratio_dialog import *
 from factory_flexibility_model.ui.dialogs.parameter_config_dialog import *
 from factory_flexibility_model.ui.layouts.main_menu import *

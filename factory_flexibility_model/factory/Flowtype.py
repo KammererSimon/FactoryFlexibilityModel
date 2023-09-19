@@ -2,7 +2,7 @@
 
 # IMPORTS
 import factory_flexibility_model.factory.Unit as Unit
-import factory_flexibility_model.ui.color as c
+import factory_flexibility_model.ui.utility.color as c
 
 
 class Flowtype:
