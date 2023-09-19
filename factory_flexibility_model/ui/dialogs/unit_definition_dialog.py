@@ -1,4 +1,5 @@
 # IMPORTS
+import factory_flexibility_model.factory.Unit as Unit
 import numpy as np
 from kivy.lang import Builder
 from kivy.metrics import dp
@@ -7,7 +8,6 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import IconLeftWidget, IconRightWidget, TwoLineAvatarIconListItem, TwoLineIconListItem, IconLeftWidgetWithoutTouch, OneLineIconListItem
 from kivymd.uix.datatables import MDDataTable
 from kivymd.uix.snackbar import Snackbar
-import factory_flexibility_model.factory.Unit as Unit
 from kivy.properties import StringProperty
 
 # LAYOUTS

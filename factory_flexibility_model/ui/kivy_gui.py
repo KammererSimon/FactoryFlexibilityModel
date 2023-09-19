@@ -43,8 +43,9 @@ import factory_flexibility_model.io.session as session
 import factory_flexibility_model.ui.color as color
 import factory_flexibility_model.ui.flowtype_determination as fd
 from factory_flexibility_model.ui.dialogs.parameter_config_dialog import *
-from factory_flexibility_model.ui.dialogs.converter_ratio_dialog import *
+from factory_flexibility_model.ui.dialogs.unit_definition_dialog import *
 from factory_flexibility_model.ui.utility.custom_widget_classes import *
+
 
 # IMPORT 3RD PARTY PACKAGES
 
@@ -562,70 +563,6 @@ class factory_GUIApp(MDApp):
         # set unsaved changes to true
         self.unsaved_changes_on_session = True
 
-    def add_magnitude_to_unit(self):
-        """
-        This function adds the values currently written into the unit magnitude specification fields in the unit dialog into the lists of the selected unit
-        """
-        if (
-            not self.popup.content_cls.ids.textfield_magnitude_flowtype.text == ""
-            and not self.popup.content_cls.ids.textfield_magnitude_flowrate.text == ""
-            and not self.popup.content_cls.ids.textfield_magnitude_dimension.text == ""
-        ):
-            # get the currently selected unit
-            unit = self.blueprint.units[
-                self.get_key(self.dialog.content_cls.ids.label_unit_name.text)
-            ]
-            try:
-
-                # add magnitude values
-                unit.magnitudes = np.append(
-                    unit.magnitudes,
-                    float(
-                        self.popup.content_cls.ids.textfield_magnitude_dimension.text
-                    ),
-                )
-            except:
-                self.popup.content_cls.ids.textfield_magnitude_dimension.error = True
-                return
-
-            unit.units_flowtype.append(
-                self.popup.content_cls.ids.textfield_magnitude_flowtype.text
-            )
-            unit.units_flowrate.append(
-                self.popup.content_cls.ids.textfield_magnitude_flowrate.text
-            )
-            self.popup.content_cls.ids.textfield_magnitude_dimension.error = False
-
-            # reselect the unit to display the new magnitude table
-            self.select_unit(unit)
-            self.close_popup()
-
-    def add_unit(self, *args):
-        """
-        This function adds an unspecified unit to the factory and updates the unit dialog
-        """
-
-        # assign a key to the new unit
-        i = 1
-        while f"unit_{i}" in self.blueprint.units.keys():
-            i += 1
-        unit_key = f"unit_{i}"
-        self.blueprint.units[unit_key] = Unit.Unit(
-            key=unit_key,
-            quantity_type="other",
-            conversion_factor=1,
-            magnitudes=[],
-            units_flow=[],
-            units_flowrate=[],
-            name=f"Unspecified Unit {i}",
-        )
-
-        self.update_unit_list()
-        self.select_unit(self.blueprint.units[unit_key])
-
-        # set unsaved changes to true
-        self.unsaved_changes_on_session = True
-
     def app_add_static_parameter_value(self):
         add_static_parameter_value(self)
 
@@ -634,6 +571,36 @@ class factory_GUIApp(MDApp):
 
     def app_save_converter_ratios(self):
         save_converter_ratios(self)
+
+    def app_add_magnitude_to_unit(self):
+        add_magnitude_to_unit(self)
+
+    def app_add_unit(self):
+        add_unit(self)
+
+    def app_save_changes_on_unit(self):
+        save_changes_on_unit(self)
+
+    def app_show_unit_config_dialog(self):
+        show_unit_config_dialog(self)
+
+    def app_select_unit_list_item(self, list_item, touch):
+        select_unit_list_item(self, list_item, touch)
+
+    def app_select_unit(self, unit):
+        select_unit(self, unit)
+
+    def app_add_unit(self, *args):
+        add_unit(self, *args)
+
+    def app_update_unit_list(self):
+        update_unit_list(self)
+
+    def app_show_magnitude_creation_popup(self):
+        show_magnitude_creation_popup(self)
+
+    def app_delete_unit(self):
+        delete_unit(self)
 
     def build(self):
         """
@@ -939,22 +906,6 @@ class factory_GUIApp(MDApp):
 
         # session contains unsaved changes now:
         self.unsaved_changes_on_session = True
-
-    def delete_unit(self):
-        # get key of the current unit
-        unit_key = self.get_key(self.dialog.content_cls.ids.label_unit_name.text)
-
-        if unit_key in ["energy", "mass"]:
-            return
-
-        # delete it from the units dict
-        self.blueprint.units.pop(unit_key)
-
-        # refresh unit list
-        self.update_unit_list()
-
-        # select basic unit
-        self.select_unit(self.blueprint.units["energy"])
 
     def flowtype_used(self, flowtype_key):
         """
@@ -2397,59 +2348,6 @@ class factory_GUIApp(MDApp):
         # textfield_thermalsystem_temperature_start = self.screen.ids.textfield_thermalsystem_temperature_start
         # textfield_thermalsystem_temperature_ambient = self.screen.ids.textfield_thermalsystem_temperature_ambient
 
-    def save_changes_on_unit(self, *args):
-        """
-        This function checks the current user inputs in the unit definition window for validity and writes the values into the currently selected unit object
-        """
-
-        # get the current unit
-        unit = self.blueprint.units[
-            self.get_key(self.dialog.content_cls.ids.label_unit_name.text)
-        ]
-
-        # check, that the given name unique
-        if not self.dialog.content_cls.ids.textfield_unit_name.text == unit.name:
-            if self.get_key(self.dialog.content_cls.ids.textfield_unit_name.text):
-                self.dialog.content_cls.ids.textfield_unit_name.error = True
-                return
-        self.dialog.content_cls.ids.textfield_unit_name.error = False
-
-        # make sure that the conversion factor is a float
-        try:
-            unit.conversion_factor = float(
-                self.dialog.content_cls.ids.textfield_unit_conversion_factor.text
-            )
-            self.dialog.content_cls.ids.textfield_unit_conversion_factor.error = False
-        except:
-            self.dialog.content_cls.ids.textfield_unit_conversion_factor.error = True
-            return
-
-        # write values from GUI to the unit
-        unit.name = self.dialog.content_cls.ids.textfield_unit_name.text
-
-        if self.dialog.content_cls.ids.switch_unit_energy.active:
-            unit.quantity_type = "energy"
-        if self.dialog.content_cls.ids.switch_unit_mass.active:
-            unit.quantity_type = "mass"
-        if self.dialog.content_cls.ids.switch_unit_other.active:
-            unit.quantity_type = "other"
-
-        self.dialog.content_cls.ids.label_unit_name.text = (
-            self.dialog.content_cls.ids.textfield_unit_name.text
-        )
-
-        # no more unsaved changes on the current flow
-        self.dialog.content_cls.ids.button_unit_save.disabled = True
-
-        # set unsaved changes to true
-        self.unsaved_changes_on_session = True
-
-        # refresh list on screen
-        self.update_unit_list()
-
-        # inform the user
-        Snackbar(text=f"{unit.name} updated!").open()
-
     def save_component_positions(self):
         """
         This function is called everytime when a component has been moven by the user within the layout visualisation.
@@ -2627,75 +2525,6 @@ class factory_GUIApp(MDApp):
 
         # update preview
         self.update_timeseries_preview("Custom Timeseries")
-
-    def select_unit_list_item(self, list_item, touch):
-        """
-        This function is called whenever the user clicks on a unit within the unit list on the unit dialog. It checks, if there are any unsaved changes on the current selection. If yes the user is asked to save or discard them. Then a new unit is created or another unis is selected based on the list item clicked by the user.
-        """
-
-        # create a subfunction to bind
-        def select(*args):
-            self.close_popup()
-            if list_item.text == "Add Unit":
-                self.add_unit()
-            else:
-                self.select_unit(self.blueprint.units[self.get_key(list_item.text)])
-
-        def save_and_select(*args):
-            self.save_changes_on_unit()
-            select()
-
-        # check, if the function call actually came from an object that has been clicked/moved
-        if not list_item.collide_point(*touch.pos):
-            # abort if not
-            return
-
-        # check if there are unsaved changes
-        if not self.dialog.content_cls.ids.button_unit_save.disabled:
-            # create popup
-            btn_dismiss = MDRaisedButton(text="Dismiss changes")
-            btn_save = MDRaisedButton(text="Save changes")
-            self.popup = MDDialog(
-                title="Warning",
-                buttons=[btn_dismiss, btn_save],
-                text="There are unsaved changes on the currenttly selevted unit. Do you want to save them?",
-            )
-            btn_dismiss.bind(on_release=select)
-            btn_save.bind(on_release=save_and_select)
-
-            self.popup.open()
-        else:
-            select()
-
-    def select_unit(self, unit):
-        """
-        This function configures the unit-definition gui in a way that it displays all the values of the unit handed over
-        """
-
-        # write values of unit into the gui
-        self.dialog.content_cls.ids.label_unit_name.text = unit.name
-        self.dialog.content_cls.ids.textfield_unit_conversion_factor.text = str(
-            unit.conversion_factor
-        )
-        if unit.quantity_type == "energy":
-            self.dialog.content_cls.ids.switch_unit_energy.active = True
-        elif unit.quantity_type == "mass":
-            self.dialog.content_cls.ids.switch_unit_mass.active = True
-        else:
-            self.dialog.content_cls.ids.switch_unit_other.active = True
-
-        # insert magnitude data into table
-        row_data = []
-        for i in range(len(unit.magnitudes)):
-            row_data.append(
-                (unit.magnitudes[i], unit.units_flow[i], unit.units_flowrate[i])
-            )
-        self.dialog.content_cls.ids.table_unit.row_data = row_data
-
-        self.dialog.content_cls.ids.textfield_unit_name.text = unit.name
-
-        # no more unsaved changes -> disable save button
-        self.dialog.content_cls.ids.button_unit_save.disabled = True
 
     def select_parameter_list_item(self, list_item):
         """
@@ -3001,8 +2830,6 @@ class factory_GUIApp(MDApp):
         btn_true.bind(on_release=delete)
         self.dialog.open()
 
-
-
     def show_flowtype_config_dialog(self):
         """
         This function oipens the dialog for configuring flowtypes.
@@ -3141,14 +2968,6 @@ class factory_GUIApp(MDApp):
         btn_ok = MDRaisedButton(text="OK")
         self.popup = MDDialog(title="Warning", buttons=[btn_ok], text=text)
         btn_ok.bind(on_release=self.popup.dismiss)
-        self.popup.open()
-
-    def show_magnitude_creation_popup(self):
-        self.popup = MDDialog(
-            title="Magnitude definition",
-            type="custom",
-            content_cls=dialog_magnitude_definition(),
-        )
         self.popup.open()
 
     def show_parameter_config_dialog(self, caller):
@@ -3308,46 +3127,6 @@ class factory_GUIApp(MDApp):
 
                 # append item to list
                 self.dialog.content_cls.ids.list_timeseries.add_widget(item)
-        self.dialog.open()
-
-    def show_unit_config_dialog(self):
-        """
-        This function opens the popup-dialog for unit configuration
-        """
-
-        # abort if there is no session yet
-        if self.session_data["session_path"] is None:
-            self.show_info_popup(
-                "Cannot configure units before creating or importing a session!"
-            )
-            return
-
-        table = MDDataTable(
-            column_data=[
-                ("Magnitude", dp(40)),
-                ("Unit Flow", dp(20)),
-                ("Unit Flowrate", dp(20)),
-            ],
-            rows_num=20,
-            elevation=0,
-        )
-
-        self.dialog = MDDialog(
-            title="Unit definition",
-        type="custom",
-        content_cls=dialog_unit_definition(),
-        auto_dismiss=False
-        )
-
-        self.dialog.size_hint = (None, None)
-        self.dialog.width = dp(950)
-        self.dialog.height = dp(800)
-        self.dialog.content_cls.ids.table_container.add_widget(table)
-        self.dialog.content_cls.ids["table_unit"] = table
-
-        self.update_unit_list()
-
-        self.select_unit(self.blueprint.units["energy"])
         self.dialog.open()
 
     def show_unit_selection_dropdown(self, caller):
@@ -4395,34 +4174,6 @@ class factory_GUIApp(MDApp):
                     kwargs["mouse_pos"][0],
                     kwargs["mouse_pos"][1] - self.root.ids.canvas_layout.pos[0] / 2,
                 )
-
-    def update_unit_list(self):
-        # predefine icons for list entries
-        icons = {"energy": "lightning-bolt", "mass": "weight", "other": "help"}
-
-        # clear existing list
-        self.dialog.content_cls.ids.list_units.clear_widgets()
-
-        # iterate over all units
-        for unit in self.blueprint.units.values():
-            # create list item
-            item = TwoLineIconListItem(
-                IconLeftWidgetWithoutTouch(icon=icons[unit.quantity_type]),
-                text=unit.name,
-                secondary_text=unit.quantity_type,
-                on_touch_down=self.select_unit_list_item,
-            )
-
-            # append item to list
-            self.dialog.content_cls.ids.list_units.add_widget(item)
-
-        item = OneLineIconListItem(
-            IconLeftWidget(icon="plus"),
-            text="Add Unit",
-            on_touch_down=self.select_unit_list_item,
-        )
-        # append item to list
-        self.dialog.content_cls.ids.list_units.add_widget(item)
 
     # validation of components
     def validate_thermalsystem(self, textfield):
