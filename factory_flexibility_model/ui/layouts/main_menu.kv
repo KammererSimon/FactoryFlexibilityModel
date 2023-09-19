@@ -1,5 +1,5 @@
 ## LEFT MAIN MENU ######################################################################################################
-<left_main_menu>
+<main_menu>
     orientation: "vertical"
     spacing: "8dp"
     padding: "8dp"
@@ -22,27 +22,27 @@
     MDList:
         OneLineIconListItem:
             text: "New Session"
-            on_release: app.new_session("start")
+            on_release: app.app_new_session()
             IconLeftWidget:
                 icon: "new-box"
         OneLineIconListItem:
             text: "Save Session as"
-            on_release: app.save_session_as()
+            on_release: app.app_save_session_as()
             IconLeftWidget:
                 icon: "content-save-plus"
         OneLineIconListItem:
             text: "Save Session "
-            on_release: app.save_session()
+            on_release: app.app_save_session()
             IconLeftWidget:
                 icon: "content-save"
         OneLineIconListItem:
             text: "Open Session"
-            on_release: app.load_session()
+            on_release: app.app_load_session()
             IconLeftWidget:
                 icon: "folder-open"
         OneLineIconListItem:
             text: "Import Timeseries Data"
-            on_release: app.import_timeseries()
+            on_release: app.app_import_timeseries()
             IconLeftWidget:
                 icon: "import"
     Widget

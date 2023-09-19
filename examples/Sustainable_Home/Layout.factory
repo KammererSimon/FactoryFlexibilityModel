@@ -21,7 +21,7 @@ components:
     type: sink
   component_3:
     GUI:
-      icon: Assets\components\component_pool.png
+      icon: Assets\defaults\pool.png
       position_x: 23.0
       position_y: 21.0
     description: ''
