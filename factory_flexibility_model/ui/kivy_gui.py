@@ -1,12 +1,11 @@
+import os
 from collections import defaultdict
 
-import pandas as pd
 from kivy.core.window import Window
 from kivy.graphics import Ellipse, Line, Triangle
-from kivy_garden.graph import LinePlot
-from kivymd.uix.button import MDFillRoundFlatIconButton
+from kivymd.uix.button import MDFillRoundFlatIconButton, MDFlatButton
 from kivymd.uix.label import MDLabel
-from kivymd.uix.list import TwoLineListItem
+from kivymd.uix.list import IconRightWidget, TwoLineAvatarIconListItem, TwoLineListItem
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.pickers import MDColorPicker
 
@@ -14,18 +13,16 @@ import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.factory.Flowtype as ft
 import factory_flexibility_model.ui.utility.color as color
 import factory_flexibility_model.ui.utility.flowtype_determination as fd
-from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import *
-from factory_flexibility_model.ui.dialogs.dialog_parameter_config import *
-from factory_flexibility_model.ui.dialogs.dialog_unit_definition import (
-    show_unit_config_dialog,
+from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import (
+    show_converter_ratio_dialog,
 )
 from factory_flexibility_model.ui.layouts.main_menu import *
-from factory_flexibility_model.ui.utility.basic_session_functions import *
+from factory_flexibility_model.ui.layouts.timeseries_overview import (
+    LayoutTimeseriesOverview,
+)
 from factory_flexibility_model.ui.utility.custom_widget_classes import *
 
 # IMPORT 3RD PARTY PACKAGES
-
-main_color = "#1D4276"
 colors = {
     "Red": {
         "50": "FFEBEE",
@@ -357,6 +354,9 @@ class factory_GUIApp(MDApp):
         - left_main_menu() into the navigation drawer in the main screen
         """
         self.root.ids.main_menu.add_widget(main_menu())
+        screen_timeseries = LayoutTimeseriesOverview()
+        self.root.ids["screen_timeseries"] = screen_timeseries
+        self.root.ids.timeseries_screens.add_widget(screen_timeseries)
 
     def abort_new_connection(self, touch):
         self.connection_edit_mode = False
@@ -544,9 +544,6 @@ class factory_GUIApp(MDApp):
         # set unsaved changes to true
         self.unsaved_changes_on_session = True
 
-    def app_add_static_parameter_value(self):
-        add_static_parameter_value(self)
-
     def app_show_converter_ratio_dialog(self):
         show_converter_ratio_dialog(self)
 
@@ -604,9 +601,8 @@ class factory_GUIApp(MDApp):
         self.timeseries = []  # List of imported timeseries within the session
 
         # Style Config for GUI
-        self.main_color = "#1D4276"
-        self.main_color_rgba = [0.1137, 0.2588, 0.463, 1]
-        self.dialog = None  # keeps track of currently opened dialogs
+        self.main_color = color.color("#1D4276")
+        self.dialog = None  # keeps track of currently opened dialog
         self.display_grid_size = [
             45,
             30,
@@ -615,7 +611,6 @@ class factory_GUIApp(MDApp):
         self.theme_cls.accent_palette = "Blue"
         self.theme_cls.primary_palette = "Blue"
         self.theme_cls.theme_style = "Light"
-
         self.parameters = {}
 
         # paths to used .png-assets
@@ -816,28 +811,6 @@ class factory_GUIApp(MDApp):
                 return unit.key
 
         return None
-
-    def import_timeseries(self):
-        """
-        This function lets the user choose an excel file containing timeseries and imports all of them to the tool
-        """
-
-        # ask for filename
-        filetype = [("xlsx", "*.xlsx")]
-        filepath = filedialog.askopenfilename(
-            defaultextension=filetype, filetypes=filetype
-        )
-
-        if not filepath == "":
-            # import the excel sheet
-            self.timeseries = pd.read_excel(filepath, sheet_name="Timeseries")
-
-            if not self.dialog == None:
-                # update the list of available timeseries
-                self.update_timeseries_list()
-
-        # inform the user
-        Snackbar(text=f"{len(self.timeseries.keys())} new timeseries imported").open()
 
     def increase_scaling_factor(self):
         self.session_data["display_scaling_factor"] = (
@@ -2208,9 +2181,6 @@ class factory_GUIApp(MDApp):
         btn_ok.bind(on_release=self.popup.dismiss)
         self.popup.open()
 
-    def show_parameter_config_dialog(self, caller):
-        parameter_config_dialog(self, caller)
-
     def show_unit_selection_dropdown(self, caller):
         """
         This function creates a dropdown menu giving the user the option to select one of the existing units.
@@ -3484,161 +3454,6 @@ class factory_GUIApp(MDApp):
         #     return
 
     # CURRENTLY UNUSED FUNCTIONS
-
-    def select_timeseries_list_item(self, list_item, touch):
-        """
-        This function is called everytime when the user selects a timeseries in the scenarioparameter definition.
-        The selected timeseries is displayed in the preview window
-        """
-
-        # check, if the function call actually came from an object that has been clicked/moved
-        if not list_item.collide_point(*touch.pos):
-            # abort if not
-            return
-
-        # write the name of selected timeseries in the GUI
-        self.root.ids.label_selected_timeseries.text = list_item.text
-
-        # get data for selected timeseries and write it into self.selected_timeseries
-        self.selected_timeseries = np.array(
-            self.timeseries[list_item.text][1 : self.selected_scenario["timesteps"] + 1]
-        )
-
-        # set the scaling method to "Peak"
-        self.root.ids.textfield_timeseries_scaling.text = "with a peak value of"
-
-        # set the scaling value to the peak value of the selected timeseries
-        self.root.ids.textfield_custom_timeseries.text = str(
-            round(np.amax(self.selected_timeseries), 3)
-        )
-
-        # update preview
-        self.update_timeseries_preview("Custom Timeseries")
-
-    def update_timeseries_list(self):
-        # clear existing list
-        self.dialog.content_cls.ids.list_timeseries.clear_widgets()
-
-        # iterate over all imported timeseries
-        for key in self.timeseries:
-            # apply filter given by search textfield
-            if (
-                self.dialog.content_cls.ids.search_field_timeseries.text == ""
-                or self.dialog.content_cls.ids.search_field_timeseries.text.upper()
-                in key.upper()
-                or self.dialog.content_cls.ids.search_field_timeseries.text.upper()
-                in self.timeseries[key][0].upper()
-            ):
-
-                # create list item
-                item = TwoLineListItem(
-                    text=key,
-                    secondary_text=self.timeseries[key][0],
-                    on_touch_down=self.select_timeseries_list_item,
-                )
-
-                # append item to list
-                self.dialog.content_cls.ids.list_timeseries.add_widget(item)
-
-    def update_timeseries_preview(self, value_type):
-        """
-        This function creates a graph of a timeseries and hands it over to the preview canvas
-        """
-        # initialize the timeseries plot if not done yet
-        if not hasattr(self, "timeseries_plot"):
-            self.timeseries_plot = LinePlot(color=self.main_color_rgba, line_width=2)
-            self.root.ids.timeseries_preview.add_plot(self.timeseries_plot)
-
-        # set points depending on given user information
-        if value_type == "Static Value":
-
-            # if user wants a static value: just read out the value from gui
-            value = float(self.root.ids.textfield_static_value.text)
-            max_value = value
-
-            # update plot points for the graph
-            self.selected_timeseries = (
-                np.ones(self.selected_scenario["timesteps"]) * value
-            )
-            self.timeseries_plot.points = [
-                (x, y) for x, y in enumerate(self.selected_timeseries)
-            ]
-            self.root.ids.timeseries_preview.ylabel = (
-                self.root.ids.textfield_static_value_unit.text
-            )
-
-            # update Y-axis_label:
-            self.root.ids.timeseries_preview.ylabel = (
-                self.root.ids.textfield_static_value_unit.text
-            )
-
-        elif value_type == "Custom Timeseries":
-            # if user wants a timeseries: take the currently selected timeseries and scale it as demanded
-            if (
-                self.root.ids.textfield_timeseries_scaling.text
-                == "with a peak value of"
-            ):
-                # scale timeseries to given peak value
-                self.selected_timeseries = (
-                    self.selected_timeseries
-                    / float(np.amax(self.selected_timeseries))
-                    * float(self.root.ids.textfield_custom_timeseries.text)
-                )
-
-            elif (
-                self.root.ids.textfield_timeseries_scaling.text
-                == "with an average value of"
-            ):
-                # scale timeseries to given average value
-                self.selected_timeseries = (
-                    self.selected_timeseries
-                    / np.mean(self.selected_timeseries)
-                    * float(self.root.ids.textfield_custom_timeseries.text)
-                )
-
-            else:
-                # scale timeseries to given integral value
-                self.selected_timeseries = (
-                    self.selected_timeseries
-                    / np.sum(self.selected_timeseries)
-                    * float(self.root.ids.textfield_custom_timeseries.text)
-                )
-
-            # update Y-axis_label:
-            self.root.ids.timeseries_preview.ylabel = (
-                self.root.ids.textfield_custom_timeseries_unit.text
-            )
-
-            # update plot points for the graph
-            self.timeseries_plot.points = [
-                (x, y) for x, y in enumerate(self.selected_timeseries)
-            ]
-            max_value = float(np.amax(self.selected_timeseries))
-        # update graph properties:
-        self.root.ids.timeseries_preview.xlabel = "Hours"
-
-        # set scaling of X-Axes
-        self.root.ids.timeseries_preview.xmax = self.selected_scenario["timesteps"]
-        self.root.ids.timeseries_preview.xmin = 1
-        self.root.ids.timeseries_preview.x_ticks_major = 24
-
-        # set scaling of Y-Axes
-        self.root.ids.timeseries_preview.ymin = 0
-        if max_value == 0:
-            self.root.ids.timeseries_preview.ymax = 1
-            self.root.ids.timeseries_preview.y_ticks_major = 0.2
-        else:
-            # determine dimension of value
-            x = max_value
-            i = 0
-            while x > 1:
-                x = x / 10
-                i += 1
-
-            # set y scale of graph
-            self.root.ids.timeseries_preview.ymax = 10**i * round(x + 0.1, 1)
-
-            self.root.ids.timeseries_preview.y_ticks_major = 10**i / 5
 
     def show_connection_deletion_dialog(self):
         """
