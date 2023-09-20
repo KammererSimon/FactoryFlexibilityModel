@@ -1,3 +1,6 @@
+#:import show_unit_config_dialog factory_flexibility_model.ui.dialogs.dialog_unit_definition.show_unit_config_dialog
+#:import show_converter_ratio_dialog factory_flexibility_model.ui.dialogs.dialog_converter_ratios.show_converter_ratio_dialog
+
 Screen:
     MDNavigationLayout:
         ScreenManager:
@@ -111,7 +114,7 @@ Screen:
                                                             text: "Unit Definitions"
                                                             icon: "cog"
                                                             line_color: 1, 1, 1, 1
-                                                            on_release: app.app_show_unit_config_dialog()
+                                                            on_release: show_unit_config_dialog(app)
                                                             pos_hint: {"center_x": .5, "center_y": .5}
 
         # SOURCE CONFIG SCREEN #########################################################################################
@@ -509,7 +512,7 @@ Screen:
                                                             height: dp(30)
                                                         OneLineIconListItem:
                                                             text: "Show Input/Output Ratios"
-                                                            on_release: app.app_show_converter_ratio_dialog()
+                                                            on_release: show_converter_ratio_dialog(app)
                                                             IconLeftWidget:
                                                                 icon: "cog"
 
