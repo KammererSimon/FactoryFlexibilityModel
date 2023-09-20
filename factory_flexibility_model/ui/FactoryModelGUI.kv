@@ -1,5 +1,6 @@
 #:import show_unit_config_dialog factory_flexibility_model.ui.dialogs.dialog_unit_definition.show_unit_config_dialog
 #:import show_converter_ratio_dialog factory_flexibility_model.ui.dialogs.dialog_converter_ratios.show_converter_ratio_dialog
+#:import show_parameter_config_dialog factory_flexibility_model.ui.dialogs.dialog_parameter_config.show_parameter_config_dialog
 
 Screen:
     MDNavigationLayout:
@@ -185,7 +186,7 @@ Screen:
                                                                     value_description: "Maximum Output Flowrate"
                                                                     secondary_text: "10kW"
                                                                     tertiary_text: "Static Value"
-                                                                    on_release: app.show_parameter_config_dialog(self)
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
                                                                         icon: "numeric"
                                                                 ParameterConfigItem:

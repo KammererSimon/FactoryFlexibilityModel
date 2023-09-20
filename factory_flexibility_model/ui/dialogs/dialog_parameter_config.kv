@@ -1,5 +1,7 @@
 # This file defines the dialog window that pops up when the user clicks on a configurable parameter in the component configuration window
 
+#:import add_static_parameter_value factory_flexibility_model.ui.dialogs.dialog_parameter_config.add_static_parameter_value
+
 <dialog_parameter_config>
     size_hint: None, None
     width:dp(800)
@@ -18,7 +20,7 @@
             hint_text: "parameter value"
         MDRaisedButton:
             text: "Add"
-            on_release: app.app_add_static_parameter_value()
+            on_release: add_static_parameter_value(app)
 
         MDLabel:
             text: "Timeseries"

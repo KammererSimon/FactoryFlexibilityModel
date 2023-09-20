@@ -6,8 +6,6 @@ from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import IconLeftWidget, IconRightWidget, TwoLineAvatarIconListItem
 
-# LAYOUTS
-Builder.load_file(r"factory_flexibility_model\ui\dialogs\dialog_parameter_config.kv")
 
 # CLASSES
 class dialog_parameter_config(BoxLayout):
@@ -15,10 +13,14 @@ class dialog_parameter_config(BoxLayout):
 
 
 # FUNCTIONS
-def parameter_config_dialog(app, caller):
+def show_parameter_config_dialog(app, caller):
     """
     This function opens the dialog for configuring values of component parameters.
     """
+
+    Builder.load_file(
+        r"factory_flexibility_model\ui\dialogs\dialog_parameter_config.kv"
+    )
 
     app.dialog = MDDialog(
         title=f"{app.selected_asset['name']}: {caller.text}",
