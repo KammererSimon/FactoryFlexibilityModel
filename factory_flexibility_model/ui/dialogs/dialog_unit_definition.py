@@ -1,24 +1,31 @@
 # IMPORTS
-import factory_flexibility_model.factory.Unit as Unit
 import numpy as np
 from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
-from kivymd.uix.dialog import MDDialog
-from kivymd.uix.list import IconLeftWidget, IconRightWidget, TwoLineAvatarIconListItem, TwoLineIconListItem, IconLeftWidgetWithoutTouch, OneLineIconListItem
 from kivymd.uix.datatables import MDDataTable
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.list import (
+    IconLeftWidget,
+    IconLeftWidgetWithoutTouch,
+    OneLineIconListItem,
+    TwoLineIconListItem,
+)
 from kivymd.uix.snackbar import Snackbar
-from kivy.properties import StringProperty
+
+import factory_flexibility_model.factory.Unit as Unit
 
 # LAYOUTS
-Builder.load_file(r"factory_flexibility_model\ui\dialogs\unit_definition_dialog.kv")
+Builder.load_file(r"factory_flexibility_model\ui\dialogs\dialog_unit_definition.kv")
 
 # CLASSES
 class dialog_unit_definition(BoxLayout):
     pass
 
+
 class dialog_magnitude_definition(BoxLayout):
     pass
+
 
 # FUNCTIONS
 def add_magnitude_to_unit(app):
@@ -26,9 +33,9 @@ def add_magnitude_to_unit(app):
     This function adds the values currently written into the unit magnitude specification fields in the unit dialog into the lists of the selected unit
     """
     if (
-            not app.popup.content_cls.ids.textfield_magnitude_flow.text == ""
-            and not app.popup.content_cls.ids.textfield_magnitude_flowrate.text == ""
-            and not app.popup.content_cls.ids.textfield_magnitude_dimension.text == ""
+        not app.popup.content_cls.ids.textfield_magnitude_flow.text == ""
+        and not app.popup.content_cls.ids.textfield_magnitude_flowrate.text == ""
+        and not app.popup.content_cls.ids.textfield_magnitude_dimension.text == ""
     ):
         # get the currently selected unit
         unit = app.blueprint.units[
@@ -39,17 +46,13 @@ def add_magnitude_to_unit(app):
             # add magnitude values
             unit.magnitudes = np.append(
                 unit.magnitudes,
-                float(
-                    app.popup.content_cls.ids.textfield_magnitude_dimension.text
-                ),
+                float(app.popup.content_cls.ids.textfield_magnitude_dimension.text),
             )
         except:
             app.popup.content_cls.ids.textfield_magnitude_dimension.error = True
             return
 
-        unit.units_flow.append(
-            app.popup.content_cls.ids.textfield_magnitude_flow.text
-        )
+        unit.units_flow.append(app.popup.content_cls.ids.textfield_magnitude_flow.text)
         unit.units_flowrate.append(
             app.popup.content_cls.ids.textfield_magnitude_flowrate.text
         )
@@ -58,6 +61,7 @@ def add_magnitude_to_unit(app):
         # reselect the unit to display the new magnitude table
         app.app_select_unit(unit)
         app.close_popup()
+
 
 def add_unit(app, *args):
     """
@@ -85,6 +89,7 @@ def add_unit(app, *args):
     # set unsaved changes to true
     app.unsaved_changes_on_session = True
 
+
 def delete_unit(app):
     # get key of the current unit
     unit_key = app.get_key(app.dialog.content_cls.ids.label_unit_name.text)
@@ -100,6 +105,7 @@ def delete_unit(app):
 
     # select basic unit
     app.select_unit(app.blueprint.units["energy"])
+
 
 def save_changes_on_unit(app, *args):
     """
@@ -154,6 +160,7 @@ def save_changes_on_unit(app, *args):
     # inform the user
     Snackbar(text=f"{unit.name} updated!").open()
 
+
 def select_unit_list_item(app, list_item, touch):
     """
     This function is called whenever the user clicks on a unit within the unit list on the unit dialog. It checks, if there are any unsaved changes on the current selection. If yes the user is asked to save or discard them. Then a new unit is created or another unis is selected based on the list item clicked by the user.
@@ -193,6 +200,7 @@ def select_unit_list_item(app, list_item, touch):
     else:
         select()
 
+
 def select_unit(app, unit):
     """
     This function configures the unit-definition gui in a way that it displays all the values of the unit handed over
@@ -223,6 +231,7 @@ def select_unit(app, unit):
     # no more unsaved changes -> disable save button
     app.dialog.content_cls.ids.button_unit_save.disabled = True
 
+
 def show_magnitude_creation_popup(app):
     app.popup = MDDialog(
         title="Magnitude definition",
@@ -230,6 +239,7 @@ def show_magnitude_creation_popup(app):
         content_cls=dialog_magnitude_definition(),
     )
     app.popup.open()
+
 
 def show_unit_config_dialog(app):
     """
@@ -255,9 +265,9 @@ def show_unit_config_dialog(app):
 
     app.dialog = MDDialog(
         title="Unit definition",
-    type="custom",
-    content_cls=dialog_unit_definition(),
-    auto_dismiss=False
+        type="custom",
+        content_cls=dialog_unit_definition(),
+        auto_dismiss=False,
     )
 
     app.dialog.size_hint = (None, None)
@@ -268,8 +278,9 @@ def show_unit_config_dialog(app):
 
     update_unit_list(app)
 
-    select_unit(app,app.blueprint.units["energy"])
+    select_unit(app, app.blueprint.units["energy"])
     app.dialog.open()
+
 
 def update_unit_list(app):
     # predefine icons for list entries

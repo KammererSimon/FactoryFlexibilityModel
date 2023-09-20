@@ -7,7 +7,7 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import IconLeftWidget, IconRightWidget, TwoLineAvatarIconListItem
 
 # LAYOUTS
-Builder.load_file(r"factory_flexibility_model\ui\dialogs\parameter_config_dialog.kv")
+Builder.load_file(r"factory_flexibility_model\ui\dialogs\dialog_parameter_config.kv")
 
 # CLASSES
 class dialog_parameter_config(BoxLayout):

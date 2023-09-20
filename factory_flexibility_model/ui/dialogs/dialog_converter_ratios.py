@@ -7,7 +7,7 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import TwoLineAvatarIconListItem
 
 # LAYOUTS
-Builder.load_file(r"factory_flexibility_model\ui\dialogs\converter_ratio_dialog.kv")
+Builder.load_file(r"factory_flexibility_model\ui\dialogs\dialog_converter_ratios.kv")
 
 # CLASSES
 class dialog_converter_ratios(BoxLayout):
@@ -23,8 +23,6 @@ class TextfieldCheckboxIconListItem(TwoLineAvatarIconListItem):
 
 
 # FUNCTIONS
-
-
 def save_converter_ratios(app):
     """
     This function goes through all the list items within the converter ratio definition dialog and writes the user given values for the weights from the GUI into the corresponding connections within the blueprint.
