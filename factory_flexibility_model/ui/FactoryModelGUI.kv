@@ -2,6 +2,7 @@
 #:import show_converter_ratio_dialog factory_flexibility_model.ui.dialogs.dialog_converter_ratios.show_converter_ratio_dialog
 #:import show_parameter_config_dialog factory_flexibility_model.ui.dialogs.dialog_parameter_config.show_parameter_config_dialog
 
+
 Screen:
     MDNavigationLayout:
         ScreenManager:
@@ -1224,6 +1225,16 @@ Screen:
                                                             MDRaisedButton:
                                                                 text: "Save Changes"
                                                                 on_release: app.save_changes_on_pool()
+### TAB TIMESERIS  ######################################################################################################
+                        MDBottomNavigationItem:
+                            name: "tab_timeseries"
+                            text: "Timeseries"
+                            icon: "database-import"
+
+                            ScreenManager:
+                                Screen:
+                                    id: timeseries_screens
+
 ### TAB SIMULATION  ######################################################################################################
                         MDBottomNavigationItem:
                             name: "tab_simulation"
@@ -1232,24 +1243,6 @@ Screen:
 
                             ScreenManager:
                                 id: simulation_screens
-
-# Timeseries Preview Graph #####################################################################
-
-#MDBoxLayout:
-#    orientation: "horizontal"
-#    spacing: dp(20)
-#    MDBoxLayout:
-#        orientation: "vertical"
-#        Graph:
-#            id: timeseries_preview
-#            padding: 20
-#            x_grid: True
-#            y_grid: True
-#            y_grid_label: True
-#            x_grid_label: True
-#            label_options: {"color": (0,0,0,1)}
-#            tick_color: (0, 0, 0, .1)
-
 
 ## COMPONENT CREATION MENU ######################################################################################################
                 MDNavigationDrawer:
