@@ -1,6 +1,0 @@
-storage_electricity/capacity	1000
-storage_electricity/efficiency	0.95
-storage_electricity/power_max_charge	250
-storage_electricity/power_max_discharge	500
-source_solar/power_max	100
-source_wind/power_max	40

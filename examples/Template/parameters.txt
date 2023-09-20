@@ -1,3 +1,0 @@
-*component_key*/*parameter	value
-*connection_key*/weight_source	float
-*connection_key*/weight_sink	float
