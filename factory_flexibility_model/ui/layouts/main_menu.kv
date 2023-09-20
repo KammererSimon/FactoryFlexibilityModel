@@ -2,7 +2,7 @@
 #:import load_session factory_flexibility_model.ui.utility.basic_session_functions.load_session
 #:import save_session factory_flexibility_model.ui.utility.basic_session_functions.save_session
 #:import show_dialog_save_session_as factory_flexibility_model.ui.dialogs.dialog_save_session_as.show_dialog_save_session_as
-
+#:import import_timeseries_xlsx factory_flexibility_model.ui.utility.timeseries_handling.import_timeseries_xlsx
 <main_menu>
     orientation: "vertical"
     spacing: "8dp"
@@ -46,7 +46,7 @@
                 icon: "folder-open"
         OneLineIconListItem:
             text: "Import Timeseries Data"
-            on_release: app.app_import_timeseries()
+            on_release: import_timeseries_xlsx(app)
             IconLeftWidget:
                 icon: "import"
     Widget
