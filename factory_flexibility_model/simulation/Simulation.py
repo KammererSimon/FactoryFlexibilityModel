@@ -26,7 +26,7 @@ import numpy as np
 from gurobipy import GRB
 
 import factory_flexibility_model.input_validations as iv
-from factory_flexibility_model.ui import dash as fd
+from factory_flexibility_model.dash import dash as fd
 
 logging.basicConfig(level=logging.WARNING)
 
