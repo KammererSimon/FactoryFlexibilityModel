@@ -16,11 +16,11 @@ import factory_flexibility_model.ui.utility.color as color
 import factory_flexibility_model.ui.utility.flowtype_determination as fd
 from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import *
 from factory_flexibility_model.ui.dialogs.dialog_parameter_config import *
+from factory_flexibility_model.ui.dialogs.dialog_unit_definition import (
+    show_unit_config_dialog,
+)
 from factory_flexibility_model.ui.layouts.main_menu import *
 from factory_flexibility_model.ui.utility.basic_session_functions import *
-from factory_flexibility_model.ui.utility.basic_session_functions import (
-    initiate_new_session,
-)
 from factory_flexibility_model.ui.utility.custom_widget_classes import *
 
 # IMPORT 3RD PARTY PACKAGES
@@ -349,10 +349,6 @@ colors = {
 
 
 class factory_GUIApp(MDApp):
-    # TODO: checken ob das hier notwendig ist
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def on_start(self):
         """
         This function is automatically called by the __init_ method of the app class.
@@ -554,9 +550,6 @@ class factory_GUIApp(MDApp):
     def app_show_converter_ratio_dialog(self):
         show_converter_ratio_dialog(self)
 
-    def app_save_converter_ratios(self):
-        save_converter_ratios(self)
-
     def app_add_magnitude_to_unit(self):
         add_magnitude_to_unit(self)
 
@@ -577,24 +570,6 @@ class factory_GUIApp(MDApp):
 
     def app_add_unit(self, *args):
         add_unit(self, *args)
-
-    def app_load_session(self):
-        """
-        This function calls the "load_session" method from utility.basic_session_functions
-        """
-        load_session(self)
-
-    def app_new_session(self):
-        """
-        This function calls the "initiate_new_session" method from utility.basic_session_functions
-        """
-        initiate_new_session(self)
-
-    def app_save_session(self):
-        """
-        This function calls the "save_session" method from utility.basic_session_functions
-        """
-        save_session(self)
 
     def app_update_unit_list(self):
         update_unit_list(self)
@@ -1195,23 +1170,6 @@ class factory_GUIApp(MDApp):
             name="Unknown Flow",
             description="Built in default flowtype used as a fallback option for unspecified situations",
         )
-
-    def save_session_as(self):
-        """
-        This function is used to create a copy of a session. First the user is asked to provide a directory where the new session shall be created. Then the regular save_session() method is being called
-        """
-        # ask for filepath
-        filepath_new = filedialog.askdirectory()
-
-        # make sure the user didn't abort the file selection or selected something invalid
-        if filepath_new == None or filepath_new == "":
-            return
-
-        # set the filepath as the new session_path
-        self.session_data["session_path"] = filepath_new
-
-        # call the regular safe session routine
-        self.save_session()
 
     def save_changes_on_flowtype(self):
         """

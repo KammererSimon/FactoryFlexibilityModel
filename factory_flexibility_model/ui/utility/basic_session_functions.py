@@ -108,10 +108,6 @@ def create_new_session(app):
     app.unsaved_changes_on_session = True
     app.unsaved_changes_on_asset = False
 
-    # reset scenarios
-    app.scenarios = {}
-    app.root.ids.grid_scenarios.clear_widgets()
-
     # inform the user
     Snackbar(
         text=f"New Session '{session_name}' created under '{app.session_data['session_path']}'"
@@ -153,6 +149,39 @@ def save_session(app):
     Snackbar(
         text=f"Session successfully saved at {app.session_data['session_path']}"
     ).open()
+
+
+def save_session_as(app):
+    """
+    This function is used to create a copy of a session.
+    The function is bein called out of the save_session_as-dialog after the user has specified a new name and path
+    for the session. Those values are read out of the dialog, the dialog is closed, the info gets written into the
+    sessions blueprint. Then the regular save_session() method is being called
+    """
+    # get requested name, description and directory
+    session_name = app.dialog.content_cls.ids.textfield_new_session_name.text
+    session_description = (
+        app.dialog.content_cls.ids.textfield_new_session_description.text
+    )
+    try:
+        path = app.dialog.content_cls.ids.filechooser_new_session.selection[0]
+    except:
+        path = rf"{os.getcwd()}\sessions"
+
+    # close the dialog
+    app.dialog.dismiss()
+
+    # create the new session directory
+    session.create_session_folder(path, session_name=session_name)
+
+    # update the session info
+    app.session_data["session_path"] = rf"{path}\{session_name}"
+    app.blueprint.info["description"] = session_description
+    app.blueprint.info["name"] = session_name
+    app.root.ids.label_session_name.text = session_name
+
+    # call the regular safe session routine
+    save_session(app)
 
 
 def load_session(app):
@@ -267,7 +296,6 @@ def load_session(app):
     app.selected_asset = None
 
     # update the GUI to display the data
-    app.root.ids.scenario_screens.current = "scenario_selection_screen"
     app.root.ids.asset_config_screens.current = "welcome_screen"
     app.root.ids.label_session_name.text = app.blueprint.info["name"]
     app.initialize_visualization()
