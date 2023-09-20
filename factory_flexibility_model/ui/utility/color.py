@@ -85,3 +85,10 @@ class color:
 
         r, g, b = (int(x * 255) for x in value[:3])
         return f"#{r:02x}{g:02x}{b:02x}"
+
+    def get_rgba(self):
+        """
+        This function returns the color as rgba values in 4 separate floats.
+        :return: [float - Red value] [float - Green value] [float - Blue value] [float - Alpha value]
+        """
+        return self.rgba[0], self.rgba[1], self.rgba[2], self.rgba[3]
