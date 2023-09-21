@@ -4,6 +4,7 @@ from collections import defaultdict
 import pandas as pd
 from kivy.core.window import Window
 from kivy.graphics import Ellipse, Line, Triangle
+from kivy.lang import Builder
 from kivymd.uix.button import MDFillRoundFlatIconButton, MDFlatButton
 from kivymd.uix.label import MDLabel
 from kivymd.uix.list import IconRightWidget, TwoLineAvatarIconListItem, TwoLineListItem
@@ -18,9 +19,10 @@ from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import (
     show_converter_ratio_dialog,
 )
 from factory_flexibility_model.ui.layouts.main_menu import *
-from factory_flexibility_model.ui.layouts.timeseries_overview import (
-    LayoutTimeseriesOverview,
-)
+
+# from factory_flexibility_model.ui.layouts.timeseries_overview import (
+#    LayoutTimeseriesOverview,
+# )
 from factory_flexibility_model.ui.utility.custom_widget_classes import *
 
 # IMPORT 3RD PARTY PACKAGES
@@ -355,9 +357,6 @@ class factory_GUIApp(MDApp):
         - left_main_menu() into the navigation drawer in the main screen
         """
         self.root.ids.main_menu.add_widget(main_menu())
-        screen_timeseries = LayoutTimeseriesOverview()
-        self.root.ids["screen_timeseries"] = screen_timeseries
-        self.root.ids.timeseries_screens.add_widget(screen_timeseries)
 
     def abort_new_connection(self, touch):
         self.connection_edit_mode = False
@@ -422,7 +421,7 @@ class factory_GUIApp(MDApp):
         self.root.ids[f"frame_{component_key}"] = component_framelabel
 
         # add parameter-dict for the new component
-        self.parameters[component_key] = {}
+        self.session_data["parameters"][component_key] = {}
 
         # close the component selection menu
         self.root.ids.component_shelf.set_state("closed")
@@ -617,6 +616,7 @@ class factory_GUIApp(MDApp):
         self.session_data = {
             "display_scaling_factor": 0.6,
             "session_path": None,
+            "parameters": {},
         }
         self.timeseries = (
             pd.DataFrame()
@@ -633,7 +633,6 @@ class factory_GUIApp(MDApp):
         self.theme_cls.accent_palette = "Blue"
         self.theme_cls.primary_palette = "Blue"
         self.theme_cls.theme_style = "Light"
-        self.parameters = {}
 
         # paths to used .png-assets
         def get_files_in_directory(directory_path):
@@ -1283,7 +1282,7 @@ class factory_GUIApp(MDApp):
             # check if the user specified it
             if not textfield.text == "":
                 # if yes: safe the value in the parameters dict
-                self.parameters[key][parameter] = float(textfield.text)
+                self.session_data["parameters"][key][parameter] = float(textfield.text)
 
         # update connection names to adapt changes if the name of the converter has changed
         self.update_connection_names()
@@ -1388,7 +1387,7 @@ class factory_GUIApp(MDApp):
             )
 
         if not self.root.ids.textfield_deadtime_delay.text == "":
-            self.parameters[key]["delay"] = int(
+            self.session_data["parameters"][key]["delay"] = int(
                 self.root.ids.textfield_deadtime_delay.text
             )
 
@@ -1562,7 +1561,7 @@ class factory_GUIApp(MDApp):
             # check if the user specified it
             if not textfield.text == "":
                 # if yes: safe the value in the parameters dict
-                self.parameters[key][parameter] = float(textfield.text)
+                self.session_data["parameters"][key][parameter] = float(textfield.text)
 
         # set unsaved changes parameters
         self.unsaved_changes_on_asset = False
@@ -1634,35 +1633,37 @@ class factory_GUIApp(MDApp):
         # update parameter list
         # costs
         if not self.root.ids.textfield_source_cost.text == "":
-            self.parameters[key]["cost"] = self.root.ids.textfield_source_cost.text
+            self.session_data["parameters"][key][
+                "cost"
+            ] = self.root.ids.textfield_source_cost.text
         # power_max
         if not self.root.ids.textfield_source_power_max.text == "":
-            self.parameters[key][
+            self.session_data["parameters"][key][
                 "power_max"
             ] = self.root.ids.textfield_source_power_max.text
         # power_min
         if not self.root.ids.textfield_source_power_min.text == "":
-            self.parameters[key][
+            self.session_data["parameters"][key][
                 "power_min"
             ] = self.root.ids.textfield_source_power_min.text
         # determined_power
         if not self.root.ids.textfield_source_determined_power.text == "":
-            self.parameters[key][
+            self.session_data["parameters"][key][
                 "determined_power"
             ] = self.root.ids.textfield_source_determined_power.text
         # availability
         if not self.root.ids.textfield_source_availability.text == "":
-            self.parameters[key][
+            self.session_data["parameters"][key][
                 "availability"
             ] = self.root.ids.textfield_source_availability.text
         # co2_emission_per_unit
         if not self.root.ids.textfield_source_co2_emission_per_unit.text == "":
-            self.parameters[key][
+            self.session_data["parameters"][key][
                 "co2_emission_per_unit"
             ] = self.root.ids.textfield_source_co2_emission_per_unit.text
         # capacity_charge
         if not self.root.ids.textfield_source_capacity_charge.text == "":
-            self.parameters[key][
+            self.session_data["parameters"][key][
                 "capacity_charge"
             ] = self.root.ids.textfield_source_capacity_charge.text
 
@@ -1747,7 +1748,7 @@ class factory_GUIApp(MDApp):
             # check if the user specified it
             if not textfield.text == "":
                 # if yes: safe the value in the parameters dict
-                self.parameters[key][parameter] = float(textfield.text)
+                self.session_data["parameters"][key][parameter] = float(textfield.text)
 
         # update connection names to adapt changes if the name of the storage has changed
         self.update_connection_names()
@@ -2274,10 +2275,17 @@ class factory_GUIApp(MDApp):
                 "determined_power",
             ]:
                 textfield = getattr(self.root.ids, f"textfield_source_{parameter}")
-                if parameter in self.parameters[self.selected_asset["key"]].keys():
+                if (
+                    parameter
+                    in self.session_data["parameters"][
+                        self.selected_asset["key"]
+                    ].keys()
+                ):
 
                     textfield.text = str(
-                        self.parameters[self.selected_asset["key"]][parameter]
+                        self.session_data["parameters"][self.selected_asset["key"]][
+                            parameter
+                        ]
                     )
                 else:
                     textfield.text = ""
@@ -2333,10 +2341,17 @@ class factory_GUIApp(MDApp):
                 # get the pointer to the corresponding textfield
                 textfield = getattr(self.root.ids, f"textfield_converter_{parameter}")
                 # check if there is a value for the parameter in the parameters dict
-                if parameter in self.parameters[self.selected_asset["key"]].keys():
+                if (
+                    parameter
+                    in self.session_data["parameters"][
+                        self.selected_asset["key"]
+                    ].keys()
+                ):
                     # if yes: write value into the textfield
                     textfield.text = str(
-                        self.parameters[self.selected_asset["key"]][parameter]
+                        self.session_data["parameters"][self.selected_asset["key"]][
+                            parameter
+                        ]
                     )
                 else:
                     textfield.text = ""
@@ -2385,9 +2400,16 @@ class factory_GUIApp(MDApp):
             ]:
                 textfield = getattr(self.root.ids, f"textfield_sink_{parameter}")
 
-                if parameter in self.parameters[self.selected_asset["key"]].keys():
+                if (
+                    parameter
+                    in self.session_data["parameters"][
+                        self.selected_asset["key"]
+                    ].keys()
+                ):
                     textfield.text = str(
-                        self.parameters[self.selected_asset["key"]][parameter]
+                        self.session_data["parameters"][self.selected_asset["key"]][
+                            parameter
+                        ]
                     )
                 else:
                     textfield.text = ""
@@ -2429,9 +2451,16 @@ class factory_GUIApp(MDApp):
             ]:
                 textfield = getattr(self.root.ids, f"textfield_storage_{parameter}")
 
-                if parameter in self.parameters[self.selected_asset["key"]].keys():
+                if (
+                    parameter
+                    in self.session_data["parameters"][
+                        self.selected_asset["key"]
+                    ].keys()
+                ):
                     textfield.text = str(
-                        self.parameters[self.selected_asset["key"]][parameter]
+                        self.session_data["parameters"][self.selected_asset["key"]][
+                            parameter
+                        ]
                     )
                 else:
                     textfield.text = ""
@@ -2545,9 +2574,12 @@ class factory_GUIApp(MDApp):
                 "GUI"
             ]["icon"]
 
-            if "delay" in self.parameters[self.selected_asset["key"]].keys():
+            if (
+                "delay"
+                in self.session_data["parameters"][self.selected_asset["key"]].keys()
+            ):
                 self.root.ids.textfield_deadtime_delay.text = str(
-                    self.parameters[self.selected_asset["key"]]["delay"]
+                    self.session_data["parameters"][self.selected_asset["key"]]["delay"]
                 )
             else:
                 self.root.ids.textfield_deadtime_delay.text = ""
