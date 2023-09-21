@@ -1,6 +1,4 @@
 # IMPORTS
-import numpy as np
-from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.dialog import MDDialog
@@ -17,10 +15,6 @@ def show_parameter_config_dialog(app, caller):
     """
     This function opens the dialog for configuring values of component parameters.
     """
-
-    Builder.load_file(
-        r"factory_flexibility_model\ui\dialogs\dialog_parameter_config.kv"
-    )
 
     app.dialog = MDDialog(
         title=f"{app.selected_asset['name']}: {caller.text}",
@@ -56,7 +50,10 @@ def add_static_parameter_value(app):
         variation += 1
 
     # store the value under the determined key
-    app.parameters[asset_key][parameter_key][variation] = value
+    app.parameters[asset_key][parameter_key][variation] = {
+        "type": "parameter",
+        "value": value,
+    }
 
     update_parameter_value_list(app)
 
@@ -95,16 +92,14 @@ def update_parameter_value_list(app):
     ].items():
 
         # define list entry depending on the kind of value that is being handled
-        if isinstance(value, np.ndarray):
+        if value["type"] == "timeseries":
             text = "Timeseries"
             secondary_text = "Timeseries Name"
             icon = "chart-line"
         else:
             text = "Static Value"
             icon = "numeric"
-            secondary_text = (
-                f"{value} {app.selected_asset['flowtype'].unit.get_unit_flowrate()}"
-            )
+            secondary_text = f"{value['value']} {app.selected_asset['flowtype'].unit.get_unit_flowrate()}"
 
         # create a list item with the current value
         item = TwoLineAvatarIconListItem(

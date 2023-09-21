@@ -1,6 +1,5 @@
 # IMPORTS
 import numpy as np
-from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDRaisedButton
@@ -16,8 +15,6 @@ from kivymd.uix.snackbar import Snackbar
 
 import factory_flexibility_model.factory.Unit as Unit
 
-# LAYOUTS
-Builder.load_file(r"factory_flexibility_model\ui\dialogs\dialog_unit_definition.kv")
 
 # CLASSES
 class dialog_unit_definition(BoxLayout):

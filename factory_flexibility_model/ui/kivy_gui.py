@@ -1,6 +1,7 @@
 import os
 from collections import defaultdict
 
+import pandas as pd
 from kivy.core.window import Window
 from kivy.graphics import Ellipse, Line, Triangle
 from kivymd.uix.button import MDFillRoundFlatIconButton, MDFlatButton
@@ -582,6 +583,25 @@ class factory_GUIApp(MDApp):
         This function is the main function that is called when creating a new instance of the GUI. It creates the Screen
         and initializes all functional variables for the GUI
         """
+
+        # IMPORT additional layouts
+        # dialog parameter config
+        Builder.load_file(
+            r"factory_flexibility_model\ui\dialogs\dialog_parameter_config.kv"
+        )
+        # converter ratio dialog
+        Builder.load_file(
+            r"factory_flexibility_model\ui\dialogs\dialog_converter_ratios.kv"
+        )
+        # unit definition dialog
+        Builder.load_file(
+            r"factory_flexibility_model\ui\dialogs\dialog_unit_definition.kv"
+        )
+        # safe session as dialog
+        Builder.load_file(
+            r"factory_flexibility_model\ui\dialogs\dialog_save_session_as.kv"
+        )
+
         # create root object for the app
         screen = Builder.load_file(r"factory_flexibility_model\ui\FactoryModelGUI.kv")
 
@@ -598,7 +618,9 @@ class factory_GUIApp(MDApp):
             "display_scaling_factor": 0.6,
             "session_path": None,
         }
-        self.timeseries = []  # List of imported timeseries within the session
+        self.timeseries = (
+            pd.DataFrame()
+        )  # List of imported timeseries within the session
 
         # Style Config for GUI
         self.main_color = color.color("#1D4276")

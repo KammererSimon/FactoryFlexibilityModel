@@ -1,13 +1,9 @@
 # This file contains the function that creates and displays the dialog to specify a new name and path for an existing
 
 # IMPORTS
-from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.dialog import MDDialog
-
-# LAYOUTS
-Builder.load_file(r"factory_flexibility_model\ui\dialogs\dialog_save_session_as.kv")
 
 
 # CLASSES

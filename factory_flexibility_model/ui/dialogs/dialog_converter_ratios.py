@@ -1,5 +1,4 @@
 # IMPORTS
-from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.properties import BooleanProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
@@ -32,9 +31,6 @@ def show_converter_ratio_dialog(app):
     This function opens the dialog to specify converter input/output ratios.
     :param app: kivy-app-object that the dialog is being called from
     """
-    Builder.load_file(
-        r"factory_flexibility_model\ui\dialogs\dialog_converter_ratios.kv"
-    )
 
     app.dialog = MDDialog(
         title=f"{app.selected_asset['name']}: Input/Output Ratios",
