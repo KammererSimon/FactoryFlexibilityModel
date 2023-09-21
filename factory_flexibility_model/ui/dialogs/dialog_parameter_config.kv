@@ -4,127 +4,21 @@
 #:import add_timeseries_parameter_value factory_flexibility_model.ui.dialogs.dialog_parameter_config.add_timeseries_parameter_value
 #:import update_timeseries_list factory_flexibility_model.ui.dialogs.dialog_parameter_config.update_timeseries_list
 #:import select_parameter_type factory_flexibility_model.ui.dialogs.dialog_parameter_config.select_parameter_type
+#:import validate_static_value factory_flexibility_model.ui.dialogs.dialog_parameter_config.validate_static_value
 
 <dialog_parameter_config>
     size_hint: None, None
     width:dp(1450)
     height:dp(900)
     orientation: "vertical"
-    spacing: 10
-    padding: 10
     BoxLayout:
         orientation: "horizontal"
         spacing: 20
         padding: 20
-        BoxLayout:
-            orientation: "vertical"
-            MDLabel:
-                text: "Parameter value definition"
-                halign: "center"
-                font_style: "H5"
-                size_hint_y: None
-                height: dp(50)
 
-            MDSegmentedControl:
-                on_active: select_parameter_type(app, *args)
-                pos_hint: {"center_x": .5, "center_y": .5}
-                MDSegmentedControlItem:
-                    text: "Static Value"
-                MDSegmentedControlItem:
-                    text: "Timeseries"
-
-            ScreenManager:
-                id: parameter_type_screens
-                Screen:
-                    name: "Static Value"
-                    BoxLayout:
-                        padding: 10
-                        spacing: 10
-                        orientation: "vertical"
-                        MDTextField:
-                            id: textfield_value
-                            hint_text: "parameter value"
-                        Widget
-                        BoxLayout:
-                            padding: (10,10)
-                            orientation: "horizontal"
-                            size_hint_y: None
-                            height: dp(50)
-                            Widget:
-                            MDRaisedButton:
-                                text: "Add value as parameter variation"
-                                halign: "right"
-                                on_release: add_static_parameter_value(app)
-                Screen:
-                    name: "Timeseries"
-                    BoxLayout:
-                        spacing: 10
-                        orientation: "horizontal"
-                        BoxLayout:
-                            padding: 10
-                            spacing: 10
-                            size_hint_x: .5
-                            orientation: "vertical"
-                            MDLabel:
-                                text: "Available Timeseries"
-                                font_style: "H6"
-                                size_hint_y: None
-                                height: dp(45)
-                            MDTextField:
-                                id: textfield_search
-                                hint_text: "Search timeseries"
-                                icon_left: "magnify"
-                                on_text: update_timeseries_list(app)
-                            ScrollView:
-                                MDList:
-                                    id: list_timeseries
-                        MDCard:
-                            elevation: 3
-                            padding: 10
-                            spacing: 10
-                            orientation: "vertical"
-                            BoxLayout:
-                                orientation: "horizontal"
-                                size_hint_y: None
-                                height: dp(45)
-                                MDLabel:
-                                    text: "Selected Timeseries:"
-                                    font_style: "H6"
-                                MDLabel:
-                                    id: label_selected_timeseries
-                                Widget
-
-                            Graph:
-                                id: timeseries_preview
-                                padding: 20
-                                x_grid: True
-                                y_grid: True
-                                y_grid_label: True
-                                x_grid_label: True
-                                label_options: {"color": (0,0,0,1)}
-                                tick_color: (0, 0, 0, .1)
-                            BoxLayout:
-                                padding: (10,10)
-                                orientation: "horizontal"
-                                size_hint_y: None
-                                height: dp(100)
-                                BoxLayout:
-                                    orientation: "vertical"
-                                    MDLabel:
-                                        id: label_value_max
-                                    MDLabel:
-                                        id: label_value_min
-                                    MDLabel:
-                                        id: label_value_avg
-                                    MDLabel:
-                                        id: label_timesteps
-                                Widget:
-                                MDRaisedButton:
-                                    text: "Add timeseries as parameter variation"
-                                    on_release: add_timeseries_parameter_value(app)
         MDCard:
             elevation: 2
-            padding: 10
+            padding: 20
             orientation: "vertical"
             size_hint_x: .3
             MDLabel:
@@ -135,11 +29,177 @@
             ScrollView:
                 MDList:
                     id: list_parameter_variations
+
+        BoxLayout:
+            orientation: "vertical"
+            MDLabel:
+                text: "Parameter value definition"
+                halign: "center"
+                font_style: "H5"
+                size_hint_y: None
+                height: dp(50)
+            BoxLayout:
+                orientation: "horizontal"
+                BoxLayout:
+                    orientation: "vertical"
+                    MDSegmentedControl:
+                        on_active: select_parameter_type(app, *args)
+                        pos_hint: {"center_x": .5, "center_y": .5}
+                        MDSegmentedControlItem:
+                            text: "Static Value"
+                        MDSegmentedControlItem:
+                            text: "Timeseries"
+
+                    ScreenManager:
+                        id: parameter_type_screens
+                        Screen:
+                            name: "Static Value"
+                            BoxLayout:
+                                padding: 20
+                                spacing: 10
+                                orientation: "vertical"
+                                MDLabel:
+                                    text: "Enter a value for the parameter that is assumed to be constant during the whole simulation:"
+
+                                MDTextField:
+                                    id: textfield_value
+                                    hint_text: "parameter value"
+                                    on_text: validate_static_value(app, self)
+                                Widget
+                                BoxLayout:
+                                    padding: (10,10)
+                                    orientation: "horizontal"
+                                    size_hint_y: None
+                                    height: dp(50)
+                                    Widget:
+                                    MDRaisedButton:
+                                        id: button_add_value
+                                        text: "Add Parameter Configuration"
+                                        on_release: add_static_parameter_value(app)
+                                        disabled: True
+                        Screen:
+                            name: "Timeseries"
+                            BoxLayout:
+                                padding: 20
+                                orientation: "horizontal"
+                                BoxLayout:
+                                    spacing: 10
+                                    size_hint_x: .5
+                                    orientation: "vertical"
+                                    MDTextField:
+                                        id: textfield_search
+                                        hint_text: "Search timeseries"
+                                        icon_left: "magnify"
+                                        on_text: update_timeseries_list(app)
+                                    ScrollView:
+                                        MDList:
+                                            id: list_timeseries
+                                    BoxLayout:
+                                        padding: (10,10)
+                                        orientation: "horizontal"
+                                        size_hint_y: None
+                                        height: dp(50)
+                                        Widget:
+                                        MDRaisedButton:
+                                            id: button_add_timeseries
+                                            text: "Add Parameter Configuration"
+                                            on_release: add_timeseries_parameter_value(app)
+                                            disabled: True
+                BoxLayout:
+                    orientation: "vertical"
+                    Widget:
+                        size_hint_y: .2
+                    MDCard:
+                        elevation: 3
+                        padding: 10
+                        #size_hint_y: .5
+                        orientation: "vertical"
+                        Graph:
+                            id: timeseries_preview
+                            padding: 20
+                            x_grid: True
+                            y_grid: True
+                            y_grid_label: True
+                            x_grid_label: True
+                            label_options: {"color": (0,0,0,1)}
+                            tick_color: (0, 0, 0, .1)
+
+                    BoxLayout:
+                        orientation: "horizontal"
+                        size_hint_y: None
+                        height: dp(250)
+                        BoxLayout:
+                            orientation: "vertical"
+                            MDLabel:
+                                text: "Current Selection:"
+                                font_style: "H6"
+                                size_hint_y: None
+                                height: dp(45)
+                            Widget:
+                        BoxLayout:
+                            orientation: "vertical"
+                            BoxLayout:
+                                orientation: "horizontal"
+                                spacing: 10
+                                size_hint_y: None
+                                height: dp(50)
+                                MDIcon:
+                                    icon: "key-variant"
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+                                    size_hint_x: .2
+                                MDLabel:
+                                    id: label_selected_timeseries
+
+                            BoxLayout:
+                                orientation: "horizontal"
+                                spacing: 10
+                                size_hint_y: None
+                                height: dp(50)
+                                MDIcon:
+                                    icon: "arrow-collapse-up"
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+                                    size_hint_x: .2
+                                MDLabel:
+                                    id: label_value_max
+                            BoxLayout:
+                                orientation: "horizontal"
+                                size_hint_y: None
+                                height: dp(50)
+                                spacing: 10
+                                MDIcon:
+                                    icon: "arrow-collapse-down"
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+                                    size_hint_x: .2
+                                MDLabel:
+                                    id: label_value_min
+                            BoxLayout:
+                                orientation: "horizontal"
+                                size_hint_y: None
+                                height: dp(50)
+                                spacing: 10
+                                MDIcon:
+                                    icon: "format-align-middle"
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+                                    size_hint_x: .2
+                                MDLabel:
+                                    id: label_value_avg
+                            BoxLayout:
+                                orientation: "horizontal"
+                                size_hint_y: None
+                                height: dp(50)
+                                spacing: 10
+                                MDIcon:
+                                    icon: "arrow-expand-horizontal"
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+                                    size_hint_x: .2
+                                MDLabel:
+                                    id: label_timesteps
+
+
     BoxLayout:
-        padding: (10,10)
         orientation: "horizontal"
         size_hint_y: None
-        height: dp(50)
+        height: dp(30)
         Widget:
         MDRaisedButton:
             text: "OK"

@@ -27,18 +27,28 @@ def show_parameter_config_dialog(app, caller):
         type="custom",
         content_cls=dialog_parameter_config(),
     )
-
     app.dialog.size_hint = (None, None)
     app.dialog.width = dp(1500)
     app.dialog.height = dp(900)
 
-    app.dialog.unit = app.selected_asset["flowtype"].unit.get_unit_flowrate()
-
+    # get the parameter to be configured with the opened dialog
     app.dialog.parameter = caller.parameter
+
+    # specify the correct unit for the selected parameter
+    if app.dialog.parameter in ["availability"]:
+        app.dialog.unit = "%"
+    elif app.dialog.parameter in ["capacity_charge"]:
+        app.dialog.unit = f"€/{app.selected_asset['flowtype'].unit.get_unit_flowrate()}"
+    elif app.dialog.parameter in ["cost"]:
+        app.dialog.unit = f"€/{app.selected_asset['flowtype'].unit.get_unit_flow()}"
+    elif app.dialog.parameter in ["co2_emissions_per_unit"]:
+        app.dialog.unit = f"kgCO2/{app.selected_asset['flowtype'].unit.get_unit_flow()}"
+    else:
+        app.dialog.unit = app.selected_asset["flowtype"].unit.get_unit_flowrate()
+
     app.dialog.content_cls.ids.textfield_value.hint_text = (
         f"{caller.value_description} [{app.dialog.unit}]"
     )
-
     update_timeseries_list(app)
     update_parameter_value_list(app)
     app.dialog.open()
@@ -222,6 +232,15 @@ def select_timeseries_list_item(app, list_item, touch):
     # get data for selected timeseries and write it into self.selected_timeseries
     app.dialog.selected_timeseries = list_item.text
 
+    # write the values of the current timeseries into dialog.timeseries
+    app.dialog.timeseries = np.array(
+        app.timeseries[app.dialog.selected_timeseries][
+            1 : app.blueprint.info["timesteps"] + 1
+        ]
+    )
+
+    app.dialog.content_cls.ids.button_add_timeseries.disabled = False
+
     # update preview
     update_timeseries_preview(app)
 
@@ -231,22 +250,15 @@ def update_timeseries_preview(app):
     This function creates a graph of a timeseries and hands it over to the preview canvas together with some general info on the selected timeseries to be displayed within the info labels of the dialog.
     """
 
-    # get values
-    app.dialog.timeseries = np.array(
-        app.timeseries[app.dialog.selected_timeseries][
-            1 : app.blueprint.info["timesteps"] + 1
-        ]
-    )
-
     # write timeseries characteristics into labels
     app.dialog.content_cls.ids.label_value_max.text = (
-        f"Max: {round(app.dialog.timeseries.max(),2)} {app.dialog.unit}"
+        f"Maximum Value: {round(app.dialog.timeseries.max(),2)} {app.dialog.unit}"
     )
     app.dialog.content_cls.ids.label_value_min.text = (
-        f"Min: {round(app.dialog.timeseries.min(),2)} {app.dialog.unit}"
+        f"Minimum Value: {round(app.dialog.timeseries.min(),2)} {app.dialog.unit}"
     )
     app.dialog.content_cls.ids.label_value_avg.text = (
-        f"Avg: {round(app.dialog.timeseries.mean(),2)} {app.dialog.unit}"
+        f"Average Value: {round(app.dialog.timeseries.mean(),2)} {app.dialog.unit}"
     )
     app.dialog.content_cls.ids.label_timesteps.text = (
         f"Length: {app.dialog.timeseries.shape[0]} Timesteps"
@@ -299,3 +311,38 @@ def delete_timeseries(app, timeseries_key):
     """
     del app.timeseries[timeseries_key]
     update_timeseries_list(app)
+
+
+def validate_static_value(app, textfield):
+    """
+    This function is called, when the user changes the value that is written in the static value input textfield.
+    The function checks if the value is a valid numeric input and updates the graph on the right side of the dialog accordingly
+    """
+    # empty inputs do not have to be validated
+    if textfield.text.strip() == "":
+        textfield.text = ""
+        textfield.error = True
+        app.dialog.content_cls.ids.button_add_value.disabled = True
+        return
+
+    # Make sure that the input is a number
+    try:
+        textfield.text = textfield.text.replace(",", ".").strip()
+        input = float(textfield.text)
+    except:
+        if not textfield.text == "-":
+            textfield.text = textfield.text[:-1]
+            return
+
+    textfield.error = False
+    app.dialog.content_cls.ids.button_add_value.disabled = False
+    app.dialog.content_cls.ids.button_add_timeseries.disabled = True
+
+    # create a constant timeseries with the current user input value for the preview
+    app.dialog.timeseries = np.full(app.blueprint.info["timesteps"], input)
+
+    # write the name of selected timeseries in the GUI
+    app.dialog.content_cls.ids.label_selected_timeseries.text = "Static Value"
+
+    # update preview
+    update_timeseries_preview(app)
