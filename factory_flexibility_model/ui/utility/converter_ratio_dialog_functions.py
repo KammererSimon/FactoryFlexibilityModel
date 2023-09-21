@@ -1,28 +1,7 @@
-# IMPORTS
-from kivy.lang import Builder
-from kivy.metrics import dp
-from kivy.properties import BooleanProperty, StringProperty
-from kivy.uix.boxlayout import BoxLayout
-from kivymd.uix.dialog import MDDialog
-from kivymd.uix.list import TwoLineAvatarIconListItem
-
-# LAYOUTS
-Builder.load_file(r"factory_flexibility_model\ui\dialogs\converter_ratio_dialog.kv")
-
-# CLASSES
-class dialog_converter_ratios(BoxLayout):
-    bilance_valid = BooleanProperty()
-
-
-class TextfieldIconListItem(TwoLineAvatarIconListItem):
-    connection_key = StringProperty()
-
-
-class TextfieldCheckboxIconListItem(TwoLineAvatarIconListItem):
-    connection_key = StringProperty()
-
-
-# FUNCTIONS
+from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import (
+    TextfieldCheckboxIconListItem,
+    TextfieldIconListItem,
+)
 
 
 def save_converter_ratios(app):
@@ -197,31 +176,6 @@ def update_bilance_calculation(app):
         app.dialog.content_cls.ids.label_mass_out.text = f"{round(sum_mass_output,3)} kg ({round(sum_mass_output - sum_mass_input,3)} kg too much!)"
         app.dialog.content_cls.ids.label_mass_out.theme_text_color = "Error"
         app.dialog.bilance_valid = False
-
-
-def show_converter_ratio_dialog(app):
-    """
-    This function opens the dialog to specify converter input/output ratios.
-    :param app: kivy-app-object that the dialog is being called from
-    """
-
-    app.dialog = MDDialog(
-        title=f"{app.selected_asset['name']}: Input/Output Ratios",
-        type="custom",
-        content_cls=dialog_converter_ratios(),
-        auto_dismiss=False,
-    )
-
-    # display the icon of the current converter in the middle of the dialog
-    # app.dialog.content_cls.ids.image_converter_top.source = app.selected_asset["GUI"]["icon"]
-    # app.dialog.content_cls.ids.image_converter_bottom.source = app.selected_asset["GUI"]["icon"]
-
-    app.dialog.size_hint = (None, None)
-    app.dialog.width = dp(1050)
-    app.dialog.height = dp(1000)
-    update_connection_lists(app)
-    update_bilance_calculation(app)
-    app.dialog.open()
 
 
 def update_connection_lists(app):

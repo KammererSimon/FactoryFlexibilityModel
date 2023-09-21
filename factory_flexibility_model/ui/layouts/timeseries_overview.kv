@@ -1,0 +1,36 @@
+#:import update_timeseries_list factory_flexibility_model.ui.utility.timeseries_handling.update_timeseries_list
+
+<LayoutTimeseriesOverview>
+    padding: 20
+    spacing: 20
+    BoxLayout:
+        orientation: "vertical"
+        size_hint_x: .4
+        MDTextField:
+            id: textfield_search
+            hint_text: "Search timeseries"
+            icon_left: "magnify"
+            on_text: update_timeseries_list(app)
+        ScrollView:
+            MDList:
+                id: list_timeseries
+    MDCard:
+        padding: 20
+        spacing: 20
+        elevation: 1
+        orientation: "vertical"
+        MDLabel:
+            id: label_selected_timeseries
+            font_style: "H6"
+            size_hint_y: None
+            height: dp(45)
+
+        Graph:
+            id: timeseries_preview
+            padding: 20
+            x_grid: True
+            y_grid: True
+            y_grid_label: True
+            x_grid_label: True
+            label_options: {"color": (0,0,0,1)}
+            tick_color: (0, 0, 0, .1)

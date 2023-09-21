@@ -1,3 +1,8 @@
+#:import show_unit_config_dialog factory_flexibility_model.ui.dialogs.dialog_unit_definition.show_unit_config_dialog
+#:import show_converter_ratio_dialog factory_flexibility_model.ui.dialogs.dialog_converter_ratios.show_converter_ratio_dialog
+#:import show_parameter_config_dialog factory_flexibility_model.ui.dialogs.dialog_parameter_config.show_parameter_config_dialog
+
+
 Screen:
     MDNavigationLayout:
         ScreenManager:
@@ -111,7 +116,7 @@ Screen:
                                                             text: "Unit Definitions"
                                                             icon: "cog"
                                                             line_color: 1, 1, 1, 1
-                                                            on_release: app.app_show_unit_config_dialog()
+                                                            on_release: show_unit_config_dialog(app)
                                                             pos_hint: {"center_x": .5, "center_y": .5}
 
         # SOURCE CONFIG SCREEN #########################################################################################
@@ -158,12 +163,25 @@ Screen:
                                                             hint_text: 'Delivered Flow'
                                                             icon_right: "arrow-down-drop-circle-outline"
                                                             on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
+                                                        BoxLayout:
+                                                            padding: (10,10)
+                                                            size_hint_y: None
+                                                            height: dp(50)
+                                                            orientation: "horizontal"
+                                                            Widget:
+                                                            MDFlatButton:
+                                                                text: "Revert Changes"
+                                                                halign: "right"
+                                                                on_release: app.update_config_tab()
+                                                            MDRaisedButton:
+                                                                text: "Save Changes"
+                                                                on_release: app.save_changes_on_source()
+
                                                         MDLabel:
                                                             text: "Operating Constraints"
                                                             font_style: "H6"
                                                             size_hint_y: None
                                                             height: dp(30)
-
                                                         ScrollView:
                                                             do_scroll_y: True
                                                             do_scroll_x: False
@@ -178,55 +196,72 @@ Screen:
                                                                 ParameterConfigItem:
                                                                     id: config_source_power_max
                                                                     text: "Maximum Output"
+                                                                    secondary_text: "Not Specified"
                                                                     parameter: "power_max"
                                                                     value_description: "Maximum Output Flowrate"
-                                                                    secondary_text: "10kW"
-                                                                    tertiary_text: "Static Value"
-                                                                    on_release: app.show_parameter_config_dialog(self)
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "numeric"
+                                                                        icon: "help"
+
                                                                 ParameterConfigItem:
                                                                     id: config_source_power_min
                                                                     text: "Minimum Output"
-                                                                    secondary_text: "0-10kW"
-                                                                    tertiary_text: "Timeseries"
+                                                                    secondary_text: "Not Specified"
+                                                                    parameter: "power_min"
+                                                                    value_description: "Minimum Output Flowrate"
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "chart-line"
+                                                                        icon: "help"
+
                                                                 ParameterConfigItem:
                                                                     id: config_source_determined_power
                                                                     text: "Fixed Output"
-                                                                    secondary_text: "0-10kW"
-                                                                    tertiary_text: "Timeseries"
+                                                                    secondary_text: "Not Specified"
+                                                                    parameter: "determined_power"
+                                                                    value_description: "Fixed Output level"
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "chart-line"
+                                                                        icon: "help"
+
                                                                 ParameterConfigItem:
                                                                     id: config_source_availability
                                                                     text: "Availability"
-                                                                    secondary_text: "0-10kW"
-                                                                    tertiary_text: "Timeseries"
+                                                                    secondary_text: "Not Specified"
+                                                                    parameter: "availability"
+                                                                    value_description: "Ratio of Maximum Output that is available at any time"
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "chart-line"
+                                                                        icon: "help"
+
                                                                 ParameterConfigItem:
                                                                     id: config_source_capacity_charge
                                                                     text: "Capacity Charge"
-                                                                    secondary_text: "0-10kW"
-                                                                    tertiary_text: "Timeseries"
+                                                                    secondary_text: "Not Specified"
+                                                                    parameter: "capacity_charge"
+                                                                    value_description: "Fixed price charged per maximum utilized flowrate"
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "chart-line"
+                                                                        icon: "help"
+
                                                                 ParameterConfigItem:
                                                                     id: config_source_co2_emission_per_unit
                                                                     text: "Emissions"
-                                                                    secondary_text: "0-10kW"
-                                                                    tertiary_text: "Timeseries"
+                                                                    secondary_text: "Not Specified"
+                                                                    parameter: "co2_emissions_per_unit"
+                                                                    value_description: "CO2 emissions per unit"
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "chart-line"
+                                                                        icon: "help"
+
                                                                 ParameterConfigItem:
                                                                     id: config_source_cost
                                                                     text: "Cost"
-                                                                    secondary_text: "0-10kW"
-                                                                    tertiary_text: "Timeseries"
+                                                                    secondary_text: "Not Specified"
+                                                                    parameter: "cost"
+                                                                    value_description: "Cost per unit"
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "chart-line"
+                                                                        icon: "help"
 
                                                                 ValidatedTextField:
                                                                     id: textfield_source_power_max
@@ -290,21 +325,7 @@ Screen:
                                                                     validation_type: "source_cost"
                                                                     on_text: app.validate_textfield_input(self)
 
-                                                        BoxLayout:
-                                                            padding: (10,10)
-                                                            size_hint_y: None
-                                                            height: dp(50)
-                                                            orientation: "horizontal"
-                                                            Widget:
-                                                            MDFlatButton:
-                                                                text: "Revert Changes"
-                                                                halign: "right"
-                                                                on_release: app.update_config_tab()
 
-                                                            MDRaisedButton:
-                                                                text: "Save Changes"
-                                                                on_release: app.save_changes_on_source()
-                                                                valign: "top"
         # SINK CONFIG SCREEN ###########################################################################################
                                                 Screen:
                                                     name: "sink_config"
@@ -509,7 +530,7 @@ Screen:
                                                             height: dp(30)
                                                         OneLineIconListItem:
                                                             text: "Show Input/Output Ratios"
-                                                            on_release: app.app_show_converter_ratio_dialog()
+                                                            on_release: show_converter_ratio_dialog(app)
                                                             IconLeftWidget:
                                                                 icon: "cog"
 
@@ -609,7 +630,6 @@ Screen:
                                                     MDBoxLayout:
                                                         orientation: "vertical"
                                                         padding: dp(20)
-        # THERMALSYSTEM: Position of header with image in screen #######################################################
                                                         MDBoxLayout:
                                                             size_hint_y: None
                                                             height: dp(70)
@@ -639,7 +659,6 @@ Screen:
                                                                 height: dp(900)
                                                                 spacing: dp(10)
 
-        # THERMALSYSTEM: Position of boxlayout with textfields #########################################################
                                                                 MDLabel:
                                                                     text: "General"
                                                                     font_style: "H6"
@@ -670,7 +689,6 @@ Screen:
                                                                         on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
                                                                         on_text: app.set_unsaved_changes_on_asset(True)
 
-        # THERMALSYSTEM: Position of boxlayout 'Operating Constraints' with input fields and checkboxes for timeseries #
                                                                 MDLabel:
                                                                     text: "Operating Constraints"
                                                                     height: dp(30)
@@ -795,7 +813,6 @@ Screen:
                                                                     Widget:
                                                                         size_hint_x: .11
 
-        # THERMALSYSTEM: Position of boxlayout 'Efficiency' with input fields ##########################################
                                                                 MDLabel:
                                                                     text: "Efficiency"
                                                                     height: dp(100)
@@ -826,8 +843,6 @@ Screen:
                                                                         helper_text_mode: "on_error"
                                                                         validation_type: "thermalsystem_C"
                                                                         on_text: app.validate_textfield_input(self)
-
-        # THERMALSYSTEM: Button creation for saving and revert changes #################################################
                                                         BoxLayout:
                                                             padding: (10,10)
                                                             size_hint_y: None
@@ -1167,10 +1182,6 @@ Screen:
                                                             MDRaisedButton:
                                                                 text: "Save Changes"
                                                                 on_release: app.save_changes_on_storage()
-#<<<<<<< HEAD
-
-#=======
-#>>>>>>> origin/master
         # POOL CONFIG SCREEN ###########################################################################################
                                                 Screen:
                                                     name: "pool_config"
@@ -1230,325 +1241,24 @@ Screen:
                                                             MDRaisedButton:
                                                                 text: "Save Changes"
                                                                 on_release: app.save_changes_on_pool()
-### TAB SCENARIO  ######################################################################################################
+### TAB TIMESERIS  ######################################################################################################
                         MDBottomNavigationItem:
-                            name: "tab_scenario"
-                            text: "Scenario"
+                            name: "tab_timeseries"
+                            text: "Timeseries"
                             icon: "database-import"
 
                             ScreenManager:
-                                id: scenario_screens
-        # SCENARIO SELECTION SCREEN ####################################################################################
                                 Screen:
-                                    name: "scenario_selection_screen"
-                                    MDBoxLayout:
-                                        padding: dp(20)
-                                        spacing: dp(20)
-                                        orientation: "vertical"
+                                    id: timeseries_screens
 
-                                        StackLayout:
-                                            id: grid_scenarios
-                                            spacing: dp(20)
+### TAB SIMULATION  ######################################################################################################
+                        MDBottomNavigationItem:
+                            name: "tab_simulation"
+                            text: "Simulation"
+                            icon: "database-import"
 
-                                        MDFloatingActionButton:
-                                            icon: "plus"
-                                            user_font_size: "500sp"
-                                            pos_hint: {"center_x": .5, "center_y": .5}
-                                            on_release: app.show_scenario_creation_dialog()
-
-        # PARAMETER CONFIGURATION SCREEN ###############################################################################
-                                Screen:
-                                    name: "parameter_configuration_screen"
-
-                                    MDBoxLayout:
-                                        orientation: "horizontal"
-                                        padding: 20
-                                        spacing: 20
-               # Scenario overview Card  ###############################################################################
-                                        MDBoxLayout:
-                                            orientation: "vertical"
-                                            size_hint: (.2, 1)
-                                            spacing: dp(20)
-                                            MDCard:
-                                                orientation: "vertical"
-                                                padding: dp(20)
-                                                spacing: dp(5)
-                                                elevation: 2
-                                                radius: [10, 10]
-
-                                                FloatLayout
-                                                    size_hint_y: None
-                                                    height: dp(250)
-                                                    FitImage:
-                                                        id: image_scenario
-                                                        source: "Assets\\scenarios\\scenario_default.jpg"
-                                                        radius: [10, 10, 10, 10]
-                                                        size_hint: (1, 1)
-                                                        pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-
-                                                    MDFloatingActionButton:
-                                                        icon: "sync"
-                                                        on_release: app.show_image_selection_dialog()
-                                                        size_hint: (.1, .1)
-                                                        pos_hint: {"center_x": .9, "center_y": .1}
-
-                                                MDBoxLayout:
-                                                    orientation: "horizontal"
-                                                    size_hint_y: None
-                                                    adaptive_height: True
-                                                    MDLabel:
-                                                        id: label_scenario_title
-                                                        size_hint_y: None
-                                                        height: dp(50)
-                                                        text: "Scenario 1"
-                                                        font_style: "H6"
-                                                    MDIconButton:
-                                                        size_hint_x: None
-                                                        icon: "pencil"
-                                                        on_release: app.show_scenario_configuration_dialog()
-
-                                                MDLabel:
-                                                    id: label_scenario_description
-                                                    text: "Description of the Scenario"
-                                                    font_style: "Subtitle1"
-                                                    adaptive_height: True
-
-                                                Widget:
-                                                    size_hint_y: None
-                                                    height: dp(30)
-
-                                                TwoLineIconListItem:
-                                                    id: label_scenario_timestep_width
-                                                    size_hint_y: None
-                                                    height: dp(60)
-                                                    text: "Timestep Width"
-                                                    secondary_text: "1 Hour"
-                                                    IconLeftWidget:
-                                                        icon: "timer-sand-complete"
-
-                                                TwoLineIconListItem:
-                                                    id: label_scenario_timesteps
-                                                    size_hint_y: None
-                                                    height: dp(60)
-                                                    text: "Simulation Timesteps"
-                                                    secondary_text: "168"
-                                                    IconLeftWidget:
-                                                        icon: "clock-end"
-
-                                                TwoLineIconListItem:
-                                                    id: label_scenario_simulation_layout_valid
-                                                    size_hint_y: None
-                                                    height: dp(60)
-                                                    text: "Layout version"
-                                                    secondary_text: "Up to date"
-                                                    IconLeftWidget:
-                                                        icon: "timeline-check"
-
-                                                TwoLineIconListItem:
-                                                    id: label_scenario_simulation_parameters_specified
-                                                    size_hint_y: None
-                                                    height: dp(60)
-                                                    text: "Parameters specified"
-                                                    secondary_text: "0/3"
-                                                    IconLeftWidget:
-                                                        icon: "chart-donut"
-
-                                                TwoLineIconListItem:
-                                                    id: label_scenario_simulation_count
-                                                    size_hint_y: None
-                                                    height: dp(60)
-                                                    text: "Simulations Performed"
-                                                    secondary_text: "0/1340"
-                                                    IconLeftWidget:
-                                                        icon: "percent-outline"
-
-                                                Widget
-
-                                                MDRaisedButton:
-                                                    id: button_run_simulation
-                                                    text: "RUN SIMULATION"
-                                                    valign: "bottom"
-                                                    size_hint_x: 1
-                                                    size_hint_y: None
-                                                    height: dp(50)
-                                                    disabled: True
-                                                    on_release: app.run_simulation()
-
-                                            MDRaisedButton:
-                                                text: "BACK"
-                                                size_hint_x: 1
-                                                on_release: app.update_scenario_selection_screen()
-
-               # Parameter overview Card ###############################################################################
-
-                                        MDBoxLayout:
-                                            size_hint_x: .4
-                                            orientation: "vertical"
-                                            MDLabel:
-                                                text: "Scenario Parameter Variations"
-                                                font_style: "H5"
-                                                size_hint_y: None
-                                                height: dp(40)
-
-                                            ScrollView:
-                                                MDList:
-                                                    id: list_scenario_parameters
-
-                                        MDCard:
-                                            orientation: "horizontal"
-                                            padding: dp(20)
-                                            spacing: dp(20)
-                                            elevation: 2
-                                            size_hint_x: .4
-
-                                            MDBoxLayout:
-                                                orientation: "vertical"
-                                                MDLabel:
-                                                    id: label_selected_parameter
-                                                    text: "Component Name | Parameter Name"
-                                                    font_style: "H4"
-                                                    size_hint_y: None
-                                                    height: dp(50)
-
-                            # Timeseries Preview Graph #####################################################################
-
-                                                MDBoxLayout:
-                                                    orientation: "horizontal"
-                                                    spacing: dp(20)
-                                                    MDBoxLayout:
-                                                        orientation: "vertical"
-                                                        Graph:
-                                                            id: timeseries_preview
-                                                            padding: 20
-                                                            x_grid: True
-                                                            y_grid: True
-                                                            y_grid_label: True
-                                                            x_grid_label: True
-                                                            label_options: {"color": (0,0,0,1)}
-                                                            tick_color: (0, 0, 0, .1)
-
-                                                MDTabs:
-                                                    id: parameter_tabs
-                                                    background_color: app.theme_cls.accent_color
-                                                    size_hint_y: None
-                                                    height: dp(150)
-                                                    tab_indicator_type: "fill"# , "line-round"
-                                                    elevation: 2
-                            # Static Value Tab #############################################################################
-                                                    Tab:
-                                                        icon: "crosshairs"
-                                                        title: "Static Value"
-                                                        orientation: "vertical"
-                                                        padding: dp(20)
-                                                        spacing: dp(20)
-
-                                                        MDBoxLayout:
-                                                            orientation: "horizontal"
-                                                            Widget:
-                                                            OneLineListItem:
-                                                                size_hint: (None, None)
-                                                                height: dp(60)
-                                                                width: dp(230)
-                                                                text: "Fixed Value of"
-
-                                                            MDTextField:
-                                                                mode: "rectangle"
-                                                                id: textfield_static_value
-                                                                hint_text: "Value"
-                                                                size_hint: (None, None)
-                                                                width: dp(100)
-                                                                height: dp(60)
-                                                                on_text_validate: app.update_timeseries_preview("Static Value")
-                                                            MDTextField:
-                                                                mode: "rectangle"
-                                                                id: textfield_static_value_unit
-                                                                hint_text: "Unit"
-                                                                size_hint: (None, None)
-                                                                width: dp(70)
-                                                                height: dp(60)
-                                                                on_text_validate: app.update_timeseries_preview("Static Value")
-                                                            Widget:
-                                                        Widget:
-                            # Weather Data Tab #############################################################################
-                                                    Tab:
-                                                        icon: "weather-partly-cloudy"
-                                                        title: "Weather Data"
-                                                        MDLabel:
-                                                            text: "Function not available yet"
-                            # Market Data Tab ##############################################################################
-                                                    Tab:
-                                                        icon: "currency-eur"
-                                                        title: "Market Data"
-                                                        MDLabel:
-                                                            text: "Function not available yet"
-                            # Custom Timeseries Tab ########################################################################
-                                                    Tab:
-                                                        icon: "chart-bell-curve"
-                                                        title: "Custom Timeseries"
-                                                        orientation: "vertical"
-                                                        MDBoxLayout
-                                                            orientation: "horizontal"
-                                                            Widget
-                                                            OneLineIconListItem:
-                                                                id: label_selected_timeseries
-                                                                size_hint: (None, None)
-                                                                height: dp(60)
-                                                                width: dp(300)
-                                                                text: "Unknown timeseries"
-                                                                on_release: app.show_timeseries_selection_dialog()
-                                                                IconLeftWidget:
-                                                                    icon: "chart-line"
-                                                            OneLineListItem:
-                                                                id: textfield_timeseries_scaling
-                                                                size_hint: (None, None)
-                                                                height: dp(60)
-                                                                width: dp(230)
-                                                                text: "with a peak value of"
-                                                                on_release: app.show_scaling_selection_dialog()
-
-                                                            MDTextField:
-                                                                id: textfield_custom_timeseries
-                                                                mode: "rectangle"
-                                                                hint_text: "Value"
-                                                                size_hint: (None, None)
-                                                                width: dp(100)
-                                                                height: dp(60)
-                                                                on_text_validate: app.update_timeseries_preview("Custom Timeseries")
-
-                                                            OneLineListItem:
-                                                                id: textfield_custom_timeseries_unit
-                                                                size_hint: (None, None)
-                                                                height: dp(60)
-                                                                width: dp(100)
-                                                                text: "Unit"
-                                                                pos_hint_y: .5
-                                                            Widget
-                                                        Widget
-
-                                                MDRaisedButton:
-                                                    text: "Set Parameter"
-                                                    id: button_set_parameter
-                                                    on_release: app.set_parameter()
-
-        #                                                AnchorLayout
-        #                                                    size_hint_y: None
-        #                                                    height: dp(50)
-        #                                                    MDProgressBar:
-        #                                                        id: parameter_progress_bar
-        #                                                        value: 50
-        #                                                        color: app.theme_cls.accent_color
-        #                                                        anchor_x: "center"
-        #                                                        anchor_y: "bottom"
-        #
-        #                                                    MDLabel:
-        #                                                        id: label_parameter_progression
-        #                                                        text: "Parameter definition"
-        #                                                        size_hint_y: None
-        #                                                        anchor_x: "center"
-        #                                                        anchor_y: "bottom"
-        #                                                        valign: "center"
-
-
+                            ScreenManager:
+                                id: simulation_screens
 
 ## COMPONENT CREATION MENU ######################################################################################################
                 MDNavigationDrawer:
@@ -1584,185 +1294,12 @@ Screen:
                 MDNavigationDrawer:
                     id: main_menu
 
-#                    BoxLayout:
-#                        orientation: "vertical"
-#                        spacing: "8dp"
-#                        padding: "8dp"
-#                        Image:
-#                            source: "Assets\\logo_small.png"
-#                            height: 200
-#                            size_hint_y: None
-#
-#                        MDLabel:
-#                            text: "Factory Model"
-#                            font_style: 'H5'
-#                            size_hint_y: None
-#                            height: self.texture_size[1]
-#                        MDLabel:
-#                            text: "Main Menu"
-#                            font_style: 'Caption'
-#                            size_hint_y: None
-#                            height: self.texture_size[1]
-#
-#                        MDList:
-#                            OneLineIconListItem:
-#                                text: "New Session"
-#                                on_release: app.new_session("start")
-#                                IconLeftWidget:
-#                                    icon: "new-box"
-#                            OneLineIconListItem:
-#                                text: "Save Session as"
-#                                on_release: app.save_session_as()
-#                                IconLeftWidget:
-#                                    icon: "content-save-plus"
-#                            OneLineIconListItem:
-#                                text: "Save Session "
-#                                on_release: app.save_session()
-#                                IconLeftWidget:
-#                                    icon: "content-save"
-#                            OneLineIconListItem:
-#                                text: "Open Session"
-#                                on_release: app.load_session()
-#                                IconLeftWidget:
-#                                    icon: "folder-open"
-#                            OneLineIconListItem:
-#                                text: "Import Timeseries Data"
-#                                on_release: app.import_timeseries()
-#                                IconLeftWidget:
-#                                    icon: "import"
-#                        Widget
-#
-#                        Image:
-#                            source: "Assets\\logo_grk.png"
-#                            height: 100
-#                            size_hint_y: None
-#
-#                        Image:
-#                            source: "Assets\\ie3.png"
-#                            height: 200
-#                            size_hint_y: None
-#
-#                        MDLabel:
-#                            id: label_version
-#                            size_hint_y: None
-#                            height: dp(50)
-#                        MDLabel:
-#                            size_hint_y: None
-#                            height: dp(50)
-#                            text: "simon.kammerer@tu-dortmund.de"
-
-
 # ADDITIONAL LAYOUTS ###################################################################################################
-#       DRAGLABEL    ###################################################################################################
 <DragLabel>:
     # Define the properties for the DragLabel
     drag_rectangle: self.x, self.y, self.width, self.height
     drag_timeout: 10000000
     drag_distance: 0
-
-#       SESSION CREATION DIALOG ###########################################################################################
-
-<dialog_new_session>
-    spacing: "12dp"
-    padding: (0, 30)
-    size_hint: (None, None)
-    height: "400dp"
-    width: "500dp"
-    orientation: "vertical"
-    background_color: 0, 0, 0, 1
-
-    MDTextField:
-        id: textfield_new_session_name
-        hint_text: "Project name"
-        required: True
-        max_text_length: 30
-        helper_text_mode: "on_error"
-        helper_text: "Enter a name for the new Project"
-    MDLabel:
-        text: "Session folder path"
-        size_hint_y: None
-        height: self.texture_size[1]
-    MDBoxLayout:
-        FileChooserIconView:
-            id: filechooser_new_session
-            dirselect: True
-            path: os.getcwd()
-            Label:
-                color: 0, 0, 0, 1
-    MDTextField:
-        id: textfield_new_session_description
-        hint_text: "Project description"
-        helper_text_mode: "on_error"
-        helper_text: "Enter a brief project description"
-
-
-<FileChooserListView>:
-    layout: layout
-    FileChooserListLayout:
-        id: layout
-        controller: root
-
-#       SCENARIO CREATION DIALOG #######################################################################################
-<dialog_new_scenario>
-    spacing: "12dp"
-    padding: (0, 30)
-    size_hint: (None, None)
-    height: "150dp"
-    width: "500dp"
-    orientation: "vertical"
-    MDTextField:
-        id: textfield_new_scenario_name
-        hint_text: "Scenario name"
-        required: True
-        max_text_length: 30
-        helper_text_mode: "on_error"
-        helper_text: "Enter a name for the Scenario"
-    MDTextField:
-        id: textfield_new_scenario_description
-        hint_text: "Scenario description"
-        helper_text_mode: "on_error"
-        helper_text: "Enter a description of the scenario"
-        max_text_length: 150
-
-#       SCENARIO IMAGE SELECTION DIALOG #######################################################################################
-<dialog_image_selection>
-    spacing: "12dp"
-    padding: (0, 30)
-    size_hint: (1, None)
-    height: dp(800)
-    orientation: "vertical"
-    ScrollView:
-        MDGridLayout:
-            id: image_grid
-            cols: 3
-            row_default_height: (self.width - self.cols*self.spacing[0]) / self.cols
-            row_force_default: True
-            adaptive_height: True
-            padding: dp(4), dp(4)
-            spacing: dp(4)
-
-
-#       SCENARIO CONFIGURATION DIALOG ##################################################################################
-<dialog_update_scenario>
-    spacing: "12dp"
-    padding: (0, 30)
-    size_hint: (None, None)
-    height: "150dp"
-    width: "500dp"
-    orientation: "vertical"
-    MDTextField:
-        id: textfield_new_scenario_name
-        hint_text: "Scenario name"
-        required: True
-        max_text_length: 30
-        helper_text_mode: "on_error"
-        helper_text: "Enter a name for the Scenario"
-    MDTextField:
-        id: textfield_new_scenario_description
-        hint_text: "Scenario description"
-        helper_text_mode: "on_error"
-        helper_text: "Enter a description of the scenario"
-        max_text_length: 150
 
 #       TIMESERIES SELECTION DIALOG ####################################################################################
 <dialog_timeseries_selection>
@@ -1796,7 +1333,6 @@ Screen:
         on_release: app.close_dialog()
 
 #       FLOWTYPE DEFINITION DIALOG ####################################################################################
-
 <dialog_flowtype_definition>
     size_hint: None, None
     width:dp(800)
@@ -1892,56 +1428,3 @@ Screen:
         MDRaisedButton:
             text: "Cancel"
             on_release: app.close_dialog()
-
-#       SCENARIO CARD ##################################################################################################
-<ScenarioCard>:
-    orientation: "vertical"
-    padding: dp(20)
-    spacing: dp(20)
-    elevation: 2
-    #ripple_behaviour: True
-    focus_behavior: True
-    size_hint: (None, None)
-    height: dp(400)
-    width: dp(400)
-
-    md_bg_color: "white"
-    unfocus_color: "white"
-    focus_color: "grey"
-    radius: [10, 10]
-
-    MDBoxLayout:
-        orientation: "vertical"
-        spacing: dp(20)
-        FitImage:
-            id: image
-            source: "Assets\\scenarios\\scenario_default.jpg"
-            radius: [10, 10, 10, 10]
-            size_hint_y: .8
-            #height: dp(200)
-
-        MDLabel:
-            id: title
-            text: "Scenario 1"
-            font_style: "H6"
-            size_hint_y:.05
-
-        MDLabel:
-            id: description
-            text: "Description of the Scenario"
-            size_hint_y: .4
-            font_style: "Subtitle1"
-            valign: "top"
-
-    MDBoxLayout:
-        size_hint_y: .05
-        orientation: "horizontal"
-        Widget:
-
-        MDIconButton:
-            id: icon_copy
-            icon: "content-copy"
-
-        MDIconButton:
-            id: icon_delete
-            icon: "trash-can"

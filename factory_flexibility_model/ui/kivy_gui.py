@@ -1,32 +1,31 @@
-import copy
+import os
 from collections import defaultdict
 
 import pandas as pd
 from kivy.core.window import Window
 from kivy.graphics import Ellipse, Line, Triangle
-from kivy_garden.graph import LinePlot
-from kivymd.uix.button import MDFillRoundFlatIconButton
+from kivy.lang import Builder
+from kivymd.uix.button import MDFillRoundFlatIconButton, MDFlatButton
 from kivymd.uix.label import MDLabel
-from kivymd.uix.list import (
-    ImageLeftWidgetWithoutTouch,
-    OneLineListItem,
-    TwoLineListItem,
-)
+from kivymd.uix.list import IconRightWidget, TwoLineAvatarIconListItem, TwoLineListItem
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.pickers import MDColorPicker
 
+import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.factory.Flowtype as ft
 import factory_flexibility_model.ui.utility.color as color
 import factory_flexibility_model.ui.utility.flowtype_determination as fd
-from factory_flexibility_model.ui.dialogs.converter_ratio_dialog import *
-from factory_flexibility_model.ui.dialogs.parameter_config_dialog import *
+from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import (
+    show_converter_ratio_dialog,
+)
 from factory_flexibility_model.ui.layouts.main_menu import *
-from factory_flexibility_model.ui.utility.basic_session_functions import *
+
+# from factory_flexibility_model.ui.layouts.timeseries_overview import (
+#    LayoutTimeseriesOverview,
+# )
 from factory_flexibility_model.ui.utility.custom_widget_classes import *
 
 # IMPORT 3RD PARTY PACKAGES
-
-main_color = "#1D4276"
 colors = {
     "Red": {
         "50": "FFEBEE",
@@ -350,10 +349,6 @@ colors = {
 
 
 class factory_GUIApp(MDApp):
-    # TODO: checken ob das hier notwendig ist
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def on_start(self):
         """
         This function is automatically called by the __init_ method of the app class.
@@ -426,7 +421,7 @@ class factory_GUIApp(MDApp):
         self.root.ids[f"frame_{component_key}"] = component_framelabel
 
         # add parameter-dict for the new component
-        self.parameters[component_key] = {}
+        self.session_data["parameters"][component_key] = {}
 
         # close the component selection menu
         self.root.ids.component_shelf.set_state("closed")
@@ -549,14 +544,8 @@ class factory_GUIApp(MDApp):
         # set unsaved changes to true
         self.unsaved_changes_on_session = True
 
-    def app_add_static_parameter_value(self):
-        add_static_parameter_value(self)
-
     def app_show_converter_ratio_dialog(self):
         show_converter_ratio_dialog(self)
-
-    def app_save_converter_ratios(self):
-        save_converter_ratios(self)
 
     def app_add_magnitude_to_unit(self):
         add_magnitude_to_unit(self)
@@ -579,24 +568,6 @@ class factory_GUIApp(MDApp):
     def app_add_unit(self, *args):
         add_unit(self, *args)
 
-    def app_load_session(self):
-        """
-        This function calls the "load_session" method from main_menu.py
-        """
-        load_session(self)
-
-    def app_new_session(self):
-        """
-        This function calls the "new_session" method from main_menu.py
-        """
-        new_session(self, "start")
-
-    def app_save_session(self):
-        """
-        This function calls the "save_session" method from main_menu.py
-        """
-        save_session(self)
-
     def app_update_unit_list(self):
         update_unit_list(self)
 
@@ -611,6 +582,25 @@ class factory_GUIApp(MDApp):
         This function is the main function that is called when creating a new instance of the GUI. It creates the Screen
         and initializes all functional variables for the GUI
         """
+
+        # IMPORT additional layouts
+        # dialog parameter config
+        Builder.load_file(
+            r"factory_flexibility_model\ui\dialogs\dialog_parameter_config.kv"
+        )
+        # converter ratio dialog
+        Builder.load_file(
+            r"factory_flexibility_model\ui\dialogs\dialog_converter_ratios.kv"
+        )
+        # unit definition dialog
+        Builder.load_file(
+            r"factory_flexibility_model\ui\dialogs\dialog_unit_definition.kv"
+        )
+        # safe session as dialog
+        Builder.load_file(
+            r"factory_flexibility_model\ui\dialogs\dialog_save_session_as.kv"
+        )
+
         # create root object for the app
         screen = Builder.load_file(r"factory_flexibility_model\ui\FactoryModelGUI.kv")
 
@@ -622,27 +612,19 @@ class factory_GUIApp(MDApp):
         self.popup = None
         self.unsaved_changes_on_session = False  # indicated if there have been changes to the session since opening or saving
         self.unsaved_changes_on_asset = False  # indicates if there have been changes to the current asset since selecting or saving
-        self.scenarios = {}  # List of existing scenarios in the current session
         self.selected_asset = None  # the asset that the user has currently selected
-        self.selected_parameter = (
-            ""  # the scenarioparameter that the user has currently selected
-        )
-        self.selected_scenario = {
-            "timesteps": 168,
-            "name": "Testscenario",
-            "time_factor": 1,
-        }
-        self.selected_timeseries = np.zeros(168)  # the currently activated timeseries
         self.session_data = {
             "display_scaling_factor": 0.6,
             "session_path": None,
+            "parameters": {},
         }
-        self.timeseries = []  # List of imported timeseries within the session
+        self.timeseries = (
+            pd.DataFrame()
+        )  # List of imported timeseries within the session
 
         # Style Config for GUI
-        self.main_color = "#1D4276"
-        self.main_color_rgba = [0.1137, 0.2588, 0.463, 1]
-        self.dialog = None  # keeps track of currently opened dialogs
+        self.main_color = color.color("#1D4276")
+        self.dialog = None  # keeps track of currently opened dialog
         self.display_grid_size = [
             45,
             30,
@@ -651,8 +633,6 @@ class factory_GUIApp(MDApp):
         self.theme_cls.accent_palette = "Blue"
         self.theme_cls.primary_palette = "Blue"
         self.theme_cls.theme_style = "Light"
-
-        self.parameters = {}
 
         # paths to used .png-assets
         def get_files_in_directory(directory_path):
@@ -747,61 +727,6 @@ class factory_GUIApp(MDApp):
         if not self.popup == None:
             self.popup.dismiss()
 
-    def copy_scenario(self, instance):
-        """
-        This function duplicates a scenario
-        """
-        # get key of the scenario to be douplicated
-        parent_scenario_key = instance.parent.parent.scenario_key
-
-        # determine a key for the new scenario
-        i = 1
-        while f"{parent_scenario_key}_{i}" in self.scenarios.keys():
-            i += 1
-        new_scenario_key = f"{parent_scenario_key}_{i}"
-
-        # create copy of the original scenario and store it under the new key
-        # -> pointer to card widget of parent cant be deepcopied and has to be stored
-        card_widget_parent = self.scenarios[parent_scenario_key]["card_widget"]
-        self.scenarios[parent_scenario_key]["card_widget"] = None
-        self.scenarios[new_scenario_key] = copy.deepcopy(
-            self.scenarios[parent_scenario_key]
-        )
-        self.scenarios[parent_scenario_key]["card_widget"] = card_widget_parent
-
-        # change the key within the copy of the scenario
-        self.scenarios[new_scenario_key]["key"] = new_scenario_key
-        self.scenarios[new_scenario_key][
-            "name"
-        ] = f"Copy of {self.scenarios[parent_scenario_key]['name']}"
-
-        # create a card widget to show the new scenario in UI
-        card_widget = ScenarioCard(scenario_key=new_scenario_key)
-        card_widget.id = new_scenario_key
-        card_widget.ids.image.source = self.scenarios[parent_scenario_key]["image"]
-        card_widget.ids.title.text = (
-            f"Copy of {self.scenarios[parent_scenario_key]['name']}"
-        )
-        card_widget.ids.description.text = self.scenarios[parent_scenario_key][
-            "description"
-        ]
-        card_widget.bind(
-            on_press=lambda instance: self.update_scenario_config_screen(instance)
-        )
-        card_widget.ids.icon_copy.bind(
-            on_release=lambda instance: self.copy_scenario(instance)
-        )
-        card_widget.ids.icon_delete.bind(
-            on_release=lambda instance: self.show_scenario_deletion_dialog(instance)
-        )
-        self.root.ids.grid_scenarios.add_widget(card_widget)
-        self.scenarios[new_scenario_key][
-            "card_widget"
-        ] = card_widget  # store the pointer to the card widget in the scenario_dict
-
-        # session contains unsaved chaanges now
-        self.unsaved_changes_on_session = True
-
     def decrease_scaling_factor(self):
         self.session_data["display_scaling_factor"] = (
             self.session_data["display_scaling_factor"] * 0.95
@@ -867,24 +792,6 @@ class factory_GUIApp(MDApp):
         # redraw the preview without the connection
         self.initialize_visualization()
 
-    def delete_scenario(self, scenario_key):
-        """
-        This function deletes the scenario given as scenario_key
-        """
-
-        # close the dialog
-        self.dialog.dismiss()
-
-        self.root.ids.grid_scenarios.remove_widget(
-            self.scenarios[scenario_key]["card_widget"]
-        )
-
-        # delete the scenario from the root scenariolist:
-        self.scenarios[scenario_key] = []
-
-        # session contains unsaved changes now:
-        self.unsaved_changes_on_session = True
-
     def flowtype_used(self, flowtype_key):
         """
         This function takes a key to a flowtype and checks, wether the flowtype is currently being used within the factory
@@ -925,28 +832,6 @@ class factory_GUIApp(MDApp):
                 return unit.key
 
         return None
-
-    def import_timeseries(self):
-        """
-        This function lets the user choose an excel file containing timeseries and imports all of them to the tool
-        """
-
-        # ask for filename
-        filetype = [("xlsx", "*.xlsx")]
-        filepath = filedialog.askopenfilename(
-            defaultextension=filetype, filetypes=filetype
-        )
-
-        if not filepath == "":
-            # import the excel sheet
-            self.timeseries = pd.read_excel(filepath, sheet_name="Timeseries")
-
-            if not self.dialog == None:
-                # update the list of available timeseries
-                self.update_timeseries_list()
-
-        # inform the user
-        Snackbar(text=f"{len(self.timeseries.keys())} new timeseries imported").open()
 
     def increase_scaling_factor(self):
         self.session_data["display_scaling_factor"] = (
@@ -1280,105 +1165,6 @@ class factory_GUIApp(MDApp):
             description="Built in default flowtype used as a fallback option for unspecified situations",
         )
 
-    def new_scenario(self, *args, **kwargs):
-        """
-        This function creates a new empty scenario within the current session
-        """
-
-        # check if a scenario has been handed over
-        if "data" in kwargs:
-            new_scenario = kwargs["data"]
-            scenario_name = new_scenario["name"]
-            scenario_description = new_scenario["description"]
-
-        else:
-            # otherwise continue with given data
-
-            # if no: take the data from the gui
-            # get entered name and description
-            scenario_name = self.dialog.content_cls.ids.textfield_new_scenario_name.text
-            scenario_description = (
-                self.dialog.content_cls.ids.textfield_new_scenario_description.text
-            )
-
-            # check that name entry field was not left empty and the name is not assigned yet
-            if scenario_name == "" or scenario_name in self.scenarios.keys():
-                btn_ok = MDFlatButton(text="OK")
-                self.dialog = MDDialog(
-                    title="Invalid Name",
-                    text="Please enter a unique name for the new scenario",
-                    buttons=[btn_ok],
-                )
-                self.dialog.open()
-                btn_ok.bind(on_release=self.dialog.dismiss)
-                return
-
-            # close the naming dialog
-            self.dialog.dismiss()
-
-            # create new scenario as dict
-            new_scenario = {
-                "blueprint": {},
-                "description": scenario_description,
-                "image": "Assets\\scenarios\\scenario_default.jpg",
-                "key": scenario_name,
-                "location": [0, 0],
-                "location_name": "Dortmund, Germany",
-                "name": scenario_name,
-                "result": {},
-                "time_factor": 1,
-                "timesteps": 168,
-                "timestep_start": 1,
-                "parameters": {},
-                "year": 2023,
-            }
-
-        # create a card widget to show the scenario in UI
-        card_widget = ScenarioCard(scenario_key=scenario_name)
-        card_widget.id = scenario_name
-        card_widget.ids.title.text = scenario_name
-        card_widget.ids.description.text = scenario_description
-        card_widget.ids.image.source = new_scenario["image"]
-        card_widget.bind(
-            on_press=lambda instance: self.update_scenario_config_screen(instance)
-        )
-        card_widget.ids.icon_copy.bind(
-            on_release=lambda instance: self.copy_scenario(instance)
-        )
-        card_widget.ids.icon_delete.bind(
-            on_release=lambda instance: self.show_scenario_deletion_dialog(instance)
-        )
-        self.root.ids.grid_scenarios.add_widget(card_widget)
-
-        # assign the cardwidget to the scenario
-        new_scenario["card_widget"] = card_widget
-
-        # add new scenario to the global scenario list
-        self.scenarios.update({scenario_name: new_scenario})
-
-        # set the new scenario as the selected one
-        self.selected_scenario = new_scenario
-
-        # session contains unsaved changes now:
-        self.unsaved_changes_on_session = True
-
-    def save_session_as(self):
-        """
-        This function is used to create a copy of a session. First the user is asked to provide a directory where the new session shall be created. Then the regular save_session() method is being called
-        """
-        # ask for filepath
-        filepath_new = filedialog.askdirectory()
-
-        # make sure the user didn't abort the file selection or selected something invalid
-        if filepath_new == None or filepath_new == "":
-            return
-
-        # set the filepath as the new session_path
-        self.session_data["session_path"] = filepath_new
-
-        # call the regular safe session routine
-        self.save_session()
-
     def save_changes_on_flowtype(self):
         """
         This function checks the current user inputs in the flowetype definition window for validity and writes the values
@@ -1496,7 +1282,7 @@ class factory_GUIApp(MDApp):
             # check if the user specified it
             if not textfield.text == "":
                 # if yes: safe the value in the parameters dict
-                self.parameters[key][parameter] = float(textfield.text)
+                self.session_data["parameters"][key][parameter] = float(textfield.text)
 
         # update connection names to adapt changes if the name of the converter has changed
         self.update_connection_names()
@@ -1601,7 +1387,7 @@ class factory_GUIApp(MDApp):
             )
 
         if not self.root.ids.textfield_deadtime_delay.text == "":
-            self.parameters[key]["delay"] = int(
+            self.session_data["parameters"][key]["delay"] = int(
                 self.root.ids.textfield_deadtime_delay.text
             )
 
@@ -1775,7 +1561,7 @@ class factory_GUIApp(MDApp):
             # check if the user specified it
             if not textfield.text == "":
                 # if yes: safe the value in the parameters dict
-                self.parameters[key][parameter] = float(textfield.text)
+                self.session_data["parameters"][key][parameter] = float(textfield.text)
 
         # set unsaved changes parameters
         self.unsaved_changes_on_asset = False
@@ -1847,35 +1633,37 @@ class factory_GUIApp(MDApp):
         # update parameter list
         # costs
         if not self.root.ids.textfield_source_cost.text == "":
-            self.parameters[key]["cost"] = self.root.ids.textfield_source_cost.text
+            self.session_data["parameters"][key][
+                "cost"
+            ] = self.root.ids.textfield_source_cost.text
         # power_max
         if not self.root.ids.textfield_source_power_max.text == "":
-            self.parameters[key][
+            self.session_data["parameters"][key][
                 "power_max"
             ] = self.root.ids.textfield_source_power_max.text
         # power_min
         if not self.root.ids.textfield_source_power_min.text == "":
-            self.parameters[key][
+            self.session_data["parameters"][key][
                 "power_min"
             ] = self.root.ids.textfield_source_power_min.text
         # determined_power
         if not self.root.ids.textfield_source_determined_power.text == "":
-            self.parameters[key][
+            self.session_data["parameters"][key][
                 "determined_power"
             ] = self.root.ids.textfield_source_determined_power.text
         # availability
         if not self.root.ids.textfield_source_availability.text == "":
-            self.parameters[key][
+            self.session_data["parameters"][key][
                 "availability"
             ] = self.root.ids.textfield_source_availability.text
         # co2_emission_per_unit
         if not self.root.ids.textfield_source_co2_emission_per_unit.text == "":
-            self.parameters[key][
+            self.session_data["parameters"][key][
                 "co2_emission_per_unit"
             ] = self.root.ids.textfield_source_co2_emission_per_unit.text
         # capacity_charge
         if not self.root.ids.textfield_source_capacity_charge.text == "":
-            self.parameters[key][
+            self.session_data["parameters"][key][
                 "capacity_charge"
             ] = self.root.ids.textfield_source_capacity_charge.text
 
@@ -1960,7 +1748,7 @@ class factory_GUIApp(MDApp):
             # check if the user specified it
             if not textfield.text == "":
                 # if yes: safe the value in the parameters dict
-                self.parameters[key][parameter] = float(textfield.text)
+                self.session_data["parameters"][key][parameter] = float(textfield.text)
 
         # update connection names to adapt changes if the name of the storage has changed
         self.update_connection_names()
@@ -2192,176 +1980,12 @@ class factory_GUIApp(MDApp):
         # no more unsaved changes -> disable save button
         self.dialog.content_cls.ids.button_flowtype_save.disabled = True
 
-    def select_timeseries_list_item(self, list_item, touch):
-        """
-        This function is called everytime when the user selects a timeseries in the scenarioparameter definition.
-        The selected timeseries is displayed in the preview window
-        """
-
-        # check, if the function call actually came from an object that has been clicked/moved
-        if not list_item.collide_point(*touch.pos):
-            # abort if not
-            return
-
-        # write the name of selected timeseries in the GUI
-        self.root.ids.label_selected_timeseries.text = list_item.text
-
-        # get data for selected timeseries and write it into self.selected_timeseries
-        self.selected_timeseries = np.array(
-            self.timeseries[list_item.text][1 : self.selected_scenario["timesteps"] + 1]
-        )
-
-        # set the scaling method to "Peak"
-        self.root.ids.textfield_timeseries_scaling.text = "with a peak value of"
-
-        # set the scaling value to the peak value of the selected timeseries
-        self.root.ids.textfield_custom_timeseries.text = str(
-            round(np.amax(self.selected_timeseries), 3)
-        )
-
-        # update preview
-        self.update_timeseries_preview("Custom Timeseries")
-
-    def select_parameter_list_item(self, list_item):
-        """
-        This function is called everytime when the user clicks on a configurable parameter within the parameter selction
-        list in the scenario configuration window. The selected parameter is being loaded for editing
-        """
-
-        # get/create key for parameter
-        parameter_key = f"{self.get_key(list_item.text)}_{list_item.secondary_text}"
-        self.selected_parameter = {
-            "key": parameter_key,
-            "component": self.get_key(list_item.text),
-            "attribute": list_item.secondary_text,
-        }
-
-        # Write the name of the parameter in the header of the configuration card
-        self.root.ids.label_selected_parameter.text = (
-            f"{list_item.text} | {list_item.secondary_text}"
-        )
-
-        # reset all UI elements
-        self.root.ids.textfield_static_value.text = ""
-        self.root.ids.textfield_static_value_unit.text = "kW"
-        self.root.ids.textfield_custom_timeseries.text = ""
-        self.root.ids.textfield_custom_timeseries_unit.text = "kW"
-
-        # check, if the parameter has already been set within the scenario
-        if parameter_key in self.selected_scenario["parameters"].keys():
-
-            # get parameter data from the scenario
-            parameter_data = self.selected_scenario["parameters"][parameter_key]
-            # set the selected timeseries to the new values
-            self.selected_timeseries = parameter_data["timeseries"]
-
-            # check, which type of parameter is given
-            if parameter_data["type"] == "static_value":
-                # write the given values into the correct UI elements
-                self.root.ids.textfield_static_value.text = str(
-                    parameter_data["timeseries"][0]
-                )
-                self.root.ids.textfield_static_value_unit.text = parameter_data["unit"]
-
-                # show the correct parameter type tab
-                self.root.ids.parameter_tabs.switch_tab(
-                    "Static Value", search_by="title"
-                )
-                self.update_timeseries_preview("Static Value")
-
-            elif parameter_data["type"] == "custom_timeseries":
-                # write the timeseries values into the correct UI elements, choose peak-mode for this
-                self.root.ids.textfield_custom_timeseries.text = str(
-                    round(np.amax(parameter_data["timeseries"]), 3)
-                )
-                self.root.ids.textfield_custom_timeseries_unit.text = parameter_data[
-                    "unit"
-                ]
-                self.root.ids.textfield_timeseries_scaling.text = "with a peak value of"
-                self.root.ids.label_selected_timeseries.text = parameter_data[
-                    "description"
-                ]
-
-                # show the correct parameter type tab
-                self.root.ids.parameter_tabs.switch_tab(
-                    "Custom Timeseries", search_by="title"
-                )
-                self.update_timeseries_preview("Custom Timeseries")
-
-        else:
-            # if not: initialize the standard window
-            # show the static value screen
-            self.root.ids.parameter_tabs.switch_tab("Static Value", search_by="title")
-
-            # initialize the value
-            self.selected_timeseries = np.ones(self.selected_scenario["timesteps"])
-            self.root.ids.textfield_static_value.text = "1"
-            self.root.ids.textfield_static_value_unit.text = "kW"
-            self.update_timeseries_preview("Static Value")
-
     def set_display_scaling_factor(self, *args):
         self.session_data["display_scaling_factor"] = (
             self.root.ids.layout_size_slider.value / 100 + 0.4
         )
         self.initialize_visualization()
         self.update_visualization()
-
-    def set_parameter(self):
-        """
-        This function stores the currently displayed parameter configuration into the selected parameter of the selected scenario
-        """
-
-        # get value type
-        value_type = self.root.ids.parameter_tabs.get_current_tab().title
-
-        # set points depending on given user information
-        if value_type == "Static Value":
-            # write the currently given parameter specification into the scenario
-            self.selected_scenario["parameters"][self.selected_parameter["key"]] = {
-                "type": "static_value",
-                "timeseries": self.selected_timeseries,
-                "unit": self.root.ids.textfield_static_value_unit.text,
-                "component": self.selected_parameter["component"],
-                "attribute": self.selected_parameter["attribute"],
-            }
-        if value_type == "Custom Timeseries":
-            # write the currently given parameter specification into the scenario
-            self.selected_scenario["parameters"][self.selected_parameter["key"]] = {
-                "type": "custom_timeseries",
-                "timeseries": self.selected_timeseries,
-                "unit": self.root.ids.textfield_custom_timeseries_unit.text,
-                "component": self.selected_parameter["component"],
-                "attribute": self.selected_parameter["attribute"],
-                "description": self.root.ids.label_selected_timeseries.text,
-            }
-
-        # update the list of required scenario parameters
-        self.update_scenario_parameter_list()
-
-        # inform the user
-        Snackbar(text=f"Parameter Set").open()
-
-    def set_scenario_image(self, instance, touch):
-        """
-        This event is triggered when the user clicks on an image in the scenario image selection dialog.
-        The selected image will be taken as the visualisation image for the current scenario
-        """
-        # abort if the event has not been triggered by the touched component
-        if not instance.collide_point(*touch.pos):
-            # abort if not
-            return
-
-        # set the image within the scenario card on the scenario overview screen
-        self.selected_scenario["card_widget"].ids.image.source = instance.source
-
-        # set the image in the current scenario
-        self.selected_scenario["image"] = instance.source
-
-        # display the image in the scenario configuration screen
-        self.root.ids.image_scenario.source = instance.source
-
-        # close the dialog
-        self.dialog.dismiss()
 
     def set_unsaved_changes_on_asset(self, boolean):
         self.unsaved_changes_on_asset = boolean
@@ -2462,68 +2086,6 @@ class factory_GUIApp(MDApp):
         )
         btn_false.bind(on_release=self.dialog.dismiss)
         btn_true.bind(on_release=self.delete_component)
-        self.dialog.open()
-
-    def show_component_selection_dropdown(self, caller, exceptions=[]):
-        """
-        This function creates a dropdown menu giving the user the option to select one of the components in the blueprint.
-        """
-
-        def set_text(caller, text):
-            # this function returns the user selection to the object that the dialog has been called from
-            caller.text = text
-            self.menu.dismiss()
-
-        # initialize empty list
-        dropdown_items = []
-        # iterate over all components in the blueprint
-        for component in self.blueprint.components.values():
-            # filter sources
-            if not component["type"] in exceptions:
-                # append a dropdown item to the list
-                dropdown_items.append(
-                    {
-                        "viewclass": "ImageDropDownItem",
-                        "source": component["GUI"]["icon"],
-                        "text": component["name"],
-                        "on_release": lambda x=component["name"]: set_text(caller, x),
-                    }
-                )
-
-        # create list widget
-        self.menu = MDDropdownMenu(
-            caller=caller,
-            items=dropdown_items,
-            position="bottom",
-            width_mult=4,
-        )
-        # append widget to the UI
-        self.menu.bind()
-        self.menu.open()
-
-    def show_connection_deletion_dialog(self):
-        """
-        This function shows the warndiealog that asks the user if he really wants to delete the selcted connection.
-        If the user confirms the delete_connection method is called. Otherwise nothing will happen
-        """
-
-        # prepar helper function to suppress initial callback
-        def delete(instance):
-            self.delete_connection(connection_key)
-
-        # get key of the scenario to be deleted
-        connection_key = self.selected_asset["key"]
-
-        # create dialog
-        btn_false = MDFlatButton(text="CANCEL")
-        btn_true = MDRaisedButton(text="DELETE CONNECTION")
-        self.dialog = MDDialog(
-            title="Delete Connection",
-            text=f"Do you really want to delete the Connection '{self.selected_asset['name']}'?",
-            buttons=[btn_false, btn_true],
-        )
-        btn_false.bind(on_release=self.dialog.dismiss)
-        btn_true.bind(on_release=delete)
         self.dialog.open()
 
     def show_flowtype_config_dialog(self):
@@ -2631,54 +2193,6 @@ class factory_GUIApp(MDApp):
         self.menu.bind()
         self.menu.open()
 
-    def show_image_selection_dialog(self):
-        """
-        This function displays a dialog with all predefined scenario artworks for the user
-        to select one for the current scenario
-        """
-        # create dialog
-
-        self.dialog = MDDialog(
-            title="Select scenario image",
-            type="custom",
-            content_cls=dialog_image_selection(),
-        )
-
-        for image in self.scenario_images.keys():
-            image_tile = Image(
-                source=self.scenario_images[image],
-                on_touch_down=lambda instance, touch: self.set_scenario_image(
-                    instance, touch
-                ),
-            )
-            image_tile.bind()
-            self.dialog.content_cls.ids.image_grid.add_widget(image_tile)
-        self.dialog.open()
-
-    def show_image_selection_dialog(self):
-        """
-        This function displays a dialog with all predefined scenario artworks for the user
-        to select one for the current scenario
-        """
-        # create dialog
-
-        self.dialog = MDDialog(
-            title="Select scenario image",
-            type="custom",
-            content_cls=dialog_image_selection(),
-        )
-
-        for image in self.scenario_images.keys():
-            image_tile = Image(
-                source=self.scenario_images[image],
-                on_touch_down=lambda instance, touch: self.set_scenario_image(
-                    instance, touch
-                ),
-            )
-            image_tile.bind()
-            self.dialog.content_cls.ids.image_grid.add_widget(image_tile)
-        self.dialog.open()
-
     def show_info_popup(self, text):
         """
         This function creates an overlay popup that displays the user a handed over text message.
@@ -2689,165 +2203,6 @@ class factory_GUIApp(MDApp):
         self.popup = MDDialog(title="Warning", buttons=[btn_ok], text=text)
         btn_ok.bind(on_release=self.popup.dismiss)
         self.popup.open()
-
-    def show_parameter_config_dialog(self, caller):
-        parameter_config_dialog(self, caller)
-
-    def show_scaling_selection_dialog(self, *args):
-        def set_text(text):
-            # this function returns the user selection to the object that the dialog has been called from
-            self.root.ids.textfield_timeseries_scaling.text = text
-
-            self.menu.dismiss()
-
-        # initialize empty list
-        dropdown_items = []
-
-        # append a dropdown item to the list
-        dropdown_items.append(
-            {
-                "viewclass": "OneLineListItem",
-                "text": "with a peak value of",
-                "on_release": lambda x="with a peak value of": set_text(x),
-            }
-        )
-        dropdown_items.append(
-            {
-                "viewclass": "OneLineListItem",
-                "text": "with an average value of",
-                "on_release": lambda x="with an average value of": set_text(x),
-            }
-        )
-        dropdown_items.append(
-            {
-                "viewclass": "OneLineListItem",
-                "text": "with a total value of",
-                "on_release": lambda x="with a total value of": set_text(x),
-            }
-        )
-
-        # create list widget
-        self.menu = MDDropdownMenu(
-            caller=self.root.ids.textfield_timeseries_scaling,
-            items=dropdown_items,
-            position="center",
-            width_mult=4,
-        )
-        # append widget to the UI
-        self.menu.bind()
-        self.menu.open()
-
-    def show_scenario_configuration_dialog(self):
-        def edit_scenario(*args):
-            # write given information into the GUI and into the scenario
-            self.selected_scenario[
-                "name"
-            ] = self.dialog.content_cls.ids.textfield_new_scenario_name.text
-            self.root.ids.label_scenario_title.text = self.selected_scenario["name"]
-            self.selected_scenario[
-                "description"
-            ] = self.dialog.content_cls.ids.textfield_new_scenario_description.text
-            self.root.ids.label_scenario_description.text = self.selected_scenario[
-                "description"
-            ]
-            # close dialog
-            self.dialog.dismiss()
-
-        # create dialog
-        btn_false = MDFlatButton(text="CANCEL")
-        btn_true = MDRaisedButton(text="SAVE")
-        self.dialog = MDDialog(
-            title="Edit Scenario",
-            buttons=[btn_false, btn_true],
-            type="custom",
-            content_cls=dialog_update_scenario(),
-        )
-
-        # write current name and description into the dialog
-        self.dialog.content_cls.ids.textfield_new_scenario_name.text = (
-            self.selected_scenario["name"]
-        )
-        self.dialog.content_cls.ids.textfield_new_scenario_description.text = (
-            self.selected_scenario["description"]
-        )
-
-        # bind functions and open dialog
-        btn_false.bind(on_release=self.dialog.dismiss)
-        btn_true.bind(on_release=edit_scenario)
-        self.dialog.open()
-
-    def show_scenario_creation_dialog(self):
-        # create dialog
-        btn_false = MDFlatButton(text="CANCEL")
-        btn_true = MDRaisedButton(text="CREATE NEW SCENARIO")
-        self.dialog = MDDialog(
-            title="New Scenario",
-            buttons=[btn_false, btn_true],
-            type="custom",
-            content_cls=dialog_new_scenario(),
-        )
-        btn_false.bind(on_release=self.dialog.dismiss)
-        btn_true.bind(on_release=self.new_scenario)
-        self.dialog.open()
-
-    def show_scenario_seletion_dialog(self, instance):
-        """
-        This function creates a dialog that asks the user to confirm the deletion of a scenario
-
-        """
-
-        # prepare helper function to suppress initial callback
-        def delete(instance):
-            self.delete_scenario(scenario_key)
-
-        # get key of the scenario to be deleted
-        scenario_key = instance.parent.parent.scenario_key
-
-        # create dialog
-        btn_false = MDFlatButton(text="CANCEL")
-        btn_true = MDRaisedButton(text="DELETE SCENARIO")
-        self.dialog = MDDialog(
-            title="Delete Scenario",
-            text=f"Do you really want to delete the scenario '{self.scenarios[scenario_key]['name']}'?",
-            buttons=[btn_false, btn_true],
-        )
-        btn_false.bind(on_release=self.dialog.dismiss)
-        btn_true.bind(on_release=delete)
-        self.dialog.open()
-
-    def show_timeseries_selection_dialog(self, *args):
-        """
-        This function opens a dialog, in which the user can select one of the timeseries that are currently opened within self.timeseries.
-        The style of the window is defined as <dialog_timeseries_selection> within the kivy file.
-        It contains a button to call the excel-inport routine for timeseries as well.
-        """
-        self.dialog = MDDialog(
-            title="Select Timeseries",
-            type="custom",
-            content_cls=dialog_timeseries_selection(),
-        )
-
-        # iterate over all imported timeseries
-        for key in self.timeseries:
-            # apply filter given by search textfield
-            if (
-                self.dialog.content_cls.ids.search_field_timeseries.text == ""
-                or self.dialog.content_cls.ids.search_field_timeseries.text.upper()
-                in key.upper()
-                or self.dialog.content_cls.ids.search_field_timeseries.text.upper()
-                in self.timeseries[key][0].upper()
-            ):
-
-                # create list item
-                item = TwoLineListItem(
-                    text=key,
-                    secondary_text=self.timeseries[key][0],
-                    on_touch_down=self.select_timeseries_list_item,
-                )
-
-                # append item to list
-                self.dialog.content_cls.ids.list_timeseries.add_widget(item)
-        self.dialog.open()
 
     def show_unit_selection_dropdown(self, caller):
         """
@@ -2885,87 +2240,6 @@ class factory_GUIApp(MDApp):
         self.menu.bind()
         self.menu.open()
 
-    def update_scenario_parameter_list(self):
-        """
-        This function creates a list of all parameters that the user has to specify during scenario setup
-        """
-        # clear existing list
-        self.root.ids.list_scenario_parameters.clear_widgets()
-        self.parameters_missing = 0
-        self.parameters_ok = 0
-
-        def append_item(frame, component_name, parameter_name):
-            """
-            This subfunction creates a list entry representing a single component parameter that has to be specified
-            for the simulation. The Item is being attached to the list_scenario_parameters-object
-            """
-
-            # create list entry with basic parameter description
-            parameter_description = TwoLineAvatarListItem(
-                text=component_name,
-                secondary_text=parameter_name,
-                on_release=self.select_parameter_list_item,
-            )
-
-            # create an image object with the correct image and append it to the list item
-            image = ImageLeftWidgetWithoutTouch(source=frame)
-            parameter_description.add_widget(image)
-
-            # create an label for the list entry that shows the number of specified varietions for the parameter
-            label_variation_count = OneLineListItem(text="No variations specified")
-
-            # create a button to enable editing the components variations
-            button = RightButton(text="EDIT")
-
-            # create the final list item with all prepared components and attach it to the list
-            item = BoxLayout(orientation="horizontal", size_hint_y=None, height="70dp")
-            item.add_widget(parameter_description)
-            item.add_widget(label_variation_count)
-            item.add_widget(button)
-            self.root.ids.list_scenario_parameters.add_widget(item)
-
-        for component in self.blueprint.components.values():
-            if component["type"] == "source":
-                if component["scenario_availability"]:
-                    append_item(
-                        component["GUI"]["icon"], component["name"], "availability"
-                    )
-                if component["scenario_cost"]:
-                    append_item(component["GUI"]["icon"], component["name"], "cost")
-                if component["scenario_determined"]:
-                    append_item(
-                        component["GUI"]["icon"], component["name"], "determined_power"
-                    )
-                if component["scenario_emissions"]:
-                    append_item(
-                        component["GUI"]["icon"], component["name"], "emissions"
-                    )
-            elif component["type"] == "sink":
-                if component["scenario_revenue"]:
-                    append_item(component["GUI"]["icon"], component["name"], "revenue")
-                if component["scenario_cost"]:
-                    append_item(component["GUI"]["icon"], component["name"], "cost")
-                if component["scenario_determined"]:
-                    append_item(component["GUI"]["icon"], component["name"], "demand")
-                if component["scenario_co2_emission_per_unit"]:
-                    append_item(
-                        component["GUI"]["icon"], component["name"], "Emissions Created"
-                    )
-                if component["scenario_co2_refund_per_unit"]:
-                    append_item(
-                        component["GUI"]["icon"], component["name"], "Emissions Avoided"
-                    )
-
-        # update progress information on GUI
-        self.root.ids.label_scenario_simulation_parameters_specified.secondary_text = (
-            f"{self.parameters_ok} / {self.parameters_ok + self.parameters_missing}"
-        )
-
-        if self.parameters_missing == 0:
-            self.root.ids.button_run_simulation.disabled = False
-        else:
-            self.root.ids.button_run_simulation.disabled = True
-
     def update_config_tab(self):
         """
         This function is called, when the user clicks on a component. It openes the corresponding configuration-screen in the card on the right and fills in all the values from the selected asset into the textfields and labels.
@@ -3001,10 +2275,17 @@ class factory_GUIApp(MDApp):
                 "determined_power",
             ]:
                 textfield = getattr(self.root.ids, f"textfield_source_{parameter}")
-                if parameter in self.parameters[self.selected_asset["key"]].keys():
+                if (
+                    parameter
+                    in self.session_data["parameters"][
+                        self.selected_asset["key"]
+                    ].keys()
+                ):
 
                     textfield.text = str(
-                        self.parameters[self.selected_asset["key"]][parameter]
+                        self.session_data["parameters"][self.selected_asset["key"]][
+                            parameter
+                        ]
                     )
                 else:
                     textfield.text = ""
@@ -3060,10 +2341,17 @@ class factory_GUIApp(MDApp):
                 # get the pointer to the corresponding textfield
                 textfield = getattr(self.root.ids, f"textfield_converter_{parameter}")
                 # check if there is a value for the parameter in the parameters dict
-                if parameter in self.parameters[self.selected_asset["key"]].keys():
+                if (
+                    parameter
+                    in self.session_data["parameters"][
+                        self.selected_asset["key"]
+                    ].keys()
+                ):
                     # if yes: write value into the textfield
                     textfield.text = str(
-                        self.parameters[self.selected_asset["key"]][parameter]
+                        self.session_data["parameters"][self.selected_asset["key"]][
+                            parameter
+                        ]
                     )
                 else:
                     textfield.text = ""
@@ -3112,9 +2400,16 @@ class factory_GUIApp(MDApp):
             ]:
                 textfield = getattr(self.root.ids, f"textfield_sink_{parameter}")
 
-                if parameter in self.parameters[self.selected_asset["key"]].keys():
+                if (
+                    parameter
+                    in self.session_data["parameters"][
+                        self.selected_asset["key"]
+                    ].keys()
+                ):
                     textfield.text = str(
-                        self.parameters[self.selected_asset["key"]][parameter]
+                        self.session_data["parameters"][self.selected_asset["key"]][
+                            parameter
+                        ]
                     )
                 else:
                     textfield.text = ""
@@ -3156,9 +2451,16 @@ class factory_GUIApp(MDApp):
             ]:
                 textfield = getattr(self.root.ids, f"textfield_storage_{parameter}")
 
-                if parameter in self.parameters[self.selected_asset["key"]].keys():
+                if (
+                    parameter
+                    in self.session_data["parameters"][
+                        self.selected_asset["key"]
+                    ].keys()
+                ):
                     textfield.text = str(
-                        self.parameters[self.selected_asset["key"]][parameter]
+                        self.session_data["parameters"][self.selected_asset["key"]][
+                            parameter
+                        ]
                     )
                 else:
                     textfield.text = ""
@@ -3272,9 +2574,12 @@ class factory_GUIApp(MDApp):
                 "GUI"
             ]["icon"]
 
-            if "delay" in self.parameters[self.selected_asset["key"]].keys():
+            if (
+                "delay"
+                in self.session_data["parameters"][self.selected_asset["key"]].keys()
+            ):
                 self.root.ids.textfield_deadtime_delay.text = str(
-                    self.parameters[self.selected_asset["key"]]["delay"]
+                    self.session_data["parameters"][self.selected_asset["key"]]["delay"]
                 )
             else:
                 self.root.ids.textfield_deadtime_delay.text = ""
@@ -3335,169 +2640,6 @@ class factory_GUIApp(MDApp):
         )
         # append item to list
         self.root.ids.list_flowtypes.add_widget(item)
-
-    def update_scenario_config_screen(self, instance):
-        """
-        This function is called everytime when the user clicks on one of the scenario cards.
-        It sets the currently selected scenario to the one that the user clicked on and shows up the scenario config screen
-        """
-
-        # if not instance.collide_point(*touch.pos):
-        #     # abort if not
-        #     return
-
-        # change selected scenario to the one that the function call came from
-        self.selected_scenario = self.scenarios[instance.scenario_key]
-
-        # switch to the scenario config screen
-        self.root.ids.scenario_screens.current = "parameter_configuration_screen"
-
-        # update the list of required parameters:
-        self.update_scenario_parameter_list()
-
-        # write the information on the current scenario into the infobox on the scenario screen
-        self.root.ids.image_scenario.source = self.selected_scenario["image"]
-        self.root.ids.label_scenario_title.text = self.selected_scenario["name"]
-        self.root.ids.label_scenario_description.text = self.selected_scenario[
-            "description"
-        ]
-        # self.root.ids.label_scenario_location.secondary_text = self.selected_scenario["location_name"]
-        # self.root.ids.label_scenario_year.secondary_text = f"{self.selected_scenario['year']}"
-        # self.root.ids.label_scenario_timestep_start.secondary_text = f"{self.selected_scenario['timestep_start']}"
-        self.root.ids.label_scenario_timestep_width.secondary_text = (
-            f"{self.selected_scenario['time_factor']} Hour(s)"
-        )
-        self.root.ids.label_scenario_timesteps.secondary_text = (
-            f"{self.selected_scenario['timesteps']}"
-        )
-
-    def update_scenario_selection_screen(self):
-        self.root.ids.scenario_screens.current = "scenario_selection_screen"
-
-    def update_timeseries_list(self):
-        # clear existing list
-        self.dialog.content_cls.ids.list_timeseries.clear_widgets()
-
-        # iterate over all imported timeseries
-        for key in self.timeseries:
-            # apply filter given by search textfield
-            if (
-                self.dialog.content_cls.ids.search_field_timeseries.text == ""
-                or self.dialog.content_cls.ids.search_field_timeseries.text.upper()
-                in key.upper()
-                or self.dialog.content_cls.ids.search_field_timeseries.text.upper()
-                in self.timeseries[key][0].upper()
-            ):
-
-                # create list item
-                item = TwoLineListItem(
-                    text=key,
-                    secondary_text=self.timeseries[key][0],
-                    on_touch_down=self.select_timeseries_list_item,
-                )
-
-                # append item to list
-                self.dialog.content_cls.ids.list_timeseries.add_widget(item)
-
-    def update_timeseries_preview(self, value_type):
-        """
-        This function creates a graph of a timeseries and hands it over to the preview canvas
-        """
-        # initialize the timeseries plot if not done yet
-        if not hasattr(self, "timeseries_plot"):
-            self.timeseries_plot = LinePlot(color=self.main_color_rgba, line_width=2)
-            self.root.ids.timeseries_preview.add_plot(self.timeseries_plot)
-
-        # set points depending on given user information
-        if value_type == "Static Value":
-
-            # if user wants a static value: just read out the value from gui
-            value = float(self.root.ids.textfield_static_value.text)
-            max_value = value
-
-            # update plot points for the graph
-            self.selected_timeseries = (
-                np.ones(self.selected_scenario["timesteps"]) * value
-            )
-            self.timeseries_plot.points = [
-                (x, y) for x, y in enumerate(self.selected_timeseries)
-            ]
-            self.root.ids.timeseries_preview.ylabel = (
-                self.root.ids.textfield_static_value_unit.text
-            )
-
-            # update Y-axis_label:
-            self.root.ids.timeseries_preview.ylabel = (
-                self.root.ids.textfield_static_value_unit.text
-            )
-
-        elif value_type == "Custom Timeseries":
-            # if user wants a timeseries: take the currently selected timeseries and scale it as demanded
-            if (
-                self.root.ids.textfield_timeseries_scaling.text
-                == "with a peak value of"
-            ):
-                # scale timeseries to given peak value
-                self.selected_timeseries = (
-                    self.selected_timeseries
-                    / float(np.amax(self.selected_timeseries))
-                    * float(self.root.ids.textfield_custom_timeseries.text)
-                )
-
-            elif (
-                self.root.ids.textfield_timeseries_scaling.text
-                == "with an average value of"
-            ):
-                # scale timeseries to given average value
-                self.selected_timeseries = (
-                    self.selected_timeseries
-                    / np.mean(self.selected_timeseries)
-                    * float(self.root.ids.textfield_custom_timeseries.text)
-                )
-
-            else:
-                # scale timeseries to given integral value
-                self.selected_timeseries = (
-                    self.selected_timeseries
-                    / np.sum(self.selected_timeseries)
-                    * float(self.root.ids.textfield_custom_timeseries.text)
-                )
-
-            # update Y-axis_label:
-            self.root.ids.timeseries_preview.ylabel = (
-                self.root.ids.textfield_custom_timeseries_unit.text
-            )
-
-            # update plot points for the graph
-            self.timeseries_plot.points = [
-                (x, y) for x, y in enumerate(self.selected_timeseries)
-            ]
-            max_value = float(np.amax(self.selected_timeseries))
-        # update graph properties:
-        self.root.ids.timeseries_preview.xlabel = "Hours"
-
-        # set scaling of X-Axes
-        self.root.ids.timeseries_preview.xmax = self.selected_scenario["timesteps"]
-        self.root.ids.timeseries_preview.xmin = 1
-        self.root.ids.timeseries_preview.x_ticks_major = 24
-
-        # set scaling of Y-Axes
-        self.root.ids.timeseries_preview.ymin = 0
-        if max_value == 0:
-            self.root.ids.timeseries_preview.ymax = 1
-            self.root.ids.timeseries_preview.y_ticks_major = 0.2
-        else:
-            # determine dimension of value
-            x = max_value
-            i = 0
-            while x > 1:
-                x = x / 10
-                i += 1
-
-            # set y scale of graph
-            self.root.ids.timeseries_preview.ymax = 10**i * round(x + 0.1, 1)
-
-            self.root.ids.timeseries_preview.y_ticks_major = 10**i / 5
 
     def update_visualization(self, *args, **kwargs):
         """
@@ -3895,7 +3037,7 @@ class factory_GUIApp(MDApp):
                     kwargs["mouse_pos"][1] - self.root.ids.canvas_layout.pos[0] / 2,
                 )
 
-    # validation of components
+    # VALIDATION FUNCTIONS
     def validate_thermalsystem(self, textfield):
         # check for the required validation type and perform checks accordingly
         if textfield.validation_type in ("thermalsystem_temperature"):
@@ -4364,3 +3506,107 @@ class factory_GUIApp(MDApp):
         # if tmin > tmax:
         #     textfield.helper_text("...")
         #     return
+
+    # CURRENTLY UNUSED FUNCTIONS
+
+    def show_connection_deletion_dialog(self):
+        """
+        This function shows the warndialog that asks the user if he really wants to delete the selcted connection.
+        If the user confirms the delete_connection method is called. Otherwise nothing will happen
+        """
+
+        # prepar helper function to suppress initial callback
+        def delete(instance):
+            self.delete_connection(connection_key)
+
+        # get key of the connection to be deleted
+        connection_key = self.selected_asset["key"]
+
+        # create dialog
+        btn_false = MDFlatButton(text="CANCEL")
+        btn_true = MDRaisedButton(text="DELETE CONNECTION")
+        self.dialog = MDDialog(
+            title="Delete Connection",
+            text=f"Do you really want to delete the Connection '{self.selected_asset['name']}'?",
+            buttons=[btn_false, btn_true],
+        )
+        btn_false.bind(on_release=self.dialog.dismiss)
+        btn_true.bind(on_release=delete)
+        self.dialog.open()
+
+    def show_scaling_selection_dialog(self, *args):
+        def set_text(text):
+            # this function returns the user selection to the object that the dialog has been called from
+            self.root.ids.textfield_timeseries_scaling.text = text
+
+            self.menu.dismiss()
+
+        # initialize empty list
+        dropdown_items = []
+
+        # append a dropdown item to the list
+        dropdown_items.append(
+            {
+                "viewclass": "OneLineListItem",
+                "text": "with a peak value of",
+                "on_release": lambda x="with a peak value of": set_text(x),
+            }
+        )
+        dropdown_items.append(
+            {
+                "viewclass": "OneLineListItem",
+                "text": "with an average value of",
+                "on_release": lambda x="with an average value of": set_text(x),
+            }
+        )
+        dropdown_items.append(
+            {
+                "viewclass": "OneLineListItem",
+                "text": "with a total value of",
+                "on_release": lambda x="with a total value of": set_text(x),
+            }
+        )
+
+        # create list widget
+        self.menu = MDDropdownMenu(
+            caller=self.root.ids.textfield_timeseries_scaling,
+            items=dropdown_items,
+            position="center",
+            width_mult=4,
+        )
+        # append widget to the UI
+        self.menu.bind()
+        self.menu.open()
+
+    def show_timeseries_selection_dialog(self, *args):
+        """
+        This function opens a dialog, in which the user can select one of the timeseries that are currently opened within self.timeseries.
+        The style of the window is defined as <dialog_timeseries_selection> within the kivy file.
+        It contains a button to call the excel-inport routine for timeseries as well.
+        """
+        self.dialog = MDDialog(
+            title="Select Timeseries",
+            type="custom",
+            content_cls=dialog_timeseries_selection(),
+        )
+
+        # iterate over all imported timeseries
+        for key in self.timeseries:
+            # apply filter given by search textfield
+            if (
+                self.dialog.content_cls.ids.search_field_timeseries.text == ""
+                or self.dialog.content_cls.ids.search_field_timeseries.text.upper()
+                in key.upper()
+                or self.dialog.content_cls.ids.search_field_timeseries.text.upper()
+                in self.timeseries[key][0].upper()
+            ):
+                # create list item
+                item = TwoLineListItem(
+                    text=key,
+                    secondary_text=self.timeseries[key][0],
+                    on_touch_down=self.select_timeseries_list_item,
+                )
+
+                # append item to list
+                self.dialog.content_cls.ids.list_timeseries.add_widget(item)
+        self.dialog.open()

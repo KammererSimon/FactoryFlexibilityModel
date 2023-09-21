@@ -1,4 +1,8 @@
-## LEFT MAIN MENU ######################################################################################################
+#:import new_session factory_flexibility_model.ui.utility.basic_session_functions.initiate_new_session
+#:import load_session factory_flexibility_model.ui.utility.basic_session_functions.load_session
+#:import save_session factory_flexibility_model.ui.utility.basic_session_functions.save_session
+#:import show_dialog_save_session_as factory_flexibility_model.ui.dialogs.dialog_save_session_as.show_dialog_save_session_as
+#:import import_timeseries_xlsx factory_flexibility_model.ui.utility.timeseries_handling.import_timeseries_xlsx
 <main_menu>
     orientation: "vertical"
     spacing: "8dp"
@@ -22,27 +26,27 @@
     MDList:
         OneLineIconListItem:
             text: "New Session"
-            on_release: app.app_new_session()
+            on_release: new_session(app)
             IconLeftWidget:
                 icon: "new-box"
         OneLineIconListItem:
             text: "Save Session as"
-            on_release: app.app_save_session_as()
+            on_release: show_dialog_save_session_as(app)
             IconLeftWidget:
                 icon: "content-save-plus"
         OneLineIconListItem:
             text: "Save Session "
-            on_release: app.app_save_session()
+            on_release: save_session(app)
             IconLeftWidget:
                 icon: "content-save"
         OneLineIconListItem:
             text: "Open Session"
-            on_release: app.app_load_session()
+            on_release: load_session(app)
             IconLeftWidget:
                 icon: "folder-open"
         OneLineIconListItem:
             text: "Import Timeseries Data"
-            on_release: app.app_import_timeseries()
+            on_release: import_timeseries_xlsx(app)
             IconLeftWidget:
                 icon: "import"
     Widget

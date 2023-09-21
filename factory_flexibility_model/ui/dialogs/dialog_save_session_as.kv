@@ -1,0 +1,43 @@
+# This file specifies the layout for the dialog that openes when the user wants to save a session under a new name
+# It contains a textfield to input a session name, a file-directory browser to specify a path for the session
+# and a textfield to enter a project description.
+
+<DialogSaveSessionAs>
+    spacing: "12dp"
+    padding: (0, 30)
+    size_hint: (None, None)
+    height: "400dp"
+    width: "500dp"
+    orientation: "vertical"
+    background_color: 0, 0, 0, 1
+
+    MDTextField:
+        id: textfield_new_session_name
+        hint_text: "Project name"
+        required: True
+        max_text_length: 30
+        helper_text_mode: "on_error"
+        helper_text: "Enter a new name for the Project"
+    MDLabel:
+        text: "Session folder path"
+        size_hint_y: None
+        height: self.texture_size[1]
+    MDBoxLayout:
+        FileChooserIconView:
+            id: filechooser_new_session
+            dirselect: True
+            path: os.getcwd()
+            Label:
+                color: 0, 0, 0, 1
+    MDTextField:
+        id: textfield_new_session_description
+        hint_text: "Project description"
+        helper_text_mode: "on_error"
+        helper_text: "Enter a brief project description"
+
+
+<FileChooserListView>:
+    layout: layout
+    FileChooserListLayout:
+        id: layout
+        controller: root

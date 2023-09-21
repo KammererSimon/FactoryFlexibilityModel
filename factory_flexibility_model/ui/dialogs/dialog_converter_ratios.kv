@@ -1,16 +1,18 @@
 # This file defines the dialog window that pops up when the user selects the ratio-config button within the converter config tab.
 # The dives an overview of incoming and outgoing connections to/from the selected converter and allows the user to specify all the weights of involved flowtypes
 
+#:import update_bilance_calculation factory_flexibility_model.ui.utility.converter_ratio_dialog_functions.update_bilance_calculation
+#:import save_converter_ratios factory_flexibility_model.ui.utility.converter_ratio_dialog_functions.save_converter_ratios
+
+
 <dialog_converter_ratios>
     size_hint: None, None
     width:dp(1000)
     height:dp(1000)
     orientation: "vertical"
     spacing: 20
-
     MDCard:
         padding: 20
-        spacing: 20
         orientation: "vertical"
         elevation: 1
         BoxLayout:
@@ -125,7 +127,7 @@
             on_release: app.close_dialog()
         MDRaisedButton:
             text: "Save Changes"
-            on_release: app.app_save_converter_ratios()
+            on_release: save_converter_ratios(app)
 
 <TextfieldCheckboxIconListItem>
     BoxLayout:
@@ -140,7 +142,7 @@
             width: dp(100)
             mode: "round"
             helper_text_mode: "persistent"
-            on_text: app.app_update_bilance_calculation()
+            on_text: update_bilance_calculation(app)
         MDIcon:
             icon: "trash-can-outline"
             pos_hint: {"center_x": .5, "center_y": .5}
@@ -150,7 +152,7 @@
             id: list_item_checkbox
             size_hint_x: None
             width: dp(30)
-            on_active: app.app_update_bilance_calculation()
+            on_active: update_bilance_calculation(app)
 
 <TextfieldIconListItem>
     MDTextField:
@@ -161,4 +163,4 @@
         width: dp(100)
         mode: "round"
         helper_text_mode: "persistent"
-        on_text: app.app_update_bilance_calculation()
+        on_text: update_bilance_calculation(app)

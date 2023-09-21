@@ -9,12 +9,11 @@ from kivy.uix.image import Image
 from kivy.uix.widget import Widget
 from kivymd.app import MDApp
 from kivymd.uix.button import MDRaisedButton
-from kivymd.uix.card import MDCard
 from kivymd.uix.list import (
     IRightBodyTouch,
     OneLineAvatarListItem,
-    ThreeLineIconListItem,
     TwoLineAvatarListItem,
+    TwoLineIconListItem,
 )
 from kivymd.uix.tab import MDTabsBase
 from kivymd.uix.textfield import MDTextField
@@ -35,10 +34,6 @@ class dialog_connection_config(BoxLayout):
     pass
 
 
-# class FlowchartConnector(Widget):
-#    pass
-
-
 class dialog_flowtype_definition(BoxLayout):
     pass
 
@@ -55,23 +50,7 @@ class dialog_new_component(BoxLayout):
     pass
 
 
-class dialog_new_connection(BoxLayout):
-    pass
-
-
-# class dialog_new_flow(BoxLayout):
-#    pass
-
-
-class dialog_new_scenario(BoxLayout):
-    pass
-
-
-class dialog_new_session(BoxLayout):
-    pass
-
-
-class ParameterConfigItem(ThreeLineIconListItem):
+class ParameterConfigItem(TwoLineIconListItem):
     parameter = ""
     value_description = ""
 
@@ -84,10 +63,6 @@ class dialog_unit_definition(BoxLayout):
     pass
 
 
-class dialog_update_scenario(BoxLayout):
-    pass
-
-
 class IconListItem(TwoLineAvatarListItem):
     icon = StringProperty()
 
@@ -97,16 +72,8 @@ class ImageDropDownItem(OneLineAvatarListItem):
     text = StringProperty()
 
 
-# class connection_source_dropdown(DropDown):
-#   pass
-
-
 class RightButton(IRightBodyTouch, MDRaisedButton):
     """Custom right container."""
-
-
-class ScenarioCard(MDCard):
-    scenario_key = StringProperty("")
 
 
 class Tab(BoxLayout, MDTabsBase):
