@@ -5,12 +5,7 @@ from kivy.properties import ObjectProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy_garden.graph import LinePlot
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.list import (
-    IconLeftWidget,
-    IconRightWidget,
-    TwoLineAvatarIconListItem,
-    TwoLineListItem,
-)
+from kivymd.uix.list import IconLeftWidget, IconRightWidget, TwoLineAvatarIconListItem
 
 
 # CLASSES
@@ -191,7 +186,14 @@ def update_timeseries_list(app):
             continue
 
         # create list item
-        item = TwoLineListItem(
+        item = TwoLineAvatarIconListItem(
+            IconLeftWidget(icon="chart-line"),
+            IconRightWidget(
+                icon="delete",
+                on_release=lambda x, timeseries_key=key: delete_timeseries(
+                    app, timeseries_key
+                ),
+            ),
             text=key,
             secondary_text=app.timeseries[key][0],
             on_touch_down=lambda instance, touch: select_timeseries_list_item(
@@ -288,3 +290,12 @@ def update_timeseries_preview(app):
         graph.ymax = 10**i * round(x + 0.1, 1)
 
         graph.y_ticks_major = 10**i / 5
+
+
+def delete_timeseries(app, timeseries_key):
+    """
+    This function deletes the timeseries referenced by timeseries_key from app.timeseries
+    :param timeseries_key: [str] key to one of the items of app.timeseries
+    """
+    del app.timeseries[timeseries_key]
+    update_timeseries_list(app)
