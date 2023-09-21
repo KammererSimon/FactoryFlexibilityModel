@@ -1,11 +1,15 @@
 # This file contains the basic functions required to create, save and load sessions within the factory model gui.
 
 
+import logging
+
 # IMPORTS
 import os
 from tkinter import filedialog
 from tkinter.messagebox import askyesno
 
+import numpy as np
+import pandas as pd
 import yaml
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.dialog import MDDialog
@@ -125,23 +129,49 @@ def save_session(app):
     # make sure that there is no open dialog
     app.close_dialog()
 
-    # save session data
+    # SAVE SESSION DATA
     with open(
         f"{app.session_data['session_path']}\\{app.blueprint.info['name']}.ffm",
         "w",
     ) as file:
         yaml.dump(app.session_data, file)
 
-    # save current blueprint
+    # SAVE THE BLUEPRINT
     app.blueprint.save(path=app.session_data["session_path"])
 
-    # save parameters
+    # CREATE parameters.txt AND timeseries.txt
+    entries_parameters = []
+    entries_timeseries = []
+    # iterate over all components
+    for key_component, dict_parameters in app.session_data["parameters"].items():
+        # iterate over all parameters of the current component
+        for key_parameter, dict_variations in dict_parameters.items():
+            # iterate over all variations given for the current parameter
+            for variation in dict_variations.values():
+                # handle static values
+                if variation["type"] == "static":
+                    entries_parameters.append(
+                        f"{key_component}/{key_parameter}\t{variation['value']}\n"
+                    )
+
+                # handle timeseries
+                elif variation["type"] == "timeseries":
+                    entries_timeseries.append(
+                        f"{key_component}/{key_parameter}\t{np.array(app.timeseries[variation['value']][1:app.blueprint.info['timesteps'] + 1])}\n"
+                    )
+
+    # write files
     with open(f"{app.session_data['session_path']}\\parameters.txt", "w") as file:
-        for key_outer, inner_dict in app.parameters.items():
-            for key_inner, values in inner_dict.items():
-                for value in values.values():
-                    line = f"{key_outer}/{key_inner}\t{value}\n"
-                    file.write(line)
+        for line in entries_parameters:
+            file.write(line)
+    with open(f"{app.session_data['session_path']}\\timeseries.txt", "w") as file:
+        for line in entries_timeseries:
+            file.write(line)
+
+    # SAVE TIMESERIES DATABASE
+    app.timeseries.to_excel(
+        f"{app.session_data['session_path']}\\timeseries_data.xlsx", index=False
+    )
 
     # There are no more unsaved changes now...
     app.unsaved_changes_on_session = False
@@ -223,69 +253,82 @@ def load_session(app):
         ).open()
         return
 
-    # IMPORT parameters
-    try:
-        # open the given file
-        with open(f"{app.session_data['session_path']}\\parameters.txt") as file:
-            parameters_new = {}
-            for component_key in blueprint_new.components.keys():
-                parameters_new[component_key] = {}
+    # IMPORT parameter and timeseries configurations
 
-            # initialize a counter that ensures, that every parameter within the factory gets a unique key assigned
-            value_key = 0
-            # iterate over all lines in the file
-            for line in file:
-                # split line into key and value
-                key, value = line.strip().split("\t")
-                # split key into component and parameter
-                key = key.split("/")
-                # make sure that the parameter's dict has an entry for the component and parameter
-                if key[1] not in parameters_new[key[0]].keys():
-                    parameters_new[key[0]][key[1]] = {}
-                # add entry to parameters-dict
-                parameters_new[key[0]][key[1]][value_key] = float(
-                    value.replace(",", ".")
-                )
-                # increment value_key to prevent double usage of keys
-                value_key += 1
+    # # initialize a counter that ensures, that every parameter within the factory gets a unique key assigned
+    # value_key = 0
+    #
+    # # read in parameters.txt
+    # try:
+    #     # open the given file
+    #     with open(f"{app.session_data['session_path']}\\parameters.txt") as file:
+    #         parameters_new = {}
+    #         for component_key in blueprint_new.components.keys():
+    #             parameters_new[component_key] = {}
+    #
+    #         # iterate over all lines in the file
+    #         for line in file:
+    #             # split line into key and value
+    #             key, value = line.strip().split("\t")
+    #             # split key into component and parameter
+    #             [component_key, parameter_key] = key.split("/")
+    #             # make sure that the parameter's dict has an entry for the component and parameter
+    #             if parameter_key not in parameters_new[component_key].keys():
+    #                 parameters_new[component_key][parameter_key] = {}
+    #             # add entry to parameters-dict
+    #             parameters_new[component_key][parameter_key][value_key] = {"type": "static", "value": float(value.replace(",", "."))}
+    #             # increment value_key to prevent double usage of keys
+    #             value_key += 1
+    #     logging.info("parameters.txt import successfull")
+    # except:
+    #     Snackbar(
+    #         text=f"The given parameters.txt-config file is invalid, has a wrong format or is corrupted! "
+    #         f"({app.session_data['session_path']}\\parameters.txt)"
+    #     ).open()
+    #     return
+
+    # IMPORT timeseries.txt
+    # try:
+    #     # open the given file
+    #     with open(f"{app.session_data['session_path']}\\timeseries.txt") as file:
+    #         # iterate over all lines in the file
+    #         for line in file:
+    #             # parse current line
+    #             items = line.split("\t")
+    #
+    #             # first item of the line is the key
+    #             key = items[0].split("/")
+    #
+    #             # remaining line is the value array
+    #             values = [float(x.replace(",", ".")) for x in items[1:]]
+    #
+    #             # add a component entry in the parameters dict if this is the first setting for a component
+    #             if not key[0] in timeseries_new:
+    #                 timeseries_new[key[0]] = {}
+    #             # add entry to parameters-dict
+    #             timeseries_new[key[0]][key[1]] = values
+    # except:
+    #     Snackbar(
+    #         text=f"The given timeseries_data.xlsx file is invalid, has a wrong format or is corrupted! "
+    #         f"({app.session_data['session_path']}\\timeseries_data.xlsx)"
+    #     ).open()
+    #     return
+
+    # IMPORT TIMESERIES DATABASE
+    try:
+        timeseries_new = pd.read_excel(
+            f"{app.session_data['session_path']}\\timeseries_data.xlsx"
+        )
+        logging.info("timeseries_data.xlsx import successfull")
     except:
         Snackbar(
-            text=f"The given parameters.txt-config file is invalid, has a wrong format or is corrupted! "
-            f"({app.session_data['session_path']}\\parameters.txt)"
-        ).open()
-        return
-
-    # IMPORT timeseries
-    try:
-        # open the given file
-        with open(f"{app.session_data['session_path']}\\timeseries.txt") as file:
-            timeseries_new = {}
-            # iterate over all lines in the file
-            for line in file:
-                # parse current line
-                items = line.split("\t")
-
-                # first item of the line is the key
-                key = items[0].split("/")
-
-                # remaining line is the value array
-                values = [float(x.replace(",", ".")) for x in items[1:]]
-
-                # add a component entry in the parameters dict if this is the first setting for a component
-                if not key[0] in timeseries_new:
-                    timeseries_new[key[0]] = {}
-                # add entry to parameters-dict
-                timeseries_new[key[0]][key[1]] = values
-    except:
-        Snackbar(
-            text=f"The given timeseries.txt-config file is invalid, has a wrong format or is corrupted! "
-            f"({app.session_data['session_path']}\\timeseries.txt)"
+            text=f"The given timeseries_data.xlsx file is invalid, has a wrong format or is corrupted! "
+            f"({app.session_data['session_path']}\\timeseries_data.xlsx)"
         ).open()
         return
 
     # Did all imports work till here? -> Overwrite internal attributes
     app.blueprint = blueprint_new
-    app.parameters = parameters_new
     app.timeseries = timeseries_new
 
     # There are no more unsaved changes now...
