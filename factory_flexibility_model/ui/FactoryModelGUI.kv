@@ -163,12 +163,25 @@ Screen:
                                                             hint_text: 'Delivered Flow'
                                                             icon_right: "arrow-down-drop-circle-outline"
                                                             on_focus: if self.focus: app.show_flowtype_selection_dropdown(self)
+                                                        BoxLayout:
+                                                            padding: (10,10)
+                                                            size_hint_y: None
+                                                            height: dp(50)
+                                                            orientation: "horizontal"
+                                                            Widget:
+                                                            MDFlatButton:
+                                                                text: "Revert Changes"
+                                                                halign: "right"
+                                                                on_release: app.update_config_tab()
+                                                            MDRaisedButton:
+                                                                text: "Save Changes"
+                                                                on_release: app.save_changes_on_source()
+
                                                         MDLabel:
                                                             text: "Operating Constraints"
                                                             font_style: "H6"
                                                             size_hint_y: None
                                                             height: dp(30)
-
                                                         ScrollView:
                                                             do_scroll_y: True
                                                             do_scroll_x: False
@@ -183,55 +196,72 @@ Screen:
                                                                 ParameterConfigItem:
                                                                     id: config_source_power_max
                                                                     text: "Maximum Output"
+                                                                    secondary_text: "Not Specified"
                                                                     parameter: "power_max"
                                                                     value_description: "Maximum Output Flowrate"
-                                                                    secondary_text: "10kW"
-                                                                    tertiary_text: "Static Value"
                                                                     on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "numeric"
+                                                                        icon: "help"
+
                                                                 ParameterConfigItem:
                                                                     id: config_source_power_min
                                                                     text: "Minimum Output"
-                                                                    secondary_text: "0-10kW"
-                                                                    tertiary_text: "Timeseries"
+                                                                    secondary_text: "Not Specified"
+                                                                    parameter: "power_min"
+                                                                    value_description: "Minimum Output Flowrate"
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "chart-line"
+                                                                        icon: "help"
+
                                                                 ParameterConfigItem:
                                                                     id: config_source_determined_power
                                                                     text: "Fixed Output"
-                                                                    secondary_text: "0-10kW"
-                                                                    tertiary_text: "Timeseries"
+                                                                    secondary_text: "Not Specified"
+                                                                    parameter: "determined_power"
+                                                                    value_description: "Fixed Output level"
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "chart-line"
+                                                                        icon: "help"
+
                                                                 ParameterConfigItem:
                                                                     id: config_source_availability
                                                                     text: "Availability"
-                                                                    secondary_text: "0-10kW"
-                                                                    tertiary_text: "Timeseries"
+                                                                    secondary_text: "Not Specified"
+                                                                    parameter: "availability"
+                                                                    value_description: "Ratio of Maximum Output that is available at any time"
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "chart-line"
+                                                                        icon: "help"
+
                                                                 ParameterConfigItem:
                                                                     id: config_source_capacity_charge
                                                                     text: "Capacity Charge"
-                                                                    secondary_text: "0-10kW"
-                                                                    tertiary_text: "Timeseries"
+                                                                    secondary_text: "Not Specified"
+                                                                    parameter: "capacity_charge"
+                                                                    value_description: "Fixed price charged per maximum utilized flowrate"
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "chart-line"
+                                                                        icon: "help"
+
                                                                 ParameterConfigItem:
                                                                     id: config_source_co2_emission_per_unit
                                                                     text: "Emissions"
-                                                                    secondary_text: "0-10kW"
-                                                                    tertiary_text: "Timeseries"
+                                                                    secondary_text: "Not Specified"
+                                                                    parameter: "co2_emissions_per_unit"
+                                                                    value_description: "CO2 emissions per unit"
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "chart-line"
+                                                                        icon: "help"
+
                                                                 ParameterConfigItem:
                                                                     id: config_source_cost
                                                                     text: "Cost"
-                                                                    secondary_text: "0-10kW"
-                                                                    tertiary_text: "Timeseries"
+                                                                    secondary_text: "Not Specified"
+                                                                    parameter: "cost"
+                                                                    value_description: "Cost per unit"
+                                                                    on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
-                                                                        icon: "chart-line"
+                                                                        icon: "help"
 
                                                                 ValidatedTextField:
                                                                     id: textfield_source_power_max
@@ -295,21 +325,7 @@ Screen:
                                                                     validation_type: "source_cost"
                                                                     on_text: app.validate_textfield_input(self)
 
-                                                        BoxLayout:
-                                                            padding: (10,10)
-                                                            size_hint_y: None
-                                                            height: dp(50)
-                                                            orientation: "horizontal"
-                                                            Widget:
-                                                            MDFlatButton:
-                                                                text: "Revert Changes"
-                                                                halign: "right"
-                                                                on_release: app.update_config_tab()
 
-                                                            MDRaisedButton:
-                                                                text: "Save Changes"
-                                                                on_release: app.save_changes_on_source()
-                                                                valign: "top"
         # SINK CONFIG SCREEN ###########################################################################################
                                                 Screen:
                                                     name: "sink_config"
