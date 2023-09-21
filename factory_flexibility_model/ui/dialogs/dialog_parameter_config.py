@@ -173,6 +173,12 @@ def update_parameter_value_list(app):
 
 
 def update_timeseries_list(app):
+    """
+    This function updates the list showing all the currently available timeseries within the session.
+    First the existing list in the gui is being cleared, then it is iterated over the
+    list app.timeseries and all existing timeseries are added to the list
+    """
+
     # if app.dialog is not None:
     # clear existing list
     app.dialog.content_cls.ids.list_timeseries.clear_widgets()
@@ -220,7 +226,7 @@ def select_timeseries_list_item(app, list_item, touch):
 
 def update_timeseries_preview(app):
     """
-    This function creates a graph of a timeseries and hands it over to the preview canvas
+    This function creates a graph of a timeseries and hands it over to the preview canvas together with some general info on the selected timeseries to be displayed within the info labels of the dialog.
     """
 
     # get values
