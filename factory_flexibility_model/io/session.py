@@ -3,6 +3,8 @@
 # IMPORTS
 import os
 
+import pandas as pd
+
 
 def create_session_folder(root_folder, session_name: str = "New Session"):
     """
@@ -19,7 +21,6 @@ def create_session_folder(root_folder, session_name: str = "New Session"):
     # create list of files to be initialized
     files = [
         "parameters.txt",
-        "timeseries.txt",
         "flowtypes.txt",
         "units.txt",
         "Layout.factory",
@@ -29,6 +30,11 @@ def create_session_folder(root_folder, session_name: str = "New Session"):
     for file in files:
         with open(os.path.join(subfolder_path, file), "w") as f:
             pass
+
+    # create empty timeseries database
+    pd.DataFrame().to_excel(
+        os.path.join(subfolder_path, "timeseries_data.xlsx"), index=False
+    )
 
     # create a subfolder for simulations
     simulations_path = os.path.join(subfolder_path, "simulations")
