@@ -12,8 +12,8 @@ from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.list import (
     IRightBodyTouch,
     OneLineAvatarListItem,
-    ThreeLineIconListItem,
     TwoLineAvatarListItem,
+    TwoLineIconListItem,
 )
 from kivymd.uix.tab import MDTabsBase
 from kivymd.uix.textfield import MDTextField
@@ -50,7 +50,7 @@ class dialog_new_component(BoxLayout):
     pass
 
 
-class ParameterConfigItem(ThreeLineIconListItem):
+class ParameterConfigItem(TwoLineIconListItem):
     parameter = ""
     value_description = ""
 
