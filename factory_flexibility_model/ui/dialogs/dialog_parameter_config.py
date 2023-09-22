@@ -346,3 +346,4 @@ def validate_static_value(app, textfield):
 
     # update preview
     update_timeseries_preview(app)
+    
