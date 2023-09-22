@@ -1,6 +1,7 @@
 #:import show_unit_config_dialog factory_flexibility_model.ui.dialogs.dialog_unit_definition.show_unit_config_dialog
 #:import show_converter_ratio_dialog factory_flexibility_model.ui.dialogs.dialog_converter_ratios.show_converter_ratio_dialog
 #:import show_parameter_config_dialog factory_flexibility_model.ui.dialogs.dialog_parameter_config.show_parameter_config_dialog
+#:import save_changes_on_source factory_flexibility_model.ui.layouts.config_tab_source.save_changes_on_source
 
 
 Screen:
@@ -175,7 +176,7 @@ Screen:
                                                                 on_release: app.update_config_tab()
                                                             MDRaisedButton:
                                                                 text: "Save Changes"
-                                                                on_release: app.save_changes_on_source()
+                                                                on_release: save_changes_on_source(app)
 
                                                         MDLabel:
                                                             text: "Operating Constraints"
@@ -201,6 +202,7 @@ Screen:
                                                                     value_description: "Maximum Output Flowrate"
                                                                     on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
+                                                                        id: config_source_icon_power_max
                                                                         icon: "help"
 
                                                                 ParameterConfigItem:
@@ -211,6 +213,7 @@ Screen:
                                                                     value_description: "Minimum Output Flowrate"
                                                                     on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
+                                                                        id: config_source_icon_power_min
                                                                         icon: "help"
 
                                                                 ParameterConfigItem:
@@ -221,6 +224,7 @@ Screen:
                                                                     value_description: "Fixed Output level"
                                                                     on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
+                                                                        id: config_source_icon_determined_power
                                                                         icon: "help"
 
                                                                 ParameterConfigItem:
@@ -231,6 +235,7 @@ Screen:
                                                                     value_description: "Ratio of Maximum Output that is available at any time"
                                                                     on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
+                                                                        id: config_source_icon_availability
                                                                         icon: "help"
 
                                                                 ParameterConfigItem:
@@ -241,6 +246,7 @@ Screen:
                                                                     value_description: "Fixed price charged per maximum utilized flowrate"
                                                                     on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
+                                                                        id: config_source_icon_capacity_charge
                                                                         icon: "help"
 
                                                                 ParameterConfigItem:
@@ -251,6 +257,7 @@ Screen:
                                                                     value_description: "CO2 emissions per unit"
                                                                     on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
+                                                                        id: config_source_icon_co2_emission_per_unit
                                                                         icon: "help"
 
                                                                 ParameterConfigItem:
@@ -261,70 +268,8 @@ Screen:
                                                                     value_description: "Cost per unit"
                                                                     on_release: show_parameter_config_dialog(app, self)
                                                                     IconLeftWidgetWithoutTouch:
+                                                                        id: config_source_icon_cost
                                                                         icon: "help"
-
-                                                                ValidatedTextField:
-                                                                    id: textfield_source_power_max
-                                                                    hint_text: 'Maximum Output Power'
-                                                                    helper_text: "mistake"
-                                                                    helper_text_mode: "on_error"
-                                                                    validation_type: "source"
-                                                                    on_text: app.validate_textfield_input(self)
-
-                                                                ValidatedTextField:
-                                                                    id: textfield_source_power_min
-                                                                    hint_text: 'Minimum Output Power'
-                                                                    helper_text: "mistake"
-                                                                    helper_text_mode: "on_error"
-                                                                    validation_type: "source"
-                                                                    on_text: app.validate_textfield_input(self)
-
-                                                                ValidatedTextField:
-                                                                    id: textfield_source_determined_power
-                                                                    hint_text: 'Fixed Operation Level'
-                                                                    helper_text: "mistake"
-                                                                    helper_text_mode: "on_error"
-                                                                    validation_type: "source"
-                                                                    on_text: app.validate_textfield_input(self)
-
-                                                                ValidatedTextField:
-                                                                    id: textfield_source_availability
-                                                                    hint_text: 'Availability [%]'
-                                                                    helper_text: "mistake"
-                                                                    helper_text_mode: "on_error"
-                                                                    validation_type: "source"
-                                                                    on_text: app.validate_textfield_input(self)
-
-                                                                MDLabel:
-                                                                    text: "Price of utilization"
-                                                                    font_style: "H6"
-                                                                    size_hint_y: None
-                                                                    height: dp(30)
-
-                                                                ValidatedTextField:
-                                                                    id: textfield_source_capacity_charge
-                                                                    hint_text: "Capacity charge [€/unit peak]"
-                                                                    helper_text: "mistake"
-                                                                    helper_text_mode: "on_error"
-                                                                    validation_type: "source_capacity_charge"
-                                                                    on_text: app.validate_textfield_input(self)
-
-                                                                ValidatedTextField:
-                                                                    id: textfield_source_co2_emission_per_unit
-                                                                    hint_text: "CO2 emissions per unit in [kg]"
-                                                                    helper_text: "mistake"
-                                                                    helper_text_mode: "on_error"
-                                                                    validation_type: "source_emissions"
-                                                                    on_text: app.validate_textfield_input(self)
-
-                                                                ValidatedTextField:
-                                                                    id: textfield_source_cost
-                                                                    hint_text: "Cost per unit in [€]"
-                                                                    helper_text: "mistake"
-                                                                    helper_text_mode: "on_error"
-                                                                    validation_type: "source_cost"
-                                                                    on_text: app.validate_textfield_input(self)
-
 
         # SINK CONFIG SCREEN ###########################################################################################
                                                 Screen:
