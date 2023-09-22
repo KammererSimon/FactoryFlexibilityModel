@@ -18,6 +18,7 @@ import factory_flexibility_model.ui.utility.flowtype_determination as fd
 from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import (
     show_converter_ratio_dialog,
 )
+from factory_flexibility_model.ui.layouts.config_tab_source import update_config_tab_source, save_changes_on_source
 from factory_flexibility_model.ui.layouts.main_menu import *
 
 # from factory_flexibility_model.ui.layouts.timeseries_overview import (
@@ -1578,109 +1579,6 @@ class factory_GUIApp(MDApp):
         # inform the user
         Snackbar(text=f"{self.selected_asset['name']} updated!").open()
 
-    def save_changes_on_source(self):
-        """
-        This function takes the user input from the source configuration tab and stores it in the blueprint
-        """
-
-        # get component_key
-        key = self.selected_asset["key"]
-
-        # make sure that the given name is not taken yet
-        if not self.blueprint.components[self.selected_asset["key"]][
-            "name"
-        ] == self.root.ids.textfield_source_name.text and self.get_key(
-            self.root.ids.textfield_source_name.text
-        ):
-            self.show_info_popup(
-                "The given name is already assigned within the factory!"
-            )
-            return
-
-            # Check, that all user inputs are valid
-            if (
-                not (self.root.ids.textfield_source_power_max.value_valid)
-                and (self.root.ids.textfield_source_power_min.value_valid)
-                and (self.root.ids.textfield_source_determined_power.value_valid)
-                and (self.root.ids.textfield_source_availability.value_valid)
-                and (self.root.ids.textfield_source_capacity_charge.value_valid)
-                and (self.root.ids.textfield_source_emissions.value_valid)
-                and (self.root.ids.textfield_source_cost.value_valid)
-            ):
-                self.show_info_popup(
-                    "Changes can not be stored due to invalid values remaining"
-                )
-                return
-
-        # update general attributes and icon
-        self.blueprint.components[key].update(
-            {
-                "name": self.root.ids.textfield_source_name.text,
-                "description": self.root.ids.textfield_source_description.text,
-            }
-        )
-        self.blueprint.components[key]["GUI"].update(
-            {"icon": self.root.ids.image_source_configuration.source}
-        )
-
-        # change the flowtype if the user specified a new one
-        flowtype_key = self.get_key(self.root.ids.textfield_source_flowtype.text)
-        if not self.blueprint.components[key]["flowtype"].key == flowtype_key:
-            fd.set_component_flowtype(
-                self.blueprint, key, self.blueprint.flowtypes[flowtype_key]
-            )
-
-        # update parameter list
-        # costs
-        if not self.root.ids.textfield_source_cost.text == "":
-            self.session_data["parameters"][key][
-                "cost"
-            ] = self.root.ids.textfield_source_cost.text
-        # power_max
-        if not self.root.ids.textfield_source_power_max.text == "":
-            self.session_data["parameters"][key][
-                "power_max"
-            ] = self.root.ids.textfield_source_power_max.text
-        # power_min
-        if not self.root.ids.textfield_source_power_min.text == "":
-            self.session_data["parameters"][key][
-                "power_min"
-            ] = self.root.ids.textfield_source_power_min.text
-        # determined_power
-        if not self.root.ids.textfield_source_determined_power.text == "":
-            self.session_data["parameters"][key][
-                "determined_power"
-            ] = self.root.ids.textfield_source_determined_power.text
-        # availability
-        if not self.root.ids.textfield_source_availability.text == "":
-            self.session_data["parameters"][key][
-                "availability"
-            ] = self.root.ids.textfield_source_availability.text
-        # co2_emission_per_unit
-        if not self.root.ids.textfield_source_co2_emission_per_unit.text == "":
-            self.session_data["parameters"][key][
-                "co2_emission_per_unit"
-            ] = self.root.ids.textfield_source_co2_emission_per_unit.text
-        # capacity_charge
-        if not self.root.ids.textfield_source_capacity_charge.text == "":
-            self.session_data["parameters"][key][
-                "capacity_charge"
-            ] = self.root.ids.textfield_source_capacity_charge.text
-
-        # set unsaved changes parameters
-        self.unsaved_changes_on_asset = False
-        self.unsaved_changes_on_session = True
-
-        # update connection names to adapt changes if the name of the source has changed
-        self.update_connection_names()
-        # update flowtype list to adapt changes if a flowtype has to be locked or unlocked
-        self.update_flowtype_list()
-
-        # redraw the preview:
-        self.initialize_visualization()
-
-        # inform the user
-        Snackbar(text=f"{self.selected_asset['name']} updated!").open()
 
     def save_changes_on_storage(self):
         """
@@ -2252,51 +2150,53 @@ class factory_GUIApp(MDApp):
             # switch to the correct screen of the component tab
             self.root.ids.asset_config_screens.current = "source_config"
 
+            update_config_tab_source(self)
+
             # get data from blueprint and add it to the screen
-            self.root.ids.label_source_name.text = self.selected_asset["name"]
-            self.root.ids.textfield_source_name.text = self.selected_asset["name"]
-            self.root.ids.textfield_source_description.text = self.selected_asset[
-                "description"
-            ]
-            self.root.ids.textfield_source_flowtype.text = self.selected_asset[
-                "flowtype"
-            ].name
-            self.root.ids.image_source_configuration.source = self.selected_asset[
-                "GUI"
-            ]["icon"]
-
-            for parameter in [
-                "capacity_charge",
-                "cost",
-                "power_max",
-                "power_min",
-                "availability",
-                "co2_emission_per_unit",
-                "determined_power",
-            ]:
-                textfield = getattr(self.root.ids, f"textfield_source_{parameter}")
-                if (
-                    parameter
-                    in self.session_data["parameters"][
-                        self.selected_asset["key"]
-                    ].keys()
-                ):
-
-                    textfield.text = str(
-                        self.session_data["parameters"][self.selected_asset["key"]][
-                            parameter
-                        ]
-                    )
-                else:
-                    textfield.text = ""
-
-            # Adapt hint texts to the specified flowtype-unit
-            self.root.ids.textfield_source_power_max.hint_text = f"Maximum Output Flowrate [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
-            self.root.ids.textfield_source_power_min.hint_text = f"Minimum Output Flowrate [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
-            self.root.ids.textfield_source_determined_power.hint_text = f"Fixed Output Level [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
-            self.root.ids.textfield_source_cost.hint_text = f"Cost per Unit [€/{self.selected_asset['flowtype'].unit.get_unit_flow()}]"
-            self.root.ids.textfield_source_capacity_charge.hint_text = f"Capacity Charge [€/{self.selected_asset['flowtype'].unit.get_unit_flowrate()}_peak]"
-            self.root.ids.textfield_source_co2_emission_per_unit.hint_text = f"CO2 Emissions per Unit [kgCO2/{self.selected_asset['flowtype'].unit.get_unit_flow()}]"
+            # self.root.ids.label_source_name.text = self.selected_asset["name"]
+            # self.root.ids.textfield_source_name.text = self.selected_asset["name"]
+            # self.root.ids.textfield_source_description.text = self.selected_asset[
+            #     "description"
+            # ]
+            # self.root.ids.textfield_source_flowtype.text = self.selected_asset[
+            #     "flowtype"
+            # ].name
+            # self.root.ids.image_source_configuration.source = self.selected_asset[
+            #     "GUI"
+            # ]["icon"]
+            #
+            # for parameter in [
+            #     "capacity_charge",
+            #     "cost",
+            #     "power_max",
+            #     "power_min",
+            #     "availability",
+            #     "co2_emission_per_unit",
+            #     "determined_power",
+            # ]:
+            #     textfield = getattr(self.root.ids, f"textfield_source_{parameter}")
+            #     if (
+            #         parameter
+            #         in self.session_data["parameters"][
+            #             self.selected_asset["key"]
+            #         ].keys()
+            #     ):
+            #
+            #         textfield.text = str(
+            #             self.session_data["parameters"][self.selected_asset["key"]][
+            #                 parameter
+            #             ]
+            #         )
+            #     else:
+            #         textfield.text = ""
+            #
+            # # Adapt hint texts to the specified flowtype-unit
+            # self.root.ids.textfield_source_power_max.hint_text = f"Maximum Output Flowrate [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
+            # self.root.ids.textfield_source_power_min.hint_text = f"Minimum Output Flowrate [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
+            # self.root.ids.textfield_source_determined_power.hint_text = f"Fixed Output Level [{self.selected_asset['flowtype'].unit.get_unit_flowrate()}]"
+            # self.root.ids.textfield_source_cost.hint_text = f"Cost per Unit [€/{self.selected_asset['flowtype'].unit.get_unit_flow()}]"
+            # self.root.ids.textfield_source_capacity_charge.hint_text = f"Capacity Charge [€/{self.selected_asset['flowtype'].unit.get_unit_flowrate()}_peak]"
+            # self.root.ids.textfield_source_co2_emission_per_unit.hint_text = f"CO2 Emissions per Unit [kgCO2/{self.selected_asset['flowtype'].unit.get_unit_flow()}]"
 
         elif self.selected_asset["type"] == "pool":
             # show the pool configuration screen
