@@ -1,6 +1,7 @@
 # This file contains the basic functions required to create, save and load sessions within the factory model gui.
 
 
+import csv
 import logging
 
 # IMPORTS
@@ -8,7 +9,6 @@ import os
 from tkinter import filedialog
 from tkinter.messagebox import askyesno
 
-import numpy as np
 import pandas as pd
 import yaml
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
@@ -144,6 +144,9 @@ def save_session(app):
     entries_timeseries = []
     # iterate over all components
     for key_component, dict_parameters in app.session_data["parameters"].items():
+        # make sure that there are parameters to save
+        if dict_parameters is None:
+            continue
         # iterate over all parameters of the current component
         for key_parameter, dict_variations in dict_parameters.items():
             # iterate over all variations given for the current parameter
@@ -156,22 +159,36 @@ def save_session(app):
 
                 # handle timeseries
                 elif variation["type"] == "timeseries":
-                    entries_timeseries.append(
-                        f"{key_component}/{key_parameter}\t{np.array(app.timeseries[variation['value']][1:app.blueprint.info['timesteps'] + 1])}\n"
+                    row = [key_component, key_parameter]
+                    row.extend(
+                        app.timeseries[variation["value"]][
+                            1 : app.blueprint.info["timesteps"] + 1
+                        ].tolist()
                     )
+                    entries_timeseries.append(row)
 
     # write files
     with open(f"{app.session_data['session_path']}\\parameters.txt", "w") as file:
         for line in entries_parameters:
             file.write(line)
-    with open(f"{app.session_data['session_path']}\\timeseries.txt", "w") as file:
-        for line in entries_timeseries:
-            file.write(line)
+    with open(
+        f"{app.session_data['session_path']}\\timeseries.csv", "w", newline=""
+    ) as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerows(entries_timeseries)
 
     # SAVE TIMESERIES DATABASE
     app.timeseries.to_excel(
-        f"{app.session_data['session_path']}\\timeseries_data.xlsx", index=False
+        f"{app.session_data['session_path']}\\timeseries_data.xlsx",
+        index=False,
+        engine="openpyxl",
     )
+
+    # SAFE SCHEDULER DEMANDS
+    for key, demands in app.session_data["scheduler_demands"].items():
+        demands.to_csv(
+            f"{app.session_data['session_path']}\\scheduler_demands.xlsx", index=False
+        )
 
     # There are no more unsaved changes now...
     app.unsaved_changes_on_session = False
