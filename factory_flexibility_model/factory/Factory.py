@@ -344,7 +344,7 @@ class Factory:
                 quantity_type="energy",
                 conversion_factor=1,
                 magnitudes=[1, 1000, 1000000, 1000000000, 1000000000000],
-                units_flow=["kWh", "Wh", "GWh", "TWh", "PWh"],
+                units_flow=["kWh", "MWh", "GWh", "TWh", "PWh"],
                 units_flowrate=["kW", "MW", "GW", "TW", "PW"],
             )
         elif key == "mass":
