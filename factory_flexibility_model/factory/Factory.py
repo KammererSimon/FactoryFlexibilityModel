@@ -495,6 +495,22 @@ class Factory:
             "ambient_gains", parameters={"is_onsite": True, "cost": 0.0001}
         )  # Ambient gain gets a tiny cost related to it to avoid a direct feed of energy from ambient gains to thermal losses!
 
+    def get_key(self, name):
+        """
+        This method takes an asset name and returns the corresponding key that the component or connection can be adressed with
+        """
+
+        # search name in component dict
+        for component in self.components.values():
+            if component.name == name:
+                return component.key
+
+        # search name in connection dict
+        for connection in self.connections.values():
+            if connection.name == name:
+                return connection.key
+        return None
+
     def initialize_flowtypes(self):
         """
         This creates a basic set of the most important units and flowtypes that might be used in a typical Simulation setup:
