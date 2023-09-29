@@ -234,10 +234,6 @@ class Component:
                     f"the power of Component {self.name} is already defined as determined. Availability has "
                     f"been set, but will have no effect during the Simulation"
                 )
-            # catch scenario parameters
-            if parameters[parameter] in ("$parameter$", "$timeseries$"):
-                self.availability = parameters[parameter]
-                return
 
             # Availability without power_max is useless:
             if not self.power_max_limited and "power_max" not in parameters:
@@ -1589,7 +1585,7 @@ class Schedule(Component):
         self.type = "schedule"  # identify Component as slack
 
         logging.debug(
-            f"        - New schedule Component {self.name} created with Component-id {self.component_id}"
+            f"        - New schedule Component {self.name} created with Component-id {self.key}"
         )
 
     def set_input(self, connection: co.Connection):
