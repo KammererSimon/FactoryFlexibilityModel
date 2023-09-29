@@ -34,21 +34,11 @@ def show_parameter_config_dialog(app, caller):
     # get the parameter to be configured with the opened dialog
     app.dialog.parameter = caller.parameter
 
-    # specify the correct unit for the selected parameter
-    if app.dialog.parameter in ["availability"]:
-        app.dialog.unit = "%"
-    elif app.dialog.parameter in ["capacity_charge"]:
-        app.dialog.unit = f"€/{app.selected_asset['flowtype'].unit.get_unit_flowrate()}"
-    elif app.dialog.parameter in ["cost"]:
-        app.dialog.unit = f"€/{app.selected_asset['flowtype'].unit.get_unit_flow()}"
-    elif app.dialog.parameter in ["co2_emissions_per_unit"]:
-        app.dialog.unit = f"kgCO2/{app.selected_asset['flowtype'].unit.get_unit_flow()}"
-    else:
-        app.dialog.unit = app.selected_asset["flowtype"].unit.get_unit_flowrate()
-
     app.dialog.content_cls.ids.textfield_value.hint_text = (
-        f"{caller.value_description} [{app.dialog.unit}]"
+        f"{caller.value_description} [{caller.unit}]"
     )
+
+    app.dialog.unit = caller.unit
     update_timeseries_list(app)
     update_parameter_value_list(app)
     app.dialog.open()
@@ -159,7 +149,7 @@ def update_parameter_value_list(app):
         else:
             text = "Static Value"
             icon = "numeric"
-            secondary_text = f"{value['value']} {app.selected_asset['flowtype'].unit.get_unit_flowrate()}"
+            secondary_text = f"{value['value']} {app.dialog.unit}"
 
         # create a list item with the current value
         item = TwoLineAvatarIconListItem(
@@ -346,4 +336,3 @@ def validate_static_value(app, textfield):
 
     # update preview
     update_timeseries_preview(app)
-    
