@@ -1,0 +1,42 @@
+<DialogSessionConfig>
+    spacing: "12dp"
+    padding: (0, 30)
+    size_hint: (None, None)
+    height: "400dp"
+    width: "500dp"
+    orientation: "vertical"
+
+    MDTextField:
+        id: textfield_session_name
+        hint_text: "Factory Name"
+        required: True
+        max_text_length: 30
+        helper_text_mode: "on_error"
+        helper_text: "Enter a new name for the Project"
+
+    MDTextField:
+        id: textfield_session_description
+        hint_text: "Factiory Description"
+        helper_text_mode: "on_error"
+        helper_text: "Enter a brief project description"
+
+    MDLabel:
+        text: "Simulation Parameters"
+        font_style: "H5"
+        size_hint_y: None
+        height: dp(35)
+
+    MDTextField:
+        id: textfield_session_timesteps
+        hint_text: "Number of Timesteps for Simulation"
+        helper_text_mode: "on_error"
+        helper_text: "Enter an Integer"
+
+    BoxLayout:
+        orientation: "horizontal"
+        MDCheckbox:
+            size_hint_x: None
+            width: dp(30)
+            id: checkbox_slack
+        MDLabel:
+            text: "Enable Slacks"
