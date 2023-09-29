@@ -51,7 +51,7 @@ def simulate_session():
 
     # setup, run and save simulation
     simulation = fs.Simulation(factory=factory, scenario=scenario)
-    simulation.simulate(log_solver=False)
+    simulation.simulate(log_solver=False, threshold=0.000001)
     simulation.save(rf"{session_folder}\simulations")
 
     # run dashboard
