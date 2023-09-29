@@ -63,7 +63,7 @@ class Flowtype:
         :return: [string] Description of the value with correct magnitude and unit
         """
 
-        return f"{self.unit.get_value_expression(value=value, quantity_type=quantity_type, digits=digits)} {self.suffix}"
+        return f"{self.unit.get_value_expression(value=value, quantity_type=quantity_type, digits=digits)}"
 
     def is_unknown(self) -> bool:
         """
