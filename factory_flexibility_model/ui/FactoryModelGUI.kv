@@ -1,7 +1,6 @@
 #:import show_unit_config_dialog factory_flexibility_model.ui.dialogs.dialog_unit_definition.show_unit_config_dialog
 #:import show_parameter_config_dialog factory_flexibility_model.ui.dialogs.dialog_parameter_config.show_parameter_config_dialog
-#:import save_changes_on_source factory_flexibility_model.ui.layouts.config_tab_source.save_changes_on_source
-#:import save_changes_on_schedule factory_flexibility_model.ui.layouts.config_tab_schedule.save_changes_on_schedule
+#:import show_session_config_dialog factory_flexibility_model.ui.dialogs.dialog_session_config.show_session_config_dialog
 
 Screen:
     MDNavigationLayout:
@@ -27,6 +26,10 @@ Screen:
                             height: dp(50)
                             halign: "right"
                             valign: "center"
+
+                        IconRightWidget:
+                            icon: "cog"
+                            on_release: show_session_config_dialog(app)
 
 ## BOTTOM NAVIGATION BAR ###############################################################################################
                     MDBottomNavigation:
@@ -121,10 +124,15 @@ Screen:
         # COMPONENT CONFIG SCREEN #########################################################################################
                                                 Screen:
                                                     name: "component_config"
-                                                    BoxLayout:
+                                                    MDBoxLayout:
                                                         orientation: "vertical"
-                                                        padding: 20
-                                                        id: screen_component_config
+                                                        padding: dp(20)
+                                                        MDBoxLayout
+                                                            id:  screen_component_config_top
+                                                            size_hint_y: .2
+                                                        MDBoxLayout
+                                                            orientation: "vertical"
+                                                            id:  screen_component_config_bottom
 
 ### TAB TIMESERIS  ######################################################################################################
                         MDBottomNavigationItem:
