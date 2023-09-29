@@ -27,10 +27,6 @@ def validate(input, output_type, *, min=None, max=None, positive=False, timestep
 
     logging.basicConfig(level=logging.WARNING)
 
-    # if the input is a reference to a scenarioparameter: just skip and give it back
-    if input in ("$parameter$", "$timeseries$"):
-        return input
-
     # handle config and prepare the limits for numeric inputs
     if max is not None:
         upperlimit = True
