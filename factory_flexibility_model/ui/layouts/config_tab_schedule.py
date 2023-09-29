@@ -57,59 +57,6 @@ def save_changes_on_schedule(app):
     Snackbar(text=f"{app.selected_asset['name']} updated!").open()
 
 
-def update_config_tab_schedule(app):
-    asset_key = app.selected_asset["key"]
-    asset_type = app.selected_asset["type"]
-
-    # Update general info
-    app.root.ids.textfield_schedule_flowtype.text = app.selected_asset["flowtype"].name
-    app.root.ids.label_schedule_name.text = app.selected_asset["name"].upper()
-    app.root.ids.textfield_schedule_name.text = app.selected_asset["name"]
-    app.root.ids.textfield_schedule_description.text = app.selected_asset["description"]
-    app.root.ids.image_schedule_configuration.source = app.selected_asset["GUI"]["icon"]
-
-    parameters = app.session_data["parameters"][asset_key]
-
-    for parameter_key in [
-        "power_max",
-        "demands",
-    ]:
-
-        print(f"config_{asset_type}_{parameter_key}")
-        list_item = getattr(app.root.ids, f"config_{asset_type}_{parameter_key}")
-        list_icon = getattr(app.root.ids, f"config_{asset_type}_icon_{parameter_key}")
-
-        list_item.secondary_text = "Not Specified"
-        list_icon.icon = "help"
-        list_icon.theme_text_color = "Custom"
-        list_icon.text_color = [0.7, 0.7, 0.7, 1]
-        list_item.theme_text_color = "Custom"
-        list_item.text_color = [0.6, 0.6, 0.6, 1]
-        list_item.font_style = "Subtitle1"
-        list_item.secondary_theme_text_color = "Custom"
-        list_item.secondary_text_color = [0.8, 0.8, 0.8, 1]
-
-        if parameter_key in parameters.keys() and len(parameters[parameter_key]) > 0:
-            list_icon.text_color = app.main_color.rgba
-            list_item.text_color = app.main_color.rgba
-            list_item.secondary_text_color = app.main_color.rgba
-            list_item.font_style = "H6"
-
-            if len(parameters[parameter_key]) == 1:
-                value = parameters[parameter_key][next(iter(parameters[parameter_key]))]
-                if value["type"] == "static":
-                    list_item.secondary_text = f"{value['value']} {app.selected_asset['flowtype'].unit.get_unit_flowrate()}"
-                    list_icon.icon = "ray-start-arrow"
-                else:
-                    list_item.secondary_text = f"Timeseries: {value['value']}"
-                    list_icon.icon = "chart-line"
-            elif len(parameters[parameter_key]) > 1:
-                list_item.secondary_text = (
-                    f"{len(parameters[parameter_key])} Variations Specified"
-                )
-                list_icon.icon = "multicast"
-
-
 def import_scheduler_demands(app):
     """
     This function imports an xlsx file containing a matrix with demands and writes them as .demands for the currently selected scheduler
@@ -125,9 +72,25 @@ def import_scheduler_demands(app):
         imported_demands = pd.read_excel(
             filepath, usecols="A:D", header=None, skiprows=1
         )
-        app.session_data["scheduler_demands"][
-            app.selected_asset["key"]
-        ] = imported_demands
+
+        # make sure that the key "demands" exists within the parameter list of the current compoent
+        if (
+            "demands"
+            not in app.session_data["parameters"][app.selected_asset["key"]].keys()
+        ):
+            app.session_data["parameters"][app.selected_asset["key"]]["demands"] = {}
+
+        # create a key to adress the variation
+        # variation = 0
+        # while variation in app.session_data["parameters"][app.selected_asset["key"]]["demands"].keys():
+        #    variation += 1
+        # TODO: activate multiple variations again when the model is capable of handling them
+
+        variation = 0
+
+        app.session_data["parameters"][app.selected_asset["key"]]["demands"][
+            variation
+        ] = {"type": "demands", "value": imported_demands.to_dict()}
 
         # inform the user
         Snackbar(text=f"Excelfile successfully imported").open()
