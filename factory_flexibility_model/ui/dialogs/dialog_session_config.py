@@ -31,7 +31,6 @@ def show_session_config_dialog(app):
     btn_true = MDRaisedButton(text="Save")
 
     app.dialog = MDDialog(
-        title="Session Configuration",
         buttons=[btn_false, btn_true],
         type="custom",
         content_cls=DialogSessionConfig(),
@@ -46,6 +45,13 @@ def show_session_config_dialog(app):
     app.dialog.content_cls.ids.textfield_session_timesteps.text = str(
         app.blueprint.info["timesteps"]
     )
+    if app.blueprint.info["currency"] == "€":
+        app.dialog.content_cls.ids.checkbox_euro.active = True
+        app.dialog.content_cls.ids.checkbox_dollar.active = False
+    else:
+        app.dialog.content_cls.ids.checkbox_euro.active = False
+        app.dialog.content_cls.ids.checkbox_dollar.active = True
+
     app.dialog.content_cls.ids.checkbox_slack.active = app.blueprint.info[
         "enable_slacks"
     ]
@@ -63,6 +69,11 @@ def save_session_config(app):
 
     try:
         # read inputs from GUI and write them into app.blueprint.
+        if app.dialog.content_cls.ids.checkbox_dollar.active:
+            currency = "$"
+        else:
+            currency = "€"
+
         app.blueprint.info = {
             "name": app.dialog.content_cls.ids.textfield_session_name.text,
             "description": app.dialog.content_cls.ids.textfield_session_description.text,
@@ -70,6 +81,7 @@ def save_session_config(app):
                 app.dialog.content_cls.ids.textfield_session_timesteps.text
             ),
             "enable_slacks": app.dialog.content_cls.ids.checkbox_slack.active,
+            "currency": currency,
         }
         # write the new name into the top app bar
         app.root.ids.label_session_name.text = app.blueprint.info["name"]

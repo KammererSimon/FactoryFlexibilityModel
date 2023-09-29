@@ -2,10 +2,16 @@
     spacing: "12dp"
     padding: (0, 30)
     size_hint: (None, None)
-    height: "400dp"
+    height: "500dp"
     width: "500dp"
     orientation: "vertical"
 
+    MDLabel:
+        text: "Session Settings"
+        font_style: "H5"
+        size_hint_y: None
+        height: dp(35)
+        id: label_currency
     MDTextField:
         id: textfield_session_name
         hint_text: "Factory Name"
@@ -19,6 +25,29 @@
         hint_text: "Factiory Description"
         helper_text_mode: "on_error"
         helper_text: "Enter a brief project description"
+
+    MDLabel:
+        text: "Currency"
+        font_style: "H5"
+        size_hint_y: None
+        height: dp(35)
+        id: label_currency
+    BoxLayout:
+        orientation: "horizontal"
+        MDCheckbox:
+            group: "currency"
+            size_hint_x: None
+            width: dp(30)
+            id: checkbox_euro
+        MDLabel:
+            text: "€"
+        MDCheckbox:
+            group: "currency"
+            size_hint_x: None
+            width: dp(30)
+            id: checkbox_dollar
+        MDLabel:
+            text: "$"
 
     MDLabel:
         text: "Simulation Parameters"
