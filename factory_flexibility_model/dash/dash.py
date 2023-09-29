@@ -351,7 +351,7 @@ def create_dash(simulation):
     }
     for c in simulation.factory.components:
         options[simulation.factory.components[c].type].append(
-            simulation.factory.components[c].key
+            simulation.factory.components[c].name
         )
     for arg in options:
         if options[arg] == []:
@@ -1177,7 +1177,7 @@ def create_dash(simulation):
                                             ),
                                             dbc.Row(
                                                 [figures["schedule1"]],
-                                                style={"height": "55vh"},
+                                                style={"height": "60vh"},
                                             ),
                                         ],
                                         width=7,
@@ -1294,7 +1294,7 @@ def create_dash(simulation):
                                             simulation.factory.connections[i].key
                                         ]
                                     ),
-                                    simulation.factory.connection_key_list.index(
+                                    connection_key_list.index(
                                         simulation.factory.connections[i].key
                                     ),
                                 ]
@@ -1565,7 +1565,9 @@ def create_dash(simulation):
             t0 = timesteps[0]
             t1 = timesteps[1]
             x = np.arange(t0, t1, 1)
-            component = simulation.factory.components[user_input]
+            component = simulation.factory.components[
+                simulation.factory.get_key(user_input)
+            ]
             Pmin = min(component.power_min)
             if component.power_max_limited:
                 Pmax = int(max(component.power_max))
@@ -1617,7 +1619,7 @@ def create_dash(simulation):
                 linecolor=style["axis_color"],
             )
             fig.update_yaxes(
-                title_text=f"Utilization [SU/Δt]",
+                title_text=f"Utilization {component.flowtype.unit_flowrate()}",
                 range=[0, Pmax * 1.05],
                 linewidth=2,
                 linecolor=style["axis_color"],
@@ -1708,31 +1710,32 @@ def create_dash(simulation):
             )
 
             # collect configuration information
-            config = f"\n **Pnominal**: {component.power_nominal} SU/Δt\n "
+            config = f"\n **Pnominal**: {component.power_nominal} {component.flowtype.unit_flowrate()}\n "
             if component.power_max_limited:
                 config = (
                     config
-                    + f"\n**power_max:** {round(max(component.power_max))} SU/Δt\n "
+                    + f"\n**power_max:** {component.flowtype.get_value_expression(round(max(component.power_max)), 'flowrate')}\n "
                 )
             else:
                 config = config + f"\n**power_max**: Unlimited \n"
             if component.power_min_limited:
                 config = (
-                    config + f"\n**Pmin**: {round(min(component.power_min))} SU/Δt\n"
+                    config
+                    + f"\n**Pmin**: {component.flowtype.get_value_expression(round(min(component.power_min)), 'flowrate')}\n"
                 )
             else:
                 config = config + f"\n**Pmin**: 0 SU/Δt \n"
             if component.max_pos_ramp_power < 10000000:
                 config = (
                     config
-                    + f"\n**Fastest Rampup:** {round(component.max_pos_ramp_power)} SU/Δt² \n "
+                    + f"\n**Fastest Rampup:** {component.flowtype.get_value_expression(round(component.max_pos_ramp_power), 'flowrate')} \n "
                 )
             else:
                 config = config + f"\n**Fastest Rampup:** Unlimited \n "
             if component.max_neg_ramp_power < 10000000:
                 config = (
                     config
-                    + f"\n**Fastest Rampdown:** {round(component.max_neg_ramp_power)} SU/Δt² \n "
+                    + f"\n**Fastest Rampdown:** {component.flowtype.get_value_expression(round(component.max_neg_ramp_power), 'flowrate')} \n "
                 )
             else:
                 config = config + f"\n**Fastest Rampdown:** Unlimited \n "
@@ -1753,10 +1756,10 @@ def create_dash(simulation):
             results = ""
             results = (
                 results
-                + f"\n **Total Conversion**: {round(sum(simulation.result[component.key]['utilization']))} SU \n"
-                f"\n **Highest Utilization**: {round(max(simulation.result[component.key]['utilization']))} SU/Δt \n"
-                f"\n **Lowest Utilization**: {round(min(simulation.result[component.key]['utilization']))} SU/Δt \n "
-                f"\n **Average Utilization**: {round(simulation.result[component.key]['utilization'].mean())} SU/Δt \n"
+                + f"\n **Total Conversion**: {component.flowtype.get_value_expression(round(sum(simulation.result[component.key]['utilization'])), 'flow')}  \n"
+                f"\n **Highest Utilization**: {component.flowtype.get_value_expression(round(max(simulation.result[component.key]['utilization'])), 'flowrate')} \n"
+                f"\n **Lowest Utilization**: {component.flowtype.get_value_expression(round(min(simulation.result[component.key]['utilization'])), 'flowrate')} \n "
+                f"\n **Average Utilization**: {component.flowtype.get_value_expression(round(simulation.result[component.key]['utilization'].mean()), 'flowrate')} \n"
                 f"\n **Activation Time**: {sum(simulation.result[component.key]['utilization'] > 0.001)} Intervals ({round(sum(simulation.result[component.key]['utilization'] > 0.001) / T *100)}% of time)\n"
             )
 
@@ -1778,7 +1781,9 @@ def create_dash(simulation):
         t0 = timesteps[0]
         t1 = timesteps[1]
         x = np.arange(t0, t1, 1)
-        component = simulation.factory.components[user_input]
+        component = simulation.factory.components[
+            simulation.factory.get_key(user_input)
+        ]
 
         fig = go.Figure()
         # create positive side of the diagram
@@ -1847,7 +1852,9 @@ def create_dash(simulation):
         t0 = timesteps[0]
         t1 = timesteps[1]
         x = np.arange(t0, t1, 1)
-        component = simulation.factory.components[user_input]
+        component = simulation.factory.components[
+            simulation.factory.get_key(user_input)
+        ]
         data = (
             simulation.result[component.key]["utilization"][t0:t1]
             / simulation.scenario.timefactor
@@ -1944,7 +1951,9 @@ def create_dash(simulation):
         t0 = timesteps[0]
         t1 = timesteps[1]
         x = np.arange(t0, t1, 1)
-        component = simulation.factory.components[user_input]
+        component = simulation.factory.components[
+            simulation.factory.get_key(user_input)
+        ]
         data = (
             simulation.result[component.key]["utilization"][t0:t1]
             / simulation.scenario.timefactor
@@ -2033,7 +2042,9 @@ def create_dash(simulation):
             t1 = timesteps[1]
             x = np.arange(t0, t1, 1)
 
-            component = simulation.factory.components[user_input]
+            component = simulation.factory.components[
+                simulation.factory.get_key(user_input)
+            ]
 
             data = (
                 -simulation.result[component.key]["utilization"][t0:t1]
@@ -2168,7 +2179,9 @@ def create_dash(simulation):
         t0 = timesteps[0]
         t1 = timesteps[1]
         x = np.arange(t0, t1, 1)
-        component = simulation.factory.components[user_input]
+        component = simulation.factory.components[
+            simulation.factory.get_key(user_input)
+        ]
 
         """TEMPERATURE FIGURE"""
         fig1 = make_subplots(specs=[[{"secondary_y": True, "r": -0.06}]])
@@ -2381,7 +2394,9 @@ def create_dash(simulation):
             t0 = timesteps[0]
             t1 = timesteps[1]
             x = np.arange(t0, t1, 1)
-            component = simulation.factory.components[user_input]
+            component = simulation.factory.components[
+                simulation.factory.get_key(user_input)
+            ]
             fig = make_subplots(
                 rows=2, cols=1, subplot_titles=("PARTDEMAND FULLFILMENT", "TOTAL FLOW")
             )
@@ -2512,7 +2527,7 @@ def create_dash(simulation):
             if component.power_max_limited:
                 config = (
                     config
-                    + f"\n**power_max:** {max(component.power_max)} {component.flowtype.unit.get_unit_flowrate()}\n "
+                    + f"\n**power_max:** {component.flowtype.unit.get_value_expression(max(component.power_max), 'flowrate')}\n "
                 )
             else:
                 config = config + f"\n**power_max**: unlimited \n"
@@ -2522,7 +2537,7 @@ def create_dash(simulation):
                 + f"\n **Flow**: {component.flowtype.name} \n \n**Unit:** {component.flowtype.unit.get_unit_flow()}\n \n **Number of Demands:** {len(component.demands)} \n"
             )
 
-            results = f"\n **Total Flow:** {round(sum(sum(utilization)))} {component.flowtype.unit.get_unit_flow()}\n \n **power_max:** {max(sum(utilization))}{component.flowtype.unit.get_unit_flowrate()}\n"
+            results = f"\n **Total Flow:** {component.flowtype.unit.get_value_expression(round(sum(sum(utilization))), 'flow')}\n \n **power_max:** {component.flowtype.unit.get_value_expression(max(sum(utilization)), 'flowrate')}\n"
         else:
             fig = go.Figure()
             fig2 = go.Figure()
