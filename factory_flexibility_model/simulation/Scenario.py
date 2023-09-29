@@ -1,7 +1,12 @@
 # SCENARIO
 
 # IMPORT
+import csv
 import os
+
+import numpy as np
+import pandas as pd
+import yaml
 
 
 # CODE START
@@ -24,9 +29,14 @@ class Scenario:
             self.import_parameters(parameter_file)
 
         # read in timeseries.txt
-        timeseries_file = rf"{session_folder}\timeseries.txt"
+        timeseries_file = rf"{session_folder}\timeseries.csv"
         if timeseries_file is not None:
             self.import_timeseries(timeseries_file)
+
+        # read in scheduler demands
+        demands_file = rf"{session_folder}\demands.txt"
+        if timeseries_file is not None:
+            self.import_demands(demands_file)
 
     def import_parameters(self, parameter_file: str) -> bool:
         """
@@ -73,26 +83,36 @@ class Scenario:
                 f"Requested timeseries.txt-file does not exists: {timeseries_file}"
             )
 
-        try:
-            # open the given file
-            with open(timeseries_file) as file:
-                # iterate over all lines in the file
-                for line in file:
-                    # parse current line
-                    items = line.split("\t")
+        with open(timeseries_file) as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                print(row)
+                key_component, key_parameter = row[0], row[1]
+                values = np.array([float(value) for value in row[2:]])
+                # make sure that the component key exists in the configurations dict
+                if not key_component in self.configurations:
+                    self.configurations[key_component] = {}
+                self.configurations[key_component][key_parameter] = values
 
-                    # first item of the line is the key
-                    key = items[0].split("/")
+    def import_demands(self, demands_file: str) -> bool:
+        """
+        This function opens the .txt file given as "demands_file" and returns the contained demandlist as a dictionary with one key: [pd.df] pair per demand specified
+        :param demand_file: [string] Path to a .txt file containing the key: [pd.df] pairs
+        :return: [boolean] True if import was successfull
+        """
+        # open file
+        with open(demands_file) as file:
+            demands_data = yaml.load(file, Loader=yaml.SafeLoader)
 
-                    # remaining line is the value array
-                    values = [float(x.replace(",", ".")) for x in items[1:]]
+        for key_component, demands in demands_data.items():
+            for values in demands.values():
+                # make sure that the component key exists in the configurations dict
+                if not key_component in self.configurations:
+                    self.configurations[key_component] = {}
 
-                    # add a component entry in the parameters dict if this is the first setting for a component
-                    if not key[0] in self.configurations:
-                        self.configurations[key[0]] = {}
-                    # add entry to parameters-dict
-                    self.configurations[key[0]][key[1]] = values
-        except:
-            raise ValueError(
-                f"The given timeseries.txt-config file is invalid, has a wrong format or is corrupted! ({timeseries_file})"
-            )
+                # write the dataframe to the configurations dict
+                self.configurations[key_component]["demands"] = pd.DataFrame(
+                    values
+                ).to_numpy()
+
+                print(self.configurations[key_component]["demands"])
