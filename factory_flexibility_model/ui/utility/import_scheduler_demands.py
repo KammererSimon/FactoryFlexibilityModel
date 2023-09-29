@@ -21,6 +21,23 @@ def import_scheduler_demands(app):
             filepath, usecols="A:D", header=None, skiprows=1
         )
 
+        # make sure all start and end times are integers
+        if (
+            not imported_demands[0].apply(lambda x: isinstance(x, int)).all()
+            or not imported_demands[1].apply(lambda x: isinstance(x, int)).all()
+        ):
+            Snackbar(
+                text="Cannot import scheduler demands, because at least one start or endtime is not an integer"
+            ).open()
+            return
+
+        # make sure that no demand starts before timestep 1
+        if (imported_demands[0] < 1).any():
+            Snackbar(
+                text="Cannot import scheduler demands, because at least one partdemand starts before timestep 1."
+            ).open()
+            return
+
         # make sure that the key "demands" exists within the parameter list of the current compoent
         if (
             "demands"
