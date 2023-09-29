@@ -139,9 +139,10 @@ def save_session(app):
     # SAVE THE BLUEPRINT
     app.blueprint.save(path=app.session_data["session_path"])
 
-    # CREATE parameters.txt AND timeseries.txt
+    # CREATE parameters.txt, timeseries.txt and demands.txt
     entries_parameters = []
     entries_timeseries = []
+    entries_demands = {}
     # iterate over all components
     for key_component, dict_parameters in app.session_data["parameters"].items():
         # make sure that there are parameters to save
@@ -150,7 +151,7 @@ def save_session(app):
         # iterate over all parameters of the current component
         for key_parameter, dict_variations in dict_parameters.items():
             # iterate over all variations given for the current parameter
-            for variation in dict_variations.values():
+            for index, variation in dict_variations.items():
                 # handle static values
                 if variation["type"] == "static":
                     entries_parameters.append(
@@ -167,6 +168,14 @@ def save_session(app):
                     )
                     entries_timeseries.append(row)
 
+                # handle demands
+                elif variation["type"] == "demands":
+                    # make sure that component key exists within entries_demands
+                    if key_component not in entries_demands.keys():
+                        entries_demands[key_component] = {}
+                    # add values of current variation to the dict
+                    entries_demands[key_component][index] = variation["value"]
+
     # write files
     with open(f"{app.session_data['session_path']}\\parameters.txt", "w") as file:
         for line in entries_parameters:
@@ -176,6 +185,11 @@ def save_session(app):
     ) as csvfile:
         writer = csv.writer(csvfile)
         writer.writerows(entries_timeseries)
+    with open(
+        f"{app.session_data['session_path']}\\demands.txt",
+        "w",
+    ) as file:
+        yaml.dump(entries_demands, file)
 
     # SAVE TIMESERIES DATABASE
     app.timeseries.to_excel(
@@ -183,12 +197,6 @@ def save_session(app):
         index=False,
         engine="openpyxl",
     )
-
-    # SAFE SCHEDULER DEMANDS
-    for key, demands in app.session_data["scheduler_demands"].items():
-        demands.to_csv(
-            f"{app.session_data['session_path']}\\scheduler_demands.xlsx", index=False
-        )
 
     # There are no more unsaved changes now...
     app.unsaved_changes_on_session = False
