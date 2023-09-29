@@ -108,6 +108,8 @@ class Blueprint:
                 key=key,
                 flowtype=flowtype,
                 to_losses=to_losses,
+                weight_source=connection["weight_source"],
+                weight_sink=connection["weight_sink"],
             )
 
         factory.check_validity()
