@@ -23,6 +23,8 @@ class Blueprint:
             "description": "Undefined",
             "timesteps": 168,
             "enable_slacks": False,
+            "timestep_length": 1,
+            "currency": "€",
         }
         self.units = {}  # list of units
 
