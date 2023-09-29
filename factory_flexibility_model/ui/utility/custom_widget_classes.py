@@ -13,7 +13,6 @@ from kivymd.uix.list import (
     IRightBodyTouch,
     OneLineAvatarListItem,
     TwoLineAvatarListItem,
-    TwoLineIconListItem,
 )
 from kivymd.uix.tab import MDTabsBase
 from kivymd.uix.textfield import MDTextField
@@ -48,11 +47,6 @@ class dialog_magnitude_definition(BoxLayout):
 
 class dialog_new_component(BoxLayout):
     pass
-
-
-class ParameterConfigItem(TwoLineIconListItem):
-    parameter = ""
-    value_description = ""
 
 
 class dialog_timeseries_selection(BoxLayout):
