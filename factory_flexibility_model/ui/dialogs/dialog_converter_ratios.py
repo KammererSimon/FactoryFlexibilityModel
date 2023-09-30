@@ -45,3 +45,13 @@ def show_converter_ratio_dialog(app):
     update_connection_lists(app)
     update_bilance_calculation(app)
     app.dialog.open()
+
+def select_ratio_type(app, segmented_control, segmented_item):
+    """
+    This function is being called when the user uses the segmentedcontrol to switch between energy and materila rations.
+    It switches the screen displayed in the bottom area of the dialog according to the users selection.
+    :param app: pointer to the main GUI-object
+    :param segmented_control: segmented control object -> unused
+    :param segmented_item: item that the user clicked on -> is used to determine which screen to show
+    """
+    app.dialog.content_cls.ids.ratio_config_screens.current = segmented_item.text

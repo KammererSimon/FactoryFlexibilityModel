@@ -199,8 +199,8 @@ def update_connection_lists(app):
 
             # create list item for the connection
             item = TextfieldIconListItem(
-                text=app.blueprint.components[connection["from"]]["name"],
-                secondary_text=connection["flowtype"].name,
+                secondary_text=app.blueprint.components[connection["from"]]["name"],
+                text=connection["flowtype"].name,
                 connection_key=connection["key"],
                 divider_color=(1, 1, 1, 1),
             )
@@ -218,8 +218,8 @@ def update_connection_lists(app):
         if connection["from"] == app.selected_asset["key"]:
             # create list item for the connection
             item = TextfieldCheckboxIconListItem(
-                text=app.blueprint.components[connection["to"]]["name"],
-                secondary_text=connection["flowtype"].name,
+                secondary_text=app.blueprint.components[connection["to"]]["name"],
+                text=connection["flowtype"].name,
                 connection_key=connection["key"],
                 divider_color=(1, 1, 1, 1),
             )
