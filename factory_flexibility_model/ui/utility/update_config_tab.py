@@ -7,12 +7,12 @@ from factory_flexibility_model.ui.dialogs.dialog_parameter_config import (
 from factory_flexibility_model.ui.layouts.component_config_tab import (
     layout_component_configuration,
     layout_component_definition,
-    layout_converter_ratios,
 )
 from factory_flexibility_model.ui.utility.import_scheduler_demands import (
     import_scheduler_demands,
 )
 from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import show_converter_ratio_dialog
+
 # define list of attributes to be considered for the different component types
 converter_parameters = {
     "ratios": {
@@ -23,12 +23,12 @@ converter_parameters = {
     "power_max": {
         "text": "Maximum Operating Point",
         "description": "Maximum Conversion Rate per Timestep",
-        "unit_type": "flowrate",
+        "unit_type": "flowrate_primary",
     },
     "power_min": {
         "text": "Minimum Operating Point",
         "description": "Minimum Conversion Rate per Timestep",
-        "unit_type": "flowrate",
+        "unit_type": "flowrate_primary",
     },
     "availabiity": {
         "text": "Availability",
@@ -53,7 +53,7 @@ converter_parameters = {
     "power_nominal": {
         "text": "Nominal Operating Point",
         "description": "Operating Point of Max Efficiency",
-        "unit_type": "flowrate",
+        "unit_type": "flowrate_primary",
     },
     "delta_eta_high": {
         "text": "Upper Efficiency Drop",
@@ -300,7 +300,8 @@ def update_config_tab(app):
         elif attribute_data["unit_type"] == "timesteps":
             unit = "hours"
         elif attribute_data["unit_type"] == "ramping":
-            unit = f"{app.selected_asset['flowtype'].unit.get_unit_flowrate()}/h"
+            flowtype = app.blueprint.components[app.selected_asset['GUI']['primary_flow']]['flowtype']
+            unit = f"{flowtype.unit.get_unit_flowrate()} {flowtype.name} /h"
         elif attribute_data["unit_type"] == "currency":
             unit = app.blueprint.info["currency"]
         elif attribute_data["unit_type"] == "leakage_time":
@@ -311,6 +312,9 @@ def update_config_tab(app):
             unit = f"kgCO2/{app.selected_asset['flowtype'].unit.get_unit_flow()}"
         elif attribute_data["unit_type"] == "capacity_charge":
             unit = f"{app.blueprint.info['currency']}/{app.selected_asset['flowtype'].unit.get_unit_flowrate()}_peak"
+        elif attribute_data["unit_type"] == "flowrate_primary":
+            flowtype = app.blueprint.components[app.selected_asset['GUI']['primary_flow']]['flowtype']
+            unit = f"{flowtype.unit.get_unit_flowrate()} {flowtype.name}"
         else:
             unit = ""
 

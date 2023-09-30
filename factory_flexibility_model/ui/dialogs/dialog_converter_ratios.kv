@@ -2,6 +2,7 @@
 # The dives an overview of incoming and outgoing connections to/from the selected converter and allows the user to specify all the weights of involved flowtypes
 
 #:import update_bilance_calculation factory_flexibility_model.ui.utility.converter_ratio_dialog_functions.update_bilance_calculation
+#:import update_primary_flow factory_flexibility_model.ui.utility.converter_ratio_dialog_functions.update_primary_flow
 #:import save_converter_ratios factory_flexibility_model.ui.utility.converter_ratio_dialog_functions.save_converter_ratios
 #:import select_ratio_type factory_flexibility_model.ui.dialogs.dialog_converter_ratios.select_ratio_type
 
@@ -170,14 +171,40 @@
             size_hint_x: None
             width: dp(30)
             on_active: update_bilance_calculation(app)
+        MDIcon:
+            icon: "cog"
+            pos_hint: {"center_x": .5, "center_y": .5}
+            size_hint_x: None
+            width: dp(30)
+        MDCheckbox:
+            id: list_item_primary
+            size_hint_x: None
+            width: dp(30)
+            on_active: update_primary_flow(app)
+            group: "primary"
 
 <TextfieldIconListItem>
-    MDTextField:
-        id: list_item_textfield
-        pos_hint: {"center_y": .5, "right": 1}
-        size_hint: None, None
+    BoxLayout:
+        spacing: 10
+        pos_hint: {"center_y": .5}
+        size_hint_y: None
         height: self.minimum_height
-        width: dp(100)
-        mode: "round"
-        helper_text_mode: "persistent"
-        on_text: update_bilance_calculation(app)
+        Widget:
+        MDTextField:
+            id: list_item_textfield
+            size_hint_x: None
+            width: dp(100)
+            mode: "round"
+            helper_text_mode: "persistent"
+            on_text: update_bilance_calculation(app)
+        MDIcon:
+            icon: "cog"
+            pos_hint: {"center_x": .5, "center_y": .5}
+            size_hint_x: None
+            width: dp(30)
+        MDCheckbox:
+            id: list_item_primary
+            size_hint_x: None
+            width: dp(30)
+            on_active: update_primary_flow(app)
+            group: "primary"

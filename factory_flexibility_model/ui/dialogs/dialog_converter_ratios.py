@@ -9,6 +9,7 @@ from kivymd.uix.list import TwoLineAvatarIconListItem
 # CLASSES
 class dialog_converter_ratios(BoxLayout):
     bilance_valid = BooleanProperty()
+    primary_flow = StringProperty()
 
 
 class TextfieldIconListItem(TwoLineAvatarIconListItem):
@@ -42,6 +43,7 @@ def show_converter_ratio_dialog(app):
     app.dialog.size_hint = (None, None)
     app.dialog.width = dp(1050)
     app.dialog.height = dp(1000)
+    app.dialog.primary_flow = app.selected_asset["GUI"]["primary_flow"]
     update_connection_lists(app)
     update_bilance_calculation(app)
     app.dialog.open()
