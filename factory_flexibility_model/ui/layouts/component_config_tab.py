@@ -12,11 +12,3 @@ class layout_component_definition(BoxLayout):
 
 class layout_component_configuration(BoxLayout):
     pass
-
-
-class layout_converter_ratios(BoxLayout):
-    pass
-
-
-class layout_scheduler_demands(BoxLayout):
-    pass
