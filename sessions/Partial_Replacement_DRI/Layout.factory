@@ -1,0 +1,584 @@
+components:
+  component_1:
+    GUI:
+      icon: Assets\sources\Powerpole.png
+      position_x: 1.0
+      position_y: 30.0
+    description: ''
+    flowtype: flowtype_2
+    key: component_1
+    name: Electricity Grid
+    type: source
+  component_10:
+    GUI:
+      icon: Assets\sources\Deliveries.png
+      position_x: 39.0
+      position_y: 30.0
+    description: ''
+    flowtype: flowtype_8
+    key: component_10
+    name: Source Lime
+    type: source
+  component_11:
+    GUI:
+      icon: Assets\defaults\converter.png
+      position_x: 8.0
+      position_y: 25.0
+      primary_flow: component_6
+    description: Polymer Membrane Electrolysis
+    flowtype: unknown
+    key: component_11
+    name: PEM
+    type: converter
+  component_12:
+    GUI:
+      icon: Assets\defaults\pool.png
+      position_x: 17.0
+      position_y: 22.0
+    description: ''
+    flowtype: flowtype_5
+    key: component_12
+    name: Pool Oxygen
+    type: pool
+  component_13:
+    GUI:
+      icon: Assets\sinks\Sales.png
+      position_x: 25.0
+      position_y: 19.0
+    description: ''
+    flowtype: flowtype_5
+    key: component_13
+    name: Oxagen Sales
+    type: sink
+  component_14:
+    GUI:
+      icon: Assets\defaults\storage.png
+      position_x: 8.0
+      position_y: 13.0
+    description: ''
+    flowtype: flowtype_3
+    key: component_14
+    name: Hydrogen Storage
+    type: storage
+  component_15:
+    GUI:
+      icon: Assets\components\Arc Furnance.png
+      position_x: 33.0
+      position_y: 23.0
+      primary_flow: component_23
+    description: ''
+    flowtype: unknown
+    key: component_15
+    name: EAF
+    type: converter
+  component_16:
+    GUI:
+      icon: Assets\components\DRI.png
+      position_x: 12.0
+      position_y: 5.0
+      primary_flow: component_17
+    description: ''
+    flowtype: unknown
+    key: component_16
+    name: Natural gas DRI
+    type: converter
+  component_17:
+    GUI:
+      icon: Assets\defaults\pool.png
+      position_x: 25.0
+      position_y: 8.0
+    description: ''
+    flowtype: flowtype_10
+    key: component_17
+    name: DRI Composition
+    type: pool
+  component_18:
+    GUI:
+      icon: Assets\components\DRI.png
+      position_x: 18.0
+      position_y: 10.0
+      primary_flow: component_17
+    description: ''
+    flowtype: unknown
+    key: component_18
+    name: Hydrogen DRI
+    type: converter
+  component_19:
+    GUI:
+      icon: Assets\defaults\converter.png
+      position_x: 34.0
+      position_y: 9.0
+      primary_flow: component_20
+    description: ''
+    flowtype: unknown
+    key: component_19
+    name: DRI Restrictions
+    type: converter
+  component_2:
+    GUI:
+      icon: Assets\sources\Gas Grid.png
+      position_x: 1.0
+      position_y: 18.0
+    description: ''
+    flowtype: flowtype_3
+    key: component_2
+    name: Hydrogen Purchase
+    type: source
+  component_20:
+    GUI:
+      icon: Assets\defaults\pool.png
+      position_x: 40.0
+      position_y: 9.0
+    description: ''
+    flowtype: flowtype_10
+    key: component_20
+    name: Pool DRI
+    type: pool
+  component_21:
+    GUI:
+      icon: Assets\sinks\Gas Grid.png
+      position_x: 24.0
+      position_y: 13.0
+    description: ''
+    flowtype: flowtype_4
+    key: component_21
+    name: Sink Water
+    type: sink
+  component_22:
+    GUI:
+      icon: Assets\sources\Gas Grid.png
+      position_x: 1.0
+      position_y: 22.0
+    description: Option to buy oxygen
+    flowtype: flowtype_5
+    key: component_22
+    name: Source Oxygen
+    type: source
+  component_23:
+    GUI:
+      icon: Assets\defaults\schedule.png
+      position_x: 40.0
+      position_y: 24.0
+    description: ''
+    flowtype: flowtype_11
+    key: component_23
+    name: Steel Demand Schedule
+    type: schedule
+  component_24:
+    GUI:
+      icon: Assets\sinks\Delivery.png
+      position_x: 45
+      position_y: 23.0
+    description: ''
+    flowtype: flowtype_11
+    key: component_24
+    name: Crude Steel Out
+    type: sink
+  component_28:
+    GUI:
+      icon: Assets\sinks\Emissions.png
+      position_x: 45.0
+      position_y: 14.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_28
+    name: CO2 Emissions
+    type: sink
+  component_3:
+    GUI:
+      icon: Assets\sources\Deliveries.png
+      position_x: 1.0
+      position_y: 9.0
+    description: ''
+    flowtype: flowtype_9
+    key: component_3
+    name: Source Iron Ore
+    type: source
+  component_4:
+    GUI:
+      icon: Assets\sources\Gas Grid.png
+      position_x: 1.0
+      position_y: 25.0
+    description: ''
+    flowtype: flowtype_4
+    key: component_4
+    name: Water Grid
+    type: source
+  component_5:
+    GUI:
+      icon: Assets\sources\Gas Grid.png
+      position_x: 1.0
+      position_y: 3.0
+    description: ''
+    flowtype: flowtype_1
+    key: component_5
+    name: Natural Gas Grid
+    type: source
+  component_6:
+    GUI:
+      icon: Assets\defaults\pool.png
+      position_x: 12.0
+      position_y: 30.0
+    description: ''
+    flowtype: flowtype_2
+    key: component_6
+    name: Pool Electricity
+    type: pool
+  component_7:
+    GUI:
+      icon: Assets\defaults\pool.png
+      position_x: 8.0
+      position_y: 18.0
+    description: ''
+    flowtype: flowtype_3
+    key: component_7
+    name: Pool Hydrogen
+    type: pool
+  component_8:
+    GUI:
+      icon: Assets\sources\Deliveries.png
+      position_x: 28.0
+      position_y: 30.0
+    description: ''
+    flowtype: flowtype_6
+    key: component_8
+    name: Source Scrap
+    type: source
+  component_9:
+    GUI:
+      icon: Assets\sources\Deliveries.png
+      position_x: 33.0
+      position_y: 30.0
+    description: ''
+    flowtype: flowtype_7
+    key: component_9
+    name: Source Carbon
+    type: source
+connections:
+  connection_0:
+    flowtype: flowtype_2
+    from: component_1
+    key: connection_0
+    name: Electricity Grid -> Unspecified pool 1
+    to: component_6
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 1
+  connection_1:
+    flowtype: flowtype_3
+    from: component_2
+    key: connection_1
+    name: Hydrogen Purchase -> Unspecified pool 2
+    to: component_7
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 1
+  connection_10:
+    flowtype: flowtype_6
+    from: component_8
+    key: connection_10
+    name: Source Scrap -> EAF
+    to: component_15
+    to_losses: false
+    type: connection
+    weight_sink: 0.001
+    weight_source: 1
+  connection_11:
+    flowtype: flowtype_7
+    from: component_9
+    key: connection_11
+    name: Source Carbon -> EAF
+    to: component_15
+    to_losses: false
+    type: connection
+    weight_sink: 0.008
+    weight_source: 1
+  connection_12:
+    flowtype: flowtype_8
+    from: component_10
+    key: connection_12
+    name: Source Lime -> EAF
+    to: component_15
+    to_losses: false
+    type: connection
+    weight_sink: 0.05
+    weight_source: 1
+  connection_13:
+    flowtype: flowtype_2
+    from: component_6
+    key: connection_13
+    name: Pool Electricity -> EAF
+    to: component_15
+    to_losses: false
+    type: connection
+    weight_sink: 0.4
+    weight_source: 1
+  connection_14:
+    flowtype: flowtype_9
+    from: component_3
+    key: connection_14
+    name: Source Iron Ore -> Natural gas DRI
+    to: component_16
+    to_losses: false
+    type: connection
+    weight_sink: 1.377
+    weight_source: 1
+  connection_15:
+    flowtype: flowtype_1
+    from: component_5
+    key: connection_15
+    name: Natural Gas Grid -> Natural gas DRI
+    to: component_16
+    to_losses: false
+    type: connection
+    weight_sink: 0.206
+    weight_source: 1
+  connection_16:
+    flowtype: flowtype_10
+    from: component_16
+    key: connection_16
+    name: Natural gas DRI -> DRI Composition
+    to: component_17
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 1.0
+  connection_17:
+    flowtype: flowtype_3
+    from: component_7
+    key: connection_17
+    name: Pool Hydrogen -> Hydrogen DRI
+    to: component_18
+    to_losses: false
+    type: connection
+    weight_sink: 0.079
+    weight_source: 1
+  connection_18:
+    flowtype: flowtype_9
+    from: component_3
+    key: connection_18
+    name: Source Iron Ore -> Hydrogen DRI
+    to: component_18
+    to_losses: false
+    type: connection
+    weight_sink: 1.377
+    weight_source: 1
+  connection_19:
+    flowtype: flowtype_10
+    from: component_18
+    key: connection_19
+    name: Hydrogen DRI -> DRI Composition
+    to: component_17
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 1.0
+  connection_2:
+    flowtype: flowtype_4
+    from: component_4
+    key: connection_2
+    name: Water Grid -> PEM
+    to: component_11
+    to_losses: false
+    type: connection
+    weight_sink: 0.1928
+    weight_source: 1
+  connection_20:
+    flowtype: flowtype_2
+    from: component_6
+    key: connection_20
+    name: Pool Electricity -> Hydrogen DRI
+    to: component_18
+    to_losses: false
+    type: connection
+    weight_sink: 0.105
+    weight_source: 1
+  connection_21:
+    flowtype: flowtype_2
+    from: component_6
+    key: connection_21
+    name: Pool Electricity -> Natural gas DRI
+    to: component_16
+    to_losses: false
+    type: connection
+    weight_sink: 0.435
+    weight_source: 1
+  connection_22:
+    flowtype: flowtype_10
+    from: component_17
+    key: connection_22
+    name: DRI Composition -> DRI Restrictions
+    to: component_19
+    to_losses: false
+    type: connection
+    weight_sink: 1.0
+    weight_source: 1
+  connection_23:
+    flowtype: flowtype_10
+    from: component_19
+    key: connection_23
+    name: DRI Restrictions -> Pool DRI
+    to: component_20
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 1.0
+  connection_24:
+    flowtype: flowtype_4
+    from: component_18
+    key: connection_24
+    name: Hydrogen DRI -> Sink Water
+    to: component_21
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 0.424
+  connection_25:
+    flowtype: flowtype_5
+    from: component_22
+    key: connection_25
+    name: Unspecified source 1 -> Pool Oxygen
+    to: component_12
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 1
+  connection_26:
+    flowtype: flowtype_11
+    from: component_15
+    key: connection_26
+    name: EAF -> Steel Demand Schedule
+    to: component_23
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 1.0
+  connection_27:
+    flowtype: flowtype_11
+    from: component_23
+    key: connection_27
+    name: Steel Demand Schedule -> Crude Steel Out
+    to: component_24
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 1
+  connection_3:
+    flowtype: flowtype_2
+    from: component_6
+    key: connection_3
+    name: Pool Electricity -> PEM
+    to: component_11
+    to_losses: false
+    type: connection
+    weight_sink: 1.0
+    weight_source: 1
+  connection_30:
+    flowtype: flowtype_10
+    from: component_20
+    key: connection_30
+    name: Pool DRI -> EAF
+    to: component_15
+    to_losses: false
+    type: connection
+    weight_sink: 1.092
+    weight_source: 1
+  connection_34:
+    flowtype: flowtype_0
+    from: component_15
+    key: connection_34
+    name: EAF -> CO2 Emissions
+    to: component_28
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 0.14
+  connection_35:
+    flowtype: flowtype_0
+    from: component_18
+    key: connection_35
+    name: Hydrogen DRI -> CO2 Emissions
+    to: component_28
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 0.001
+  connection_36:
+    flowtype: flowtype_0
+    from: component_16
+    key: connection_36
+    name: Natural gas DRI -> CO2 Emissions
+    to: component_28
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 0.579
+  connection_4:
+    flowtype: flowtype_3
+    from: component_11
+    key: connection_4
+    name: PEM -> Pool Hydrogen
+    to: component_7
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 0.02142
+  connection_5:
+    flowtype: flowtype_5
+    from: component_11
+    key: connection_5
+    name: PEM -> Pool Oxygen
+    to: component_12
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 0.17138
+  connection_6:
+    flowtype: flowtype_5
+    from: component_12
+    key: connection_6
+    name: Pool Oxygen -> Oxagen Sales
+    to: component_13
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 1
+  connection_7:
+    flowtype: flowtype_3
+    from: component_7
+    key: connection_7
+    name: Pool Hydrogen -> Hydrogen Storage
+    to: component_14
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 1
+  connection_8:
+    flowtype: flowtype_3
+    from: component_14
+    key: connection_8
+    name: Hydrogen Storage -> Pool Hydrogen
+    to: component_7
+    to_losses: false
+    type: connection
+    weight_sink: 1
+    weight_source: 1
+  connection_9:
+    flowtype: flowtype_5
+    from: component_12
+    key: connection_9
+    name: Pool Oxygen -> EAF
+    to: component_15
+    to_losses: false
+    type: connection
+    weight_sink: 0.057
+    weight_source: 1
+info:
+  currency: $
+  description: ''
+  enable_slacks: true
+  name: Partial Replacement DRI
+  timestep_length: 1
+  timesteps: 680
