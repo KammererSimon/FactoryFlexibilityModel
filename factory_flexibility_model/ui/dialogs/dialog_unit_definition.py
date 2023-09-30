@@ -99,7 +99,7 @@ def delete_unit(app):
     app.blueprint.units.pop(unit_key)
 
     # refresh unit list
-    app.update_unit_list()
+    app.app_update_unit_list()
 
     # select basic unit
     app.select_unit(app.blueprint.units["energy"])

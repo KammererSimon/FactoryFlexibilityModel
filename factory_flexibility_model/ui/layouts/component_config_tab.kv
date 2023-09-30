@@ -1,5 +1,4 @@
 #:import show_converter_ratio_dialog factory_flexibility_model.ui.dialogs.dialog_converter_ratios.show_converter_ratio_dialog
-#:import show_converter_ratio_dialog factory_flexibility_model.ui.dialogs.dialog_converter_ratios.show_converter_ratio_dialog
 #:import import_scheduler_demands factory_flexibility_model.ui.utility.import_scheduler_demands.import_scheduler_demands
 #:import show_component_definition_dialog factory_flexibility_model.ui.dialogs.dialog_component_definition.show_component_definition_dialog
 
@@ -11,7 +10,7 @@
 
         MDBoxLayout:
             size_hint_y: None
-            height: dp(70)
+            height: dp(80)
             orientation: "horizontal"
             MDBoxLayout:
                 orientation: "vertical"
@@ -45,9 +44,6 @@
             size_hint_y: None
             height: dp(50)
 
-
-
-
 <layout_component_configuration>
     MDBoxLayout:
         orientation: "vertical"
@@ -60,44 +56,3 @@
         ScrollView:
             MDList:
                 id: list_attributes
-
-<layout_converter_ratios>
-    MDBoxLayout:
-        orientation: "vertical"
-        spacing: dp(20)
-        size_hint_y: None
-        height: dp(50)
-        MDLabel:
-            text: "Input / Output Ratios"
-            font_style: "H6"
-            size_hint_y: None
-            height: dp(30)
-        OneLineIconListItem:
-            text: "Show Input/Output Ratios"
-            on_release: show_converter_ratio_dialog(app)
-            IconLeftWidget:
-                icon: "cog"
-
-<layout_scheduler_demands>
-    MDBoxLayout:
-        orientation: "vertical"
-        spacing: dp(20)
-        size_hint_y: None
-        height: dp(50)
-
-        MDLabel:
-            text: "Demand List"
-            font_style: "H6"
-            size_hint_y: None
-            height: dp(30)
-        ParameterConfigItem:
-            id: config_schedule_demands
-            text: "Demands"
-            font_style: "Subtitle1"
-            secondary_text: "Not Specified"
-            parameter: "demands"
-            value_description: "List of demands to fulfill"
-            on_release: import_scheduler_demands(app)
-            IconLeftWidgetWithoutTouch:
-                id: config_schedule_icon_demands
-                icon: "help"

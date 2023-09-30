@@ -7,23 +7,28 @@ from factory_flexibility_model.ui.dialogs.dialog_parameter_config import (
 from factory_flexibility_model.ui.layouts.component_config_tab import (
     layout_component_configuration,
     layout_component_definition,
-    layout_converter_ratios,
 )
 from factory_flexibility_model.ui.utility.import_scheduler_demands import (
     import_scheduler_demands,
 )
+from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import show_converter_ratio_dialog
 
 # define list of attributes to be considered for the different component types
 converter_parameters = {
+    "ratios": {
+        "text": "Inputs/Outputs",
+        "description": "",
+        "unit_type": ""
+    },
     "power_max": {
         "text": "Maximum Operating Point",
         "description": "Maximum Conversion Rate per Timestep",
-        "unit_type": "flowrate",
+        "unit_type": "flowrate_primary",
     },
     "power_min": {
         "text": "Minimum Operating Point",
         "description": "Minimum Conversion Rate per Timestep",
-        "unit_type": "flowrate",
+        "unit_type": "flowrate_primary",
     },
     "availabiity": {
         "text": "Availability",
@@ -48,7 +53,7 @@ converter_parameters = {
     "power_nominal": {
         "text": "Nominal Operating Point",
         "description": "Operating Point of Max Efficiency",
-        "unit_type": "flowrate",
+        "unit_type": "flowrate_primary",
     },
     "delta_eta_high": {
         "text": "Upper Efficiency Drop",
@@ -270,12 +275,6 @@ def update_config_tab(app):
     # add layout to the tab
     app.root.ids.screen_component_config_top.add_widget(layout_definition)
 
-    # add Input/output-ratio specification for converters
-    if asset_type == "converter":
-        app.root.ids.screen_component_config_bottom.add_widget(
-            layout_converter_ratios()
-        )
-
     # stop here if the component is a pool
     if asset_type == "pool":
         return
@@ -301,7 +300,8 @@ def update_config_tab(app):
         elif attribute_data["unit_type"] == "timesteps":
             unit = "hours"
         elif attribute_data["unit_type"] == "ramping":
-            unit = f"{app.selected_asset['flowtype'].unit.get_unit_flowrate()}/h"
+            flowtype = app.blueprint.components[app.selected_asset['GUI']['primary_flow']]['flowtype']
+            unit = f"{flowtype.unit.get_unit_flowrate()} {flowtype.name} /h"
         elif attribute_data["unit_type"] == "currency":
             unit = app.blueprint.info["currency"]
         elif attribute_data["unit_type"] == "leakage_time":
@@ -312,6 +312,11 @@ def update_config_tab(app):
             unit = f"kgCO2/{app.selected_asset['flowtype'].unit.get_unit_flow()}"
         elif attribute_data["unit_type"] == "capacity_charge":
             unit = f"{app.blueprint.info['currency']}/{app.selected_asset['flowtype'].unit.get_unit_flowrate()}_peak"
+        elif attribute_data["unit_type"] == "flowrate_primary":
+            flowtype = app.blueprint.components[app.selected_asset['GUI']['primary_flow']]['flowtype']
+            unit = f"{flowtype.unit.get_unit_flowrate()} {flowtype.name}"
+        else:
+            unit = ""
 
         list_icon = IconLeftWidgetWithoutTouch(id="icon", icon="help")
         list_item = ParameterConfigItem(
@@ -362,6 +367,14 @@ def update_config_tab(app):
 
         if parameter_key == "demands":
             list_item.bind(on_release=lambda x: import_scheduler_demands(app))
+        elif parameter_key == "ratios":
+            list_item.bind(on_release=lambda x: show_converter_ratio_dialog(app))
+            list_icon.icon = "cog"
+            list_item.secondary_text = "Show Conversion Ratio Definition"
+            list_icon.text_color = app.main_color.rgba
+            list_item.text_color = app.main_color.rgba
+            list_item.secondary_text_color = app.main_color.rgba
+            list_item.font_style = "H6"
         else:
             list_item.bind(
                 on_release=lambda x, item=list_item: show_parameter_config_dialog(

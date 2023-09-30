@@ -1,0 +1,103 @@
+energy_losses:
+  color: '#555555'
+  description: Built in default flowtype used to represent all kinds of energy losses
+  name: Energy Losses
+  represents_losses: true
+  unit: energy
+flowtype_0:
+  color: '#c62828'
+  description: CO2
+  name: CO2
+  represents_losses: false
+  unit: unit_1
+flowtype_1:
+  color: '#ffee58'
+  description: CH4
+  name: Natural Gas
+  represents_losses: false
+  unit: unit_1
+flowtype_10:
+  color: '#ab47bc'
+  description: Direct Reduced Iron
+  name: DRI
+  represents_losses: false
+  unit: unit_1
+flowtype_11:
+  color: '#7b1fa2'
+  description: Crude Steel
+  name: Crude Steel
+  represents_losses: false
+  unit: unit_1
+flowtype_12:
+  color: '#512da8'
+  description: Hot Bricetted Iron
+  name: HBI
+  represents_losses: false
+  unit: unit_1
+flowtype_2:
+  color: '#0d47a1'
+  description: Electricity
+  name: Electricity
+  represents_losses: false
+  unit: energy
+flowtype_3:
+  color: '#81c784'
+  description: H2
+  name: Hydrogen
+  represents_losses: false
+  unit: unit_1
+flowtype_4:
+  color: '#2196f3'
+  description: H2O
+  name: Water
+  represents_losses: false
+  unit: unit_1
+flowtype_5:
+  color: '#bbdefb'
+  description: O3
+  name: Oxygen
+  represents_losses: false
+  unit: unit_1
+flowtype_6:
+  color: '#424242'
+  description: Steel Scrap from Recycling
+  name: Scrap
+  represents_losses: false
+  unit: unit_1
+flowtype_7:
+  color: '#607d8b'
+  description: C
+  name: Carbon
+  represents_losses: false
+  unit: unit_1
+flowtype_8:
+  color: '#8d6e63'
+  description: Flowtype of Unspecified Flowtype 1
+  name: Lime
+  represents_losses: false
+  unit: unit_1
+flowtype_9:
+  color: '#e1bee7'
+  description: Fe3O2
+  name: Iron Ore Pellets
+  represents_losses: false
+  unit: unit_1
+heat:
+  color: '#996666'
+  description: Built in default flowtype used to represent all kinds of heat
+  name: Heat
+  represents_losses: false
+  unit: energy
+material_losses:
+  color: '#555555'
+  description: Built in default flowtype used to represent all kinds of material losses
+  name: Material Losses
+  represents_losses: true
+  unit: unit_1
+unknown:
+  color: '#999999'
+  description: Built in default flowtype used as a fallback option for unspecified
+    situations
+  name: Unknown Flow
+  represents_losses: false
+  unit: unit

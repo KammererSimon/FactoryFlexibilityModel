@@ -3,7 +3,6 @@ from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import (
     TextfieldIconListItem,
 )
 
-
 def save_converter_ratios(app):
     """
     This function goes through all the list items within the converter ratio definition dialog and writes the user given values for the weights from the GUI into the corresponding connections within the blueprint.
@@ -14,6 +13,9 @@ def save_converter_ratios(app):
     if not app.dialog.bilance_valid:
         app.show_info_popup("The given ratios are invalid!")
         return
+
+    # call the update primary flow routine to normalize all the ratio values in case the user changed the ratio of the primary flow manually
+    update_primary_flow(app)
 
     # iterate over all connections and write their weighting factors into the blueprint
     for input in app.dialog.content_cls.ids.list_converter_inputs_energy.children:
@@ -38,6 +40,9 @@ def save_converter_ratios(app):
         app.blueprint.connections[output.connection_key][
             "to_losses"
         ] = output.ids.list_item_checkbox.active
+
+    # save the primary input/output of the converter
+    app.selected_asset["GUI"]["primary_flow"] = app.dialog.primary_flow
 
     # close the dialog
     app.close_dialog()
@@ -199,8 +204,8 @@ def update_connection_lists(app):
 
             # create list item for the connection
             item = TextfieldIconListItem(
-                text=app.blueprint.components[connection["from"]]["name"],
-                secondary_text=connection["flowtype"].name,
+                secondary_text=app.blueprint.components[connection["from"]]["name"],
+                text=connection["flowtype"].name,
                 connection_key=connection["key"],
                 divider_color=(1, 1, 1, 1),
             )
@@ -210,16 +215,20 @@ def update_connection_lists(app):
             item.ids.list_item_textfield.text = str(connection["weight_sink"])
             # add list item to the correct  input_list
             if connection["flowtype"].unit.is_energy():
+                if connection["from"] == app.dialog.primary_flow:
+                    item.ids.list_item_primary.active = True
                 app.dialog.content_cls.ids.list_converter_inputs_energy.add_widget(item)
             elif connection["flowtype"].unit.is_mass():
+                if connection["from"] == app.dialog.primary_flow:
+                    item.ids.list_item_primary.active = True
                 app.dialog.content_cls.ids.list_converter_inputs_mass.add_widget(item)
 
         # check if the connection is an output of the selected converter:
         if connection["from"] == app.selected_asset["key"]:
             # create list item for the connection
             item = TextfieldCheckboxIconListItem(
-                text=app.blueprint.components[connection["to"]]["name"],
-                secondary_text=connection["flowtype"].name,
+                secondary_text=app.blueprint.components[connection["to"]]["name"],
+                text=connection["flowtype"].name,
                 connection_key=connection["key"],
                 divider_color=(1, 1, 1, 1),
             )
@@ -235,9 +244,13 @@ def update_connection_lists(app):
                 # check, if the current connection is meant to deduct losses
                 if connection["to_losses"]:
                     item.ids.list_item_checkbox.active = True
+                if connection["to"] == app.dialog.primary_flow:
+                    item.ids.list_item_primary.active = True
                 app.dialog.content_cls.ids.list_converter_outputs_energy.add_widget(
                     item
                 )
+
+
 
             elif connection["flowtype"].unit.is_mass():
                 # add the checkbox to the correct group
@@ -245,4 +258,49 @@ def update_connection_lists(app):
                 # check, if the current connection is meant to deduct losses
                 if connection["to_losses"]:
                     item.ids.list_item_checkbox.active = True
+                if connection["to"] == app.dialog.primary_flow:
+                    item.ids.list_item_primary.active = True
                 app.dialog.content_cls.ids.list_converter_outputs_mass.add_widget(item)
+
+def update_primary_flow(app):
+    """
+    This function is being called, whenever the user activates one of the checkboxes in the dialog and thereby decides
+    to use another flow as the primary flow for the converter. The function first gets the information on the new
+    primary flow, calculates a conversion factor to adjust all other inputs. Then it sets the ratio value of the new
+    primary input to 1 and scales all other values accordingly so that the relative ratios do not change.
+    """
+
+    # get the list_item of the new primary flow and the corresponding numeric value
+    scaling_factor = 1
+    primary_flow_item = None
+    for input in app.dialog.content_cls.ids.list_converter_inputs_energy.children:
+        if input.ids.list_item_primary.active:
+            scaling_factor = float(input.ids.list_item_textfield.text)
+            primary_flow_item = input
+            app.dialog.primary_flow = app.blueprint.connections[primary_flow_item.connection_key]["from"]
+    for input in app.dialog.content_cls.ids.list_converter_inputs_mass.children:
+        if input.ids.list_item_primary.active:
+            scaling_factor = float(input.ids.list_item_textfield.text)
+            primary_flow_item = input
+            app.dialog.primary_flow = app.blueprint.connections[primary_flow_item.connection_key]["from"]
+    for output in app.dialog.content_cls.ids.list_converter_outputs_energy.children:
+        if output.ids.list_item_primary.active:
+            scaling_factor = float(output.ids.list_item_textfield.text)
+            primary_flow_item = output
+            app.dialog.primary_flow = app.blueprint.connections[primary_flow_item.connection_key]["to"]
+    for output in app.dialog.content_cls.ids.list_converter_outputs_mass.children:
+        if output.ids.list_item_primary.active:
+            scaling_factor = float(output.ids.list_item_textfield.text)
+            primary_flow_item = output
+            app.dialog.primary_flow = app.blueprint.connections[primary_flow_item.connection_key]["to"]
+
+    # scale all ratios
+    for input in app.dialog.content_cls.ids.list_converter_inputs_energy.children:
+        input.ids.list_item_textfield.text = str(round(float(input.ids.list_item_textfield.text)/scaling_factor,5))
+    for input in app.dialog.content_cls.ids.list_converter_inputs_mass.children:
+        input.ids.list_item_textfield.text = str(round(float(input.ids.list_item_textfield.text)/scaling_factor,5))
+    for output in app.dialog.content_cls.ids.list_converter_outputs_mass.children:
+        output.ids.list_item_textfield.text = str(round(float(output.ids.list_item_textfield.text)/scaling_factor,5))
+    for input in app.dialog.content_cls.ids.list_converter_outputs_energy.children:
+        input.ids.list_item_textfield.text = str(round(float(input.ids.list_item_textfield.text)/scaling_factor,5))
+
