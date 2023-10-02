@@ -47,15 +47,12 @@
                         font_style: "H6"
 
                 BoxLayout:
-                    spacing: 20
+                    spacing: 10
                     orientation: "horizontal"
                     ScrollView:
                         size_hint_x: .45
                         MDList:
                             id: list_converter_inputs_energy
-                    Widget:
-                        size_hint: (None, None)
-                        width: dp(60)
                     ScrollView:
                         size_hint_x: .45
                         MDList:
@@ -109,9 +106,6 @@
                         size_hint_x: .45
                         MDList:
                             id: list_converter_inputs_mass
-                    Widget:
-                        size_hint: (None, None)
-                        height: dp(60)
                     ScrollView:
                         size_hint_x: .45
                         MDList:
@@ -149,7 +143,7 @@
 
 <TextfieldCheckboxIconListItem>
     BoxLayout:
-        spacing: 10
+        spacing: 5
         pos_hint: {"center_y": .5}
         size_hint_y: None
         height: self.minimum_height
@@ -165,21 +159,21 @@
             icon: "trash-can-outline"
             pos_hint: {"center_x": .5, "center_y": .5}
             size_hint_x: None
-            width: dp(30)
+            width: dp(25)
         MDCheckbox:
             id: list_item_checkbox
             size_hint_x: None
-            width: dp(30)
+            width: dp(25)
             on_active: update_bilance_calculation(app)
         MDIcon:
-            icon: "cog"
+            icon: "key-star"
             pos_hint: {"center_x": .5, "center_y": .5}
             size_hint_x: None
-            width: dp(30)
+            width: dp(25)
         MDCheckbox:
             id: list_item_primary
             size_hint_x: None
-            width: dp(30)
+            width: dp(25)
             on_active: update_primary_flow(app)
             group: "primary"
 
@@ -198,7 +192,7 @@
             helper_text_mode: "persistent"
             on_text: update_bilance_calculation(app)
         MDIcon:
-            icon: "cog"
+            icon: "key-star"
             pos_hint: {"center_x": .5, "center_y": .5}
             size_hint_x: None
             width: dp(30)

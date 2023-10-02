@@ -1,6 +1,9 @@
 from kivy.properties import StringProperty
 from kivymd.uix.list import IconLeftWidgetWithoutTouch, TwoLineIconListItem
 
+from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import (
+    show_converter_ratio_dialog,
+)
 from factory_flexibility_model.ui.dialogs.dialog_parameter_config import (
     show_parameter_config_dialog,
 )
@@ -11,15 +14,10 @@ from factory_flexibility_model.ui.layouts.component_config_tab import (
 from factory_flexibility_model.ui.utility.import_scheduler_demands import (
     import_scheduler_demands,
 )
-from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import show_converter_ratio_dialog
 
 # define list of attributes to be considered for the different component types
 converter_parameters = {
-    "ratios": {
-        "text": "Inputs/Outputs",
-        "description": "",
-        "unit_type": ""
-    },
+    "ratios": {"text": "Inputs/Outputs", "description": "", "unit_type": ""},
     "power_max": {
         "text": "Maximum Operating Point",
         "description": "Maximum Conversion Rate per Timestep",
@@ -299,9 +297,6 @@ def update_config_tab(app):
             unit = "%/Unit"
         elif attribute_data["unit_type"] == "timesteps":
             unit = "hours"
-        elif attribute_data["unit_type"] == "ramping":
-            flowtype = app.blueprint.components[app.selected_asset['GUI']['primary_flow']]['flowtype']
-            unit = f"{flowtype.unit.get_unit_flowrate()} {flowtype.name} /h"
         elif attribute_data["unit_type"] == "currency":
             unit = app.blueprint.info["currency"]
         elif attribute_data["unit_type"] == "leakage_time":
@@ -313,8 +308,27 @@ def update_config_tab(app):
         elif attribute_data["unit_type"] == "capacity_charge":
             unit = f"{app.blueprint.info['currency']}/{app.selected_asset['flowtype'].unit.get_unit_flowrate()}_peak"
         elif attribute_data["unit_type"] == "flowrate_primary":
-            flowtype = app.blueprint.components[app.selected_asset['GUI']['primary_flow']]['flowtype']
-            unit = f"{flowtype.unit.get_unit_flowrate()} {flowtype.name}"
+            if (
+                "primary_flow" in app.selected_asset["GUI"].keys()
+                and app.selected_asset["GUI"]["primary_flow"] is not None
+            ):
+                flowtype = app.blueprint.components[
+                    app.selected_asset["GUI"]["primary_flow"]
+                ]["flowtype"]
+                unit = f"{flowtype.unit.get_unit_flowrate()} {flowtype.name}"
+            else:
+                unit = ""
+        elif attribute_data["unit_type"] == "ramping":
+            if (
+                "primary_flow" in app.selected_asset["GUI"].keys()
+                and app.selected_asset["GUI"]["primary_flow"] is not None
+            ):
+                flowtype = app.blueprint.components[
+                    app.selected_asset["GUI"]["primary_flow"]
+                ]["flowtype"]
+                unit = f"{flowtype.unit.get_unit_flowrate()} {flowtype.name} /h"
+            else:
+                unit = ""
         else:
             unit = ""
 
@@ -354,7 +368,9 @@ def update_config_tab(app):
             elif len(parameters[parameter_key]) == 1:
                 value = parameters[parameter_key][next(iter(parameters[parameter_key]))]
                 if value["type"] == "static":
-                    list_item.secondary_text = f"{value['value']} {unit}"
+                    list_item.secondary_text = (
+                        f"{round(float(value['value']),2)} {unit}"
+                    )
                     list_icon.icon = "ray-start-arrow"
                 else:
                     list_item.secondary_text = f"Timeseries: {value['value']}"

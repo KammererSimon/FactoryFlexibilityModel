@@ -3,7 +3,7 @@ from kivy.metrics import dp
 from kivy.properties import BooleanProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.list import TwoLineAvatarIconListItem
+from kivymd.uix.list import TwoLineAvatarListItem
 
 
 # CLASSES
@@ -12,11 +12,11 @@ class dialog_converter_ratios(BoxLayout):
     primary_flow = StringProperty()
 
 
-class TextfieldIconListItem(TwoLineAvatarIconListItem):
+class TextfieldIconListItem(TwoLineAvatarListItem):
     connection_key = StringProperty()
 
 
-class TextfieldCheckboxIconListItem(TwoLineAvatarIconListItem):
+class TextfieldCheckboxIconListItem(TwoLineAvatarListItem):
     connection_key = StringProperty()
 
 
@@ -34,7 +34,7 @@ def show_converter_ratio_dialog(app):
     """
 
     app.dialog = MDDialog(
-        title=f"{app.selected_asset['name']}: Input/Output Ratios",
+        title=f"Input/Output Ratios at {app.selected_asset['name']}",
         type="custom",
         content_cls=dialog_converter_ratios(),
         auto_dismiss=False,
@@ -47,6 +47,7 @@ def show_converter_ratio_dialog(app):
     update_connection_lists(app)
     update_bilance_calculation(app)
     app.dialog.open()
+
 
 def select_ratio_type(app, segmented_control, segmented_item):
     """
