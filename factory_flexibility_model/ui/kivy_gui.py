@@ -1,7 +1,6 @@
 import os
 from collections import defaultdict
 
-import pandas as pd
 from kivy.core.window import Window
 from kivy.graphics import Ellipse, Line, Triangle
 from kivy.lang import Builder
@@ -424,6 +423,9 @@ class factory_GUIApp(MDApp):
             "flowtype": self.blueprint.flowtypes["unknown"],
         }
 
+        if component_type == "converter":
+            self.blueprint.components[component_key]["GUI"]["primary_flow"] = None
+
         # create a temporary widget on the main canvas to store the position until self.save_component_positions()
         component_framelabel = DragLabel(id=component_key)
         component_framelabel.pos = instance.pos
@@ -631,10 +633,8 @@ class factory_GUIApp(MDApp):
             "display_scaling_factor": 0.6,
             "session_path": None,
             "parameters": {},
+            "timeseries": {},
         }
-        self.timeseries = (
-            pd.DataFrame()
-        )  # List of imported timeseries within the session
 
         # Style Config for GUI
         self.main_color = color.color("#1D4276")
@@ -1888,6 +1888,10 @@ class factory_GUIApp(MDApp):
             "storage": {
                 "id": "dummy_storage",
                 "source": "Assets\\defaults\\storage.png",
+            },
+            "triggerdemand": {
+                "id": "triggerdemand",
+                "source": "Assets\\defaults\\triggerdemand.png",
             },
             "converter": {
                 "id": "dummy_converter",
