@@ -1802,7 +1802,7 @@ def create_dash(simulation):
                         mode="lines",
                         stackgroup="one",
                         line_shape=interpolation[linestyle],
-                        name=f" Inflow from {component.inputs[i].source.key}",
+                        name=f" Inflow from {component.inputs[i].source.name}",
                         line={"color": c[i]},
                     )
                 )
