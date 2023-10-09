@@ -2,21 +2,18 @@
 
 
 import csv
-import logging
 
 # IMPORTS
 import os
 from tkinter import filedialog
 from tkinter.messagebox import askyesno
 
-import pandas as pd
 import yaml
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.snackbar import Snackbar
 
 import factory_flexibility_model.factory.Blueprint as bp
-import factory_flexibility_model.io.session as session
 from factory_flexibility_model.ui.dialogs.dialog_new_session import (
     show_new_session_dialog,
 )
@@ -66,6 +63,37 @@ def initiate_new_session(app):
         show_new_session_dialog(app)
 
 
+def create_session_folder(root_folder, session_name: str = "New Session"):
+    """
+    This function initializes a session folder with all required files and subfolders
+    :param root_folder: [str] User given path where the new session folder shall be created
+    :session_name: [str] Name for the new session == Name of the subfolder to be created
+    """
+
+    # Create path to the new session folder
+    subfolder_path = os.path.join(root_folder, session_name)
+    if not os.path.exists(subfolder_path):
+        os.makedirs(subfolder_path)
+
+    # create list of files to be initialized
+    files = [
+        "parameters.txt",
+        "flowtypes.txt",
+        "units.txt",
+        "Layout.factory",
+    ]
+
+    # create empty files
+    for file in files:
+        with open(os.path.join(subfolder_path, file), "w") as f:
+            pass
+
+    # create a subfolder for simulations
+    simulations_path = os.path.join(subfolder_path, "simulations")
+    if not os.path.exists(simulations_path):
+        os.makedirs(simulations_path)
+
+
 def create_new_session(app):
     """
     This function creates a new session. It reads out all the user inputs from the currently opened dialog_new_session.
@@ -85,7 +113,7 @@ def create_new_session(app):
     app.dialog.dismiss()
 
     # create the new session directory
-    session.create_session_folder(path, session_name=session_name)
+    create_session_folder(path, session_name=session_name)
     app.session_data["session_path"] = rf"{path}\{session_name}"
 
     # create an empty blueprint and add the given information
@@ -191,12 +219,12 @@ def save_session(app):
         yaml.dump(entries_demands, file)
 
     # SAVE TIMESERIES DATABASE
-    timeseries_df = pd.DataFrame(app.session_data["timeseries"])
-    timeseries_df.to_excel(
-        f"{app.session_data['session_path']}\\timeseries_data.xlsx",
-        index=False,
-        engine="openpyxl",
-    )
+    # timeseries_df = pd.DataFrame(app.session_data["timeseries"])
+    # timeseries_df.to_excel(
+    #    f"{app.session_data['session_path']}\\timeseries_data.xlsx",
+    #    index=False,
+    #    engine="openpyxl",
+    # )
 
     # There are no more unsaved changes now...
     app.unsaved_changes_on_session = False
@@ -278,22 +306,8 @@ def load_session(app):
         ).open()
         return
 
-    # IMPORT TIMESERIES DATABASE
-    try:
-        timeseries_new = pd.read_excel(
-            f"{app.session_data['session_path']}\\timeseries_data.xlsx"
-        )
-        logging.info("timeseries_data.xlsx import successfull")
-    except:
-        Snackbar(
-            text=f"The given timeseries_data.xlsx file is invalid, has a wrong format or is corrupted! "
-            f"({app.session_data['session_path']}\\timeseries_data.xlsx)"
-        ).open()
-        return
-
     # Did all imports work till here? -> Overwrite internal attributes
     app.blueprint = blueprint_new
-    app.session_data["timeseries"] = timeseries_new
 
     # There are no more unsaved changes now...
     app.unsaved_changes_on_session = False
