@@ -20,12 +20,16 @@ def import_timeseries_xlsx(app):
 
         for timeseries_key, timeseries_values in imported_timeseries.items():
             # make sure, that the key is unique
-            if timeseries_key in app.timeseries.keys():
+            if timeseries_key in app.session_data["timeseries"].keys():
                 index = 1
-                while f"{timeseries_key}_{index}" in app.timeseries.keys():
+                while (
+                    f"{timeseries_key}_{index}" in app.session_data["timeseries"].keys()
+                ):
                     index += 1
                 timeseries_key = f"{timeseries_key}_{index}"
-            app.timeseries[timeseries_key] = timeseries_values
+            app.session_data["timeseries"][timeseries_key] = timeseries_values.dropna()
 
         # inform the user
-        Snackbar(text=f"{len(app.timeseries.keys())} new timeseries imported").open()
+        Snackbar(
+            text=f"{len(app.session_data['timeseries'].keys())} new timeseries imported"
+        ).open()
