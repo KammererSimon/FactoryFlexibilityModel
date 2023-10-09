@@ -76,11 +76,8 @@ def create_new_session(app):
     """
     # get requested name, description and directory
     session_name = app.dialog.content_cls.ids.textfield_new_session_name.text
-    session_description = (
-        app.dialog.content_cls.ids.textfield_new_session_description.text
-    )
     try:
-        path = app.dialog.content_cls.ids.filechooser_new_session.selection[0]
+        path = app.dialog.content_cls.ids.label_session_folder.text
     except:
         path = rf"{os.getcwd()}\sessions"
 
@@ -94,10 +91,12 @@ def create_new_session(app):
     # create an empty blueprint and add the given information
     app.blueprint = bp.Blueprint()
     app.blueprint.info["name"] = session_name
-    app.blueprint.info["description"] = session_description
 
     # initialize units and flowtypes
     app.initialize_units_and_flowtypes()
+
+    # reset the session timeseries list
+    app.session_data["timeseries"] = {}
 
     # set the selected asset to none
     app.selected_asset = None
@@ -162,7 +161,7 @@ def save_session(app):
                 elif variation["type"] == "timeseries":
                     row = [key_component, key_parameter]
                     row.extend(
-                        app.timeseries[variation["value"]][
+                        app.session_data["timeseries"][variation["value"]][
                             1 : app.blueprint.info["timesteps"] + 1
                         ].tolist()
                     )
@@ -192,7 +191,8 @@ def save_session(app):
         yaml.dump(entries_demands, file)
 
     # SAVE TIMESERIES DATABASE
-    app.timeseries.to_excel(
+    timeseries_df = pd.DataFrame(app.session_data["timeseries"])
+    timeseries_df.to_excel(
         f"{app.session_data['session_path']}\\timeseries_data.xlsx",
         index=False,
         engine="openpyxl",
@@ -278,67 +278,6 @@ def load_session(app):
         ).open()
         return
 
-    # IMPORT parameter and timeseries configurations
-
-    # # initialize a counter that ensures, that every parameter within the factory gets a unique key assigned
-    # value_key = 0
-    #
-    # # read in parameters.txt
-    # try:
-    #     # open the given file
-    #     with open(f"{app.session_data['session_path']}\\parameters.txt") as file:
-    #         parameters_new = {}
-    #         for component_key in blueprint_new.components.keys():
-    #             parameters_new[component_key] = {}
-    #
-    #         # iterate over all lines in the file
-    #         for line in file:
-    #             # split line into key and value
-    #             key, value = line.strip().split("\t")
-    #             # split key into component and parameter
-    #             [component_key, parameter_key] = key.split("/")
-    #             # make sure that the parameter's dict has an entry for the component and parameter
-    #             if parameter_key not in parameters_new[component_key].keys():
-    #                 parameters_new[component_key][parameter_key] = {}
-    #             # add entry to parameters-dict
-    #             parameters_new[component_key][parameter_key][value_key] = {"type": "static", "value": float(value.replace(",", "."))}
-    #             # increment value_key to prevent double usage of keys
-    #             value_key += 1
-    #     logging.info("parameters.txt import successfull")
-    # except:
-    #     Snackbar(
-    #         text=f"The given parameters.txt-config file is invalid, has a wrong format or is corrupted! "
-    #         f"({app.session_data['session_path']}\\parameters.txt)"
-    #     ).open()
-    #     return
-
-    # IMPORT timeseries.txt
-    # try:
-    #     # open the given file
-    #     with open(f"{app.session_data['session_path']}\\timeseries.txt") as file:
-    #         # iterate over all lines in the file
-    #         for line in file:
-    #             # parse current line
-    #             items = line.split("\t")
-    #
-    #             # first item of the line is the key
-    #             key = items[0].split("/")
-    #
-    #             # remaining line is the value array
-    #             values = [float(x.replace(",", ".")) for x in items[1:]]
-    #
-    #             # add a component entry in the parameters dict if this is the first setting for a component
-    #             if not key[0] in timeseries_new:
-    #                 timeseries_new[key[0]] = {}
-    #             # add entry to parameters-dict
-    #             timeseries_new[key[0]][key[1]] = values
-    # except:
-    #     Snackbar(
-    #         text=f"The given timeseries_data.xlsx file is invalid, has a wrong format or is corrupted! "
-    #         f"({app.session_data['session_path']}\\timeseries_data.xlsx)"
-    #     ).open()
-    #     return
-
     # IMPORT TIMESERIES DATABASE
     try:
         timeseries_new = pd.read_excel(
@@ -354,7 +293,7 @@ def load_session(app):
 
     # Did all imports work till here? -> Overwrite internal attributes
     app.blueprint = blueprint_new
-    app.timeseries = timeseries_new
+    app.session_data["timeseries"] = timeseries_new
 
     # There are no more unsaved changes now...
     app.unsaved_changes_on_session = False
