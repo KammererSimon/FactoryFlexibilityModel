@@ -171,14 +171,14 @@ def update_timeseries_list(app):
     """
     This function updates the list showing all the currently available timeseries within the session.
     First the existing list in the gui is being cleared, then it is iterated over the
-    list app.timeseries and all existing timeseries are added to the list
+    list app.session_data["timeseries"] and all existing timeseries are added to the list
     """
 
     # if app.dialog is not None:
     # clear existing list
     app.dialog.content_cls.ids.list_timeseries.clear_widgets()
     # iterate over all imported timeseries
-    for key in app.timeseries:
+    for key in app.session_data["timeseries"]:
 
         # apply filter
         search_text = app.dialog.content_cls.ids.textfield_search.text
@@ -195,7 +195,7 @@ def update_timeseries_list(app):
                 ),
             ),
             text=key,
-            secondary_text=app.timeseries[key][0],
+            secondary_text=app.session_data["timeseries"][key][0],
             on_touch_down=lambda instance, touch: select_timeseries_list_item(
                 app, instance, touch
             ),
@@ -224,7 +224,7 @@ def select_timeseries_list_item(app, list_item, touch):
 
     # write the values of the current timeseries into dialog.timeseries
     app.dialog.timeseries = np.array(
-        app.timeseries[app.dialog.selected_timeseries][
+        app.session_data["timeseries"][app.dialog.selected_timeseries][
             1 : app.blueprint.info["timesteps"] + 1
         ]
     )
@@ -271,7 +271,10 @@ def update_timeseries_preview(app):
     graph.ylabel = app.dialog.unit
 
     # set scaling of X-Axes
-    graph.xmax = app.blueprint.info["timesteps"]
+    if app.dialog.timeseries.size < app.blueprint.info["timesteps"]:
+        graph.xmax = app.dialog.timeseries.size
+    else:
+        graph.xmax = app.blueprint.info["timesteps"]
     graph.xmin = 0
     graph.x_ticks_major = 24
 
@@ -296,10 +299,10 @@ def update_timeseries_preview(app):
 
 def delete_timeseries(app, timeseries_key):
     """
-    This function deletes the timeseries referenced by timeseries_key from app.timeseries
-    :param timeseries_key: [str] key to one of the items of app.timeseries
+    This function deletes the timeseries referenced by timeseries_key from app.session_data["timeseries"]
+    :param timeseries_key: [str] key to one of the items of app.session_data["timeseries"]
     """
-    del app.timeseries[timeseries_key]
+    del app.session_data["timeseries"][timeseries_key]
     update_timeseries_list(app)
 
 
