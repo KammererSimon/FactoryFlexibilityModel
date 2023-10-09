@@ -221,6 +221,23 @@ thermalsystem_parameters = {
         "unit_type": "float",
     },
 }
+triggerdemand_parameters = {
+    "load_profile_energy": {
+        "text": "Energy Profile",
+        "description": "Energy throughput timeseries",
+        "unit_type": "float",
+    },
+    "load_profile_mass": {
+        "text": "Mass Profile",
+        "description": "Mass throughput timeseries",
+        "unit_type": "float",
+    },
+    "max_parallel": {
+        "text": "Max Parallel Executions",
+        "description": "Max number of parallel executions",
+        "unit_type": "integer",
+    },
+}
 
 component_parameter_list = {
     "converter": converter_parameters,
@@ -230,6 +247,7 @@ component_parameter_list = {
     "source": source_parameters,
     "storage": storage_parameters,
     "thermalsystem": thermalsystem_parameters,
+    "triggerdemand": triggerdemand_parameters,
 }
 
 # CLASSES
