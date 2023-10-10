@@ -1,5 +1,6 @@
 from tkinter import filedialog
 
+import numpy as np
 import pandas as pd
 from kivymd.uix.snackbar import Snackbar
 
@@ -27,8 +28,11 @@ def import_timeseries_xlsx(app):
                 ):
                     index += 1
                 timeseries_key = f"{timeseries_key}_{index}"
-            app.session_data["timeseries"][timeseries_key] = timeseries_values.dropna()
-
+            app.session_data["timeseries"][timeseries_key] = {
+                "description": timeseries_values[0],
+                "type": timeseries_values[1],
+                "values": np.array(timeseries_values[2:].dropna()).tolist(),
+            }
         # inform the user
         Snackbar(
             text=f"{len(app.session_data['timeseries'].keys())} new timeseries imported"

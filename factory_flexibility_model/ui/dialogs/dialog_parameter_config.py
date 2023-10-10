@@ -178,7 +178,7 @@ def update_timeseries_list(app):
     # clear existing list
     app.dialog.content_cls.ids.list_timeseries.clear_widgets()
     # iterate over all imported timeseries
-    for key in app.session_data["timeseries"]:
+    for key in app.session_data["timeseries"].keys():
 
         # apply filter
         search_text = app.dialog.content_cls.ids.textfield_search.text
@@ -195,7 +195,7 @@ def update_timeseries_list(app):
                 ),
             ),
             text=key,
-            secondary_text=app.session_data["timeseries"][key][0],
+            secondary_text=app.session_data["timeseries"][key]["description"],
             on_touch_down=lambda instance, touch: select_timeseries_list_item(
                 app, instance, touch
             ),
@@ -224,9 +224,7 @@ def select_timeseries_list_item(app, list_item, touch):
 
     # write the values of the current timeseries into dialog.timeseries
     app.dialog.timeseries = np.array(
-        app.session_data["timeseries"][app.dialog.selected_timeseries][
-            1 : app.blueprint.info["timesteps"] + 1
-        ]
+        app.session_data["timeseries"][app.dialog.selected_timeseries]["values"]
     )
 
     app.dialog.content_cls.ids.button_add_timeseries.disabled = False

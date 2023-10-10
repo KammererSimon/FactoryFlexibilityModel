@@ -125,6 +125,7 @@ def create_new_session(app):
 
     # reset the session timeseries list
     app.session_data["timeseries"] = {}
+    app.session_data["show_component_config_dialog_on_creation"] = False
 
     # set the selected asset to none
     app.selected_asset = None
@@ -188,11 +189,17 @@ def save_session(app):
                 # handle timeseries
                 elif variation["type"] == "timeseries":
                     row = [key_component, key_parameter]
-                    row.extend(
-                        app.session_data["timeseries"][variation["value"]][
-                            1 : app.blueprint.info["timesteps"] + 1
-                        ].tolist()
-                    )
+                    values = app.session_data["timeseries"][variation["value"]][
+                        "values"
+                    ]
+                    if (
+                        app.session_data["timeseries"][variation["value"]]["type"]
+                        == "full"
+                        or len(values) >= app.blueprint.info["timesteps"]
+                    ):
+                        row.extend(values[0 : app.blueprint.info["timesteps"]])
+                    else:
+                        row.extend(values)
                     entries_timeseries.append(row)
 
                 # handle demands
@@ -217,14 +224,6 @@ def save_session(app):
         "w",
     ) as file:
         yaml.dump(entries_demands, file)
-
-    # SAVE TIMESERIES DATABASE
-    # timeseries_df = pd.DataFrame(app.session_data["timeseries"])
-    # timeseries_df.to_excel(
-    #    f"{app.session_data['session_path']}\\timeseries_data.xlsx",
-    #    index=False,
-    #    engine="openpyxl",
-    # )
 
     # There are no more unsaved changes now...
     app.unsaved_changes_on_session = False
@@ -255,7 +254,7 @@ def save_session_as(app):
     app.dialog.dismiss()
 
     # create the new session directory
-    session.create_session_folder(path, session_name=session_name)
+    create_session_folder(path, session_name=session_name)
 
     # update the session info
     app.session_data["session_path"] = rf"{path}\{session_name}"

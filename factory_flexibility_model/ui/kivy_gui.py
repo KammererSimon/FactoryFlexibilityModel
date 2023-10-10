@@ -447,7 +447,8 @@ class factory_GUIApp(MDApp):
         self.change_selected_asset(component_key)
 
         # ask the user for a name, description and flowtype
-        show_component_definition_dialog(self)
+        if self.session_data["show_component_config_dialog_on_creation"]:
+            show_component_definition_dialog(self)
 
         # set unsaved changes to true
         self.unsaved_changes_on_session = True
@@ -631,6 +632,7 @@ class factory_GUIApp(MDApp):
         self.selected_asset = None  # the asset that the user has currently selected
         self.session_data = {
             "display_scaling_factor": 0.6,
+            "show_component_config_dialog_on_creation": False,
             "session_path": None,
             "parameters": {},
             "timeseries": {},

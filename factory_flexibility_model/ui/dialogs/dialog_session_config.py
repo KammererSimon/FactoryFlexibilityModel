@@ -55,6 +55,9 @@ def show_session_config_dialog(app):
     app.dialog.content_cls.ids.checkbox_slack.active = app.blueprint.info[
         "enable_slacks"
     ]
+    app.dialog.content_cls.ids.checkbox_config.active = app.session_data[
+        "show_component_config_dialog_on_creation"
+    ]
 
     # bind callbacks to buttons
     btn_true.bind(on_release=lambda instance: save_session_config(app))
@@ -83,6 +86,12 @@ def save_session_config(app):
             "enable_slacks": app.dialog.content_cls.ids.checkbox_slack.active,
             "currency": currency,
         }
+
+        # save the show component config dialog option
+        app.session_data[
+            "show_component_config_dialog_on_creation"
+        ] = app.dialog.content_cls.ids.checkbox_config.active
+
         # write the new name into the top app bar
         app.root.ids.label_session_name.text = app.blueprint.info["name"]
         # close the dialog
