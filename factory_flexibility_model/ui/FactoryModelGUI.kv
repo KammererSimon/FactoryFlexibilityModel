@@ -1,6 +1,7 @@
 #:import show_unit_config_dialog factory_flexibility_model.ui.dialogs.dialog_unit_definition.show_unit_config_dialog
 #:import show_parameter_config_dialog factory_flexibility_model.ui.dialogs.dialog_parameter_config.show_parameter_config_dialog
 #:import show_session_config_dialog factory_flexibility_model.ui.dialogs.dialog_session_config.show_session_config_dialog
+#:import update_scenario_list factory_flexibility_model.ui.utility.scenario_handling.update_scenario_list
 
 Screen:
     MDNavigationLayout:
@@ -151,7 +152,21 @@ Screen:
                             icon: "database-import"
 
                             ScreenManager:
-                                id: simulation_screens
+                                Screen:
+                                    BoxLayout:
+                                        orientation: "vertical"
+                                        padding: 20
+                                        spacing: 20
+                                        MDLabel:
+                                            text: "Scenario Variations"
+                                            size_hint_y: None
+                                            height: dp(30)
+                                            font_style: 'H5'
+                                        BoxLayout:
+                                            id: simulation_screens
+                                        MDRaisedButton:
+                                            text: "Refresh"
+                                            on_release: update_scenario_list(app)
 
 ## COMPONENT CREATION MENU ######################################################################################################
                 MDNavigationDrawer:
