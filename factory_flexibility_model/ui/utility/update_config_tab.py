@@ -84,6 +84,11 @@ schedule_parameters = {
     },
 }
 sink_parameters = {
+    "cost": {
+        "text": "Cost",
+        "description": "Cost per Unit of Utilization",
+        "unit_type": "currency",
+    },
     "power_max": {
         "text": "Maximum Input",
         "description": "Maximum Input Flowrate",
@@ -99,10 +104,10 @@ sink_parameters = {
         "description": "Endogenous given Demand",
         "unit_type": "flowrate",
     },
-    "cost": {
-        "text": "Cost",
-        "description": "Cost per Unit of Utilization",
-        "unit_type": "currency",
+    "max_total_input": {
+        "text": "Maximum Cumulative Input",
+        "description": "Maximum cumulative input over all timesteps",
+        "unit_type": "flow",
     },
     "revenue": {
         "text": "Revenue",
@@ -116,7 +121,7 @@ sink_parameters = {
     },
     "co2_refund_per_unit": {
         "text": "Emissions Saved",
-        "description": "Saved Emissions]",
+        "description": "Avoided Emissions",
         "unit_type": "emissions",
     },
 }

@@ -440,6 +440,16 @@ class Simulation:
             f"        - Constraint:   E_{component.key} == sum of incoming flows"
         )
 
+        # is the total cumulative input of the sink limited? If yes: add sum constraint
+        if component.max_total_input_limited:
+            self.m.addConstr(
+                gp.quicksum(self.MVars[f"E_{component.key}"])
+                <= component.max_total_input
+            )
+            logging.debug(
+                f"        - Constraint:   sum(E_{component.key}(t)) <= E_{component.name}_max_total"
+            )
+
         # is the maximum output power of the sink limited? If yes: Add power_max constraint
         if component.power_max_limited:
             self.m.addConstr(

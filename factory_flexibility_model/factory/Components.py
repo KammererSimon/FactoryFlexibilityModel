@@ -741,6 +741,10 @@ class Sink(Component):
         self.flowtype_description = ""  # A clearer description of the flowtype (e.g. "Room Heating for Main Office"), just for the visualisation
         self.is_onsite = True  # Set to False if the flowtype is leaving the factory without being consumed
         self.IS_SINK = True  # sinks can obviously act as a sink
+        self.max_total_input_limited = (
+            False  # specify if maximum cummulative input is limited
+        )
+        self.max_total_input = None  # maximum cummulative input over all timesteps
         self.power_max_limited = False  # specify if maximum output is limited
         self.power_max = []  # must be specified by set_configuration
         self.power_min_limited = False  # specify if the minimum output power is limited
@@ -881,6 +885,12 @@ class Sink(Component):
                 self.chargeable = True
                 self.cost = iv.validate(
                     parameters["cost"], "float", timesteps=timesteps
+                )
+
+            elif parameter == "max_total_input":
+                self.max_total_input_limited = True
+                self.max_total_input = iv.validate(
+                    parameters["max_total_input"], "float"
                 )
 
             elif parameter == "revenue":
