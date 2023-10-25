@@ -7,7 +7,7 @@
     spacing: "12dp"
     padding: (0, 30)
     size_hint: (None, None)
-    height: "400dp"
+    height: "200dp"
     width: "500dp"
     orientation: "vertical"
 
@@ -18,14 +18,20 @@
         max_text_length: 30
         helper_text_mode: "on_error"
         helper_text: "Enter a name for the new Project"
+
+    MDLabel:
+        text: "Session folder path"
+        font_style: "H6"
+        size_hint_y: None
+        height: self.texture_size[1]
     BoxLayout:
         orientation: "horizontal"
-        MDLabel:
-            id: label_session_folder
-        MDLabel:
-            text: "Session folder path"
+        size_hint_y: None
+        height: dp(60)
+        MDIconButton:
+            id: button_session_folder
+            icon: "folder-outline"
             size_hint_y: None
-            height: self.texture_size[1]
-    MDIconButton:
-        id: button_session_folder
-        icon: "folder-outline"
+        MDTextField:
+            id: label_session_folder
+            disabled: True

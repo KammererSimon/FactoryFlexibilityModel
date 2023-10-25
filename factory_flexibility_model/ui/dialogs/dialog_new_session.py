@@ -54,6 +54,9 @@ def show_new_session_dialog(app):
     app.dialog.content_cls.ids.button_session_folder.bind(
         on_release=lambda instance: get_session_path(app)
     )
+    app.dialog.content_cls.ids.label_session_folder.bind(
+        on_release=lambda instance: get_session_path(app)
+    )
     app.dialog.open()
 
 
