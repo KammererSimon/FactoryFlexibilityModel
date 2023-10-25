@@ -636,6 +636,7 @@ class factory_GUIApp(MDApp):
             "session_path": None,
             "parameters": {},
             "timeseries": {},
+            "simulations": {},
         }
 
         # Style Config for GUI
