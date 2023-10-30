@@ -29,6 +29,13 @@ def show_dialog_save_session_as(app):
         if app.dialog is not None:
             app.dialog.dismiss()
 
+    # make sure that there is a session to save
+    if app.session_data["session_path"] is None:
+        app.show_info_popup(
+            "Cannot save before a session has been created or imported!"
+        )
+        return
+
     # create dialog
     btn_false = MDFlatButton(text="Cancel")
     btn_true = MDRaisedButton(text="Create copy of the session")

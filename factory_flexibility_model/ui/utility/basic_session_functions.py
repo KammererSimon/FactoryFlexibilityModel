@@ -157,6 +157,13 @@ def save_session(app):
     # make sure that there is no open dialog
     app.close_dialog()
 
+    # make sure that there is a session to save
+    if app.session_data["session_path"] is None:
+        app.show_info_popup(
+            "Cannot save before a session has been created or imported!"
+        )
+        return
+
     # SAVE SESSION DATA
     with open(
         f"{app.session_data['session_path']}\\{app.blueprint.info['name']}.ffm",
@@ -240,6 +247,7 @@ def save_session_as(app):
     for the session. Those values are read out of the dialog, the dialog is closed, the info gets written into the
     sessions blueprint. Then the regular save_session() method is being called
     """
+
     # get requested name, description and directory
     session_name = app.dialog.content_cls.ids.textfield_new_session_name.text
     session_description = (

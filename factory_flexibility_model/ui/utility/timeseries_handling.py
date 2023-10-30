@@ -11,6 +11,13 @@ def import_timeseries_xlsx(app):
     If keys are redundant, the timeseries from the file are enumerated to make them unique.
     """
 
+    # make sure that there is a session initialized
+    if app.session_data["session_path"] is None:
+        app.show_info_popup(
+            "Cannot import timeseries before a session has been created or imported!"
+        )
+        return
+
     # ask for filename
     filetype = [("xlsx", "*.xlsx")]
     filepath = filedialog.askopenfilename(defaultextension=filetype, filetypes=filetype)
