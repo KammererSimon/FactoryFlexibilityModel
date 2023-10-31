@@ -9,58 +9,32 @@ from kivymd.uix.list import IconLeftWidget, IconRightWidget, TwoLineAvatarIconLi
 
 
 # CLASSES
-class dialog_parameter_config(BoxLayout):
+class DialogParameterConfig(BoxLayout):
     parameter = None
     unit = StringProperty()
     selected_timeseries = StringProperty()
     timeseries = ObjectProperty()
 
 
+class PopupAddStaticValue(BoxLayout):
+    pass
+
+
+class PopupAddTimeseries(BoxLayout):
+    pass
+
+
 # FUNCTIONS
-def show_parameter_config_dialog(app, caller):
-    """
-    This function opens the dialog for configuring values of component parameters.
-    """
-
-    app.dialog = MDDialog(
-        title=f"{app.selected_asset['name']}: {caller.text}",
-        type="custom",
-        content_cls=dialog_parameter_config(),
-    )
-    app.dialog.size_hint = (None, None)
-    app.dialog.width = dp(1500)
-    app.dialog.height = dp(900)
-
-    # get the parameter to be configured with the opened dialog
-    app.dialog.parameter = caller.parameter
-
-    app.dialog.content_cls.ids.textfield_value.hint_text = (
-        f"{caller.value_description} [{caller.unit}]"
-    )
-
-    app.dialog.unit = caller.unit
-    update_timeseries_list(app)
-    update_parameter_value_list(app)
-    app.dialog.open()
-
-
-def select_parameter_type(app, segmented_control, segmented_item):
-    """
-    This function is being called when the user uses the segmentedcontrol to switch between static values and timeseries data.
-    It switches the screen displayed in the left area of the dialog according to the users selection.
-    :param app: pointer to the main GUI-object
-    :param segmented_control: segmented control object -> unused
-    :param segmented_item: item that the user clicked on -> is used to determine which screen to show
-    """
-    app.dialog.content_cls.ids.parameter_type_screens.current = segmented_item.text
-
-
 def add_static_parameter_value(app):
     """
     this function takes the value currently given by the user via the textfield_value and appends it to the parameter list of the component within app.session_data["parameters"]
     """
+
     # get the value to store
-    value = app.dialog.content_cls.ids.textfield_value.text
+    value = app.popup.content_cls.ids.textfield_value.text
+
+    # close popup
+    app.popup.dismiss()
 
     # get the asset and parameter keys
     asset_key = app.selected_asset["key"]
@@ -89,6 +63,9 @@ def add_timeseries_parameter_value(app):
     asset_key = app.selected_asset["key"]
     parameter_key = app.dialog.parameter
 
+    # close popup
+    app.popup.dismiss()
+
     # create a key to adress the variation
     variation = 0
     while variation in app.session_data["parameters"][asset_key][parameter_key].keys():
@@ -97,10 +74,79 @@ def add_timeseries_parameter_value(app):
     # store the value under the determined key
     app.session_data["parameters"][asset_key][parameter_key][variation] = {
         "type": "timeseries",
-        "value": app.dialog.selected_timeseries,
+        "value": app.popup.selected_timeseries,
     }
 
     update_parameter_value_list(app)
+
+
+def show_popup_add_static_value(app):
+    """
+    This function creates a new dialog within app.popup. The Dialog Layout is taken from ui.dialogs.dialog_add_static_value.kv.
+    It contains a single input field  for the user to give a float input
+    """
+
+    # create popup
+
+    app.popup = MDDialog(
+        title="Static Value Definition",
+        type="custom",
+        content_cls=PopupAddStaticValue(),
+    )
+
+    app.popup.height = dp(200)
+    app.popup.width = dp(500)
+    app.popup.content_cls.ids.textfield_value.hint_text = (
+        app.dialog.parameter_description
+    )
+    app.popup.open()
+
+
+def show_popup_add_timeseries(app):
+    """
+    This function creates a new popup within app.dialog. The Popup Layout is taken from ui.dialogs.dialog_parameter_config.kv.
+    It contains a list of imported timeseries and a preview graph for the currently selected timeseries
+    """
+
+    # create popup
+    app.popup = MDDialog(
+        title="Timeseries Selection",
+        type="custom",
+        content_cls=PopupAddTimeseries(),
+    )
+
+    app.popup.height = dp(800)
+    app.popup.width = dp(1000)
+
+    # initialize timeseries list
+    update_timeseries_list(app)
+
+    # open popup
+    app.popup.open()
+
+
+def show_parameter_config_dialog(app, caller):
+    """
+    This function opens the dialog for configuring values of component parameters.
+    """
+
+    app.dialog = MDDialog(
+        title=f"{app.selected_asset['name']}: {caller.text}",
+        type="custom",
+        content_cls=DialogParameterConfig(),
+    )
+    app.dialog.size_hint = (None, None)
+    app.dialog.width = dp(650)
+    app.dialog.height = dp(900)
+
+    app.dialog.parameter_description = f"{caller.value_description} [{caller.unit}]"
+
+    # get the parameter to be configured with the opened dialog
+    app.dialog.parameter = caller.parameter
+
+    app.dialog.unit = caller.unit
+    update_parameter_value_list(app)
+    app.dialog.open()
 
 
 def delete_parameter_value(app, value_key):
@@ -176,12 +222,12 @@ def update_timeseries_list(app):
 
     # if app.dialog is not None:
     # clear existing list
-    app.dialog.content_cls.ids.list_timeseries.clear_widgets()
+    app.popup.content_cls.ids.list_timeseries.clear_widgets()
     # iterate over all imported timeseries
     for key in app.session_data["timeseries"].keys():
 
         # apply filter
-        search_text = app.dialog.content_cls.ids.textfield_search.text
+        search_text = app.popup.content_cls.ids.textfield_search.text
         if search_text.upper() not in key.upper():
             continue
 
@@ -202,7 +248,7 @@ def update_timeseries_list(app):
         )
 
         # append item to list
-        app.dialog.content_cls.ids.list_timeseries.add_widget(item)
+        app.popup.content_cls.ids.list_timeseries.add_widget(item)
 
 
 def select_timeseries_list_item(app, list_item, touch):
@@ -217,17 +263,17 @@ def select_timeseries_list_item(app, list_item, touch):
         return
 
     # write the name of selected timeseries in the GUI
-    app.dialog.content_cls.ids.label_selected_timeseries.text = list_item.text
+    app.popup.content_cls.ids.label_selected_timeseries.text = list_item.text
 
     # get data for selected timeseries and write it into self.selected_timeseries
-    app.dialog.selected_timeseries = list_item.text
+    app.popup.selected_timeseries = list_item.text
 
     # write the values of the current timeseries into dialog.timeseries
-    app.dialog.timeseries = np.array(
-        app.session_data["timeseries"][app.dialog.selected_timeseries]["values"]
+    app.popup.timeseries = np.array(
+        app.session_data["timeseries"][app.popup.selected_timeseries]["values"]
     )
 
-    app.dialog.content_cls.ids.button_add_timeseries.disabled = False
+    app.popup.content_cls.ids.button_add_timeseries.disabled = False
 
     # update preview
     update_timeseries_preview(app)
@@ -239,20 +285,20 @@ def update_timeseries_preview(app):
     """
 
     # write timeseries characteristics into labels
-    app.dialog.content_cls.ids.label_value_max.text = (
-        f"Maximum Value: {round(app.dialog.timeseries.max(),2)} {app.dialog.unit}"
+    app.popup.content_cls.ids.label_value_max.text = (
+        f"Maximum Value: {round(app.popup.timeseries.max(),2)} {app.dialog.unit}"
     )
-    app.dialog.content_cls.ids.label_value_min.text = (
-        f"Minimum Value: {round(app.dialog.timeseries.min(),2)} {app.dialog.unit}"
+    app.popup.content_cls.ids.label_value_min.text = (
+        f"Minimum Value: {round(app.popup.timeseries.min(),2)} {app.dialog.unit}"
     )
-    app.dialog.content_cls.ids.label_value_avg.text = (
-        f"Average Value: {round(app.dialog.timeseries.mean(),2)} {app.dialog.unit}"
+    app.popup.content_cls.ids.label_value_avg.text = (
+        f"Average Value: {round(app.popup.timeseries.mean(),2)} {app.dialog.unit}"
     )
-    app.dialog.content_cls.ids.label_timesteps.text = (
-        f"Length: {app.dialog.timeseries.shape[0]} Timesteps"
+    app.popup.content_cls.ids.label_timesteps.text = (
+        f"Length: {app.popup.timeseries.shape[0]} Timesteps"
     )
 
-    graph = app.dialog.content_cls.ids.timeseries_preview
+    graph = app.popup.content_cls.ids.timeseries_preview
 
     for plot in list(graph.plots):
         graph.remove_plot(plot)
@@ -261,16 +307,16 @@ def update_timeseries_preview(app):
     graph.add_plot(timeseries_plot)
 
     # update plot points for the graph
-    timeseries_plot.points = [(x, y) for x, y in enumerate(app.dialog.timeseries)]
+    timeseries_plot.points = [(x, y) for x, y in enumerate(app.popup.timeseries)]
 
-    max_value = float(np.amax(app.dialog.timeseries))
+    max_value = float(np.amax(app.popup.timeseries))
 
     graph.xlabel = "Hours"
     graph.ylabel = app.dialog.unit
 
     # set scaling of X-Axes
-    if app.dialog.timeseries.size < app.blueprint.info["timesteps"]:
-        graph.xmax = app.dialog.timeseries.size
+    if app.popup.timeseries.size < app.blueprint.info["timesteps"]:
+        graph.xmax = app.popup.timeseries.size
     else:
         graph.xmax = app.blueprint.info["timesteps"]
     graph.xmin = 0
@@ -304,36 +350,27 @@ def delete_timeseries(app, timeseries_key):
     update_timeseries_list(app)
 
 
-def validate_static_value(app, textfield):
+def validate_value(app, textfield):
     """
-    This function is called, when the user changes the value that is written in the static value input textfield.
+    This function is called, when the user changes the value that is written in the static value input textfield within the corresponding popup.
     The function checks if the value is a valid numeric input and updates the graph on the right side of the dialog accordingly
     """
+
+    app.popup.content_cls.ids.button_add_static_value.disabled = True
     # empty inputs do not have to be validated
     if textfield.text.strip() == "":
         textfield.text = ""
         textfield.error = True
-        app.dialog.content_cls.ids.button_add_value.disabled = True
+
         return
 
     # Make sure that the input is a number
     try:
         textfield.text = textfield.text.replace(",", ".").strip()
-        input = float(textfield.text)
     except:
         if not textfield.text == "-":
             textfield.text = textfield.text[:-1]
             return
 
     textfield.error = False
-    app.dialog.content_cls.ids.button_add_value.disabled = False
-    app.dialog.content_cls.ids.button_add_timeseries.disabled = True
-
-    # create a constant timeseries with the current user input value for the preview
-    app.dialog.timeseries = np.full(app.blueprint.info["timesteps"], input)
-
-    # write the name of selected timeseries in the GUI
-    app.dialog.content_cls.ids.label_selected_timeseries.text = "Static Value"
-
-    # update preview
-    update_timeseries_preview(app)
+    app.popup.content_cls.ids.button_add_static_value.disabled = False
