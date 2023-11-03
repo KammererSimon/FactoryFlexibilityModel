@@ -4,7 +4,7 @@
 # a list of scenarios and a list of sensitivities you want to analyze. The script then optimizes the factory in all
 # given scenarios and with all specified sensitivities and returns a list with all the results.
 
-import input_validations as iv
+from factory_flexibility_model.io import input_validations as iv
 
 # IMPORT ENDOGENOUS COMPONENTS
 from factory_flexibility_model.simulation import simulation as sm
