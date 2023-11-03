@@ -605,10 +605,16 @@ class factory_GUIApp(MDApp):
         Builder.load_file(
             r"factory_flexibility_model\ui\dialogs\dialog_parameter_config.kv"
         )
+        # dialog session_config
+        Builder.load_file(
+            r"factory_flexibility_model\ui\dialogs\dialog_session_config.kv"
+        )
+
         # converter ratio dialog
         Builder.load_file(
             r"factory_flexibility_model\ui\dialogs\dialog_converter_ratios.kv"
         )
+
         # unit definition dialog
         Builder.load_file(
             r"factory_flexibility_model\ui\dialogs\dialog_unit_definition.kv"

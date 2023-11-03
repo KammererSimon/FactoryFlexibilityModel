@@ -4,7 +4,7 @@
 import logging
 
 # IMPORT ENDOGENOUS COMPONENTS
-import factory_flexibility_model.input_validations as iv
+import factory_flexibility_model.io.input_validations as iv
 
 
 class Connection:

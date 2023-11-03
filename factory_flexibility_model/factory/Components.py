@@ -9,7 +9,7 @@ import numpy as np
 
 import factory_flexibility_model.factory.Connection as co
 import factory_flexibility_model.factory.Flowtype as ft
-import factory_flexibility_model.input_validations as iv
+import factory_flexibility_model.io.input_validations as iv
 
 
 # CODE START
@@ -916,15 +916,6 @@ class Sink(Component):
                         parameters["revenue"], "float", timesteps=timesteps
                     )
 
-            elif parameter == "co2_refund_per_unit":
-                # set the emission factor as timeseries:
-                self.co2_refund_per_unit = iv.validate(
-                    parameters["co2_refund_per_unit"], "float", timesteps=timesteps
-                )
-
-                # set the sink to avoid emissions:
-                self.avoids_emissions = True
-
             elif parameter == "co2_emission_per_unit":
                 # set the emission factor as timeseries:
                 self.co2_emission_per_unit = iv.validate(
@@ -933,6 +924,7 @@ class Sink(Component):
 
                 # set the sink to avoid emissions:
                 self.causes_emissions = True
+                print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
             # handle is_onsite definition
             elif parameter == "is_onsite":
@@ -1093,7 +1085,6 @@ class Source(Component):
                             f"ERROR: given timeseries Power is incompatible with existing constraint Pmin for Component {self.name}"
                         )
                         raise Exception
-                # TODO: to make this indestructable i will have to check the concerning region, if the fixed power interferes with any of the other components as well
 
             # handle given price/revenue timeseries
             elif parameter == "cost":

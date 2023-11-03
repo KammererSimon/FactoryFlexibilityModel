@@ -9,7 +9,7 @@ import logging
 import pickle
 from pathlib import Path
 
-import factory_flexibility_model.input_validations as iv
+import factory_flexibility_model.io.input_validations as iv
 from factory_flexibility_model.factory import Components as factory_components
 from factory_flexibility_model.factory import Connection as factory_connection
 from factory_flexibility_model.factory import Flowtype as ft
@@ -27,6 +27,8 @@ class Factory:
         description: str = "Unspecified Factory",
         enable_slacks: bool = False,
         timefactor: float = 1,
+        emission_limit: float = None,
+        emission_cost: float = None,
     ):
 
         # Initialize structure variables
@@ -34,6 +36,11 @@ class Factory:
         self.components = {}
         self.flowtypes = {}
         self.units = {}
+
+        # Initialize emission accounting variables
+        self.emission_accounting = False  # is set to true during set_configuration() when any component gets an emission factor assigned
+        self.emission_limit = emission_limit
+        self.emission_cost = emission_cost
 
         # Initialize user configurable variables
         self.timesteps = timesteps
@@ -468,8 +475,12 @@ class Factory:
         # make sure that the specified Component exists
         self.check_existence(component)
 
-        # call the set_configuration - methodof the factory
+        # call the set_configuration - method of the component
         self.components[component].set_configuration(self.timesteps, parameters)
+
+        # enable emission accounting if any component gets an emission factor assigned
+        if "co2_emissions_per_unit" in parameters.keys():
+            self.emission_accounting = True
 
     def check_existence(self, key: str):
         """

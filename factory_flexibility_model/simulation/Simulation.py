@@ -25,7 +25,7 @@ import gurobipy as gp
 import numpy as np
 from gurobipy import GRB
 
-import factory_flexibility_model.input_validations as iv
+import factory_flexibility_model.io.input_validations as iv
 from factory_flexibility_model.dash import dash as fd
 
 logging.basicConfig(level=logging.WARNING)
@@ -499,35 +499,31 @@ class Simulation:
 
         if component.avoids_emissions:
             # avoided emissions
-            self.R_objective.append(
+            self.emission_sources.append(
                 self.m.addMVar(
-                    1, vtype=GRB.CONTINUOUS, name=f"R_{component.key}_emissions"
+                    1, vtype=GRB.CONTINUOUS, name=f"CO2_{component.key}_avoided"
                 )
             )
             self.m.addConstr(
-                self.R_objective[-1]
-                == component.co2_refund_per_unit[0 : self.T]
+                self.emission_sources[-1]
+                == -component.co2_refund_per_unit[0 : self.T]
                 @ self.MVars[f"E_{component.key}"]
-                * self.scenario.cost_co2_per_kg
             )
             logging.debug(
-                f"        - CostFactor:   Revenue from reduced CO2-emissions due to usage of {component.name}"
+                f"        - EmissionFactor:   Emissions avoided by usage of {component.name}"
             )
         if component.causes_emissions:
             # additional emissions
-            self.C_objective.append(
-                self.m.addMVar(
-                    1, vtype=GRB.CONTINUOUS, name=f"C_{component.key}_emissions"
-                )
+            self.emission_sources.append(
+                self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"CO2_{component.key}")
             )
             self.m.addConstr(
-                self.C_objective[-1]
+                self.emission_sources[-1]
                 == component.co2_emission_per_unit[0 : self.T]
                 @ self.MVars[f"E_{component.key}"]
-                * self.scenario.cost_co2_per_kg
             )
             logging.debug(
-                f"        - CostFactor:   Costs for CO2-emissions due to usage of {component.name}"
+                f"        - EmissionFactor:   Emissions caused by usage of {component.name}"
             )
 
     def __add_slack(self, component):
@@ -840,23 +836,18 @@ class Simulation:
 
         # does the source cause direct or indirect emissions when used?
         if component.causes_emissions:
-            # create new cost term for the emissions
-            self.C_objective.append(
-                self.m.addMVar(
-                    1, vtype=GRB.CONTINUOUS, name=f"C_{component.key}_emissions"
-                )
-            )
 
-            # calculate the costs
+            # calculate total emissions
+            self.emission_sources.append(
+                self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"CO2_{component.key}")
+            )
             self.m.addConstr(
-                self.C_objective[-1]
+                self.emission_sources[-1]
                 == component.co2_emissions_per_unit[0 : self.T]
                 @ self.MVars[f"E_{component.key}"]
-                * self.scenario.cost_co2_per_kg
             )
-
             logging.debug(
-                f"        - CostFactor:   Cost for CO2-emissions due to usage of {component.name}"
+                f"        - EmissionFactor:   Emissions caused by usage of {component.name}"
             )
 
     def __add_thermalsystem(self, component):
@@ -1303,25 +1294,12 @@ class Simulation:
                     utilization, threshold, rounding_decimals
                 )
 
-                # calculate the emissions avoided by the sink
-                if component.avoids_emissions:
-                    # if the sink can avoid emissions: calculate them
-                    emissions = utilization * component.co2_refund_per_unit[0 : self.T]
-                    emission_cost = sum(emissions) * self.scenario.cost_co2_per_kg
-
-                    # add avoided costs and emissions to the summing variables
-                    total_emissions -= emissions
-                    total_emission_cost -= emission_cost
-
-                    logging.info(
-                        f"Sink {component.key} avoided total emissions of {round(sum(emissions), 2)} kgCO2, refunding {round(emission_cost, 2)}€"
-                    )
-
-                elif component.causes_emissions:
+                # calculate the emissions created by the sink
+                if component.causes_emissions:
                     emissions = (
                         utilization * component.co2_emission_per_unit[0 : self.T]
                     )
-                    emission_cost = sum(emissions) * self.scenario.cost_co2_per_kg
+                    emission_cost = sum(emissions) * self.factory.emission_cost
 
                     # add avoided costs and emissions to the summing variables
                     total_emissions += emissions
@@ -1375,7 +1353,7 @@ class Simulation:
                     emissions = (
                         utilization * component.co2_emissions_per_unit[0 : self.T]
                     )
-                    emission_cost = sum(emissions) * self.scenario.cost_co2_per_kg
+                    emission_cost = sum(emissions) * self.factory.emission_cost
 
                     # add the emissions and cost to the summing variables:
                     total_emissions += emissions
@@ -1624,6 +1602,7 @@ class Simulation:
         simulation_data.MVars = []
         simulation_data.C_objective = []
         simulation_data.R_objective = []
+        simulation_data.emission_sources = []
 
         # save the factory at the given path
         with open(filename, "wb") as f:
@@ -1688,7 +1667,7 @@ class Simulation:
         # Configure the timefactor as specified in the scenario:
         self.interval_length = (
             self.scenario.timefactor
-        )  # The length of one Simulation timesten in hours is taken from the scenario
+        )  # The length of one Simulation timestep in hours is taken from the scenario
         self.T = self.factory.timesteps
 
         # calculate time_reference_factor
@@ -1720,6 +1699,13 @@ class Simulation:
         logging.info("SETTING SCENARIO_DATA")
         self.__read_scenario_data()
         logging.debug(" -> Scenario data collection successful")
+
+        # ENABLE EMISSION ACCOUNTING IF NECESSARY
+        if self.factory.emission_accounting:
+            logging.info("ENABLING EMISSION ACCOUNTING")
+            self.emission_sources = (
+                list()
+            )  # list of emission terms that need to be added up to calculate the total emissions
 
         # BUILDING OPTIMIZATION PROBLEM
         logging.info("BUILDING OPTIMIZATION PROBLEM")
@@ -1762,6 +1748,43 @@ class Simulation:
                     f"Adding {component.type} {component.name}: {round(time.time() - self.t_step, 2)}s"
                 )
                 self.t_step = time.time()
+
+        # SET EMISSION RELATED COSTS AND CONSTRAINTS
+        if self.factory.emission_accounting:
+            # add MVar to keep track of total caused emissions
+            self.MVars["total_emissions"] = self.m.addMVar(
+                1, vtype=GRB.CONTINUOUS, name="total_emissions"
+            )
+
+            # calculate the total emissions throughout the entire factory layout
+            self.m.addConstr(
+                self.MVars[f"total_emissions"]
+                == sum(
+                    self.emission_sources[i] for i in range(len(self.emission_sources))
+                )
+            )
+
+            # add cost term for emissions
+            if self.factory.emission_cost is not None:
+                self.C_objective.append(
+                    self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"C_emissions")
+                )
+                self.m.addConstr(
+                    self.C_objective[-1]
+                    == self.MVars["total_emissions"] * self.factory.emission_cost
+                )
+                logging.debug(
+                    f"        - CostFactor:   Costs for CO2 emission allowances"
+                )
+
+            # set constraint for the emission limit
+            if self.factory.emission_limit is not None:
+                self.m.addConstr(
+                    self.MVars[f"total_emissions"] <= self.factory.emission_limit
+                )
+                logging.debug(
+                    f"        - Constraint:   Total Emissions <= Emission Limit"
+                )
 
         # SET OBJECTIVE FUNCTION
         self.m.setObjective(
@@ -1817,9 +1840,8 @@ class Simulation:
         if not log_solver:
             self.m.Params.LogToConsole = 0
 
-        logging.info(f"CALLING THE SOLVER")
-
         # CALL SOLVER
+        logging.info(f"CALLING THE SOLVER")
         self.m.optimize()
         if self.enable_time_tracking:
             logging.info(f"Solver Time: {round(time.time() - self.t_step, 2)}s")

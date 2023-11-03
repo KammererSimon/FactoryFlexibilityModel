@@ -21,6 +21,9 @@ class Scenario:
         # set timefactor
         self.timefactor = timefactor
 
+        # set co2-costs
+        self.cost_co2_per_kg = 0
+
         self.configurations = {}
 
         # read in parameters.txt
@@ -60,6 +63,7 @@ class Scenario:
                     key, value = line.strip().split("\t")
                     # split key into component and parameter
                     key = key.split("/")
+
                     # add a component entry in the parameters dict if this is the first setting for a component
                     if not key[0] in self.configurations:
                         self.configurations[key[0]] = {}

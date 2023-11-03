@@ -25,6 +25,8 @@ class Blueprint:
             "enable_slacks": False,
             "timestep_length": 1,
             "currency": "€",
+            "emission_limit": None,
+            "emission_cost": None,
         }
         self.units = {}  # list of units
 
@@ -49,6 +51,8 @@ class Blueprint:
             timesteps=self.info["timesteps"],
             description=self.info["description"],
             enable_slacks=self.info["enable_slacks"],
+            emission_limit=self.info["emission_limit"],
+            emission_cost=self.info["emission_cost"],
         )
         factory.create_essentials()
 

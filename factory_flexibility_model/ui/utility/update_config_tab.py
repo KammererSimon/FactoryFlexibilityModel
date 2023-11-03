@@ -114,14 +114,9 @@ sink_parameters = {
         "description": "Revenue per Unit of Utilization",
         "unit_type": "currency",
     },
-    "co2_emission_per_unit": {
+    "co2_emissions_per_unit": {
         "text": "Emissions Caused",
         "description": "Caused Emissions",
-        "unit_type": "emissions",
-    },
-    "co2_refund_per_unit": {
-        "text": "Emissions Saved",
-        "description": "Avoided Emissions",
         "unit_type": "emissions",
     },
 }
@@ -156,7 +151,7 @@ source_parameters = {
         "description": "Fixed price charged per maximum utilized flowrate",
         "unit_type": "capacity_charge",
     },
-    "co2_emission_per_unit": {
+    "co2_emissions_per_unit": {
         "text": "Emissions Caused",
         "description": "Caused Emissions",
         "unit_type": "emissions",
@@ -321,7 +316,7 @@ def update_config_tab(app):
         elif attribute_data["unit_type"] == "timesteps":
             unit = "hours"
         elif attribute_data["unit_type"] == "currency":
-            unit = app.blueprint.info["currency"]
+            unit = f"{app.blueprint.info['currency']}/{app.selected_asset['flowtype'].unit.get_unit_flow()}"
         elif attribute_data["unit_type"] == "leakage_time":
             unit = f"{app.selected_asset['flowtype'].unit.get_unit_flow()}/h"
         elif attribute_data["unit_type"] == "leakage_soc":

@@ -1,15 +1,82 @@
 # IMPORTS
-from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.dialog import MDDialog
 
-# LAYOUTS
-Builder.load_file(r"factory_flexibility_model\ui\dialogs\dialog_session_config.kv")
 
 # CLASSES
 class DialogSessionConfig(BoxLayout):
     pass
+
+
+# FUNCTIONS
+def save_session_config(app):
+    """
+    This function reads out the name, description, number of timesteps and slackcheckbox from the dialog_session config and writes into the blueprint.info of the session
+    """
+
+    # read inputs from GUI and write them into app.blueprint.
+    if app.dialog.content_cls.ids.checkbox_dollar.active:
+        currency = "$"
+    else:
+        currency = "€"
+
+    if app.dialog.content_cls.ids.checkbox_emission_limit.active:
+        try:
+            emission_limit = float(
+                app.dialog.content_cls.ids.textfield_emission_limit.text
+            )
+        except:
+            app.dialog.content_cls.ids.textfield_emission_limit.error = True
+            return
+    else:
+        emission_limit = None
+
+    if app.dialog.content_cls.ids.checkbox_emission_cost.active:
+        try:
+            emission_cost = float(
+                app.dialog.content_cls.ids.textfield_emission_cost.text
+            )
+        except:
+            app.dialog.content_cls.ids.textfield_emission_cost.error = True
+            return
+    else:
+        emission_cost = None
+
+    try:
+        timesteps = int(app.dialog.content_cls.ids.textfield_session_timesteps.text)
+    except:
+        app.dialog.content_cls.ids.textfield_session_timesteps.error = True
+        return
+
+    try:
+        timestep_length = float(
+            app.dialog.content_cls.ids.textfield_session_timestep_length.text
+        )
+    except:
+        app.dialog.content_cls.ids.textfield_session_timestep_length.error = True
+        return
+
+    app.blueprint.info = {
+        "name": app.dialog.content_cls.ids.textfield_session_name.text,
+        "description": app.dialog.content_cls.ids.textfield_session_description.text,
+        "timesteps": timesteps,
+        "timestep_length": timestep_length,
+        "enable_slacks": app.dialog.content_cls.ids.checkbox_slack.active,
+        "currency": currency,
+        "emission_limit": emission_limit,
+        "emission_cost": emission_cost,
+    }
+
+    # save the show component config dialog option
+    app.session_data[
+        "show_component_config_dialog_on_creation"
+    ] = app.dialog.content_cls.ids.checkbox_config.active
+
+    # write the new name into the top app bar
+    app.root.ids.label_session_name.text = app.blueprint.info["name"]
+    # close the dialog
+    app.close_dialog()
 
 
 def show_session_config_dialog(app):
@@ -45,6 +112,10 @@ def show_session_config_dialog(app):
     app.dialog.content_cls.ids.textfield_session_timesteps.text = str(
         app.blueprint.info["timesteps"]
     )
+    app.dialog.content_cls.ids.textfield_session_timestep_length.text = str(
+        app.blueprint.info["timestep_length"]
+    )
+
     if app.blueprint.info["currency"] == "€":
         app.dialog.content_cls.ids.checkbox_euro.active = True
         app.dialog.content_cls.ids.checkbox_dollar.active = False
@@ -59,44 +130,69 @@ def show_session_config_dialog(app):
         "show_component_config_dialog_on_creation"
     ]
 
+    # set emission cost gui element config
+    if app.blueprint.info["emission_cost"] is None:
+        app.dialog.content_cls.ids.checkbox_emission_cost.active = False
+        app.dialog.content_cls.ids.textfield_emission_cost.disabled = True
+    else:
+        app.dialog.content_cls.ids.checkbox_emission_cost.active = True
+        app.dialog.content_cls.ids.textfield_emission_cost.text = str(
+            app.blueprint.info["emission_cost"]
+        )
+        app.dialog.content_cls.ids.textfield_emission_cost.disabled = False
+
+    # set emission limit gui element config
+    if app.blueprint.info["emission_limit"] is None:
+        app.dialog.content_cls.ids.checkbox_emission_limit.active = False
+        app.dialog.content_cls.ids.textfield_emission_limit.disabled = True
+    else:
+        app.dialog.content_cls.ids.checkbox_emission_limit.active = True
+        app.dialog.content_cls.ids.textfield_emission_limit.text = str(
+            app.blueprint.info["emission_limit"]
+        )
+        app.dialog.content_cls.ids.textfield_emission_limit.disabled = False
+
+    # call toggle_currency method to display the correct hint text for the emission cost textfield
+    toggle_currency(app)
+
     # bind callbacks to buttons
     btn_true.bind(on_release=lambda instance: save_session_config(app))
     btn_false.bind(on_release=app.dialog.dismiss)
     app.dialog.open()
 
 
-def save_session_config(app):
+def toggle_currency(app):
     """
-    This function reads out the name, description, number of timesteps and slackcheckbox from the dialog_session config and writes into the blueprint.info of the session
+    This function is activated when the user activates either the "€" or "$" checkbox within the session settings dialog. Everything the function does by now is to set the hint-text of the emission cost input textfield to correctly display the currency that the user selected.
+    :param app: Pointer to the app instance
     """
+    if app.dialog.content_cls.ids.checkbox_euro.active:
+        app.dialog.content_cls.ids.textfield_emission_cost.hint_text = (
+            "Set cost per kg of CO2 emitted [€/kgCO2]"
+        )
+    else:
+        app.dialog.content_cls.ids.textfield_emission_cost.hint_text = (
+            "Set cost per kg of CO2 emitted [$/kgCO2]"
+        )
 
-    try:
-        # read inputs from GUI and write them into app.blueprint.
-        if app.dialog.content_cls.ids.checkbox_dollar.active:
-            currency = "$"
-        else:
-            currency = "€"
 
-        app.blueprint.info = {
-            "name": app.dialog.content_cls.ids.textfield_session_name.text,
-            "description": app.dialog.content_cls.ids.textfield_session_description.text,
-            "timesteps": int(
-                app.dialog.content_cls.ids.textfield_session_timesteps.text
-            ),
-            "enable_slacks": app.dialog.content_cls.ids.checkbox_slack.active,
-            "currency": currency,
-        }
+def toggle_emission_cost(app):
+    """
+    This function is activated when the user activated or deactivates the "set emission cost" checkbox within the session settings dialog. Everything the function does by now is to set the status of the corresponding input textfield to active/inactive in order to show the user if the current input value is being used for the somulation ore ignored.
+    :param app: Pointer to the app instance
+    """
+    if app.dialog.content_cls.ids.checkbox_emission_cost.active:
+        app.dialog.content_cls.ids.textfield_emission_cost.disabled = False
+    else:
+        app.dialog.content_cls.ids.textfield_emission_cost.disabled = True
 
-        # save the show component config dialog option
-        app.session_data[
-            "show_component_config_dialog_on_creation"
-        ] = app.dialog.content_cls.ids.checkbox_config.active
 
-        # write the new name into the top app bar
-        app.root.ids.label_session_name.text = app.blueprint.info["name"]
-        # close the dialog
-        app.close_dialog()
-
-    except:
-        # if saving failed it is because there is no integer within the timesteps textfield
-        app.dialog.content_cls.ids.textfield_session_timesteps.error = True
+def toggle_emission_limit(app):
+    """
+    This function is activated when the user activated or deactivates the "set emission limit" checkbox within the session settings dialog. Everything the function does by now is to set the status of the corresponding input textfield to active/inactive in order to show the user if the current input value is being used for the somulation ore ignored.
+    :param app: Pointer to the app instance
+    """
+    if app.dialog.content_cls.ids.checkbox_emission_limit.active:
+        app.dialog.content_cls.ids.textfield_emission_limit.disabled = False
+    else:
+        app.dialog.content_cls.ids.textfield_emission_limit.disabled = True
