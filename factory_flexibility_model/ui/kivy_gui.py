@@ -603,7 +603,7 @@ class factory_GUIApp(MDApp):
         # IMPORT additional layouts
         # component_config_tab
         Builder.load_file(
-            r"factory_flexibility_model\ui\layouts\component_config_tab.kv"
+            r"factory_flexibility_model\ui\dialogs\component_config_tab.kv"
         )
         # converter ratio dialog
         Builder.load_file(
@@ -623,7 +623,7 @@ class factory_GUIApp(MDApp):
             r"factory_flexibility_model\ui\dialogs\dialog_session_config.kv"
         )
         # main menu
-        Builder.load_file(r"factory_flexibility_model\ui\layouts\main_menu.kv")
+        Builder.load_file(r"factory_flexibility_model\ui\dialogs\main_menu.kv")
 
         # safe session as dialog
         Builder.load_file(
@@ -676,11 +676,21 @@ class factory_GUIApp(MDApp):
                     files_dict[filename] = os.path.join(root, file)
             return files_dict
 
-        self.component_icons = get_files_in_directory("assets\\components")
-        self.source_icons = get_files_in_directory("assets\\sources")
-        self.sink_icons = get_files_in_directory("assets\\sinks")
-        self.highlight_icons = get_files_in_directory("assets\\highlights")
-        self.default_icons = get_files_in_directory("assets\\defaults")
+        self.component_icons = get_files_in_directory(
+            "factory_flexibility_model\\ui\\assets\\components"
+        )
+        self.source_icons = get_files_in_directory(
+            "factory_flexibility_model\\ui\\assets\\sources"
+        )
+        self.sink_icons = get_files_in_directory(
+            "factory_flexibility_model\\ui\\assets\\sinks"
+        )
+        self.highlight_icons = get_files_in_directory(
+            "factory_flexibility_model\\ui\\assets\\highlights"
+        )
+        self.default_icons = get_files_in_directory(
+            "factory_flexibility_model\\ui\\assets\\defaults"
+        )
 
         # set window configuration
         Window.maximize()
@@ -1016,7 +1026,9 @@ class factory_GUIApp(MDApp):
             # if the component is a pool: create a circle in the correct color
             if component["type"] == "pool":
                 # exchange the icon with an empty one
-                component_framelabel.source = "assets\\empty_rectangle.png"
+                component_framelabel.source = (
+                    "factory_flexibility_model\\ui\\assets\\empty_rectangle.png"
+                )
                 # determine of the color of the pool
                 if component["flowtype"].key == "unknown":
                     canvas.add(Color(0.1137, 0.2588, 0.463, 1))
@@ -1894,36 +1906,39 @@ class factory_GUIApp(MDApp):
         component_dummys = {
             "thermalsystem": {
                 "id": "dummy_thermalsystem",
-                "source": "assets\\defaults\\thermalsystem.png",
+                "source": "factory_flexibility_model\\ui\\assets\\defaults\\thermalsystem.png",
             },
             "deadtime": {
                 "id": "dummy_deadtime",
-                "source": "assets\\defaults\\deadtime.png",
+                "source": "factory_flexibility_model\\ui\\assets\\defaults\\deadtime.png",
             },
             "schedule": {
                 "id": "dummy_schedule",
-                "source": "assets\\defaults\\schedule.png",
+                "source": "factory_flexibility_model\\ui\\assets\\defaults\\schedule.png",
             },
             "storage": {
                 "id": "dummy_storage",
-                "source": "assets\\defaults\\storage.png",
+                "source": "factory_flexibility_model\\ui\\assets\\defaults\\storage.png",
             },
             "triggerdemand": {
                 "id": "triggerdemand",
-                "source": "assets\\defaults\\triggerdemand.png",
+                "source": "factory_flexibility_model\\ui\\assets\\defaults\\triggerdemand.png",
             },
             "converter": {
                 "id": "dummy_converter",
-                "source": "assets\\defaults\\converter.png",
+                "source": "factory_flexibility_model\\ui\\assets\\defaults\\converter.png",
             },
             "pool": {
                 "id": "dummy_pool",
-                "source": "assets\\defaults\\pool.png",
+                "source": "factory_flexibility_model\\ui\\assets\\defaults\\pool.png",
             },
-            "sink": {"id": "dummy_sink", "source": "assets\\defaults\\sink.png"},
+            "sink": {
+                "id": "dummy_sink",
+                "source": "factory_flexibility_model\\ui\\assets\\defaults\\sink.png",
+            },
             "source": {
                 "id": "dummy_source",
-                "source": "assets\\defaults\\source.png",
+                "source": "factory_flexibility_model\\ui\\assets\\defaults\\source.png",
             },
         }
 
