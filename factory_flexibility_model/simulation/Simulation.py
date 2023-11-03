@@ -1,18 +1,21 @@
-# FACTORY SIMULATION
-# This Script contains the Simulation class of the factory factory. It is used to store Factory-Scenario-Combinations and to perform the Simulation itself on them
-# The following Methods are meant to be used by external Scripts to prepare a Simulation:
-# self.__init__
-# self.set_factory
-# self.set_name
-# self.set_scenario
+"""
+    .. _Simulation:
 
-# The Simulation itself is conducted by the Method:
-# self.simulate
-# -> This method calls all the other internal functions to build an optimization problem out of the components specified in the factory
+    This Script contains the Simulation class of the factory factory. It is used to store Factory-Scenario-Combinations and to perform the Simulation itself on them
+    The following Methods are meant to be used by external Scripts to prepare a Simulation:
+    self.__init__
+    self.set_factory
+    self.set_name
+    self.set_scenario
 
-# To get the results use:
-# self.create_dash
-# self.show_results
+    The Simulation itself is conducted by the Method:
+    self.simulate
+    -> This method calls all the other internal functions to build an optimization problem out of the components specified in the factory
+
+    To get the results use:
+    self.create_dash
+    self.show_results
+"""
 
 # IMPORTS
 import logging
@@ -32,10 +35,6 @@ logging.basicConfig(level=logging.WARNING)
 
 
 class Simulation:
-    """
-    .. _Simulation:
-    """
-
     def __init__(
         self,
         *,
