@@ -1,9 +1,0 @@
-component_11/power_max	800
-component_14/capacity	1500000
-component_14/efficiency	0.95
-component_19/max_neg_ramp_power	50
-component_19/max_pos_ramp_power	50
-component_19/power_max	285.390
-component_19/power_min	199.770
-component_2/cost	5
-component_22/cost	60
