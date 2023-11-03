@@ -134,7 +134,7 @@ def import_xlsx_to_factory(data_path: str):
 # UTILITY FUNCTIONS
 
 
-def __add_flows_to_blueprint(workbook: openpyxl.workbook, blueprint: bp.blueprint):
+def __add_flows_to_blueprint(workbook: openpyxl.workbook, blueprint: bp.Blueprint):
     """
     This function adds all flows specified in the given workbook
     to the given factory and then returns the edited factory blueprint
@@ -164,7 +164,7 @@ def __add_flows_to_blueprint(workbook: openpyxl.workbook, blueprint: bp.blueprin
 
 def __add_components_to_blueprint(
     workbook: openpyxl.workbook,
-    blueprint: bp.blueprint,
+    blueprint: bp.Blueprint,
     timeseries: str,
     scenario_parameters: str,
 ):
@@ -205,7 +205,7 @@ def __add_components_to_blueprint(
 
 
 def __add_connections_to_blueprint(
-    workbook: openpyxl.workbook, blueprint: bp.blueprint
+    workbook: openpyxl.workbook, blueprint: bp.Blueprint
 ):
     """
     This function adds all connections specified in the given workbook

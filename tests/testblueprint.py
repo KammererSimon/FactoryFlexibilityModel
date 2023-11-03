@@ -40,7 +40,7 @@ def create_test_blueprint():
             "type": "source",
             "flowtype": "electricity",
             "cost": "5",
-            "icon": "Assets\\sources\\source_powerpole.png",
+            "icon": "assets\\sources\\source_powerpole.png",
             "position_x": 0.1,
             "position_y": 0.2,
         }
@@ -55,7 +55,7 @@ def create_test_blueprint():
             "description": "Onsite generation of installed solar panels",
             "flowtype": "electricity",
             "cost": "0",
-            "icon": "Assets\\sources\\source_solar.png",
+            "icon": "assets\\sources\\source_solar.png",
             "position_x": 0.1,
             "position_y": 0.6,
         }
@@ -69,7 +69,7 @@ def create_test_blueprint():
             "type": "storage",
             "description": "A 200kWh stationary lithium ion battery storage",
             "flowtype": "electricity",
-            "icon": "Assets\\components\\component_battery.png",
+            "icon": "assets\\components\\component_battery.png",
             "position_x": 0.5,
             "position_y": 0.2,
         }
@@ -84,7 +84,7 @@ def create_test_blueprint():
             "description": "Option to sell electricity to the grid",
             "flowtype": "electricity",
             "revenue": "5",
-            "icon": "Assets\\sinks\\sink_sales.png",
+            "icon": "assets\\sinks\\sink_sales.png",
             "position_x": 0.9,
             "position_y": 0.6,
         }
@@ -98,7 +98,7 @@ def create_test_blueprint():
             "type": "sink",
             "description": "Fixed electricity demand timeseries",
             "flowtype": "electricity",
-            "icon": "Assets\\sinks\\sink_lightbulb.png",
+            "icon": "assets\\sinks\\sink_lightbulb.png",
             "position_x": 0.9,
             "position_y": 0.3,
         }
@@ -109,7 +109,7 @@ def create_test_blueprint():
         {
             "name": "Pool Electricity",
             "key": "pool_electricity",
-            "icon": "Assets\\components\\pool_frame.png",
+            "icon": "assets\\components\\pool_frame.png",
             "type": "pool",
             "description": "electrical power equilibrium within the factory",
             "flowtype": "electricity",
