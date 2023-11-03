@@ -20,7 +20,7 @@ from factory_flexibility_model.ui.dialogs.dialog_component_definition import (
 from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import (
     show_converter_ratio_dialog,
 )
-from factory_flexibility_model.ui.layouts.main_menu import *
+from factory_flexibility_model.ui.dialogs.main_menu import *
 
 # from factory_flexibility_model.ui.layouts.timeseries_overview import (
 #    LayoutTimeseriesOverview,

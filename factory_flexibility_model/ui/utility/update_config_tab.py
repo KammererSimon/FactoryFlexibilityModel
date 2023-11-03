@@ -1,15 +1,15 @@
 from kivy.properties import StringProperty
 from kivymd.uix.list import IconLeftWidgetWithoutTouch, TwoLineIconListItem
 
+from factory_flexibility_model.ui.dialogs.component_config_tab import (
+    layout_component_configuration,
+    layout_component_definition,
+)
 from factory_flexibility_model.ui.dialogs.dialog_converter_ratios import (
     show_converter_ratio_dialog,
 )
 from factory_flexibility_model.ui.dialogs.dialog_parameter_config import (
     show_parameter_config_dialog,
-)
-from factory_flexibility_model.ui.layouts.component_config_tab import (
-    layout_component_configuration,
-    layout_component_definition,
 )
 from factory_flexibility_model.ui.utility.import_scheduler_demands import (
     import_scheduler_demands,
