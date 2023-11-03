@@ -1,12 +1,26 @@
-""" FACTORY DASH """
-""" This script sets up a webbased dashboard to visualizue the results of a Simulation run using plotly dash"""
+"""
+This module contains the result dashboard that can be used to show and analyze the results of a solved simulation.
+It consists of a single function "create_dash", which takes a solved simulation object as input and uses the plotly dash library to create an interactive browserbased dashboard.
 
+Usage:
+------
+1. Create a factory layout, solve the simulation
+
+2. Call the `create_dash()`_ function and hand over the solved `Simulation`_ object
+
+3. After some preprocessing the function will provide you with an ip where the dashboard is being hosted in realtime. Click this link to open your browser and view the results
+
+4. The function stays active providing the backbone for the interactive dashboard until the execution is canceled
+
+.. image:: _static/dashboard_illustration.png
+"""
+
+
+# IMPORT 3RD PARTY PACKAGES
 import copy
 import warnings
 
 import dash_bootstrap_components as dbc
-
-# IMPORT 3RD PARTY PACKAGES
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
@@ -18,7 +32,13 @@ from plotly.subplots import make_subplots
 
 # CODE START
 def create_dash(simulation):
-    pass
+    """
+    .. _create_dash():
+    This function takes a solved simulation object and creates an interactive browserbased dashboard.
+
+    :param simulation: Simulation - Object.
+    :return: Nothing. The script ends with providing a dashboard on an internal server and goes into a loop to process user inputs within the dashboard until it is being cancelled externally.
+    """
 
     # Check, that Simulation has been performed and results are existing
     if not simulation.simulated:
