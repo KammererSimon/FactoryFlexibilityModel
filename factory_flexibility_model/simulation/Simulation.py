@@ -32,6 +32,10 @@ logging.basicConfig(level=logging.WARNING)
 
 
 class Simulation:
+    """
+    .. _Simulation:
+    """
+
     def __init__(
         self,
         *,

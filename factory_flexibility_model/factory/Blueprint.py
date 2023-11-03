@@ -1,6 +1,13 @@
-# FACTORY-BLUEPRINT
-# This file describes a class, which can be used to store all the information needed to create a factory-object.
-# The class is used as an intermediate step for factory definition and imports
+"""
+.. _Blueprint:
+A Blueprint is a helper class that describes the architecture of a factory including all units, flowtypes, components and connections plus some additional info.
+
+It is used as a common interface for different input methods to connect to the simulation pipeline.
+
+Blueprints can be translated to `Factory`_ -objects using the `to_factory()`_ method to conduct simulations.
+
+Blueprints can be serialized, stored to files, manually edited and reimported using the `save()`_ and `import_from_file()`_ methods
+"""
 
 import logging
 
@@ -10,10 +17,45 @@ import factory_flexibility_model.factory.Factory as fm
 import factory_flexibility_model.factory.Flowtype as ft
 import factory_flexibility_model.factory.Unit as un
 
-# IMPORTS
-
 
 class Blueprint:
+    """
+    Represents a blueprint for a factory.
+
+    This class defines the structure of a factory, including its components, connections,
+    flowtypes, and various information.
+
+    Attributes:
+        +----------------+------------------------------------------------------------+
+        | Attribute      | Description                                                |
+        +================+============================================================+
+        | components     | A dictionary of all components in the factory.             |
+        +----------------+------------------------------------------------------------+
+        | connections    | A dictionary of connections between components.            |
+        +----------------+------------------------------------------------------------+
+        | flowtypes      | A dictionary of available flowtypes.                       |
+        +----------------+------------------------------------------------------------+
+        | info           | Additional information about the factory, including:       |
+        |                |   - 'name' (str): The name of the factory (default:        |
+        |                |     "Undefined_Factory").                                  |
+        |                |   - 'description' (str): A description of the factory      |
+        |                |     (default: "Undefined").                                |
+        |                |   - 'timesteps' (int): The number of timesteps (default:   |
+        |                |     168).                                                  |
+        |                |   - 'enable_slacks' (bool): Flag to enable or disable      |
+        |                |     slack handling (default: False).                       |
+        |                |   - 'timestep_length' (int): The length of each timestep   |
+        |                |     (default: 1).                                          |
+        |                |   - 'currency' (str): The currency used (default: "€").    |
+        |                |   - 'emission_limit' (None or float): Emission limit for   |
+        |                |     the factory (default: None).                           |
+        |                |   - 'emission_cost' (None or float): Cost associated with  |
+        |                |     emissions (default: None).                             |
+        +----------------+------------------------------------------------------------+
+        | units          | A dictionary of available units.                           |
+        +----------------+------------------------------------------------------------+
+    """
+
     def __init__(self):
         self.components = {}  # dict with all components of the factory
         self.connections = {}  # dict of connections
@@ -32,8 +74,10 @@ class Blueprint:
 
     def to_factory(self) -> fm.Factory:
         """
+        .. _to_factory():
         This function creates the corresponding factory-object to the blueprint
-        :return: [factory.factory] -> realization of the factory object described by the blueprint
+
+        :return: [factory.Factory] -> realization of the factory object described by the blueprint
         """
 
         # Check, if the Blueprint already contains some objects
@@ -124,9 +168,13 @@ class Blueprint:
 
     def import_from_file(self, folder: str, *, overwrite: bool = False) -> bool:
         """
+        .. _import_from_file():
         This function imports a  blueprint stored as .factory-file and sets all attributes of the blueprint according to the specified confidurations of the file
+
         :param folder: [string] path of the folder containing the Session
+
         :param overwrite: [boolean] determines, if the import is conducted even if some attributes of the blueprint have already been defined.
+
         :return: [true] if successfull
         """
 
@@ -228,8 +276,11 @@ class Blueprint:
 
     def save(self, *, path: str = None) -> bool:
         """
+        .. _save():
         This function stores the blueprint as a .factory-file under the given path.
+
         :param path: [string] Filepath where the file shall be saved
+
         :param filename: [string] Name of the file. If no name is handed over the file will be named like the factoryname defined within the blueprint
         """
 

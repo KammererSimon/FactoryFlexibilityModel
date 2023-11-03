@@ -1,8 +1,9 @@
-# FACTORY MODEL
-# This Package contains everything that is needed to specify the structure of a factory for the Simulation:
-#        -> "factory" is the main class and the only one meant to be called by the user.
-#               It collects all given Information and organizes the setup process
-
+"""
+.. _Factory:
+This Package contains everything that is needed to specify the structure of a factory for the Simulation:
+       -> "factory" is the main class and the only one meant to be called by the user.
+              It collects all given Information and organizes the setup process
+"""
 
 # IMPORTS
 import logging
@@ -19,6 +20,44 @@ logging.basicConfig(level=logging.DEBUG)
 
 # CODE START
 class Factory:
+    """
+    This class defines the structure and configuration of a factory.
+
+    Attributes:
+        +--------------------+-----------------------------------------------------+
+        | Attribute          | Description                                         |
+        +====================+=====================================================+
+        | name               | The name of the factory (default: "New Factory").   |
+        +--------------------+-----------------------------------------------------+
+        | timesteps          | The number of timesteps in the simulation           |
+        |                    | (default: 168).                                     |
+        +--------------------+-----------------------------------------------------+
+        | description        | A description of the factory (default:              |
+        |                    | "Unspecified Factory").                             |
+        +--------------------+-----------------------------------------------------+
+        | enable_slacks      | A flag to enable or disable slack handling in the   |
+        |                    | simulation (default: False).                        |
+        +--------------------+-----------------------------------------------------+
+        | timefactor         | A float representing the time factor for the        |
+        |                    | simulation (default: 1).                            |
+        +--------------------+-----------------------------------------------------+
+        | emission_limit     | The emission limit for the factory (default: None). |
+        +--------------------+-----------------------------------------------------+
+        | emission_cost      | The cost associated with emissions (default: None). |
+        +--------------------+-----------------------------------------------------+
+        | connections        | A dictionary of connections between components.     |
+        +--------------------+-----------------------------------------------------+
+        | components         | A dictionary of all components in the factory.      |
+        +--------------------+-----------------------------------------------------+
+        | flowtypes          | A dictionary of available flowtypes.                |
+        +--------------------+-----------------------------------------------------+
+        | units              | A dictionary of available units.                    |
+        +--------------------+-----------------------------------------------------+
+        | emission_accounting| A boolean flag that indicates if emission           |
+        |                    | accounting is enabled (default: False).             |
+        +--------------------+-----------------------------------------------------+
+    """
+
     def __init__(
         self,
         *,

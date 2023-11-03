@@ -1,6 +1,5 @@
 # SCENARIO
 
-# IMPORT
 import csv
 import os
 
@@ -11,6 +10,46 @@ import yaml
 
 # CODE START
 class Scenario:
+    """
+    .. _Scenario:
+        Represents a scenario for a simulation.
+
+        This class defines a simulation scenario and provides methods for importing parameters,
+        timeseries data, and scheduler demands.
+
+        Attributes:
+            +-----------------+--------------------------------------------------------+
+            | Attribute       | Description                                            |
+            +=================+========================================================+
+            | session_folder  | A string representing the session folder path.         |
+            +-----------------+--------------------------------------------------------+
+            | timefactor      | An integer representing the time factor (default: 1).  |
+            +-----------------+--------------------------------------------------------+
+            | cost_co2_per_kg | The cost of CO2 per kilogram (default: 0).             |
+            +-----------------+--------------------------------------------------------+
+            | configurations  | A dictionary to store simulation configurations.       |
+            +-----------------+--------------------------------------------------------+
+
+        Methods:
+            +-------------------+--------------------------------------------------------+
+            | Method            | Description                                            |
+            +===================+========================================================+
+            | _import_parameters| Import parameters from 'parameters.txt' in the session |
+            |                   | folder and populate the 'configurations' dictionary.   |
+            +-------------------+--------------------------------------------------------+
+            | _import_timeseries| Import timeseries data from 'timeseries.csv' in the    |
+            |                   | session folder.                                        |
+            +-------------------+--------------------------------------------------------+
+            | _import_demands   | Import scheduler demands from 'demands.txt' in the     |
+            |                   | session folder.                                        |
+            +-------------------+--------------------------------------------------------+
+
+        Example:
+            Creating Scenario object:
+
+            >>> my_scenario = Scenario(session_folder="path/to/session")
+    """
+
     def __init__(
         self,
         session_folder: str,
@@ -29,19 +68,19 @@ class Scenario:
         # read in parameters.txt
         parameter_file = rf"{session_folder}\parameters.txt"
         if parameter_file is not None:
-            self.import_parameters(parameter_file)
+            self._import_parameters(parameter_file)
 
         # read in timeseries.txt
         timeseries_file = rf"{session_folder}\timeseries.csv"
         if timeseries_file is not None:
-            self.import_timeseries(timeseries_file)
+            self._import_timeseries(timeseries_file)
 
         # read in scheduler demands
         demands_file = rf"{session_folder}\demands.txt"
         if timeseries_file is not None:
-            self.import_demands(demands_file)
+            self._import_demands(demands_file)
 
-    def import_parameters(self, parameter_file: str) -> bool:
+    def _import_parameters(self, parameter_file: str) -> bool:
         """
         This function opens the .txt file given as "parameter_file" and returns the contained parameters as a dictionary with one key/value pair per parameter specified
         :param parameter_file: [string] Path to a .txt file containing the key/value pairs
@@ -74,7 +113,7 @@ class Scenario:
                 f"The given parameters.txt-config file is invalid, has a wrong format or is corrupted! ({parameter_file})"
             )
 
-    def import_timeseries(self, timeseries_file: str) -> bool:
+    def _import_timeseries(self, timeseries_file: str) -> bool:
         """
         This function opens the .txt file given as "timeseries_file" and returns the contained timeseries as a dictionary with one key: [array] pair per timeseries specified
         :param timeseries_file: [string] Path to a .txt file containing the key: [array] pairs
@@ -98,7 +137,7 @@ class Scenario:
                     self.configurations[key_component] = {}
                 self.configurations[key_component][key_parameter] = values
 
-    def import_demands(self, demands_file: str) -> bool:
+    def _import_demands(self, demands_file: str) -> bool:
         """
         This function opens the .txt file given as "demands_file" and returns the contained demandlist as a dictionary with one key: [pd.df] pair per demand specified
         :param demand_file: [string] Path to a .txt file containing the key: [pd.df] pairs
