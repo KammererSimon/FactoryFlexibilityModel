@@ -6,7 +6,7 @@ from kivy.graphics import Ellipse, Line, Triangle
 from kivy.lang import Builder
 from kivymd.uix.button import MDFillRoundFlatIconButton, MDFlatButton
 from kivymd.uix.label import MDLabel
-from kivymd.uix.list import IconRightWidget, TwoLineAvatarIconListItem, TwoLineListItem
+from kivymd.uix.list import IconRightWidget, TwoLineAvatarIconListItem
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.pickers import MDColorPicker
 
@@ -601,6 +601,19 @@ class factory_GUIApp(MDApp):
         """
 
         # IMPORT additional layouts
+        # component_config_tab
+        Builder.load_file(
+            r"factory_flexibility_model\ui\layouts\component_config_tab.kv"
+        )
+        # converter ratio dialog
+        Builder.load_file(
+            r"factory_flexibility_model\ui\dialogs\dialog_converter_ratios.kv"
+        )
+
+        # dialog component definition
+        Builder.load_file(
+            r"factory_flexibility_model\ui\dialogs\dialog_component_definition.kv"
+        )
         # dialog parameter config
         Builder.load_file(
             r"factory_flexibility_model\ui\dialogs\dialog_parameter_config.kv"
@@ -609,19 +622,16 @@ class factory_GUIApp(MDApp):
         Builder.load_file(
             r"factory_flexibility_model\ui\dialogs\dialog_session_config.kv"
         )
+        # main menu
+        Builder.load_file(r"factory_flexibility_model\ui\layouts\main_menu.kv")
 
-        # converter ratio dialog
-        Builder.load_file(
-            r"factory_flexibility_model\ui\dialogs\dialog_converter_ratios.kv"
-        )
-
-        # unit definition dialog
-        Builder.load_file(
-            r"factory_flexibility_model\ui\dialogs\dialog_unit_definition.kv"
-        )
         # safe session as dialog
         Builder.load_file(
             r"factory_flexibility_model\ui\dialogs\dialog_save_session_as.kv"
+        )
+        # unit definition dialog
+        Builder.load_file(
+            r"factory_flexibility_model\ui\dialogs\dialog_unit_definition.kv"
         )
 
         # create root object for the app
@@ -666,11 +676,11 @@ class factory_GUIApp(MDApp):
                     files_dict[filename] = os.path.join(root, file)
             return files_dict
 
-        self.component_icons = get_files_in_directory("Assets\\components")
-        self.source_icons = get_files_in_directory("Assets\\sources")
-        self.sink_icons = get_files_in_directory("Assets\\sinks")
-        self.highlight_icons = get_files_in_directory("Assets\\highlights")
-        self.default_icons = get_files_in_directory("Assets\\defaults")
+        self.component_icons = get_files_in_directory("assets\\components")
+        self.source_icons = get_files_in_directory("assets\\sources")
+        self.sink_icons = get_files_in_directory("assets\\sinks")
+        self.highlight_icons = get_files_in_directory("assets\\highlights")
+        self.default_icons = get_files_in_directory("assets\\defaults")
 
         # set window configuration
         Window.maximize()
@@ -1006,7 +1016,7 @@ class factory_GUIApp(MDApp):
             # if the component is a pool: create a circle in the correct color
             if component["type"] == "pool":
                 # exchange the icon with an empty one
-                component_framelabel.source = "Assets\\empty_rectangle.png"
+                component_framelabel.source = "assets\\empty_rectangle.png"
                 # determine of the color of the pool
                 if component["flowtype"].key == "unknown":
                     canvas.add(Color(0.1137, 0.2588, 0.463, 1))
@@ -1884,36 +1894,36 @@ class factory_GUIApp(MDApp):
         component_dummys = {
             "thermalsystem": {
                 "id": "dummy_thermalsystem",
-                "source": "Assets\\defaults\\thermalsystem.png",
+                "source": "assets\\defaults\\thermalsystem.png",
             },
             "deadtime": {
                 "id": "dummy_deadtime",
-                "source": "Assets\\defaults\\deadtime.png",
+                "source": "assets\\defaults\\deadtime.png",
             },
             "schedule": {
                 "id": "dummy_schedule",
-                "source": "Assets\\defaults\\schedule.png",
+                "source": "assets\\defaults\\schedule.png",
             },
             "storage": {
                 "id": "dummy_storage",
-                "source": "Assets\\defaults\\storage.png",
+                "source": "assets\\defaults\\storage.png",
             },
             "triggerdemand": {
                 "id": "triggerdemand",
-                "source": "Assets\\defaults\\triggerdemand.png",
+                "source": "assets\\defaults\\triggerdemand.png",
             },
             "converter": {
                 "id": "dummy_converter",
-                "source": "Assets\\defaults\\converter.png",
+                "source": "assets\\defaults\\converter.png",
             },
             "pool": {
                 "id": "dummy_pool",
-                "source": "Assets\\defaults\\pool.png",
+                "source": "assets\\defaults\\pool.png",
             },
-            "sink": {"id": "dummy_sink", "source": "Assets\\defaults\\sink.png"},
+            "sink": {"id": "dummy_sink", "source": "assets\\defaults\\sink.png"},
             "source": {
                 "id": "dummy_source",
-                "source": "Assets\\defaults\\source.png",
+                "source": "assets\\defaults\\source.png",
             },
         }
 
@@ -2584,577 +2594,3 @@ class factory_GUIApp(MDApp):
                     kwargs["mouse_pos"][0],
                     kwargs["mouse_pos"][1] - self.root.ids.canvas_layout.pos[0] / 2,
                 )
-
-    # VALIDATION FUNCTIONS
-    def validate_thermalsystem(self, textfield):
-        # check for the required validation type and perform checks accordingly
-        if textfield.validation_type in ("thermalsystem_temperature"):
-            # if (self.root.ids.checkbox_thermasystem_temperature_min.active):
-            if self.root.ids.textfield_thermalsystem_temperature_min.text == "":
-                temperature_min = -273
-            elif self.root.ids.textfield_thermalsystem_temperature_min.text == "-":
-                temperature_min = -273
-                print("Temperatur min ist -273")
-            else:
-                temperature_min = float(
-                    self.root.ids.textfield_thermalsystem_temperature_min.text
-                )
-                print("Temperatur min eingetippt")
-
-            if self.root.ids.textfield_thermalsystem_temperature_max.text == "":
-                temperature_max = 1000000000
-                print("Temperatur maximal hoch")
-            elif self.root.ids.textfield_thermalsystem_temperature_max.text == "-":
-                temperature_max = 1000000000
-                print("Temperatur max maximal hoch")
-            else:
-                temperature_max = float(
-                    self.root.ids.textfield_thermalsystem_temperature_max.text
-                )
-                print("Temperatur max eingetippt")
-
-            if self.root.ids.textfield_thermalsystem_temperature_start.text == "":
-                temperature_start = temperature_min
-                print(
-                    "temperature start sollte temperature min entsprechen",
-                    temperature_start,
-                    temperature_min,
-                )
-            elif self.root.ids.textfield_thermalsystem_temperature_start.text == "-":
-                temperature_start = 0
-                print("temperature start ist 0")
-            else:
-                temperature_start = float(
-                    self.root.ids.textfield_thermalsystem_temperature_start.text
-                )
-                print("temperature start eingetippt")
-
-            # Eigentliche Checks durchführen
-            # tmin < tmax
-            if not temperature_min <= temperature_max:
-                textfield.helper_text = (
-                    "temperature min is not allowed to be higher than temperature max"
-                )
-                print("t_min zu niedrig bzw t_max zu hoch")
-                return False
-            else:
-                print("t_max größer als t_min")
-
-            # tstart <= tmax
-            if not temperature_start <= temperature_max:
-                textfield.helper_text = (
-                    "temperature start is not allowed to be higher temperature max"
-                )
-                print("t_start darf nicht höher sein als t_max")
-                return False
-            else:
-                print("t_max größer als t_start")
-
-            # tmin <= tstart
-            if not temperature_start >= temperature_min:
-                textfield.helper_text = (
-                    "temperature min is not allowed to be higher than temperature start"
-                )
-                print("t_start muss größer sein als t_min")
-                return False
-            else:
-                print("t_start ist größer als t_min")
-
-            # tmin >= -273
-            if not temperature_min >= -273:
-                textfield.helper_text = (
-                    "temperature should be higher than or equal to -273°C"
-                )
-                print("t_min zu klein")
-                return False
-            else:
-                print("t_min Wert ist ok")
-
-            if not temperature_max >= -273:
-                textfield.helper_text = (
-                    "temperature should be higher than or equal to -273°C"
-                )
-                print("t_max zu niedrig")
-                return False
-            else:
-                print("t_max Wert ist ok")
-
-            if not temperature_start >= -273:
-                textfield.helper_text = (
-                    "temperature should be higher than or equal to -273°C"
-                )
-                print("t_start zu niedrig")
-                return False
-            else:
-                print("t_start Wert ist ok")
-
-        # all checks passed? set value to be valid
-        textfield.value_valid = True
-        textfield.error = False
-
-    def validate_deadtime(self):
-        print("Komponente 'dedatime' aufgerufen")
-
-    def validate_schedule(self):
-        print("Kompoente 'schedule' aufgerufen")
-
-    def validate_storage(self):
-        print("Komponente 'storage' aufgerufen")
-
-    def validate_converter(self, textfield):
-        print("Komponente 'converter' aufgerufen")
-
-        if textfield.validation_type in ("converter"):
-            if self.root.ids.textfield_converter_power_max.text == "":
-                power_max = 0
-                print("max power gleich 0")
-            elif self.root.ids.textfield_converter_power_max.text == "-":
-                power_max = 0
-                print("max power gleich 0")
-            else:
-                power_max = float(self.root.ids.textfield_converter_power_max.text)
-                print("max power eingetippt")
-
-            if self.root.ids.textfield_converter_power_min.text == "":
-                power_min = 0
-                print("min power gleich 0")
-            elif self.root.ids.textfield_converter_power_min.text == "-":
-                power_min = 0
-                print("min power gleich 0")
-            else:
-                power_min = float(self.root.ids.textfield_converter_power_min.text)
-                print("min power eingetippt")
-
-            if self.root.ids.textfield_converter_power_nominal.text == "":
-                power_nominal = 0
-                print("nominal power gleich ß")
-            elif self.root.ids.textfield_converter_power_nominal.text == "-":
-                power_nominal = 0
-                print("nominal power gleich 0")
-            else:
-                power_nominal = float(
-                    self.root.ids.textfield_converter_power_nominal.text
-                )
-                print("nominal power eigetippt")
-
-            if self.root.ids.textfield_converter_eta_max.text == "":
-                eta_max = 0
-                print("eta max gleich 0")
-            elif self.root.ids.textfield_converter_eta_max.text == "-":
-                eta_max = 0
-                print("eta max gleich 0")
-            else:
-                eta_max = float(self.root.ids.textfield_converter_eta_max.text)
-                print("eta max eingetippt")
-
-            if self.root.ids.textfield_converter_availability.text == "":
-                converter_availability = 0
-                print("converter availability gleich 0")
-            elif self.root.ids.textfield_converter_availability.text == "-":
-                converter_availability = 0
-                print("converter availabiltiy gleich 0")
-            else:
-                converter_availability = float(
-                    self.root.ids.textfield_converter_availability.text
-                )
-                print("converter availability eingetippt")
-
-            if not power_max >= power_min:
-                print("max power darf nicht kleiner als min power sein")
-                textfield.helper_text = "max. operating power should be higher than or equal to min. operating power"
-                return False
-            else:
-                print("max power größer als min power")
-
-            if power_max > power_min and power_min == 0:
-                print("A.1.1")
-                self.root.ids.textfield_converter_power_min.error = True
-                self.root.ids.textfield_converter_power_min.helper_text = (
-                    "no min. operating power"
-                )
-                # textfield.helper_text = "no min. operating power"
-                # return
-            else:
-                print("B")
-
-            if power_nominal != 0 and (
-                power_nominal < power_min or power_nominal > power_max
-            ):
-                print("E.1")
-                textfield.helper_text = (
-                    "operating point is outside the limits of min. or max. power"
-                )
-                return False
-            else:
-                print("E.2")
-
-            if not (eta_max >= 0 and eta_max <= 100):
-                print("")
-                textfield.helper_text = "expected percentage value between 0-100% !"
-                return False
-            else:
-                print("I.2")
-
-            if not (converter_availability >= 0 and converter_availability <= 100):
-                print("converter availaility außerhalb der Grenzen")
-                textfield.helper_text = "expected a percentage value between 0-100% !"
-                return False
-            else:
-                print("Wert für converter availability erlaubt")
-
-        # all checks passed? set value to be valid
-        textfield.value_valid = True
-        textfield.error = False
-
-    def validate_sink(self, textfield):
-        print("sink")
-
-        # if textfield.validation_type in ("sink_power_max", "sink_power_min", "sink_demand"):
-        if textfield.validation_type in ("sink"):
-
-            if self.root.ids.textfield_sink_power_max.text == "":
-                sink_power_max = 0
-                # self.root.ids.textfield_sink_power_max.error = False
-                print("H.1")
-            elif self.root.ids.textfield_sink_power_max.text == "-":
-                sink_power_max = 0
-                # self.root.ids.textfield_sink_power_max.error = False
-                print("Fall H.2")
-            else:
-                sink_power_max = float(self.root.ids.textfield_sink_power_max.text)
-                # self.root.ids.textfield_sink_power_max.error = False
-                print("Fall H.3")
-
-            if self.root.ids.textfield_sink_power_min.text == "":
-                sink_power_min = 0
-                # self.root.ids.textfield_sink_power_min.error = False
-                print("H.1")
-            elif self.root.ids.textfield_sink_power_min.text == "-":
-                sink_power_min = 0
-                # self.root.ids.textfield_sink_power_min.error = False
-                print("Fall H.2")
-            else:
-                sink_power_min = float(self.root.ids.textfield_sink_power_min.text)
-                # self.root.ids.textfield_sink_power_min.error = False
-                print("Fall H.3")
-
-            if self.root.ids.textfield_sink_demand.text == "":
-                sink_demand = 0
-                # self.root.ids.textfield_sink_demand.error = False
-                print("H.1")
-            elif self.root.ids.textfield_sink_demand.text == "-":
-                sink_demand = 0
-                # self.root.ids.textfield_sink_demand.error = False
-                print("Fall H.2")
-            else:
-                sink_demand = float(self.root.ids.textfield_sink_demand.text)
-                # self.root.ids.textfield_sink_demand.error = False
-                print("Fall H.3")
-
-            if (sink_power_max != 0 or sink_power_min != 0) and sink_demand != 0:
-                print("M")
-                # textfield.error = True
-                textfield.helper_text = (
-                    "fixed demand with max/min input power not possible"
-                )
-                return False
-            else:
-                print("M.2")
-                textfield.helper_text = "numbers are ok"
-
-        # all checks passed? set value to be valid
-        textfield.value_valid = True
-        textfield.error = False
-
-    def validate_source(self, textfield):
-
-        # if textfield.validation_type in ("source_power_max", "source_power_min", "source_availability", "source_determined_power"):
-        if textfield.validation_type in ("source"):
-
-            if self.root.ids.textfield_source_availability.text == "":
-                source_availability = 0
-                # self.root.ids.textfield_source_availability.error = False
-                print("H.1")
-            elif self.root.ids.textfield_source_availability.text == "-":
-                source_availability = 0
-                # self.root.ids.textfield_source_availability.error = False
-                print("Fall H.2")
-            else:
-                source_availability = float(
-                    self.root.ids.textfield_source_availability.text
-                )
-                # self.root.ids.textfield_source_availability.error = False
-                print("Fall H.3")
-
-            if self.root.ids.textfield_source_power_max.text == "":
-                source_power_max = 0
-                # self.root.ids.textfield_sink_demand.error = False
-                print("H.1")
-            elif self.root.ids.textfield_source_power_max.text == "-":
-                source_power_max = 0
-                # self.root.ids.textfield_sink_demand.error = False
-                print("Fall H.2")
-            else:
-                source_power_max = float(self.root.ids.textfield_source_power_max.text)
-                # self.root.ids.textfield_sink_demand.error = False
-                print("Fall H.3")
-
-            if self.root.ids.textfield_source_power_min.text == "":
-                source_power_min = 0
-                # self.root.ids.textfield_sink_power_min.error = False
-                print("H.1")
-            elif self.root.ids.textfield_source_power_min.text == "-":
-                source_power_min = 0
-                # self.root.ids.textfield_sink_power_min.error = False
-                print("Fall H.2")
-            else:
-                source_power_min = float(self.root.ids.textfield_source_power_min.text)
-                # self.root.ids.textfield_sink_power_min.error = False
-                print("Fall H.3")
-
-            if self.root.ids.textfield_source_determined_power.text == "":
-                source_determined_power = 0
-                # self.root.ids.textfield_sink_demand.error = False
-                print("H.1")
-            elif self.root.ids.textfield_source_determined_power.text == "-":
-                source_determined_power = 0
-                # self.root.ids.textfield_sink_demand.error = False
-                print("Fall H.2")
-            else:
-                source_determined_power = float(
-                    self.root.ids.textfield_source_determined_power.text
-                )
-                # self.root.ids.textfield_sink_demand.error = False
-                print("Fall H.3")
-
-            if not (source_availability >= 0 and source_availability <= 100):
-                print("K")
-                # textfield.error = True
-                textfield.helper_text = "expected percentage value between 0-100% !"
-                return False
-            else:
-                print("K.2")
-                textfield.helper_text = "numbers are ok"
-
-            # if source_power_max != "" and source_availability == 0:
-            #     print("L")
-            #     #textfield.error = True
-            #     textfield.helper_text = "availablility must be set"
-            #     return
-            # else:
-            #     print("L.2")
-            #     textfield.helper_text = "numbers are ok"
-
-            if source_power_max == 0 and source_availability != 0:
-                print("L")
-                # textfield.error = True
-                textfield.helper_text = "maximum output power must be set"
-                return False
-            else:
-                print("L.2")
-                textfield.helper_text = "numbers are ok"
-
-            if (
-                source_power_max != 0 or source_power_min != 0
-            ) and source_determined_power != 0:
-                print("N")
-                # textfield.error = True
-                textfield.helper_text = (
-                    "fixed operation level with max/min output power not possible"
-                )
-                return False
-            else:
-                print("N.2")
-                textfield.helper_text = "numbers are ok"
-
-        # all checks passed? set value to be valid
-        textfield.value_valid = True
-        textfield.error = False
-
-    def validate_textfield_input(self, textfield):
-        """Description...."""
-
-        # Set unsaved changes on asset to True
-        self.unsaved_changes_on_asset = True
-
-        # empty inputs do not have to be validated
-        if textfield.text.strip() == "":
-            textfield.text = ""
-            textfield.error = False
-            textfield.value_valid = True
-            return
-
-        # #assume value as invalid
-        textfield.value_valid = False
-        textfield.error = True
-
-        # Make sure that the input is a number
-        try:
-            textfield.text = textfield.text.replace(",", ".").strip()
-            input = float(textfield.text)
-        except:
-            if not textfield.text == "-":
-                textfield.text = textfield.text[:-1]
-                return
-
-        # negative Zahlen erlauben? Grenze dann bei -273°C?
-        # keine negativen Zahlen für alle Textfelder (ausgenommen thermalsystem) ?
-        if not textfield.validation_type in ("thermalsystem_temperature"):
-            if textfield.text == "-":
-                input = 0
-            if input < 0:
-                textfield.text = textfield.text[1:]
-                input = input * -1
-
-        if (
-            textfield.validation_type == "thermalsystem_temperature"
-            and not self.validate_thermalsystem(textfield)
-        ):
-            return
-        elif textfield.validation_type == "deadtime":
-            self.validate_deadtime()
-        elif textfield.validation_type == "schedule":
-            self.validate_schedule()
-        elif textfield.validation_type == "storage":
-            self.validate_storage()
-        elif textfield.validation_type == "converter" and not self.validate_converter(
-            textfield
-        ):
-            return
-        elif textfield.validation_type == "sink" and not self.validate_sink(textfield):
-            return
-        elif textfield.validation_type == "source" and not self.validate_source(
-            textfield
-        ):
-            return
-
-        # all checks passed? set value to be valid
-        textfield.value_valid = True
-        textfield.error = False
-
-        # if tmin leer:
-        # oder checkbox:
-        #     tmin = -273
-        # else:
-        #     tmin = textfield_tmin
-        #
-        # if tmax leer:
-        # oder checkbox :
-        #     tmax = 100000000
-        # else:
-        #     tmax = textfield_tmax
-        #
-        # if tstart leer:
-        # oder checkbox:
-        #     tstart = tmin
-        # else:
-        #     tstart= textfield_tstart
-        #
-        #
-        # if tmin > tmax:
-        #     textfield.helper_text("...")
-        #     return
-
-    # CURRENTLY UNUSED FUNCTIONS
-
-    def show_connection_deletion_dialog(self):
-        """
-        This function shows the warndialog that asks the user if he really wants to delete the selcted connection.
-        If the user confirms the delete_connection method is called. Otherwise nothing will happen
-        """
-
-        # prepar helper function to suppress initial callback
-        def delete(instance):
-            self.delete_connection(connection_key)
-
-        # get key of the connection to be deleted
-        connection_key = self.selected_asset["key"]
-
-        # create dialog
-        btn_false = MDFlatButton(text="CANCEL")
-        btn_true = MDRaisedButton(text="DELETE CONNECTION")
-        self.dialog = MDDialog(
-            title="Delete Connection",
-            text=f"Do you really want to delete the Connection '{self.selected_asset['name']}'?",
-            buttons=[btn_false, btn_true],
-        )
-        btn_false.bind(on_release=self.dialog.dismiss)
-        btn_true.bind(on_release=delete)
-        self.dialog.open()
-
-    def show_scaling_selection_dialog(self, *args):
-        def set_text(text):
-            # this function returns the user selection to the object that the dialog has been called from
-            self.root.ids.textfield_timeseries_scaling.text = text
-
-            self.menu.dismiss()
-
-        # initialize empty list
-        dropdown_items = []
-
-        # append a dropdown item to the list
-        dropdown_items.append(
-            {
-                "viewclass": "OneLineListItem",
-                "text": "with a peak value of",
-                "on_release": lambda x="with a peak value of": set_text(x),
-            }
-        )
-        dropdown_items.append(
-            {
-                "viewclass": "OneLineListItem",
-                "text": "with an average value of",
-                "on_release": lambda x="with an average value of": set_text(x),
-            }
-        )
-        dropdown_items.append(
-            {
-                "viewclass": "OneLineListItem",
-                "text": "with a total value of",
-                "on_release": lambda x="with a total value of": set_text(x),
-            }
-        )
-
-        # create list widget
-        self.menu = MDDropdownMenu(
-            caller=self.root.ids.textfield_timeseries_scaling,
-            items=dropdown_items,
-            position="center",
-            width_mult=4,
-        )
-        # append widget to the UI
-        self.menu.bind()
-        self.menu.open()
-
-    def show_timeseries_selection_dialog(self, *args):
-        """
-        This function opens a dialog, in which the user can select one of the timeseries that are currently opened within self.timeseries.
-        The style of the window is defined as <dialog_timeseries_selection> within the kivy file.
-        It contains a button to call the excel-inport routine for timeseries as well.
-        """
-        self.dialog = MDDialog(
-            title="Select Timeseries",
-            type="custom",
-            content_cls=dialog_timeseries_selection(),
-        )
-
-        # iterate over all imported timeseries
-        for key in self.timeseries:
-            # apply filter given by search textfield
-            if (
-                self.dialog.content_cls.ids.search_field_timeseries.text == ""
-                or self.dialog.content_cls.ids.search_field_timeseries.text.upper()
-                in key.upper()
-                or self.dialog.content_cls.ids.search_field_timeseries.text.upper()
-                in self.timeseries[key][0].upper()
-            ):
-                # create list item
-                item = TwoLineListItem(
-                    text=key,
-                    secondary_text=self.timeseries[key][0],
-                    on_touch_down=self.select_timeseries_list_item,
-                )
-
-                # append item to list
-                self.dialog.content_cls.ids.list_timeseries.add_widget(item)
-        self.dialog.open()

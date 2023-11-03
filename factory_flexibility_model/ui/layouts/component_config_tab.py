@@ -1,9 +1,6 @@
 # IMPORTS
-from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
 
-# LAYOUTS
-Builder.load_file(r"factory_flexibility_model\ui\layouts\component_config_tab.kv")
 
 # CLASSES
 class layout_component_definition(BoxLayout):

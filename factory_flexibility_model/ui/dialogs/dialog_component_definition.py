@@ -1,17 +1,11 @@
 # This file contains the function that creates and displays the dialog to specify name and path for a new session
 
 # IMPORTS
-from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.dialog import MDDialog
 
 import factory_flexibility_model.ui.utility.flowtype_determination as fd
-
-# LAYOUTS
-Builder.load_file(
-    r"factory_flexibility_model\ui\dialogs\dialog_component_definition.kv"
-)
 
 
 # CLASSES
