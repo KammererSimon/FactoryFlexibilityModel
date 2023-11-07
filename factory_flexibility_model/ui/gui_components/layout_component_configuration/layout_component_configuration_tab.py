@@ -38,6 +38,12 @@ def update_component_configuration_tab(app):
     :param app: Pointer to the main factory_GUIApp-Object
     """
 
+    # if no asset is selected: show the standard screen and stop
+    if app.selected_asset is None:
+        app.root.ids.asset_config_screens.current = "flowtype_list"
+        return
+
+    # otherwise get the information on the current component and show it...
     asset_key = app.selected_asset["key"]
     asset_type = app.selected_asset["type"]
 

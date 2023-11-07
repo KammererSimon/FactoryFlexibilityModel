@@ -1,6 +1,7 @@
 #:import close_dialog factory_flexibility_model.ui.utility.window_handling.close_dialog
 #:import save_changes_on_flowtype factory_flexibility_model.ui.gui_components.layout_flowtype_configuration.layout_flowtype_list.save_changes_on_flowtype
 #:import show_color_picker factory_flexibility_model.ui.gui_components.layout_flowtype_configuration.dialog_flowtype_definition.dialog_flowtype_definition.show_color_picker
+#:import show_unit_selection_dropdown factory_flexibility_model.ui.gui_components.layout_flowtype_configuration.dialog_flowtype_definition.dropdown_unit_selection.show_unit_selection_dropdown
 
 <DialogFlowtypeDefinition>
     size_hint: None, None
@@ -56,7 +57,7 @@
                 size_hint_y: None
                 height: dp(30)
                 hint_text: 'Represented by unit:'
-                on_release: app.show_unit_selection_dropdown(self)
+                on_release: show_unit_selection_dropdown(app, self)
                 on_release: button_flowtype_save.disabled = False
             MDBoxLayout:
                 orientation: "horizontal"

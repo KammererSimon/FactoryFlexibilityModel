@@ -24,9 +24,10 @@ class CanvasWidget(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        with self.canvas:
-            Color("#1D4276")
-            Color(0.5, 0.3, 0.8, 1)
+        # with self.canvas:
+        #    Color("#1D4276")
+        #    Color(0.5, 0.3, 0.8, 1)
+        # TODO: delete this if it causes no harm to comment it ;)
 
     def on_touch_up(self, touch):
         """
@@ -50,8 +51,6 @@ class CanvasWidget(Widget):
 
 
 # FUNCTIONS
-
-
 def decrease_scaling_factor(app):
     """
     When called, this function decreses the size of all components within the layout visualisation by 5%.
@@ -96,7 +95,7 @@ def initialize_visualization(app, *args):
         app.session_data["display_scaling_factor"]
         * app.root.ids.canvas_layout.size[0]
         / 1000
-        / (len(app.blueprint.components) + 1) ** (0.25)
+        / (len(app.blueprint.components) + 1) ** app.config["display_scaling_exponent"]
     )
 
     # specify height of components in px. Standard is 100px, the blueprint provides an additional scaling factor
@@ -146,7 +145,7 @@ def initialize_visualization(app, *args):
         new_line = Line(
             points=(0, 0, 1000, 1000),
             width=8 * app.session_data["display_scaling_factor"],
-        )  #
+        )
 
         # place it on the canvas
         canvas.add(new_line)
@@ -288,6 +287,123 @@ def initialize_visualization(app, *args):
     update_visualization(app)
 
 
+def save_component_positions(app):
+    """
+    This function is called everytime when a component has been moven by the user within the layout visualisation.
+    It checks the current positions of all components for deviations from their last known location.
+    If a position deviates more than the expected rounding error the new position is stored in the blueprint
+    """
+
+    from factory_flexibility_model.ui.gui_components.dialog_delete_component.dialog_delete_component import (
+        show_component_deletion_dialog,
+    )
+
+    # create a factor that determines the size of displayed components depending on the canvas size and the number
+    # of elements to be displayed. The concrete function is try and error and my be changed during development
+    scaling_factor = (
+        app.session_data["display_scaling_factor"]
+        * app.root.ids.canvas_layout.size[0]
+        / 1000
+        / (len(app.blueprint.components) + 1)
+        ** (app.config["display_scaling_exponent"])
+    )
+
+    # specify size of the components depending on the determined scaling factor
+    component_height = 100 * scaling_factor  # height in px
+
+    # specify display widths of components in px depending on their type and the scaling factor
+    component_width = {
+        "source": component_height,
+        "sink": component_height,
+        "pool": component_height,
+        "storage": component_height * 1.5,
+        "converter": component_height * 1.5,
+        "deadtime": component_height * 1.5,
+        "thermalsystem": component_height * 1.5,
+        "triggerdemand": component_height * 1.5,
+        "schedule": component_height * 1.5,
+    }
+
+    # keep track if there had been any changes
+    changes_done = False
+
+    # iterate over all components
+    for component in app.blueprint.components.values():
+        # calculate the current relative position on the canvas for the component
+        current_pos_x = round(
+            (
+                app.root.ids[f"frame_{component['key']}"].pos[0]
+                - 50
+                - app.root.ids.canvas_layout.pos[0]
+                + component_width[component["type"]] / 2
+            )
+            / (app.root.ids.canvas_layout.width - 100)
+            * app.config["display_grid_size"][0],
+            0,
+        )
+        current_pos_y = round(
+            (
+                app.root.ids[f"frame_{component['key']}"].pos[1]
+                - 50
+                - app.root.ids.canvas_layout.pos[1]
+                + component_height / 2
+            )
+            / (app.root.ids.canvas_layout.height - 100)
+            * app.config["display_grid_size"][1],
+            0,
+        )
+
+        # make sure that the new position is within the grid. If not: move tho component to the closest border
+        if current_pos_x < 0:
+            current_pos_x = 0
+        if current_pos_x > app.config["display_grid_size"][0]:
+            current_pos_x = app.config["display_grid_size"][0]
+        if current_pos_y < 0:
+            current_pos_y = 0
+        if current_pos_y > app.config["display_grid_size"][1]:
+            current_pos_y = app.config["display_grid_size"][1]
+
+        # check, if window size is big enough to avoid rounding errors
+        if (
+            app.root.ids.canvas_layout.width > 800
+            and app.root.ids.canvas_layout.height > 500
+        ):
+
+            # Check, if the component has been dragged on top of the recycle bin to delete it.
+            if (
+                app.root.ids[f"frame_{component['key']}"].pos[0]
+                < app.root.ids.icon_delete_component.pos[0]
+                + app.root.ids.icon_delete_component.size[0]
+            ) and (
+                app.root.ids[f"frame_{component['key']}"].pos[1]
+                < app.root.ids.icon_delete_component.pos[1]
+                + app.root.ids.icon_delete_component.size[1]
+            ):
+                # if yes: select the asset
+                app.selected_asset = app.blueprint.components[component["key"]]
+
+                # call deletion method
+                show_component_deletion_dialog(app)
+
+                update_visualization(app)
+
+            else:
+                # if x coordinate of the component has changed more than expected rounding error:
+                if not current_pos_x - component["GUI"]["position_x"] == 0:
+                    component["GUI"]["position_x"] = current_pos_x
+                    changes_done = True
+
+                # if y coordinate of the component has changed more than expected rounding error: store it
+                if not current_pos_y - component["GUI"]["position_y"] == 0:
+                    component["GUI"]["position_y"] = current_pos_y
+                    changes_done = True
+
+    # mark session as changed if changes have been done:
+    if changes_done:
+        app.unsaved_changes_on_session = True
+        initialize_visualization(app)
+
+
 def update_visualization(app, *args, **kwargs):
     """
     This function updates the position of connections and labels of the factory layout visualization.
@@ -303,7 +419,7 @@ def update_visualization(app, *args, **kwargs):
         app.session_data["display_scaling_factor"]
         * app.root.ids.canvas_layout.size[0]
         / 1000
-        / (len(app.blueprint.components) + 1) ** (0.25)
+        / (len(app.blueprint.components) + 1) ** app.config["display_scaling_exponent"]
     )
 
     # specify size of the components depending on the size of the canvas

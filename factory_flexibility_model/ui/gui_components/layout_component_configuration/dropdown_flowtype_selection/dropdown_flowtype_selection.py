@@ -1,6 +1,7 @@
 # IMPORTS
 from kivymd.uix.menu import MDDropdownMenu
 
+from factory_flexibility_model.ui.utility.window_handling import close_popup
 
 
 # FUNCTIONS
@@ -15,8 +16,10 @@ def set_text(caller, text, app):
     """
     # set selected text to caller.text
     caller.text = text
+
     # dismiss the dropdowp popup
-    app.popup.dismiss()
+    close_popup(app)
+
 
 def show_flowtype_selection_dropdown(app, caller):
     """
@@ -30,16 +33,13 @@ def show_flowtype_selection_dropdown(app, caller):
 
     # create list of dropdown items
     dropdown_items = [
-        {"text": flowtype.name,
-         "viewclass": "OneLineListItem",
-         "on_release": lambda x=flowtype.name, app=app: set_text(caller, x, app)
-         } for flowtype in app.blueprint.flowtypes.values()
+        {
+            "text": flowtype.name,
+            "viewclass": "OneLineListItem",
+            "on_release": lambda x=flowtype.name, app=app: set_text(caller, x, app),
+        }
+        for flowtype in app.blueprint.flowtypes.values()
     ]
 
-    app.popup = MDDropdownMenu(
-        caller=caller,
-        items=dropdown_items,
-        width_mult=4
-    )
+    app.popup = MDDropdownMenu(caller=caller, items=dropdown_items, width_mult=4)
     app.popup.open()
-

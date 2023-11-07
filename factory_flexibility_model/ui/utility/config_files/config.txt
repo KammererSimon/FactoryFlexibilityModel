@@ -1,4 +1,5 @@
 display_scaling_factor: 0.6
+display_scaling_exponent: 0.3
 show_component_config_dialog_on_creation: False
 display_grid_points_x: 45
 display_grid_points_y: 30

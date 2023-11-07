@@ -2,7 +2,11 @@
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.dialog import MDDialog
-from factory_flexibility_model.ui.gui_components.info_popup.info_popup import show_info_popup
+
+from factory_flexibility_model.ui.gui_components.info_popup.info_popup import (
+    show_info_popup,
+)
+from factory_flexibility_model.ui.utility.window_handling import close_dialog
 
 
 # CLASSES
@@ -82,7 +86,7 @@ def save_session_config(app):
     app.root.ids.label_session_name.text = app.blueprint.info["name"]
 
     # close the dialog
-    app.dialog.dismiss
+    close_dialog(app)
 
 
 def show_session_config_dialog(app):
@@ -95,8 +99,9 @@ def show_session_config_dialog(app):
 
     # abort if there is no session yet
     if app.session_data["session_path"] is None:
-        show_info_popup(app,
-            "Cannot set session configuration before initializing or importing a session!"
+        show_info_popup(
+            app,
+            "Cannot set session configuration before initializing or importing a session!",
         )
         # close the component selection menu
         app.root.ids.component_shelf.set_state("closed")
@@ -166,7 +171,7 @@ def show_session_config_dialog(app):
 
     # bind callbacks to buttons
     btn_true.bind(on_release=lambda instance: save_session_config(app))
-    btn_false.bind(on_release=app.dialog.dismiss)
+    btn_false.bind(on_release=close_dialog(app))
     app.dialog.open()
 
 

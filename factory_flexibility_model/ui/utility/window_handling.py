@@ -1,6 +1,9 @@
 # IMPORTS
-import platform
 import ctypes
+import platform
+
+from kivymd.app import MDApp
+
 
 # FUNCTIONS
 def close_popup(app):
@@ -14,6 +17,7 @@ def close_popup(app):
     if app.popup is not None:
         app.popup.dismiss()
 
+
 def close_dialog(app):
     """
     This function checks, if there is a dialog window opened within app.dialog.
@@ -24,6 +28,7 @@ def close_dialog(app):
     """
     if app.dialog is not None:
         app.dialog.dismiss()
+
 
 def get_dpi():
     """
@@ -41,15 +46,21 @@ def get_dpi():
 
     return dpi
 
-def resize_window(app):
+
+def resize_window(instance, width=0, height=0):
     """
     This function is called everytime that the user maximizes, minimizes, restores or resizes the window. It makes sure, that everything stays scaled in the correct way.
 
-    :param app: Pointer to the current factory_GUIApp-instance
+    :param instance: dummy parameter to make the function resiliant against bindings that hand over a varying number of positional standard parameters
+    :param width: dummy parameter to make the function resiliant against bindings that hand over a varying number of positional standard parameters
+    :param height: dummy parameter to make the function resiliant against bindings that hand over a varying number of positional standard parameters
     :return: None
     """
 
-    from factory_flexibility_model.ui.gui_components.layout_canvas.factory_visualisation import initialize_visualization
+    from factory_flexibility_model.ui.gui_components.layout_canvas.factory_visualisation import (
+        initialize_visualization,
+    )
 
-    if app.session_data["session_path"] is not None:
+    app = MDApp.get_running_app()
+    if app.session_data["session_active"]:
         initialize_visualization(app)

@@ -6,9 +6,13 @@ from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.dialog import MDDialog
 
 import factory_flexibility_model.ui.utility.flowtype_determination as fd
-from factory_flexibility_model.ui.gui_components.layout_component_configuration.layout_component_configuration_tab import update_component_configuration_tab
+from factory_flexibility_model.ui.gui_components.layout_canvas.factory_visualisation import (
+    initialize_visualization,
+)
+from factory_flexibility_model.ui.gui_components.layout_component_configuration.layout_component_configuration_tab import (
+    update_component_configuration_tab,
+)
 from factory_flexibility_model.ui.utility.window_handling import close_dialog
-from factory_flexibility_model.ui.gui_components.layout_canvas.factory_visualisation import initialize_visualization
 
 
 # CLASSES
@@ -24,8 +28,7 @@ def show_component_definition_dialog(app):
     """
 
     # close the previous dialog
-    if app.dialog is not None:
-        app.dialog.dismiss
+    close_dialog(app)
 
     # create dialog
     btn_false = MDFlatButton(text="Cancel")

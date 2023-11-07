@@ -5,6 +5,8 @@ from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import TwoLineAvatarListItem
 
+from factory_flexibility_model.ui.utility.window_handling import close_dialog
+
 
 # CLASSES
 class dialog_converter_ratios(BoxLayout):
@@ -18,7 +20,6 @@ class TextfieldIconListItem(TwoLineAvatarListItem):
 
 class TextfieldCheckboxIconListItem(TwoLineAvatarListItem):
     connection_key = StringProperty()
-
 
 
 # FUNCTIONS
@@ -101,7 +102,7 @@ def save_converter_ratios(app):
     app.selected_asset["GUI"]["primary_flow"] = app.dialog.primary_flow
 
     # close the dialog
-    app.dialog.dismiss
+    close_dialog(app)
 
 
 def update_bilance_calculation(app):
@@ -311,8 +312,6 @@ def update_connection_lists(app):
                     item
                 )
 
-
-
             elif connection["flowtype"].unit.is_mass():
                 # add the checkbox to the correct group
                 item.ids.list_item_checkbox.group = "mass"
@@ -342,30 +341,45 @@ def update_primary_flow(app):
         if input.ids.list_item_primary.active:
             scaling_factor = float(input.ids.list_item_textfield.text)
             primary_flow_item = input
-            app.dialog.primary_flow = app.blueprint.connections[primary_flow_item.connection_key]["from"]
+            app.dialog.primary_flow = app.blueprint.connections[
+                primary_flow_item.connection_key
+            ]["from"]
     for input in app.dialog.content_cls.ids.list_converter_inputs_mass.children:
         if input.ids.list_item_primary.active:
             scaling_factor = float(input.ids.list_item_textfield.text)
             primary_flow_item = input
-            app.dialog.primary_flow = app.blueprint.connections[primary_flow_item.connection_key]["from"]
+            app.dialog.primary_flow = app.blueprint.connections[
+                primary_flow_item.connection_key
+            ]["from"]
     for output in app.dialog.content_cls.ids.list_converter_outputs_energy.children:
         if output.ids.list_item_primary.active:
             scaling_factor = float(output.ids.list_item_textfield.text)
             primary_flow_item = output
-            app.dialog.primary_flow = app.blueprint.connections[primary_flow_item.connection_key]["to"]
+            app.dialog.primary_flow = app.blueprint.connections[
+                primary_flow_item.connection_key
+            ]["to"]
     for output in app.dialog.content_cls.ids.list_converter_outputs_mass.children:
         if output.ids.list_item_primary.active:
             scaling_factor = float(output.ids.list_item_textfield.text)
             primary_flow_item = output
-            app.dialog.primary_flow = app.blueprint.connections[primary_flow_item.connection_key]["to"]
+            app.dialog.primary_flow = app.blueprint.connections[
+                primary_flow_item.connection_key
+            ]["to"]
 
     # scale all ratios
     for input in app.dialog.content_cls.ids.list_converter_inputs_energy.children:
-        input.ids.list_item_textfield.text = str(round(float(input.ids.list_item_textfield.text)/scaling_factor,5))
+        input.ids.list_item_textfield.text = str(
+            round(float(input.ids.list_item_textfield.text) / scaling_factor, 5)
+        )
     for input in app.dialog.content_cls.ids.list_converter_inputs_mass.children:
-        input.ids.list_item_textfield.text = str(round(float(input.ids.list_item_textfield.text)/scaling_factor,5))
+        input.ids.list_item_textfield.text = str(
+            round(float(input.ids.list_item_textfield.text) / scaling_factor, 5)
+        )
     for output in app.dialog.content_cls.ids.list_converter_outputs_mass.children:
-        output.ids.list_item_textfield.text = str(round(float(output.ids.list_item_textfield.text)/scaling_factor,5))
+        output.ids.list_item_textfield.text = str(
+            round(float(output.ids.list_item_textfield.text) / scaling_factor, 5)
+        )
     for input in app.dialog.content_cls.ids.list_converter_outputs_energy.children:
-        input.ids.list_item_textfield.text = str(round(float(input.ids.list_item_textfield.text)/scaling_factor,5))
-
+        input.ids.list_item_textfield.text = str(
+            round(float(input.ids.list_item_textfield.text) / scaling_factor, 5)
+        )

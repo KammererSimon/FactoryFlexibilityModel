@@ -100,6 +100,7 @@ def import_config():
         "main_color": color.color(config_file["main_color"]),
         "color_preset": color_preset,
         "display_scaling_factor": config_file["display_scaling_factor"],
+        "display_scaling_exponent": config_file["display_scaling_exponent"],
         "assets": asset_paths,
         "show_component_config_dialog_on_creation": config_file[
             "show_component_config_dialog_on_creation"

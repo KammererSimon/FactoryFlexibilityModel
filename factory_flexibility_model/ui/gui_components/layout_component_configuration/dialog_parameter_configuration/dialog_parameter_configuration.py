@@ -7,6 +7,8 @@ from kivy_garden.graph import LinePlot
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import IconLeftWidget, IconRightWidget, TwoLineAvatarIconListItem
 
+from factory_flexibility_model.ui.utility.window_handling import close_popup
+
 
 # CLASSES
 class DialogParameterConfig(BoxLayout):
@@ -34,7 +36,7 @@ def add_static_parameter_value(app):
     value = app.popup.content_cls.ids.textfield_value.text
 
     # close popup
-    app.popup.dismiss()
+    close_popup(app)
 
     # get the asset and parameter keys
     asset_key = app.selected_asset["key"]
@@ -64,7 +66,7 @@ def add_timeseries_parameter_value(app):
     parameter_key = app.dialog.parameter
 
     # close popup
-    app.popup.dismiss()
+    close_popup(app)
 
     # create a key to adress the variation
     variation = 0
@@ -312,7 +314,7 @@ def update_timeseries_preview(app):
     for plot in list(graph.plots):
         graph.remove_plot(plot)
     # initialize the timeseries plot if not done yet
-    timeseries_plot = LinePlot(color=app.main_color.get_rgba(), line_width=1)
+    timeseries_plot = LinePlot(color=app.config["main_color"].get_rgba(), line_width=1)
     graph.add_plot(timeseries_plot)
 
     # update plot points for the graph
