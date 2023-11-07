@@ -1,0 +1,141 @@
+#:import toggle_emission_limit factory_flexibility_model.ui.gui_components.dialog_session_options.dialog_session_options.toggle_emission_limit
+#:import toggle_emission_cost factory_flexibility_model.ui.gui_components.dialog_session_options.dialog_session_options.toggle_emission_cost
+#:import toggle_currency factory_flexibility_model.ui.gui_components.dialog_session_options.dialog_session_options.toggle_currency
+
+<DialogSessionConfig>
+    spacing: "12dp"
+    padding: (0, 30)
+    size_hint: (None, None)
+    height: "800dp"
+    width: "500dp"
+    orientation: "vertical"
+
+    MDLabel:
+        text: "Session Settings"
+        font_style: "H5"
+        size_hint_y: None
+        height: dp(35)
+        id: label_currency
+    MDTextField:
+        id: textfield_session_name
+        hint_text: "Factory Name"
+        required: True
+        max_text_length: 30
+        helper_text_mode: "on_error"
+        helper_text: "Enter a new name for the Project"
+
+    MDTextField:
+        id: textfield_session_description
+        hint_text: "Factiory Description"
+        helper_text_mode: "on_error"
+        helper_text: "Enter a brief project description"
+
+    MDLabel:
+        text: "GUI Settings"
+        font_style: "H5"
+        size_hint_y: None
+        height: dp(35)
+
+    BoxLayout:
+        orientation: "horizontal"
+        size_hint_y: None
+        height: dp(35)
+        MDCheckbox:
+            size_hint_x: None
+            width: dp(30)
+            id: checkbox_config
+        MDLabel:
+            text: "Show component definition menu on creation"
+
+
+
+    BoxLayout:
+        orientation: "horizontal"
+        BoxLayout:
+            orientation: "vertical"
+            MDLabel:
+                text: "Currency"
+                font_style: "H5"
+                size_hint_y: None
+                height: dp(35)
+                id: label_currency
+            BoxLayout:
+                orientation: "horizontal"
+                size_hint_y: None
+                height: dp(45)
+                MDCheckbox:
+                    group: "currency"
+                    size_hint_x: None
+                    width: dp(30)
+                    id: checkbox_euro
+                    on_active: toggle_currency(app)
+                MDLabel:
+                    text: "€"
+                MDCheckbox:
+                    group: "currency"
+                    size_hint_x: None
+                    width: dp(30)
+                    id: checkbox_dollar
+                MDLabel:
+                    text: "$"
+
+    MDLabel:
+        text: "Simulation Settings"
+        font_style: "H5"
+        size_hint_y: None
+        height: dp(35)
+
+    MDTextField:
+        id: textfield_session_timesteps
+        hint_text: "Number of simulation timesteps"
+        helper_text_mode: "on_error"
+        helper_text: "Value must be an integer"
+
+    MDTextField:
+        id: textfield_session_timestep_length
+        hint_text: "Length of simulation timesteps [hours]"
+        text: "1"
+        helper_text_mode: "on_error"
+        helper_text: "Value must be a float"
+        disabled: True
+
+    BoxLayout:
+        orientation: "horizontal"
+        size_hint_y: None
+        height: dp(45)
+        MDCheckbox:
+            size_hint_x: None
+            width: dp(30)
+            id: checkbox_slack
+        MDLabel:
+            text: "Enable Slacks"
+
+    BoxLayout:
+        orientation: "horizontal"
+        size_hint_y: None
+        height: dp(45)
+        MDCheckbox:
+            size_hint_x: None
+            width: dp(30)
+            id: checkbox_emission_cost
+            on_active: toggle_emission_cost(app)
+        MDTextField:
+            id: textfield_emission_cost
+            helper_text_mode: "on_error"
+            helper_text: "Value must be a float"
+
+    BoxLayout:
+        orientation: "horizontal"
+        size_hint_y: None
+        height: dp(45)
+        MDCheckbox:
+            size_hint_x: None
+            width: dp(30)
+            id: checkbox_emission_limit
+            on_active: toggle_emission_limit(app)
+        MDTextField:
+            id: textfield_emission_limit
+            text: "Infinite"
+            hint_text: "Set emission limit [kgCO2]"
+            helper_text_mode: "on_error"
+            helper_text: "Value must be a float"

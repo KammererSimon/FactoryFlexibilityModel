@@ -1,0 +1,7 @@
+display_scaling_factor: 0.6
+show_component_config_dialog_on_creation: False
+display_grid_points_x: 45
+display_grid_points_y: 30
+main_color: 1D4276
+show_component_config_dialog_on_creation: False
+asset_folder: factory_flexibility_model\\ui\\assets

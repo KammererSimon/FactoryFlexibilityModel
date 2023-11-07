@@ -1,0 +1,20 @@
+#:import show_unit_config_dialog factory_flexibility_model.ui.gui_components.dialog_unit_definition.dialog_unit_definition.show_unit_config_dialog
+
+<layout_flowtype_list>
+    BoxLayout:
+        orientation: "vertical"
+        padding: (20, 20)
+        MDLabel:
+            text: "Flowtypes"
+            font_style: "H5"
+            size_hint_y: None
+            height:  dp(40)
+        ScrollView:
+            MDList:
+                id: list_flowtypes
+        MDRectangleFlatIconButton:
+            text: "Unit Definitions"
+            icon: "cog"
+            line_color: 1, 1, 1, 1
+            on_release: show_unit_config_dialog(app)
+            pos_hint: {"center_x": .5, "center_y": .5}

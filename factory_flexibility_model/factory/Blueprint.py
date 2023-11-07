@@ -83,7 +83,7 @@ class Blueprint:
 
         :return: [true] if successfull
         """
-
+        print("check")
         # Check, if some specifications will be overwritten
         if not overwrite:
             if self.components or self.connections or self.flowtypes or self.units:

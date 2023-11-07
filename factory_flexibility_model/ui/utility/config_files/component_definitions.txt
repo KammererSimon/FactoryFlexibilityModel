@@ -1,0 +1,193 @@
+converter:
+  default_icon: converter_default
+  parameters:
+    availabiity:
+      description: Availability of Pmax
+      text: Availability
+      unit_type: '%'
+    delta_eta_high:
+      description: Rate of efficiency drop when exceeding nominal operating point
+      text: Upper Efficiency Drop
+      unit_type: efficiency_drop
+    delta_eta_low:
+      description: Rate of efficiency drop when operating below nominal operating
+        point
+      text: Lower Efficiency Drop
+      unit_type: efficiency_drop
+    eta_max:
+      description: Maximum Efficiency at nominal operating Point
+      text: Best Efficiency
+      unit_type: '%'
+    max_neg_ramp_power:
+      description: Maximum Ramp Down
+      text: Negative Ramping
+      unit_type: ramping
+    max_pos_ramp_power:
+      description: Maximum Ramp Up
+      text: Positive Ramping
+      unit_type: ramping
+    power_max:
+      description: Maximum Conversion Rate per Timestep
+      text: Maximum Operating Point
+      unit_type: flowrate_primary
+    power_min:
+      description: Minimum Conversion Rate per Timestep
+      text: Minimum Operating Point
+      unit_type: flowrate_primary
+    power_nominal:
+      description: Operating Point of Max Efficiency
+      text: Nominal Operating Point
+      unit_type: flowrate_primary
+    ratios:
+      description: ''
+      text: Inputs/Outputs
+      unit_type: ''
+deadtime:
+  default_icon: deadtime_default
+  parameters:
+    delay:
+      description: Delay Number of Timesteps
+      text: Delay
+      unit_type: timesteps
+schedule:
+  default_icon: schedule_default
+  parameters:
+    demands:
+      description: List of individual Demands
+      text: Demands
+      unit_type: integer
+    power_max:
+      description: Maximum Total Flowrate
+      text: Max Throughput
+      unit_type: flowrate
+sink:
+  default_icon: sink_default
+  parameters:
+    co2_emissions_per_unit:
+      description: Caused Emissions
+      text: Emissions Caused
+      unit_type: emissions
+    cost:
+      description: Cost per Unit of Utilization
+      text: Cost
+      unit_type: currency
+    demand:
+      description: Endogenous given Demand
+      text: Demand
+      unit_type: flowrate
+    max_total_input:
+      description: Maximum cumulative input over all timesteps
+      text: Maximum Cumulative Input
+      unit_type: flow
+    power_max:
+      description: Maximum Input Flowrate
+      text: Maximum Input
+      unit_type: flowrate
+    power_min:
+      description: Minimum Input Flowrate
+      text: Minimum Input
+      unit_type: flowrate
+    revenue:
+      description: Revenue per Unit of Utilization
+      text: Revenue
+      unit_type: currency
+source:
+  default_icon: source_default
+  parameters:
+    availability:
+      description: Ratio of Maximum Output that is available at any time
+      text: Availability
+      unit_type: '%'
+    capacity_charge:
+      description: Fixed price charged per maximum utilized flowrate
+      text: Capacity Charge
+      unit_type: capacity_charge
+    co2_emissions_per_unit:
+      description: Caused Emissions
+      text: Emissions Caused
+      unit_type: emissions
+    cost:
+      description: Cost per Unit of Utilization
+      text: Cost
+      unit_type: currency
+    determined_power:
+      description: Endogenous given Input Volume
+      text: Fixed Output
+      unit_type: flowrate
+    power_max:
+      description: Maximum Output Flowrate
+      text: Maximum Output
+      unit_type: flowrate
+    power_min:
+      description: Minimum Output Flowrate
+      text: Minimum Output
+      unit_type: flowrate
+storage:
+  default_icon: storage_default
+  parameters:
+    capacity:
+      description: Storage Capacity
+      text: Capacity
+      unit_type: flow
+    efficiency:
+      description: Efficiency at nominal operation point
+      text: Base Efficiency
+      unit_type: '%'
+    leakage_soc:
+      description: Relative Leakage over Time
+      text: Relative Leakage
+      unit_type: leakage_soc
+    leakage_time:
+      description: Absolute Leakage over Time
+      text: Absolute Leakage
+      unit_type: leakage_time
+    power_max_charge:
+      description: Max Charging Power
+      text: Max Charging Power
+      unit_type: flowrate
+    power_max_discharge:
+      description: Max Discharging Power
+      text: Max Discharging Power
+      unit_type: flowrate
+    soc_start:
+      description: Initial state of Charge
+      text: SOC Start
+      unit_type: '%'
+thermalsystem:
+  default_icon: thermalsystem_default
+  parameters:
+    C:
+      description: Heat Capacity
+      text: thermal Capacity
+      unit_type: float
+    R:
+      description: Energy Loss Factor
+      text: Thermal Resistance
+      unit_type: float
+    temperature_ambient:
+      description: Temperature Outside of the System
+      text: Ambient Temperature
+      unit_type: temperature
+    temperature_max:
+      description: Upper Boundary for Valid Internal Temperature
+      text: Maximum Temperature
+      unit_type: temperature
+    temperature_min:
+      description: Lower Boundary for Valid Internal Temperature
+      text: Minimum Temperature
+      unit_type: temperature
+triggerdemand:
+  default_icon: triggerdemand_default
+  parameters:
+    load_profile_energy:
+      description: Energy throughput timeseries
+      text: Energy Profile
+      unit_type: float
+    load_profile_mass:
+      description: Mass throughput timeseries
+      text: Mass Profile
+      unit_type: float
+    max_parallel:
+      description: Max number of parallel executions
+      text: Max Parallel Executions
+      unit_type: integer
