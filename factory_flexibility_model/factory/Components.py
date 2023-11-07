@@ -722,15 +722,9 @@ class Sink(Component):
         self.causes_emissions = (
             False  # Does the usage of this sink cause any CO2-Emissions?
         )
-        self.avoids_emissions = (
-            False  # Does the usage of this sink avoid any CO2-Emissions?
-        )
         self.chargeable = False  # Must be changed to "true", if the utilization of the source is connected with costs
         self.cost = []  # must be specified by set_configuration
-        self.co2_refund_per_unit = (
-            0  # How many kg CO2 can be saved by giving one unit to this sink?
-        )
-        self.co2_emission_per_unit = (
+        self.co2_emissions_per_unit = (
             0  # How many kg CO2 are emitted by giving one unit to this sink?
         )
         self.demand = []  # must be specified by set_configuration
@@ -916,10 +910,10 @@ class Sink(Component):
                         parameters["revenue"], "float", timesteps=timesteps
                     )
 
-            elif parameter == "co2_emission_per_unit":
+            elif parameter == "co2_emissions_per_unit":
                 # set the emission factor as timeseries:
-                self.co2_emission_per_unit = iv.validate(
-                    parameters["co2_emission_per_unit"], "float", timesteps=timesteps
+                self.co2_emissions_per_unit = iv.validate(
+                    parameters["co2_emissions_per_unit"], "float", timesteps=timesteps
                 )
 
                 # set the sink to avoid emissions:
