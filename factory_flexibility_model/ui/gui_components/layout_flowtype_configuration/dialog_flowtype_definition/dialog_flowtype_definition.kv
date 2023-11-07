@@ -1,0 +1,99 @@
+#:import close_dialog factory_flexibility_model.ui.utility.window_handling.close_dialog
+#:import save_changes_on_flowtype factory_flexibility_model.ui.gui_components.layout_flowtype_configuration.layout_flowtype_list.save_changes_on_flowtype
+#:import show_color_picker factory_flexibility_model.ui.gui_components.layout_flowtype_configuration.dialog_flowtype_definition.dialog_flowtype_definition.show_color_picker
+
+<DialogFlowtypeDefinition>
+    size_hint: None, None
+    width:dp(800)
+    height:dp(700)
+    orientation: "vertical"
+    MDBoxLayout:
+        orientation: "horizontal"
+        size_hint_y: None
+        height: dp(30)
+        MDLabel:
+            id: label_flowtype_name
+            font_style: 'H5'
+        MDIconButton:
+            id: button_flowtype_delete
+            icon: "delete"
+            halign: "right"
+    MDLabel:
+        text: "Name"
+        size_hint_y: None
+        height: dp(30)
+    MDTextField:
+        id: textfield_flowtype_name
+        hint_text: 'Specify a name for the flowtype'
+        size_hint_y: None
+        mode: "rectangle"
+        height: dp(30)
+        helper_text_mode: "on_error"
+        helper_text: "Name is already assigned within the factory"
+        on_text: button_flowtype_save.disabled = False
+    MDLabel:
+        text: "Description"
+        size_hint_y: None
+        height: dp(30)
+    MDTextField:
+        id: textfield_flowtype_description
+        hint_text: 'Description of the flowtype'
+        size_hint_y: None
+        mode: "rectangle"
+        height: dp(30)
+        on_text: button_flowtype_save.disabled = False
+    MDBoxLayout:
+        orientation: "horizontal"
+        MDBoxLayout:
+            orientation: "vertical"
+            MDLabel:
+                text: "Unit"
+                size_hint_y: None
+                height: dp(30)
+            MDDropDownItem:
+                id: textfield_flowtype_unit
+                text: "No Unit selected"
+                size_hint_y: None
+                height: dp(30)
+                hint_text: 'Represented by unit:'
+                on_release: app.show_unit_selection_dropdown(self)
+                on_release: button_flowtype_save.disabled = False
+            MDBoxLayout:
+                orientation: "horizontal"
+                MDCheckbox:
+                    id: checkbox_flowtype_losses
+                    size_hint: None, None
+                    height: dp(30)
+                    width: dp(30)
+                    on_active: button_flowtype_save.disabled = False
+                MDLabel:
+                    size_hint_y: None
+                    height: dp(30)
+                    text: "Flowtype represents losses"
+            Widget:
+        MDBoxLayout:
+            orientation: "vertical"
+            MDLabel:
+                text: "Color"
+                size_hint_y: None
+                height: dp(30)
+            MDIconButton:
+                id: icon_flowtype_color
+                icon: "palette"
+                icon_size: "100sp"
+                theme_icon_color: "Custom"
+                icon_color: "#1D4276"
+                on_release: show_color_picker(app)
+            Widget:
+    Widget:
+    MDBoxLayout:
+        orientation: "horizontal"
+        MDRaisedButton:
+            id: button_flowtype_save
+            text: "Save changes"
+            on_release: save_changes_on_flowtype(app)
+            on_release: close_dialog(app)
+            disabled: True
+        MDRaisedButton:
+            text: "Cancel"
+            on_release: close_dialog(app)

@@ -1,0 +1,27 @@
+converter:
+  id: dummy_converter
+  source: factory_flexibility_model\ui\assets\defaults\converter.png
+deadtime:
+  id: dummy_deadtime
+  source: factory_flexibility_model\ui\assets\defaults\deadtime.png
+pool:
+  id: dummy_pool
+  source: factory_flexibility_model\ui\assets\defaults\pool.png
+schedule:
+  id: dummy_schedule
+  source: factory_flexibility_model\ui\assets\defaults\schedule.png
+sink:
+  id: dummy_sink
+  source: factory_flexibility_model\ui\assets\defaults\sink.png
+source:
+  id: dummy_source
+  source: factory_flexibility_model\ui\assets\defaults\source.png
+storage:
+  id: dummy_storage
+  source: factory_flexibility_model\ui\assets\defaults\storage.png
+thermalsystem:
+  id: dummy_thermalsystem
+  source: factory_flexibility_model\ui\assets\defaults\thermalsystem.png
+triggerdemand:
+  id: triggerdemand
+  source: factory_flexibility_model\ui\assets\defaults\triggerdemand.png

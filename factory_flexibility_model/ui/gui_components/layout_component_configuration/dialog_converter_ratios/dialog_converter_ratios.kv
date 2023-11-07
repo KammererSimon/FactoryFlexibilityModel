@@ -1,0 +1,204 @@
+# This file defines the dialog window that pops up when the user selects the ratio-config button within the converter config tab.
+# The dives an overview of incoming and outgoing connections to/from the selected converter and allows the user to specify all the weights of involved flowtypes
+
+#:import update_bilance_calculation factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_converter_ratios.dialog_converter_ratios.update_bilance_calculation
+#:import update_primary_flow factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_converter_ratios.dialog_converter_ratios.update_primary_flow
+#:import save_converter_ratios factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_converter_ratios.dialog_converter_ratios.save_converter_ratios
+#:import select_ratio_type factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_converter_ratios.dialog_converter_ratios.select_ratio_type
+
+<dialog_converter_ratios>
+    size_hint: None, None
+    width:dp(1000)
+    height:dp(1000)
+    orientation: "vertical"
+    spacing: 20
+
+    MDSegmentedControl:
+        on_active: select_ratio_type(app, *args)
+        pos_hint: {"center_x": .5, "center_y": .5}
+        MDSegmentedControlItem:
+            text: "Energy"
+        MDSegmentedControlItem:
+            text: "Mass"
+    ScreenManager:
+        id: ratio_config_screens
+        Screen:
+            name: "Energy"
+            MDCard:
+                padding: 20
+                orientation: "vertical"
+                elevation: 1
+                BoxLayout:
+                    spacing: 20
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: dp(50)
+                    MDLabel:
+                        text: "INPUTS"
+                        font_style: "H6"
+                        halign: "center"
+                    MDIcon:
+                        icon: "lightning-bolt"
+                        pos_hint: {"center_x": .5, "center_y": .5}
+                        size_hint_x: .3
+                    MDLabel:
+                        text: "OUTPUTS"
+                        halign: "center"
+                        font_style: "H6"
+
+                BoxLayout:
+                    spacing: 10
+                    orientation: "horizontal"
+                    ScrollView:
+                        size_hint_x: .45
+                        MDList:
+                            id: list_converter_inputs_energy
+                    ScrollView:
+                        size_hint_x: .45
+                        MDList:
+                            id: list_converter_outputs_energy
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: dp(40)
+                    MDLabel:
+                        id: label_energy_in
+                        text: "INPUT SUM"
+                        halign: "center"
+                    Image:
+                        source: "Assets\\arrow.png"
+                        size_hint: (None, None)
+                        width: dp(60)
+                        pos_hint: {'center_y': 0.5}
+                    MDLabel:
+                        id: label_energy_out
+                        text: "OUTPUT SUM + losses"
+                        halign: "center"
+        Screen:
+            name: "Mass"
+            MDCard:
+                orientation: "vertical"
+                padding: 20
+                spacing: 20
+                elevation: 1
+                BoxLayout:
+                    spacing: 20
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: dp(50)
+                    MDLabel:
+                        text: "INPUTS"
+                        font_style: "H6"
+                        halign: "center"
+                    MDIcon:
+                        icon: "weight"
+                        pos_hint: {"center_x": .5, "center_y": .5}
+                        size_hint_x: .3
+                    MDLabel:
+                        text: "OUTPUTS"
+                        font_style: "H6"
+                        halign: "center"
+
+                BoxLayout:
+                    orientation: "horizontal"
+                    spacing: 20
+                    ScrollView:
+                        size_hint_x: .45
+                        MDList:
+                            id: list_converter_inputs_mass
+                    ScrollView:
+                        size_hint_x: .45
+                        MDList:
+                            id: list_converter_outputs_mass
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: dp(40)
+                    MDLabel:
+                        id: label_mass_in
+                        text: "INPUT SUM"
+                        halign: "center"
+                    Image:
+                        source: "Assets\\arrow.png"
+                        size_hint: (None, None)
+                        width: dp(60)
+                        pos_hint: {'center_y': 0.5}
+                    MDLabel:
+                        id: label_mass_out
+                        text: "OUTPUT SUM + losses"
+                        halign: "center"
+
+    BoxLayout:
+        padding: (10,10)
+        orientation: "horizontal"
+        size_hint_y: None
+        height: dp(50)
+        Widget:
+        MDFlatButton:
+            text: "Cancel"
+            on_release: app.close_dialog()
+        MDRaisedButton:
+            text: "Save Changes"
+            on_release: save_converter_ratios(app)
+
+<TextfieldCheckboxIconListItem>
+    BoxLayout:
+        spacing: 5
+        pos_hint: {"center_y": .5}
+        size_hint_y: None
+        height: self.minimum_height
+        Widget:
+        MDTextField:
+            id: list_item_textfield
+            size_hint_x: None
+            width: dp(100)
+            mode: "round"
+            helper_text_mode: "persistent"
+            on_text: update_bilance_calculation(app)
+        MDIcon:
+            icon: "trash-can-outline"
+            pos_hint: {"center_x": .5, "center_y": .5}
+            size_hint_x: None
+            width: dp(25)
+        MDCheckbox:
+            id: list_item_checkbox
+            size_hint_x: None
+            width: dp(25)
+            on_active: update_bilance_calculation(app)
+        MDIcon:
+            icon: "key-star"
+            pos_hint: {"center_x": .5, "center_y": .5}
+            size_hint_x: None
+            width: dp(25)
+        MDCheckbox:
+            id: list_item_primary
+            size_hint_x: None
+            width: dp(25)
+            on_active: update_primary_flow(app)
+            group: "primary"
+
+<TextfieldIconListItem>
+    BoxLayout:
+        spacing: 10
+        pos_hint: {"center_y": .5}
+        size_hint_y: None
+        height: self.minimum_height
+        Widget:
+        MDTextField:
+            id: list_item_textfield
+            size_hint_x: None
+            width: dp(100)
+            mode: "round"
+            helper_text_mode: "persistent"
+            on_text: update_bilance_calculation(app)
+        MDIcon:
+            icon: "key-star"
+            pos_hint: {"center_x": .5, "center_y": .5}
+            size_hint_x: None
+            width: dp(30)
+        MDCheckbox:
+            id: list_item_primary
+            size_hint_x: None
+            width: dp(30)
+            on_active: update_primary_flow(app)
+            group: "primary"

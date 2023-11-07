@@ -3,15 +3,13 @@
 # IMPORTS
 from kivy.graphics import Color
 from kivy.properties import StringProperty
-from kivy.uix.behaviors import DragBehavior
+
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.image import Image
 from kivy.uix.widget import Widget
 from kivymd.app import MDApp
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.list import (
     IRightBodyTouch,
-    OneLineAvatarListItem,
     TwoLineAvatarListItem,
 )
 from kivymd.uix.tab import MDTabsBase
@@ -19,9 +17,6 @@ from kivymd.uix.textfield import MDTextField
 
 
 # CLASS DEFINITIONS
-class DragLabel(DragBehavior, Image):
-    id = StringProperty("")
-    key = StringProperty("")
 
 
 class ValidatedTextField(MDTextField):
@@ -29,41 +24,30 @@ class ValidatedTextField(MDTextField):
     value_valid = True  # Is set to false when the user gave an invalid input
 
 
-class dialog_connection_config(BoxLayout):
-    pass
-
-
-class dialog_flowtype_definition(BoxLayout):
-    pass
-
-
-class dialog_image_selection(BoxLayout):
-    pass
-
-
-class dialog_magnitude_definition(BoxLayout):
-    pass
-
-
-class dialog_new_component(BoxLayout):
-    pass
-
-
-class dialog_timeseries_selection(BoxLayout):
-    pass
-
-
-class dialog_unit_definition(BoxLayout):
-    pass
+# class dialog_connection_config(BoxLayout):
+#     pass
+#
+# class dialog_magnitude_definition(BoxLayout):
+#     pass
+#
+#
+# class dialog_new_component(BoxLayout):
+#     pass
+#
+#
+# class dialog_timeseries_selection(BoxLayout):
+#     pass
+#
+#
+# class dialog_unit_definition(BoxLayout):
+#     pass
 
 
 class IconListItem(TwoLineAvatarListItem):
     icon = StringProperty()
 
 
-class ImageDropDownItem(OneLineAvatarListItem):
-    source = StringProperty()
-    text = StringProperty()
+
 
 
 class RightButton(IRightBodyTouch, MDRaisedButton):

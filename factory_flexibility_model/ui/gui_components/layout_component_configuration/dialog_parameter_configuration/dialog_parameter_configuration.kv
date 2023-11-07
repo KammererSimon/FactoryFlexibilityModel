@@ -1,0 +1,53 @@
+# This file defines the dialog window that pops up when the user clicks on a configurable parameter in the component configuration window
+
+#:import show_popup_add_static_value factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_parameter_configuration.dialog_parameter_configuration.show_popup_add_static_value
+#:import show_popup_add_timeseries factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_parameter_configuration.dialog_parameter_configuration.show_popup_add_timeseries
+
+<DialogParameterConfig>
+    size_hint: None, None
+    width:dp(620)
+    height:dp(800)
+    orientation: "vertical"
+    BoxLayout:
+        orientation: "horizontal"
+        spacing: 20
+        BoxLayout:
+            spacing: 20
+            orientation: "vertical"
+            size_hint_x: None
+            width: dp(150)
+            MDRaisedButton:
+                id: button_add_value
+                text: "Add Static Value"
+                on_release: show_popup_add_static_value(app)
+            MDRaisedButton:
+                id: button_add_timeseries
+                text: "Add Timeseries"
+                on_release: show_popup_add_timeseries(app)
+            Widget:
+
+        MDCard:
+            elevation: 2
+            padding: 20
+            orientation: "vertical"
+            size_hint_x: None
+            width: dp(400)
+            MDLabel:
+                text: "Parameter variations"
+                font_style: 'H5'
+                size_hint_y: None
+                height: dp(45)
+            ScrollView:
+                MDList:
+                    id: list_parameter_variations
+
+
+    BoxLayout:
+        orientation: "horizontal"
+        size_hint_y: None
+        height: dp(30)
+        Widget:
+        MDRaisedButton:
+            text: "OK"
+            on_release: app.close_dialog()
+            on_release: app.update_config_tab()

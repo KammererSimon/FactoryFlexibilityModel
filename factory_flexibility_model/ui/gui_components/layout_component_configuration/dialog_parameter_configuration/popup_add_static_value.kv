@@ -1,0 +1,31 @@
+#:import add_static_parameter_value factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_parameter_configuration.dialog_parameter_configuration.add_static_parameter_value
+#:import validate_value factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_parameter_configuration.dialog_parameter_configuration.validate_value
+
+<PopupAddStaticValue>
+    spacing: "12dp"
+    padding: (0, 30)
+    size_hint_y: None
+    height: "200dp"
+    #width: "400dp"
+    BoxLayout:
+        orientation: "vertical"
+        MDTextField:
+            id: textfield_value
+            hint_text: "Enter Value"
+            required: True
+            max_text_length: 20
+            on_text: validate_value(app, self)
+        BoxLayout:
+            padding: 20
+            #size_hint_y: None
+            #height: dp(30)
+            orientation: "horizontal"
+            Widget:
+            MDFlatButton:
+                text: "Cancel"
+                on_release: app.close_popup()
+            MDRaisedButton:
+                text: "Add Value"
+                on_release: add_static_parameter_value(app)
+                id: button_add_static_value
+                disabled: True

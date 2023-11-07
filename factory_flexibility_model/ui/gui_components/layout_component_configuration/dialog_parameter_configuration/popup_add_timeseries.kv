@@ -1,0 +1,121 @@
+#:import add_timeseries_parameter_value factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_parameter_configuration.dialog_parameter_configuration.add_timeseries_parameter_value
+#:import update_timeseries_list factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_parameter_configuration.dialog_parameter_configuration.update_timeseries_list
+
+<PopupAddTimeseries>
+    spacing: "12dp"
+    padding: (0, 30)
+    size_hint: (None, None)
+    height: "800dp"
+    width: "1000dp"
+    BoxLayout:
+        padding: 20
+        orientation: "vertical"
+        BoxLayout:
+            padding: 20
+            spacing: 20
+            orientation: "horizontal"
+            BoxLayout:
+                spacing: 10
+                size_hint_x: .5
+                orientation: "vertical"
+                MDTextField:
+                    id: textfield_search
+                    hint_text: "Search timeseries"
+                    icon_left: "magnify"
+                    on_text: update_timeseries_list(app)
+                ScrollView:
+                    MDList:
+                        id: list_timeseries
+            BoxLayout:
+                orientation: "vertical"
+                MDCard:
+                    elevation: 3
+                    padding: 10
+                    #size_hint_y: .5
+                    orientation: "vertical"
+                    Graph:
+                        id: timeseries_preview
+                        padding: 20
+                        x_grid: True
+                        y_grid: True
+                        y_grid_label: True
+                        x_grid_label: True
+                        label_options: {"color": (0,0,0,1)}
+                        tick_color: (0, 0, 0, .1)
+
+                BoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: dp(250)
+                    BoxLayout:
+                        orientation: "vertical"
+                        BoxLayout:
+                            orientation: "horizontal"
+                            spacing: 10
+                            size_hint_y: None
+                            height: dp(50)
+                            MDIcon:
+                                icon: "key-variant"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                size_hint_x: .2
+                            MDLabel:
+                                id: label_selected_timeseries
+
+                        BoxLayout:
+                            orientation: "horizontal"
+                            spacing: 10
+                            size_hint_y: None
+                            height: dp(50)
+                            MDIcon:
+                                icon: "arrow-collapse-up"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                size_hint_x: .2
+                            MDLabel:
+                                id: label_value_max
+                        BoxLayout:
+                            orientation: "horizontal"
+                            size_hint_y: None
+                            height: dp(50)
+                            spacing: 10
+                            MDIcon:
+                                icon: "arrow-collapse-down"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                size_hint_x: .2
+                            MDLabel:
+                                id: label_value_min
+                        BoxLayout:
+                            orientation: "horizontal"
+                            size_hint_y: None
+                            height: dp(50)
+                            spacing: 10
+                            MDIcon:
+                                icon: "format-align-middle"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                size_hint_x: .2
+                            MDLabel:
+                                id: label_value_avg
+                        BoxLayout:
+                            orientation: "horizontal"
+                            size_hint_y: None
+                            height: dp(50)
+                            spacing: 10
+                            MDIcon:
+                                icon: "arrow-expand-horizontal"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                                size_hint_x: .2
+                            MDLabel:
+                                id: label_timesteps
+        BoxLayout:
+            padding: 20
+            orientation: "horizontal"
+            size_hint_y: None
+            height: dp(30)
+            Widget:
+            MDFlatButton:
+                text: "Cancel"
+                on_release: app.close_popup()
+            MDRaisedButton:
+                text: "Add Timeseries"
+                on_release: add_timeseries_parameter_value(app)
+                id: button_add_timeseries
+                disabled: True

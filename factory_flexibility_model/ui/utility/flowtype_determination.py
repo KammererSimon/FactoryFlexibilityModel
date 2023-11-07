@@ -5,7 +5,7 @@ def set_component_flowtype(blueprint, component_key: str, flowtype):
     """
     This function takes a blueprint of a factory, a key to one of the components within the factory and a fowtype object.
     If the component referenced by the key has an internal flowtype it is set to the given flowtype.
-    Additionally all connections from and to the component are checked, if they match the new assigned flowtype.
+    Aditionally all connections from and to the component are checked, if they match the new assigned flowtype.
     If they don't, the set_connection_flowtype-method is called to assign the new flowtype to them as well.
     :param blueprint: [Blueprint.Blueprint] The current blueprint object of the gui session that this function is being called from
     :param component_key: [str] Unique identifier key of one of the components within the blueprint. It is expected to be withing blueprint.components.keys()
