@@ -47,7 +47,7 @@ deadtime:
   parameters:
     delay:
       description: Delay Number of Timesteps
-      text: Delay
+      text: Deadtime
       unit_type: timesteps
 schedule:
   default_icon: schedule_default
@@ -158,7 +158,7 @@ thermalsystem:
   parameters:
     C:
       description: Heat Capacity
-      text: thermal Capacity
+      text: Thermal Capacity
       unit_type: float
     R:
       description: Energy Loss Factor
@@ -191,3 +191,6 @@ triggerdemand:
       description: Max number of parallel executions
       text: Max Parallel Executions
       unit_type: integer
+pool:
+  default_icon: pool_default
+  parameters:
