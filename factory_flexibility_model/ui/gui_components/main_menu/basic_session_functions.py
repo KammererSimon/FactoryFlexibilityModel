@@ -151,7 +151,7 @@ def create_new_session(app):
     # initialize the GUI
     initialize_visualization(app)
     update_flowtype_list(app)
-    app.root.ids.asset_config_screens.current = "welcome_screen"
+    app.root.ids.asset_config_screens.current = "flowtype_list"
     app.root.ids.label_session_name.text = session_name
 
     # New session has not been saved yet
@@ -361,7 +361,7 @@ def initialize_units_and_flowtypes(app):
     This function creates the basic set of units and flowtypes required
     """
     # initialize the basic units
-    app.blueprint.units["energy"] = Unit.Unit(
+    app.blueprint.units["energy"] = Unit(
         key="energy",
         quantity_type="energy",
         conversion_factor=1,
@@ -370,7 +370,7 @@ def initialize_units_and_flowtypes(app):
         units_flowrate=["kW", "MW", "GW", "TW", "PW"],
         name="Energy [kW]",
     )
-    app.blueprint.units["joule"] = Unit.Unit(
+    app.blueprint.units["joule"] = Unit(
         key="joule",
         quantity_type="energy",
         conversion_factor=1 / 3600,
@@ -379,7 +379,7 @@ def initialize_units_and_flowtypes(app):
         units_flowrate=["kJ/h", "MJ/h", "GJ/h", "PJ/h"],
         name="Energy [Joule]",
     )
-    app.blueprint.units["mmBTU"] = Unit.Unit(
+    app.blueprint.units["mmBTU"] = Unit(
         key="mmBTU",
         quantity_type="energy",
         conversion_factor=293.071070,
@@ -388,7 +388,7 @@ def initialize_units_and_flowtypes(app):
         units_flowrate=["mmBTU/h"],
         name="Energy [mmBTU]",
     )
-    app.blueprint.units["mass"] = Unit.Unit(
+    app.blueprint.units["mass"] = Unit(
         key="mass",
         quantity_type="mass",
         conversion_factor=1,
@@ -397,7 +397,7 @@ def initialize_units_and_flowtypes(app):
         units_flowrate=["kg/h", "t/h", "kt/h", "mt/h", "gt/h"],
         name="Mass [kg]",
     )
-    app.blueprint.units["unit"] = Unit.Unit(
+    app.blueprint.units["unit"] = Unit(
         key="unit",
         quantity_type="other",
         conversion_factor=1,
@@ -408,7 +408,7 @@ def initialize_units_and_flowtypes(app):
     )
 
     # initialize basic flowtypes
-    app.blueprint.flowtypes["material_losses"] = Flowtype.Flowtype(
+    app.blueprint.flowtypes["material_losses"] = Flowtype(
         "material_losses",
         unit=app.blueprint.units["mass"],
         color="#555555",
@@ -416,7 +416,7 @@ def initialize_units_and_flowtypes(app):
         name="Material Losses",
         description="Built in default flowtype used to represent all kinds of material losses",
     )
-    app.blueprint.flowtypes["energy_losses"] = Flowtype.Flowtype(
+    app.blueprint.flowtypes["energy_losses"] = Flowtype(
         "energy_losses",
         unit=app.blueprint.units["energy"],
         color="#555555",
@@ -425,7 +425,7 @@ def initialize_units_and_flowtypes(app):
         description="Built in default flowtype used to represent all kinds of energy losses",
     )
 
-    app.blueprint.flowtypes["heat"] = Flowtype.Flowtype(
+    app.blueprint.flowtypes["heat"] = Flowtype(
         "heat",
         unit=app.blueprint.units["energy"],
         color="#996666",
@@ -433,7 +433,7 @@ def initialize_units_and_flowtypes(app):
         description="Built in default flowtype used to represent all kinds of heat",
     )
 
-    app.blueprint.flowtypes["unknown"] = Flowtype.Flowtype(
+    app.blueprint.flowtypes["unknown"] = Flowtype(
         "unknown",
         unit=app.blueprint.units["unit"],
         color="#999999",
