@@ -171,7 +171,7 @@ def show_session_config_dialog(app):
 
     # bind callbacks to buttons
     btn_true.bind(on_release=lambda instance: save_session_config(app))
-    btn_false.bind(on_release=close_dialog(app))
+    btn_false.bind(on_release=lambda x: close_dialog(app))
     app.dialog.open()
 
 
