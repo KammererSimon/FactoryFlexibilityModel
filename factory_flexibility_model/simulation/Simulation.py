@@ -30,8 +30,7 @@ from gurobipy import GRB
 
 import factory_flexibility_model.io.input_validations as iv
 from factory_flexibility_model.dash import dash as fd
-
-logging.basicConfig(level=logging.WARNING)
+from factory_flexibility_model.io.set_logger import set_logging_level
 
 
 class Simulation:
@@ -79,6 +78,7 @@ class Simulation:
         """
         This function adds all necessary MVARS and constraints to the optimization problem that are
         required to integrate the converter handed over as 'Component'
+
         :param component: components.converter-object
         :return: self.m is beeing extended
         """
@@ -246,6 +246,7 @@ class Simulation:
         """
         This function adds all necessary MVARS and constraints to the optimization problem that are
         required to integrate the deadtime handed over as 'Component'
+
         :param component: components.deadtime-object
         :return: self.m is beeing extended
         """
@@ -1530,7 +1531,6 @@ class Simulation:
     def __read_scenario_data(self):
         """This function checks the factory for scenario paramater arguments and configures concerning
         components with the requested parameters from self.scenario"""
-
         # iterate components and search for scenario data keys
         for key, config in self.scenario.configurations.items():
             # set parameters for components
@@ -1543,22 +1543,6 @@ class Simulation:
                     self.factory.connections[key].weight_sink = config["weight_sink"]
                 if "weight_source" in config:
                     self.factory.connections[key].weight_sink = config["weight_source"]
-
-            # set all configurations for the component
-            # self.factory.set_configuration(component.key, parameters=required_configs)
-
-            # iterate over all connections to get weights from scenario
-            # for input_connection in component.inputs:
-            #    if input_connection.weight_sink == "$parameter$":
-            #        input_connection.weight_sink = self.scenario.parameters[
-            #            f"{input_connection.key}/weight_sink"
-            #        ]
-
-            # for output_connection in component.outputs:
-            #    if output_connection.weight_source == "$parameter$":
-            #        output_connection.weight_source = self.scenario.parameters[
-            #            f"{output_connection.key}/weight_source"
-            #        ]
 
     def save(self, file_path: str, *, name: str = None, overwrite: bool = False):
         """
@@ -1632,12 +1616,12 @@ class Simulation:
         *,
         threshold: float = None,
         rounding_decimals: int = None,
-        log_solver: bool = False,
         solver_config: dict = {},
     ):
         """
         This function builds an optimization problem out of the factory and scenario and calls gurobi to solve it.
-        :param solver_config: [dict] Optional dict with configuration parameters for the solver (max_solver_time, barrier_tolerance, solver_method)
+
+        :param solver_config: [dict] Optional dict with configuration parameters for the solver (max_solver_time, barrier_tolerance, solver_method, logger_level)
         :param rounding_decimals: [int] Number of decimals that the results are rounded to
         :param threshold: [float] Threshold under whoch results are interpreted as zero
         :return: [True] -> Adds an attribute .result to the Simulation object
@@ -1646,6 +1630,9 @@ class Simulation:
         # ENABLE LOGGING/TIMETRACKING?
         if self.enable_time_tracking:
             self.t_start = time.time()
+
+        if "logger_level" in solver_config:
+            set_logging_level(solver_config["logger_level"])
 
         # PREPARATIONS
         self.problem_class = {"grade": 1, "type": "float"}
@@ -1679,6 +1666,11 @@ class Simulation:
         # create new gurobi model
         self.m = gp.Model("Factory")
 
+        # set solver logging
+        if "log_solver" in solver_config:
+            if not solver_config["log_solver"]:
+                self.m.Params.LogToConsole = 0
+                self.m.setParam("OutputFlag", 0)
         # initialize variables for collecting parts of the optimization problem
         self.MVars = {}  # Initialize a dict to store all the factory variables
         self.C_objective = (
@@ -1828,10 +1820,6 @@ class Simulation:
                 gp.GRB.Param.BarConvTol,
                 iv.validate(solver_config["barrier_tolerance"], "0..1"),
             )
-
-        # set solver logging
-        if not log_solver:
-            self.m.Params.LogToConsole = 0
 
         # CALL SOLVER
         logging.info(f"CALLING THE SOLVER")
