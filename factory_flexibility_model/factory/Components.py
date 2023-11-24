@@ -1406,7 +1406,7 @@ class Triggerdemand(Component):
         self.type = "triggerdemand"  # specify Component as a thermal system
         self.visualize = False  # triggerdemands cant be plotted yet
         logging.debug(
-            f"        - New triggerdemand {self.name} created with Component-id {self.component_id}"
+            f"        - New triggerdemand {self.name} created with Component-id {self.key}"
         )
 
     def set_configuration(self, timesteps: int, parameters: dict):
@@ -1420,7 +1420,7 @@ class Triggerdemand(Component):
         for parameter in parameters:
             # HANLDE TRIGGERDEMAND-SPECIFIC PARAMETERS
             if parameter == "load_profile_energy":
-                self.load_profile_energy = parameters["load_profile_energy"]
+                self.load_profile_energy = [parameters["load_profile_energy"]]
                 # set profile length for the Component + check compatibility with material profile
                 if self.load_profile_material == []:
                     self.profile_length = len(self.load_profile_energy)
@@ -1466,7 +1466,7 @@ class Triggerdemand(Component):
         """
 
         # check, that there is no more than one energy and material input each
-        if connection.flowtype.unit.resource_type == "energy":
+        if connection.flowtype.is_energy():
             if self.input_energy is not None:
                 logging.critical(
                     f"ERROR: Cannot add {connection.name} to {self.name}, since triggerdemand-components are only allowed to have one energy input and {self.name} already has {self.input_energy.name} as input!"
@@ -1493,7 +1493,7 @@ class Triggerdemand(Component):
         :param connection: [fm.Connection-object]
         """
         # check, that there is no more than one energy and material output each
-        if connection.flowtype.unit.resource_type == "energy":
+        if connection.flowtype.is_energy():
             if self.output_energy:
                 logging.critical(
                     f"ERROR: Cannot add {connection.name} to {self.name}, since triggerdemand-components are only allowed to have one energy output and {self.name} already has {self.output_energy.name} as output!"
