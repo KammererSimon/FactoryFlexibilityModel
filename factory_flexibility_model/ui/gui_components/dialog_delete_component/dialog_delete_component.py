@@ -1,9 +1,13 @@
 # IMPORTS
-from kivymd.uix.button import MDRaisedButton, MDFlatButton
+from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.snackbar import Snackbar
-from factory_flexibility_model.ui.gui_components.layout_canvas.factory_visualisation import initialize_visualization
+
+from factory_flexibility_model.ui.gui_components.layout_canvas.factory_visualisation import (
+    initialize_visualization,
+)
 from factory_flexibility_model.ui.utility.window_handling import close_dialog
+
 
 # FUNCTIONS
 def delete_selected_component(app):
@@ -29,16 +33,18 @@ def delete_selected_component(app):
     delete_list = []
     for connection in app.blueprint.connections:
         if (
-                app.blueprint.connections[connection]["from"]
-                == app.selected_asset["key"]
-        ) or (
-                app.blueprint.connections[connection]["to"]
-                == app.selected_asset["key"]
-        ):
+            app.blueprint.connections[connection]["from"] == app.selected_asset["key"]
+        ) or (app.blueprint.connections[connection]["to"] == app.selected_asset["key"]):
             delete_list.append(connection)
 
     # delete all parameters saved for the component
     del app.session_data["parameters"][app.selected_asset["key"]]
+
+    # make sure that no connection to the component is set as a primary flow at any converter
+    for component in app.blueprint.components.values():
+        if component["type"] == "converter":
+            if component["GUI"]["primary_flow"] == app.selected_asset["key"]:
+                component["GUI"]["primary_flow"] = None
 
     # delete the component
     for connection in delete_list:
@@ -60,6 +66,7 @@ def delete_selected_component(app):
     # redraw the visualisation without the selected component
     initialize_visualization(app)
 
+
 def show_component_deletion_dialog(app):
     """
     This function is being called when the user clicks on the bin-icon in the bottom right or drags a component onto it.
@@ -70,7 +77,7 @@ def show_component_deletion_dialog(app):
     :return: None
     """
 
-    #abort if there is no asses selected
+    # abort if there is no asses selected
     if app.selected_asset is None:
         return
 
