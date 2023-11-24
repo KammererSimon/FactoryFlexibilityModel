@@ -155,7 +155,6 @@ class Component:
             "IS_SOURCE",
             "IS_SINK",
             "type",
-            "component_id",
             "factory",
             "inputs",
             "outputs",
@@ -918,7 +917,6 @@ class Sink(Component):
 
                 # set the sink to avoid emissions:
                 self.causes_emissions = True
-                print("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
 
             # handle is_onsite definition
             elif parameter == "is_onsite":
@@ -1258,7 +1256,7 @@ class Thermalsystem(Component):
         self.type = "thermalsystem"  # specify Component as a thermal system
         self.visualize = False  # Set to True if a diagramm shall be plottet to show the thermal boundaries and the realized temperature curve
         logging.debug(
-            f"        - New thermal system {self.name} created with Component-id {self.component_id}"
+            f"        - New thermal system {self.name} created with Component-id {self.key}"
         )
 
     def update_flowtype(self, flowtype: str):
@@ -1406,7 +1404,7 @@ class Triggerdemand(Component):
         self.type = "triggerdemand"  # specify Component as a thermal system
         self.visualize = False  # triggerdemands cant be plotted yet
         logging.debug(
-            f"        - New triggerdemand {self.name} created with Component-id {self.key}"
+            f"        - New triggerdemand {self.name} created with Component-key {self.key}"
         )
 
     def set_configuration(self, timesteps: int, parameters: dict):
@@ -1420,7 +1418,7 @@ class Triggerdemand(Component):
         for parameter in parameters:
             # HANLDE TRIGGERDEMAND-SPECIFIC PARAMETERS
             if parameter == "load_profile_energy":
-                self.load_profile_energy = [parameters["load_profile_energy"]]
+                self.load_profile_energy = parameters["load_profile_energy"]
                 # set profile length for the Component + check compatibility with material profile
                 if self.load_profile_material == []:
                     self.profile_length = len(self.load_profile_energy)
@@ -1434,6 +1432,7 @@ class Triggerdemand(Component):
                 self.load_profile_material = parameters["load_profile_material"]
                 # set profile length for the Component + check compatibility with energyprofile
                 if self.load_profile_energy == []:
+
                     self.profile_length = len(self.load_profile_material)
                 elif not len(self.load_profile_energy) == self.profile_length:
                     logging.critical(
