@@ -131,6 +131,10 @@ def update_component_configuration_tab(app):
                 unit = f"{flowtype.unit.get_unit_flowrate()} {flowtype.name} /h"
             else:
                 unit = ""
+        elif attribute_data["unit_type"] == "thermal_capacity":
+            unit = "kWh / K"
+        elif attribute_data["unit_type"] == "thermal_resistance":
+            unit = "K / kW"
         else:
             unit = ""
 
