@@ -108,7 +108,7 @@ class Factory:
             )
 
         elif component_type == "sink":
-            # call sink constructor
+            # call destination constructor
             self.components[key] = factory_components.Sink(
                 key, self, flowtype=flowtype, name=name
             )
@@ -125,7 +125,7 @@ class Factory:
                 key, self, flowtype=flowtype, name=name
             )
 
-            # auto generate a connection to losses: determine, whether storage refers to energy or material and connect it to the corresponding loss sink
+            # auto generate a connection to losses: determine, whether storage refers to energy or material and connect it to the corresponding loss destination
             if self.components[key].flowtype.unit.is_energy():
 
                 # create connection to losses_energy if flowtype is a type of energy
@@ -178,7 +178,7 @@ class Factory:
         elif component_type == "thermalsystem":
             # call thermalsystem constructor
             self.components[key] = factory_components.Thermalsystem(
-                key, self, flowtype=flowtype, name=name
+                key, self, name=name
             )
 
             # connect the new thermalsystem to losses_energy
@@ -195,8 +195,7 @@ class Factory:
             self.add_connection(
                 "ambient_gains",
                 key,
-                name=f"ambient_gains_to_{key}",
-                # weight=0.01,
+                key=f"ambient_gains_to_{key}",
                 from_gains=True,
             )
 
@@ -232,28 +231,29 @@ class Factory:
         key: str,
         *,
         to_losses: bool = False,
+        from_gains: bool = False,
         name: str = None,
         flowtype: str = None,
         weight: float = None,
-        weight_sink: float = None,
-        weight_source: float = None,
+        weight_destination: float = None,
+        weight_origin: float = None,
     ):
         """
         This function ads a new connection between two components to the factory
         :param origin: name-string of the source Component
-        :param destination: name-string of the sink
+        :param destination: name-string of the destination
         :param to_losses: Set to true if the new connection is meant to deduct losses from its source
         :param flowtype: Name of a flowtype object that determines the flowtype transported n the connection
         :param name: String that is used as a name for the connection
-        :param weight_sink: [float] Specifies the weighting factor of the connection at the sink
-        :param weight_source: [float] Specifies the weighting factor of the connection at the source
-        :param weight: [float] Specifies the weighting factors of the connection both at the sink and source
+        :param weight_destination: [float] Specifies the weighting factor of the connection at the destination
+        :param weight_origin: [float] Specifies the weighting factor of the connection at the source
+        :param weight: [float] Specifies the weighting factors of the connection both at the destination and source
         """
 
         # make sure, that the key is still unused
         self.validate_key(key)
 
-        # check, if specified sink and source components exist
+        # check, if specified destination and source components exist
         self.check_existence(origin)
         self.check_existence(destination)
 
@@ -268,17 +268,18 @@ class Factory:
             self.components[destination],
             key,
             to_losses=to_losses,
+            from_gains=from_gains,
             flowtype=flowtype,
             weight=weight,
-            weight_sink=weight_sink,
-            weight_source=weight_source,
+            weight_destination=weight_destination,
+            weight_origin=weight_origin,
             name=name,
         )
 
         # set new connection as output for the source Component
         self.components[origin].set_output(new_connection)
 
-        # set connection as input for the sink Component
+        # set connection as input for the destination Component
         self.components[destination].set_input(new_connection)
 
         # insert the new connection into the connection_list of the factory
@@ -633,12 +634,12 @@ class Factory:
                     # check if the input refers to energy or material
                     if input_i.flowtype.unit.is_energy():
                         # if energy: add the weight of the incoming connection to the sum of energy input weights
-                        weightsum_input_energy += input_i.weight_sink
+                        weightsum_input_energy += input_i.weight_destination
 
                     elif input_i.flowtype.unit.is_mass():
 
                         # if material: add the weight of the incoming connection to the sum of material input weights
-                        weightsum_input_material += input_i.weight_sink
+                        weightsum_input_material += input_i.weight_destination
 
                     else:
 
@@ -659,11 +660,11 @@ class Factory:
                     # if energy: add the weight of the outgoing connection to the sum of energy input weights
                     if output_i.flowtype.unit.is_energy():
                         # if energy:
-                        weightsum_output_energy += output_i.weight_source
+                        weightsum_output_energy += output_i.weight_origin
 
                     elif output_i.flowtype.unit.is_mass():
                         # if material: add the weight of the outgoing connection to the sum of material input weights
-                        weightsum_output_material += output_i.weight_source
+                        weightsum_output_material += output_i.weight_origin
 
                     else:
                         # otherwise the type of the flowtype remained unspecified during factory setup und therefore is invalid
@@ -817,15 +818,15 @@ class Factory:
                 weight=0.01,
             )
 
-        # sinks get slacked on the input side if they are not the losses sink
-        elif component_type == "sink" and not (
+        # sinks get slacked on the input side if they are not the losses destination
+        elif component_type == "destination" and not (
             key == "losses_energy" or key == "losses_material"
         ):
 
             # create new slack Component
             self.add_component(f"{key}_slack", "slack")
 
-            # connect it to the input of the sink
+            # connect it to the input of the destination
             self.add_connection(
                 f"{key}_slack",
                 key,

@@ -126,8 +126,8 @@ def create_test_blueprint():
             "from": "grid_electricity",
             "to": "pool_electricity",
             "flowtype": "electricity",
-            "weight_source": 1,
-            "weight_sink": 1,
+            "weight_origin": 1,
+            "weight_destination": 1,
             "to_losses": False,
         }
     )
@@ -140,8 +140,8 @@ def create_test_blueprint():
             "from": "e_solar",
             "to": "pool_electricity",
             "flowtype": "electricity",
-            "weight_source": 1,
-            "weight_sink": 1,
+            "weight_origin": 1,
+            "weight_destination": 1,
             "to_losses": False,
         }
     )
@@ -154,8 +154,8 @@ def create_test_blueprint():
             "from": "pool_electricity",
             "to": "electricity_sales",
             "flowtype": "electricity",
-            "weight_source": 1,
-            "weight_sink": 1,
+            "weight_origin": 1,
+            "weight_destination": 1,
             "to_losses": False,
         }
     )
@@ -168,8 +168,8 @@ def create_test_blueprint():
             "from": "pool_electricity",
             "to": "battery_storage",
             "flowtype": "electricity",
-            "weight_source": 1,
-            "weight_sink": 1,
+            "weight_origin": 1,
+            "weight_destination": 1,
             "to_losses": False,
         }
     )
@@ -182,8 +182,8 @@ def create_test_blueprint():
             "from": "battery_storage",
             "to": "pool_electricity",
             "flowtype": "electricity",
-            "weight_source": 1,
-            "weight_sink": 1,
+            "weight_origin": 1,
+            "weight_destination": 1,
             "to_losses": False,
         }
     )

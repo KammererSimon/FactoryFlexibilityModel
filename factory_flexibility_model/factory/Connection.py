@@ -10,8 +10,8 @@ import factory_flexibility_model.io.input_validations as iv
 class Connection:
     def __init__(
         self,
-        source,
-        sink,
+        origin,
+        destination,
         key: str,
         *,
         from_gains: bool = None,
@@ -19,18 +19,18 @@ class Connection:
         name: str = None,
         to_losses: bool = None,
         weight: float = None,
-        weight_source: float = None,
-        weight_sink: float = None,
+        weight_origin: float = None,
+        weight_destination: float = None,
     ):
 
         # define attributes
         self.key = (
             key  # give the connection a unique id in the list of existing connections
         )
-        self.source = source
-        self.sink = sink
-        self.weight_sink = 1
-        self.weight_source = 1
+        self.origin = origin
+        self.destination = destination
+        self.weight_destination = 1
+        self.weight_origin = 1
 
         # check if the connection is meant to deduct losses
         if to_losses is not None:
@@ -50,21 +50,21 @@ class Connection:
             self.name = iv.validate(name, "str")
         else:
             # otherwise generate generic name
-            self.name = f"{source.name}_to_{sink.name}"
+            self.name = f"{origin.name}_to_{destination.name}"
 
         # check, if weights have been specified
         if weight is not None:
             # If just one "weight" is specified: use it for input and output
-            self.weight_sink = iv.validate(weight, "float")
-            self.weight_source = iv.validate(weight, "float")
+            self.weight_destination = iv.validate(weight, "float")
+            self.weight_origin = iv.validate(weight, "float")
 
-        # check if weight for sink is specified
-        if weight_sink is not None:
-            self.weight_sink = iv.validate(weight_sink, "float")
+        # check if weight for destination is specified
+        if weight_destination is not None:
+            self.weight_destination = iv.validate(weight_destination, "float")
 
-            # check if weight for source is specified
-        if weight_source is not None:
-            self.weight_source = iv.validate(weight_source, "float")
+            # check if weight for origin is specified
+        if weight_origin is not None:
+            self.weight_origin = iv.validate(weight_origin, "float")
 
         # if a flowtype is specified: adapt it and check for compatibility
         if flowtype is not None:
@@ -72,49 +72,49 @@ class Connection:
             # set the flowtype of the connection as specified
             self.flowtype = flowtype
 
-            # check, if it is compatible with the flowtype ot the source
+            # check, if it is compatible with the flowtype ot the origin
             if (
-                not (source.flowtype.is_unknown())
-                and not (sink.flowtype.is_losses())
+                not (origin.flowtype.is_unknown())
+                and not (destination.flowtype.is_losses())
                 and not (
-                    source.flowtype.key == self.flowtype.key
+                    origin.flowtype.key == self.flowtype.key
                     or self.flowtype.is_unknown()
                 )
             ):
                 logging.critical(
-                    f"incompatible flowtypes between connection {self.name} and Component {source.name}: {self.flowtype.name} vs {source.flowtype.name}"
+                    f"incompatible flowtypes between connection {self.name} and Component {origin.name}: {self.flowtype.name} vs {origin.flowtype.name}"
                 )
                 raise Exception
 
-            # check if it is compatible with the flowtype of the sink
-            if not (sink.flowtype.is_unknown()) and not (
-                sink.flowtype.is_losses()
-                or sink.flowtype.key == self.flowtype.key
+            # check if it is compatible with the flowtype of the destination
+            if not (destination.flowtype.is_unknown()) and not (
+                destination.flowtype.is_losses()
+                or destination.flowtype.key == self.flowtype.key
                 or self.flowtype.is_unknown()
             ):
                 logging.critical(
-                    f"incompatible flowtypes between connection {self.name} and Component {sink.name}: {self.flowtype.name} vs {sink.flowtype.name}"
+                    f"incompatible flowtypes between connection {self.name} and Component {destination.name}: {self.flowtype.name} vs {destination.flowtype.name}"
                 )
                 raise Exception
 
-        # if no flowtype is handed over: check, if it can be derived from sink or source
+        # if no flowtype is handed over: check, if it can be derived from destination or origin
         else:
-            # can the flowtype be derived from the sink without causing incompatibilities?
+            # can the flowtype be derived from the destination without causing incompatibilities?
             if (
-                source.flowtype.is_unknown() and not sink.flowtype.is_unknown()
-            ) or sink.flowtype == source.flowtype:
-                # if yes: set the flowtype as the flowtype of the sink
-                self.flowtype = sink.flowtype
+                origin.flowtype.is_unknown() and not destination.flowtype.is_unknown()
+            ) or destination.flowtype == origin.flowtype:
+                # if yes: set the flowtype as the flowtype of the destination
+                self.flowtype = destination.flowtype
 
-            # if no: can the flowtype be derived from the source without causing incompatibilities?
-            elif sink.flowtype.is_unknown() or sink.flowtype.is_losses():
-                # set the flowtype as the flowtype of the source
-                self.flowtype = source.flowtype
+            # if no: can the flowtype be derived from the origin without causing incompatibilities?
+            elif destination.flowtype.is_unknown() or destination.flowtype.is_losses():
+                # set the flowtype as the flowtype of the origin
+                self.flowtype = origin.flowtype
 
             else:
-                # if nothing of the above is the case the flows of source and sink must be incompatible -> throw an error
+                # if nothing of the above is the case the flows of origin and destination must be incompatible -> throw an error
                 logging.critical(
-                    f"Flowtypes of origin and destination do not match: {source.flowtype.name} vs {sink.flowtype.name}"
+                    f"Flowtypes of origin and destination do not match: {origin.flowtype.name} vs {destination.flowtype.name}"
                 )
                 raise Exception
 
@@ -131,29 +131,29 @@ class Connection:
         # ...otherwise set the flowtype of the connection
         self.flowtype = flowtype
 
-        # check, if the flowtype of the source Component is already known
-        if self.source.flowtype.is_unknown():
+        # check, if the flowtype of the origin Component is already known
+        if self.origin.flowtype.is_unknown():
             # if no: update it as well
-            self.source.update_flowtype(flowtype)
+            self.origin.update_flowtype(flowtype)
 
         # if yes: is it compatible with the flowtype that has just been set for the connection?
-        elif not self.source.flowtype == flowtype:
+        elif not self.origin.flowtype == flowtype:
             # throw error if the flows are not the same
             logging.critical(
-                f"Error while assigning flowtype types: interface between {self.source.name} and {self.sink.name} does not match"
+                f"Error while assigning flowtype types: interface between {self.origin.name} and {self.destination.name} does not match"
             )
             raise Exception
 
-        # do the same for the sink side: Check, if the flowtype of the sink Component is already known
-        if self.sink.flowtype.is_unknown():
+        # do the same for the destination side: Check, if the flowtype of the destination Component is already known
+        if self.destination.flowtype.is_unknown():
             # if no: update it as well
-            self.sink.update_flowtype(flowtype)
+            self.destination.update_flowtype(flowtype)
 
         # if yes: is it compatible with the flowtype that has just been set for the connection?
-        elif not self.sink.flowtype == flowtype:
+        elif not self.destination.flowtype == flowtype:
             # throw error if the flows are not the same
             logging.critical(
-                f"Error while assigning flowtype types: interface between {self.source.name} and {self.sink.name} does not match"
+                f"Error while assigning flowtype types: interface between {self.origin.name} and {self.destination.name} does not match"
             )
             raise Exception
 

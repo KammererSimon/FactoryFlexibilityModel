@@ -83,7 +83,6 @@ class Blueprint:
 
         :return: [true] if successfull
         """
-        print("check")
         # Check, if some specifications will be overwritten
         if not overwrite:
             if self.components or self.connections or self.flowtypes or self.units:
@@ -216,8 +215,8 @@ class Blueprint:
                 "to": connection["to"],
                 "flowtype": connection["flowtype"].key,
                 "key": connection["key"],
-                "weight_source": connection["weight_source"],
-                "weight_sink": connection["weight_sink"],
+                "weight_origin": connection["weight_origin"],
+                "weight_destination": connection["weight_destination"],
                 "to_losses": connection["to_losses"],
                 "type": connection["type"],
             }
@@ -351,8 +350,8 @@ class Blueprint:
                 key=key,
                 flowtype=flowtype,
                 to_losses=to_losses,
-                weight_source=connection["weight_source"],
-                weight_sink=connection["weight_sink"],
+                weight_origin=connection["weight_origin"],
+                weight_destination=connection["weight_destination"],
             )
 
         factory.check_validity()

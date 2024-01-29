@@ -55,7 +55,6 @@ def show_component_definition_dialog(app):
 
 def save_component_definition(app):
 
-    print("check")
     # get name and description inputs
     name = app.dialog.content_cls.ids.textfield_name.text
 
