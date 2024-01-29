@@ -15,10 +15,6 @@ import factory_flexibility_model.io.input_validations as iv
 # CODE START
 class Component:
     def __init__(self, key: str, factory, *, flowtype: str = None, name: str = None):
-        self.visualize = (
-            False  # If True a Graph of the resulting timeseries of the Component
-        )
-        # will be plotted after Simulation
         self.factory = (
             factory  # enables callbacks to the factory the Component is assigned to
         )
@@ -27,15 +23,16 @@ class Component:
         else:
             self.name = name
         self.key = key  # Identifier for internal use
-        self.IS_SOURCE = (
-            False  # Capability to act as source must be specified in subclass
+        self.IS_ORIGIN = (
+            False  # Capability to act as an Origin must be specified in subclass
         )
-        self.IS_SINK = False  # Capability to act as sink must be specified in subclass
+        self.IS_DESTINATION = (
+            False  # Capability to act as destination must be specified in subclass
+        )
         self.description = ""  # Placeholder for a description of the Component for better identification
         self.determined = (
             False  # only useful for some subclasses, but defining it for all of
         )
-        self.flowtype_description = ""  # String that can give a detailled explanation how the flow of the component is to be interpreted
         self.inputs = (
             []
         )  # initialize list, which stores pointers to all input connections
@@ -43,9 +40,7 @@ class Component:
             []
         )  # initialize list, which stores pointers to all output connections
         self.type = "unknown"  # set keyword "unknown" if no type is specified
-        self.scenario_dependent = (
-            False  # is there any relevant data for the Component that has to be
-        )
+
         # delivered by the scenario
         self.scenario_data = (
             {}
@@ -77,9 +72,9 @@ class Component:
         :param connection: [fm.Connection-object]
         """
 
-        if not self.IS_SINK:
+        if not self.IS_DESTINATION:
             logging.critical(
-                f"ERROR: Cannot create inpout connection {connection.name}, because Component {self.name} is not a valid sink"
+                f"ERROR: Cannot create inpout connection {connection.name}, because Component {self.name} is not a valid destination"
             )
             raise Exception
 
@@ -97,7 +92,7 @@ class Component:
         This function sets the given connection as an output for the component
         :param connection: [fm.Connection-object]
         """
-        if not self.IS_SOURCE:
+        if not self.IS_ORIGIN:
             logging.critical(
                 f"ERROR: Cannot create output connection {connection.name}, because Component {self.name} is not a valid source"
             )
@@ -123,10 +118,10 @@ class Component:
             f"            (UPDATE) The flowtype of Component {self.name} is now defined as {flowtype.name}"
         )
         self.flowtype = flowtype
-        if self.IS_SINK:
+        if self.IS_DESTINATION:
             for i in self.inputs:
                 i.update_flowtype(flowtype)
-        if self.IS_SOURCE:
+        if self.IS_ORIGIN:
             for i in self.outputs:
                 i.update_flowtype(flowtype)
 
@@ -152,8 +147,8 @@ class Component:
 
         # define list of boolean constants that have to remain untouched in general
         constants = {
-            "IS_SOURCE",
-            "IS_SINK",
+            "IS_ORIGIN",
+            "IS_DESTINATION",
             "type",
             "factory",
             "inputs",
@@ -317,20 +312,9 @@ class Component:
                 f" The parameter {parameter} was ignored for Component {self.name}, because it is unknown"
             )
 
-    def is_converter(self) -> bool:
-        """
-        This function returns, if the component is a converter
-        :return: [boolean] True, if the component is a converter, otherwise False
-        """
-        # just a simple function to avoid boolean-checks with keywords in any function outside the Component-class
-        if self.type == "converter":
-            return True
-        else:
-            return False
-
     def is_sink(self) -> bool:
         """
-        :return: [boolean] True, if the component is a valid sink, otherwise False
+        :return: [boolean] True, if the component is a valid destination, otherwise False
         """
         if self.type == "sink":
             return True
@@ -362,8 +346,8 @@ class Converter(Component):
         self.inputs_material = (
             []
         )  # separate list to store information about material inputs
-        self.IS_SOURCE = True  # Converters are valid sources
-        self.IS_SINK = True  # Converters are valid sinks
+        self.IS_ORIGIN = True  # Converters are valid origins
+        self.IS_DESTINATION = True  # Converters are valid destinations
         self.outputs_energy = (
             []
         )  # separate list to store information about energy outputs
@@ -372,10 +356,10 @@ class Converter(Component):
         )  # Separate list to store information about ematerial outputs
         self.to_Mlosses = (
             []
-        )  # Placeholder for pointer directing to the material losses sink
+        )  # Placeholder for pointer directing to the material losses destination
         self.to_ELosses = (
             []
-        )  # Placeholder for pointer directing to the energy losses sink
+        )  # Placeholder for pointer directing to the energy losses destination
         self.type = "converter"  # specify Component as converter
 
         # POWER CONSTRAINTS
@@ -398,8 +382,8 @@ class Converter(Component):
         self.ramp_power_limited = (
             False  # Set "True, if the power gradient of the Component is limited
         )
-        self.max_pos_ramp_power = 10000000  # maximum absolute positive power gradient per timestep, initialized as big M
-        self.max_neg_ramp_power = 10000000  # maximum absolute negative power gradient per timestep, initialized as big M
+        self.power_ramp_max_pos = 10000000  # maximum absolute positive power gradient per timestep, initialized as big M
+        self.power_ramp_max_neg = 10000000  # maximum absolute negative power gradient per timestep, initialized as big M
 
         # EFFICIENCY PARAMETERS
         self.delta_eta_high = 0  # efficiency drop when leaving the nominal operation point towards higher values. standard value of zero -> does nothing unless changed
@@ -418,7 +402,7 @@ class Converter(Component):
 
     def set_input(self, connection: co.Connection):
         """
-        This function sets the given connection as an input for the deadtime-component. The weight is either taken from weight or weight sink.
+        This function sets the given connection as an input for the deadtime-component. The weight is either taken from weight or weight destination.
         :param connection: [fm.Connection-object]
         """
 
@@ -542,9 +526,9 @@ class Converter(Component):
                 )
 
             # handle Ramping constraints
-            elif parameter == "max_pos_ramp_power":
-                self.max_pos_ramp_power = iv.validate(
-                    parameters["max_pos_ramp_power"], "float", positive=True
+            elif parameter == "power_ramp_max_pos":
+                self.power_ramp_max_pos = iv.validate(
+                    parameters["power_ramp_max_pos"], "float", positive=True
                 )
                 self.ramp_power_limited = True
                 if self.switchable:
@@ -552,9 +536,9 @@ class Converter(Component):
                         f"ERROR: cannot set ramping constraints for Component {self.name}, because it is already defined as switchable"
                     )
                     raise Exception
-            elif parameter == "max_neg_ramp_power":
-                self.max_neg_ramp_power = iv.validate(
-                    parameters["max_neg_ramp_power"], "float", positive=True
+            elif parameter == "power_ramp_max_neg":
+                self.power_ramp_max_neg = iv.validate(
+                    parameters["power_ramp_max_neg"], "float", positive=True
                 )
                 self.ramp_power_limited = True
                 if self.switchable:
@@ -605,8 +589,8 @@ class Deadtime(Component):
 
         # STRUCTURAL ATTRIBUTES
         self.type = "deadtime"  # specify Component as deadtime
-        self.IS_SOURCE = True  # Deadtimes are valid sources
-        self.IS_SINK = True  # Deadtimes are valid sinks
+        self.IS_DESTINATION = True  # Deadtimes are valid destinations
+        self.IS_ORIGIN = True  # Deadtimes are valid origins
 
         # FUNCTIONAL ATTRIBUTES
         self.delay = (
@@ -686,8 +670,8 @@ class Deadtime(Component):
 class Pool(Component):
     def __init__(self, key, factory, *, flowtype=None, name: str = None):
         super().__init__(key, factory, flowtype=flowtype, name=name)
-        self.IS_SINK = True  # pools can act as a sink
-        self.IS_SOURCE = True  # pools can act as a source
+        self.IS_DESTINATION = True  # pools can act as a destination
+        self.IS_ORIGIN = True  # pools can act as an origin
         self.type = "pool"  # identify Component as pool
         self.description = "Unspecified Pool"  # Description for identification in UI
         self.flowtype_description = (
@@ -719,12 +703,12 @@ class Sink(Component):
             factory.timesteps
         )  # used for all classes with power_max, to determine the maximum power timedependent. is initialized as all ones, so that it has no effect if not specificly adressed
         self.causes_emissions = (
-            False  # Does the usage of this sink cause any CO2-Emissions?
+            False  # Does the usage of this destination cause any CO2-Emissions?
         )
         self.chargeable = False  # Must be changed to "true", if the utilization of the source is connected with costs
         self.cost = []  # must be specified by set_configuration
         self.co2_emissions_per_unit = (
-            0  # How many kg CO2 are emitted by giving one unit to this sink?
+            0  # How many kg CO2 are emitted by giving one unit to this destination?
         )
         self.demand = []  # must be specified by set_configuration
         self.description = (
@@ -732,8 +716,8 @@ class Sink(Component):
         )
         self.determined = False  # True -> Output is determined by timeseries; False -> Output is result of optimization
         self.flowtype_description = ""  # A clearer description of the flowtype (e.g. "Room Heating for Main Office"), just for the visualisation
+        self.IS_DESTINATION = True  # sinks can act as a destination
         self.is_onsite = True  # Set to False if the flowtype is leaving the factory without being consumed
-        self.IS_SINK = True  # sinks can obviously act as a sink
         self.max_total_input_limited = (
             False  # specify if maximum cummulative input is limited
         )
@@ -742,14 +726,14 @@ class Sink(Component):
         self.power_max = []  # must be specified by set_configuration
         self.power_min_limited = False  # specify if the minimum output power is limited
         self.power_min = []  # must be specified by set_configuration
-        self.refundable = False  # Must be changed to True, if reccources/energy flowing into the sink are creating a revenue
+        self.refundable = False  # Must be changed to True, if reccources/energy flowing into the destination are creating a revenue
         self.revenue = (
             []
         )  # must be set by set_configuration, specifies the revenue in €/unit
-        self.type = "sink"  # specify Component as a global sink
+        self.type = "sink"  # specify Component as a global destination
 
         logging.debug(
-            f"        - New sink {self.name} of flowtype {self.flowtype.unit.quantity_type} "
+            f"        - New destination {self.name} of flowtype {self.flowtype.unit.quantity_type} "
             f"created with Component-key {self.key}"
         )
 
@@ -887,27 +871,24 @@ class Sink(Component):
                 )
 
             elif parameter == "revenue":
-                if parameters[parameter] in ("$parameter$", "$timeseries$"):
-                    self.revenue = parameters[parameter]
-                else:
-                    if self.determined:
-                        logging.critical(
-                            f"Error: cannot set a revenue for {self.name}, "
-                            f"because the output power is determined"
-                        )
-                        raise Exception
-
-                    if self.chargeable:
-                        logging.critical(
-                            f"ERROR: {self.name} cannot be set to create revenue, "
-                            f"because it is already defined as chargeable!"
-                        )
-                        raise Exception
-
-                    self.refundable = True
-                    self.revenue = iv.validate(
-                        parameters["revenue"], "float", timesteps=timesteps
+                if self.determined:
+                    logging.critical(
+                        f"Error: cannot set a revenue for {self.name}, "
+                        f"because the output power is determined"
                     )
+                    raise Exception
+
+                if self.chargeable:
+                    logging.critical(
+                        f"ERROR: {self.name} cannot be set to create revenue, "
+                        f"because it is already defined as chargeable!"
+                    )
+                    raise Exception
+
+                self.refundable = True
+                self.revenue = iv.validate(
+                    parameters["revenue"], "float", timesteps=timesteps
+                )
 
             elif parameter == "co2_emissions_per_unit":
                 # set the emission factor as timeseries:
@@ -915,7 +896,7 @@ class Sink(Component):
                     parameters["co2_emissions_per_unit"], "float", timesteps=timesteps
                 )
 
-                # set the sink to avoid emissions:
+                # set the destination to avoid emissions:
                 self.causes_emissions = True
 
             # handle is_onsite definition
@@ -958,7 +939,8 @@ class Source(Component):
             False  # specify if the output power is predetermined by a timeseries
         )
         self.determined_power = []  # must be specified by set_configuration
-        self.IS_SOURCE = True  # sources can obviously act as a source
+        self.flowtype_description = ""
+        self.IS_ORIGIN = True  # sources can obviously act as a source
         self.is_onsite = False  # determines wether the input is generated within the factory or comes from outside. This is used to calculate the self sufficiency in the end
         self.power_max_limited = False  # specify if maximum output is limited
         self.power_max = []  # must be specified by set_configuration
@@ -1125,13 +1107,13 @@ class Storage(Component):
     def __init__(self, key: str, factory, *, flowtype: str = None, name: str = None):
         super().__init__(key, factory, flowtype=flowtype, name=name)
         self.capacity = 0  # Storage capacity, initialized as zero, so that the Component has no effect if not explicitly specified
+        self.direct_throughput = False  # Set to true if charging and discharging in the same timestep is allowed
         self.efficiency = (
             1  # ratio of discharged vs charged power, initialized as 1 -> no losses
         )
-        self.fixed_ratio_output = True  # Storages get a unique loss-factor
-        self.flowtype_description = ""  # Optional string shown as explenation in GUI
-        self.IS_SINK = True  # storages can act as a sink
-        self.IS_SOURCE = True  # storages can act as a source
+        self.flowtype_description = ""  # Optional string shown as explanation in GUI
+        self.IS_DESTINATION = True  # storages can act as a destination
+        self.IS_ORIGIN = True  # storages can act as a source
         self.leakage_time = 0  # fixed % of capacity that leaks per timestep
         self.leakage_SOC = 0  # % of the stored ressource that leaks per timestep
         self.power_max_charge = (
@@ -1145,9 +1127,8 @@ class Storage(Component):
         self.sustainable = True  # Determines, wether the SOC has to be the same at the start and end of the Simulation or not.
         self.to_losses = (
             []
-        )  # placeholder for a pointer directing to the correct losses sink
+        )  # placeholder for a pointer directing to the correct losses destination
         self.type = "storage"  # specify Component as storage
-        self.visualize = False  # Set True, if you want the Simulation to create a plot of the charging behaviour
 
         logging.debug(
             f"        - New storage {self.name} created with Component-key{self.key}"
@@ -1166,6 +1147,10 @@ class Storage(Component):
             if parameter == "capacity":
                 self.capacity = iv.validate(
                     parameters["capacity"], "float", positive=True
+                )
+            elif parameter == "direct_throughput":
+                self.direct_throughput = iv.validate(
+                    parameters["direct_throughput"], "boolean"
                 )
             elif parameter == "soc_start":
                 self.soc_start = iv.validate(parameters["soc_start"], "0..1")
@@ -1186,6 +1171,7 @@ class Storage(Component):
 
             # HANDLE GENERAL PARAMETERS
             else:
+                print(parameter)
                 super().set_parameter(timesteps, parameter, parameters)
 
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
@@ -1234,8 +1220,8 @@ class Thermalsystem(Component):
         self.from_gains = (
             []
         )  # placeholder for a pointer directing to the source of thermal gains from outside
-        self.IS_SINK = True  # thermal systems are a sinks
-        self.IS_SOURCE = True  # thermal systems are sources
+        self.IS_DESTINATION = True  # thermal systems are a sinks
+        self.IS_ORIGIN = True  # thermal systems are sources
         self.R = 10  # Thermal loss factor
         self.sustainable = True  # Does the thermal system have to retain to it's starting temperature at the end of the Simulation?
         self.temperature_ambient = (
@@ -1252,9 +1238,8 @@ class Thermalsystem(Component):
         )
         self.to_losses = (
             []
-        )  # placeholder for a pointer directing to the correct losses sink
+        )  # placeholder for a pointer directing to the correct losses destination
         self.type = "thermalsystem"  # specify Component as a thermal system
-        self.visualize = False  # Set to True if a diagramm shall be plottet to show the thermal boundaries and the realized temperature curve
         logging.debug(
             f"        - New thermal system {self.name} created with Component-id {self.key}"
         )
@@ -1292,9 +1277,9 @@ class Thermalsystem(Component):
         :param connection: [fm.Connection-object]
         """
         # prohibit direct connections between two thermalsystems:
-        if connection.sink.type == "thermalsystem":
+        if connection.destination.type == "thermalsystem":
             logging.critical(
-                f" Error during factory setup: Connecting two Thermalsystems ({self.name} -> {connection.sink.name}) is not possible. Integrate at least one converter between them!"
+                f" Error during factory setup: Connecting two Thermalsystems ({self.name} -> {connection.destination.name}) is not possible. Integrate at least one converter between them!"
             )
             raise Exception
 
@@ -1354,7 +1339,7 @@ class Thermalsystem(Component):
 
             # HANDLE GENERAL PARAMETERS
             else:
-                super().set_parameters(timesteps, parameter, parameters)
+                super().set_parameter(timesteps, parameter, parameters)
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
         # Validation of given inputs:
@@ -1385,8 +1370,8 @@ class Triggerdemand(Component):
         )
         self.input_energy = None  # energy input
         self.input_material = None  # material input
-        self.IS_SINK = True  # triggerdemands are a sinks
-        self.IS_SOURCE = True  # triggerdemands are sources
+        self.IS_DESTINATION = True  # triggerdemands are a destination
+        self.IS_ORIGIN = True  # triggerdemands are an origin
         self.load_profile_energy = (
             []
         )  # profiles of the energy load that has to be fulfilled on execution
@@ -1399,10 +1384,9 @@ class Triggerdemand(Component):
         self.profile_length = []  # length of the given load profile
         self.Tend = (
             factory.timesteps
-        )  # last timestep of the allowed fullfilment interval. Initialized as the last timestep
+        )  # last timestep of the allowed fullfillment interval. Initialized as the last timestep
         self.Tstart = 1  # first timestep of the allowed fulfilment interval. Initialized as the first timestep
         self.type = "triggerdemand"  # specify Component as a thermal system
-        self.visualize = False  # triggerdemands cant be plotted yet
         logging.debug(
             f"        - New triggerdemand {self.name} created with Component-key {self.key}"
         )
@@ -1520,8 +1504,8 @@ class Triggerdemand(Component):
 class Slack(Component):
     def __init__(self, key: str, factory, name: str = None):
         super().__init__(key, factory, name=name)
-        self.IS_SINK = True  # pools can act as a sink
-        self.IS_SOURCE = True  # pools can act as a source
+        self.IS_DESTINATION = True  # pools can act as a destination
+        self.IS_ORIGIN = True  # pools can act as a origin
         self.type = "slack"  # identify Component as slack
         self.cost = (
             np.ones(factory.timesteps) * 1000000000
@@ -1570,8 +1554,8 @@ class Schedule(Component):
         self.demands = np.array(
             [[0, 0, 0, 0]]
         )  # Initialize Demand as a single partdemand with a volume of zero
-        self.IS_SINK = True  # schedules can act as a sink
-        self.IS_SOURCE = True  # schedules can act as a source
+        self.IS_DESTINATION = True  # schedules can act as a destination
+        self.IS_ORIGIN = True  # schedules can act as an origin
         self.power_max_limited = (
             False  # define, if the maximum total power of all part demands is limited
         )
@@ -1681,6 +1665,6 @@ class Schedule(Component):
 
             # HANDLE GENERAL PARAMETERS
             else:
-                super().set_parameters(timesteps, parameter, parameters)
+                super().set_parameter(timesteps, parameter, parameters)
 
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")

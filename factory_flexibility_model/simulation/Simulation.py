@@ -41,11 +41,13 @@ class Simulation:
         factory=None,
         enable_time_tracking=False,
         name="Unspecified Simulation",
+        big_m: float = 1000000,
     ):
         """
         :param enable_time_tracking: Set to true if you want to track the time required for Simulation
         """
         # set general data for the Simulation
+        self.big_m = big_m
         self.date_simulated = "NOT_SIMULATED"
         self.enable_time_tracking = enable_time_tracking
         self.factory = factory  # Variable to store the factory for the Simulation
@@ -181,12 +183,12 @@ class Simulation:
             self.m.addConstr(
                 self.MVars[f"P_{component.key}"][1 : self.T]
                 <= self.MVars[f"P_{component.key}"][0 : self.T - 1]
-                + component.max_pos_ramp_power
+                + component.power_ramp_max_pos
             )  # restrict ramping up
             self.m.addConstr(
                 self.MVars[f"P_{component.key}"][1 : self.T]
                 >= self.MVars[f"P_{component.key}"][0 : self.T - 1]
-                - component.max_neg_ramp_power
+                - component.power_ramp_max_neg
             )  # restrict ramping down
             logging.debug(
                 f"        - Constraint:   Ramping constraints for {component.name}"
@@ -197,7 +199,7 @@ class Simulation:
             self.m.addConstr(
                 self.MVars[connection.key]
                 == self.MVars[f"P_{component.key}"]
-                * connection.weight_sink
+                * connection.weight_destination
                 * self.interval_length
             )
 
@@ -207,7 +209,7 @@ class Simulation:
                 self.m.addConstr(
                     self.MVars[connection.key]
                     == self.MVars[f"P_{component.key}"]
-                    * connection.weight_source
+                    * connection.weight_origin
                     * self.interval_length
                     * self.MVars[f"Eta_{component.key}"]
                 )
@@ -218,7 +220,7 @@ class Simulation:
                 self.m.addConstr(
                     self.MVars[connection.key]
                     == self.MVars[f"P_{component.key}"]
-                    * connection.weight_source
+                    * connection.weight_origin
                     * self.interval_length
                 )
                 logging.debug(
@@ -310,12 +312,12 @@ class Simulation:
         rows = len(component.demands)
 
         # create availability matrix for the demands
-        availability = np.zeros((self.T, rows))
+        availability = np.ones((self.T, rows))
         for row in range(rows):
             for column in range(
                 int(component.demands[row, 0]), int(component.demands[row, 1]) + 1
             ):
-                availability[column - 1, row] = 1
+                availability[column - 1, row] = 0
         self.MVars[f"X_{component.key}_availability"] = availability
 
         # create decision variables for the demands
@@ -326,14 +328,15 @@ class Simulation:
             f"        - Variable(s):  Ein for {rows} part demands of {component.name}"
         )
 
-        # define constraint: validate and output must be equal at any timestep to ensure, that the Component just does flowtype control
-        self.m.addConstr(
-            self.MVars[component.outputs[0].key] == self.MVars[component.inputs[0].key]
+        # define constraint: input and output must be equal at any timestep to ensure, that the Component just does flowtype control
+        self.m.addConstrs(
+            self.MVars[component.outputs[0].key][t]
+            == self.MVars[component.inputs[0].key][t]
+            for t in range(self.T)
         )
         logging.debug(f"        - Constraint:   E_in == E_out for {component.name}")
-        # TODO: doesnt this have to be fulfilled for every timestep??!
 
-        # define constraint: taken inputs for demand fulfillment must equal the used validate in every timestep
+        # define constraint: taken inputs for demand fulfillment must equal the used input in every timestep
         self.m.addConstrs(
             gp.quicksum(self.MVars[f"E_{component.key}_in"][t][:])
             == self.MVars[component.inputs[0].key][t]
@@ -343,15 +346,25 @@ class Simulation:
             f"        - Constraint:   E_demands must be fed by inputs within {component.name}"
         )
 
-        # define constraint: each part demand d must have it's individual demand fulfilled
+        # define constraint: each part demand must have its individual demand fulfilled
         self.m.addConstrs(
-            self.MVars[f"E_{component.key}_in"][0 : self.T, i]
-            @ availability[0 : self.T, i]
+            gp.quicksum(self.MVars[f"E_{component.key}_in"][0 : self.T, i])
             == component.demands[i, 2]
             for i in range(rows)
         )
         logging.debug(
             f"        - Constraint:   Each part demand of {component.name} must have its demand fulfilled"
+        )
+
+        # define constraint: part demands are only allowed to be fed while available
+        self.m.addConstrs(
+            self.MVars[f"E_{component.key}_in"][0 : self.T, i]
+            @ availability[0 : self.T, i]
+            == 0
+            for i in range(rows)
+        )
+        logging.debug(
+            f"        - Constraint:   Part demands of {component.name} can only be fed when available"
         )
 
         # define constraint: adhere power_max constraints per part demand
@@ -402,15 +415,15 @@ class Simulation:
     def __add_sink(self, component):
         """
         This function adds all necessary MVARS and constraints to the optimization problem that are
-        required to simulate the sink handed over as 'Component'
-        :param component: components.sink-object
+        required to simulate the destination handed over as 'Component'
+        :param component: components.destination-object
         :return: self.m is beeing extended
         """
         # Sinks may be determined in their power intake or the power consumption may be calculated during the optimization.
         # In the first case a constraint is created, that forces all connected inputs to meet the desired power in total
         # In the second case a MVar reflecting the resulting inflow is created, together with a constraint to calculate it
 
-        # create a timeseries of decision variables to represent the total inflow (energy/material) going into the sink
+        # create a timeseries of decision variables to represent the total inflow (energy/material) going into the destination
         self.MVars[f"E_{component.key}"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.name}"
         )
@@ -422,7 +435,7 @@ class Simulation:
             # set the sum of incoming flows to meet the power demand
             self.m.addConstr(
                 gp.quicksum(
-                    component.inputs[o].weight_sink
+                    component.inputs[o].weight_destination
                     * self.MVars[component.inputs[o].key]
                     for o in range(len(component.inputs))
                 )
@@ -444,7 +457,7 @@ class Simulation:
             f"        - Constraint:   E_{component.key} == sum of incoming flows"
         )
 
-        # is the total cumulative input of the sink limited? If yes: add sum constraint
+        # is the total cumulative input of the destination limited? If yes: add sum constraint
         if component.max_total_input_limited:
             self.m.addConstr(
                 gp.quicksum(self.MVars[f"E_{component.key}"])
@@ -454,7 +467,7 @@ class Simulation:
                 f"        - Constraint:   sum(E_{component.key}(t)) <= E_{component.name}_max_total"
             )
 
-        # is the maximum output power of the sink limited? If yes: Add power_max constraint
+        # is the maximum output power of the destination limited? If yes: Add power_max constraint
         if component.power_max_limited:
             self.m.addConstr(
                 self.MVars[f"E_{component.key}"]
@@ -475,7 +488,7 @@ class Simulation:
                 f"        - Constraint:   P_{component.key} >= P_{component.key}_min"
             )
 
-        # does the utilization of the sink cost something? If yes: Add the corresponding cost factors
+        # does the utilization of the destination cost something? If yes: Add the corresponding cost factors
         if component.chargeable:
             self.C_objective.append(
                 self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"C_{component.key}")
@@ -488,7 +501,7 @@ class Simulation:
                 f"        - CostFactor:   Cost for dumping into {component.name}"
             )
 
-        # does the utilization of the sink create revenue? If yes: Add the corresponding negative cost factors
+        # does the utilization of the destination create revenue? If yes: Add the corresponding negative cost factors
         if component.refundable:
             self.R_objective.append(
                 self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"R_{component.key}")
@@ -555,7 +568,7 @@ class Simulation:
         This function adds all necessary MVARS and constraints to the optimization problem that are
         required to integrate the slack handed over as 'Component'
         :param component: components.slack-object
-        :return: self.m is beeing extended
+        :return: self.m is being extended
         """
         # create  variable for initial SOC
         self.MVars[f"SOC_{component.key}_start"] = self.m.addMVar(
@@ -574,35 +587,6 @@ class Simulation:
                 f"        - Variable:     SOC_start for storage {component.name}"
             )
 
-        # create variable for Echarge
-        self.MVars[f"E_{component.key}_charge"] = self.m.addMVar(
-            self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.key}_charge"
-        )
-        self.m.addConstr(
-            self.MVars[f"E_{component.key}_charge"]
-            == gp.quicksum(
-                self.MVars[component.inputs[input_id].key]
-                for input_id in range(len(component.inputs))
-            )
-        )
-        logging.debug(f"        - Variable:     ECharge for storage {component.key} ")
-
-        # create variable for Edischarge
-        self.MVars[f"E_{component.key}_discharge"] = self.m.addMVar(
-            self.T, vtype=GRB.CONTINUOUS, name=f"E_{component.key}_discharge"
-        )
-        self.m.addConstr(
-            self.MVars[f"E_{component.key}_discharge"]
-            == gp.quicksum(
-                self.MVars[component.outputs[output_id].key]
-                + self.MVars[component.to_losses.key]
-                for output_id in range(len(component.outputs))
-            )
-        )
-        logging.debug(
-            f"        - Variable:     EDischarge for storage {component.name} "
-        )
-
         # create variable for SOC
         self.MVars[f"SOC_{component.key}"] = self.m.addMVar(
             self.T, vtype=GRB.CONTINUOUS, name=f"SOC_{component.key}"
@@ -617,8 +601,9 @@ class Simulation:
             self.MVars[f"SOC_{component.key}"]
             == cumsum_matrix
             @ (
-                self.MVars[f"E_{component.key}_charge"]
-                - self.MVars[f"E_{component.key}_discharge"]
+                self.MVars[component.inputs[0].key]
+                - self.MVars[component.outputs[0].key]
+                - self.MVars[component.to_losses.key]
             )
             + component.capacity * self.MVars[f"SOC_{component.key}_start"][0]
         )
@@ -649,7 +634,7 @@ class Simulation:
         # create Pcharge_max-constraint
         if component.power_max_charge > 0:
             self.m.addConstr(
-                self.MVars[f"E_{component.key}_charge"]
+                self.MVars[component.inputs[0].key]
                 <= component.power_max_charge * self.interval_length
             )
             logging.debug(
@@ -659,7 +644,7 @@ class Simulation:
         # create Pdischarge_max-constraint
         if component.power_max_discharge > 0:
             self.m.addConstr(
-                self.MVars[f"E_{component.key}_discharge"]
+                self.MVars[component.outputs[0].key]
                 <= component.power_max_discharge * self.interval_length
             )
             logging.debug(
@@ -667,7 +652,11 @@ class Simulation:
             )
 
         # create constraint to calculate the occuring losses if necessary
-        if component.leakage_SOC > 0 or component.leakage_time > 0:
+        if (
+            component.leakage_SOC > 0
+            or component.leakage_time > 0
+            or component.efficiency < 1
+        ):
             soc_leakage = component.leakage_SOC**self.time_reference_factor
             lin_leakage = (
                 component.leakage_time * component.capacity * self.time_reference_factor
@@ -677,16 +666,41 @@ class Simulation:
                     self.MVars[component.to_losses.key][t]
                     == self.MVars[f"SOC_{component.key}"][t] * soc_leakage
                     + lin_leakage
-                    + gp.quicksum(  # TODO: BUG! This creates problems once the storage is empty! #TODO: The introduction of the timefactor in the soc-term causes a difference between 1*1h and 4*0.25h simulations
-                        self.MVars[component.outputs[output_id].key][t]
-                        for output_id in range(len(component.outputs))
-                    )
+                    + self.MVars[component.outputs[0].key][t]
                     * (1 / component.efficiency - 1)
                 )
                 for t in range(self.T)
             )
             logging.debug(
                 f"        - Constraint:   E_losses = E_discharge * (1-efficiency) for {component.name}"
+            )
+        else:
+            # make sure that there is no energy-disposal loophole using illegal losses
+            self.m.addConstr(self.MVars[component.to_losses.key] == 0)
+
+        # in case direct thropughput is forbitten or the storage is directly connected to a pool on both sides and the efficiency is 100%: prohibit charging and discharging at the same timestep
+        if (
+            component.inputs[0].origin == component.outputs[0].destination
+            and component.efficiency == 1
+        ) or component.direct_throughput == False:
+            # add helper variable to track if the storage is charging or discharging
+            self.MVars[f"{component.key}_charging"] = self.m.addMVar(
+                self.T, vtype=GRB.BINARY, name=f"{component.key}_charging"
+            )
+            # use big M method to force either input or output to be zero
+            self.m.addConstrs(
+                self.MVars[component.inputs[0].key][t]
+                <= self.big_m * self.MVars[f"{component.key}_charging"][t]
+                for t in range(self.T)
+            )
+            self.m.addConstrs(
+                self.MVars[component.outputs[0].key][t]
+                <= self.big_m * (1 - self.MVars[f"{component.key}_charging"][t])
+                for t in range(self.T)
+            )
+
+            logging.debug(
+                f"        - Constraint:   Preventing direct throughput on {component.name}"
             )
 
     def __add_source(self, component):
@@ -710,14 +724,14 @@ class Simulation:
         if component.determined:
             self.m.addConstr(
                 gp.quicksum(
-                    component.outputs[o].weight_source
+                    component.outputs[o].weight_origin
                     * self.MVars[component.outputs[o].key]
                     for o in range(len(component.outputs))
                 )
                 == component.determined_power
             )
 
-        # add constraints to calculate the total inflow to the system as the sum of all flows of connected regions
+        # add constraints to calculate the total inflow to the system as the sum of all flows of outgoing connections
         self.m.addConstr(
             gp.quicksum(
                 self.MVars[component.outputs[o].key]
@@ -734,7 +748,7 @@ class Simulation:
         if component.power_max_limited:
             self.m.addConstr(
                 gp.quicksum(
-                    component.outputs[o].weight_source
+                    component.outputs[o].weight_origin
                     * self.MVars[component.outputs[o].key]
                     for o in range(len(component.outputs))
                 )
@@ -747,11 +761,11 @@ class Simulation:
         elif self.factory.enable_slacks:
             self.m.addConstr(
                 gp.quicksum(
-                    component.outputs[o].weight_source
+                    component.outputs[o].weight_origin
                     * self.MVars[component.outputs[o].key]
                     for o in range(len(component.outputs))
                 )
-                <= 10000000
+                <= self.big_m
             )
             logging.debug(
                 f"        - Constraint:   P_{component.key} <= P_SECURITY                            -> Prevent Model from being unbounded"
@@ -761,7 +775,7 @@ class Simulation:
         if component.power_min_limited:
             self.m.addConstr(
                 gp.quicksum(
-                    component.outputs[o].weight_source
+                    component.outputs[o].weight_origin
                     * self.MVars[component.outputs[o].key]
                     for o in range(len(component.outputs))
                 )
@@ -775,9 +789,21 @@ class Simulation:
 
         # does the utilization of the source cost something? If yes: Add the corresponding cost factors
         if component.chargeable:
-            self.C_objective.append(
-                self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"C_{component.key}")
-            )
+            if min(component.cost[0 : self.T]) < 0:
+                # if negative prices are possible the lower bound of the decision variable has to allow negative values
+                self.C_objective.append(
+                    self.m.addMVar(
+                        1,
+                        vtype=GRB.CONTINUOUS,
+                        lb=-GRB.INFINITY,
+                        name=f"C_{component.key}",
+                    )
+                )
+            else:
+                # otherwise the lower bound is kept at 0 for better solver performance
+                self.C_objective.append(
+                    self.m.addMVar(1, vtype=GRB.CONTINUOUS, name=f"C_{component.key}")
+                )
             self.m.addConstr(
                 self.C_objective[-1]
                 == component.cost[0 : self.T] @ self.MVars[f"E_{component.key}"]
@@ -1232,7 +1258,7 @@ class Simulation:
 
                 # get the sum of the throughput as timeseries
                 utilization = sum(
-                    component.inputs[input_id].weight_sink
+                    component.inputs[input_id].weight_destination
                     * self.MVars[component.inputs[input_id].key].X
                     for input_id in range(len(component.inputs))
                 )
@@ -1269,7 +1295,7 @@ class Simulation:
             # handle sinks
             if component.type == "sink":
 
-                # is the power of the sink determined?
+                # is the power of the sinkdetermined?
                 if component.determined:
                     # if yes: use the demand timeseries
                     utilization = component.demand[0 : self.T]
@@ -1418,10 +1444,10 @@ class Simulation:
             elif component.type == "storage":
                 # read the result timeseries from the Simulation
                 power_charge = (
-                    self.MVars[f"E_{component.key}_charge"].X / self.interval_length
+                    self.MVars[component.inputs[0].key].X / self.interval_length
                 )
                 power_discharge = (
-                    self.MVars[f"E_{component.key}_discharge"].X / self.interval_length
+                    self.MVars[component.outputs[0].key].X / self.interval_length
                 )
                 soc = self.MVars[f"SOC_{component.key}"].X
                 soc_start = self.MVars[f"SOC_{component.key}_start"].X
@@ -1539,10 +1565,14 @@ class Simulation:
 
             # set weights of connections
             if key in self.factory.connections.keys():
-                if "weight_sink" in config:
-                    self.factory.connections[key].weight_sink = config["weight_sink"]
-                if "weight_source" in config:
-                    self.factory.connections[key].weight_sink = config["weight_source"]
+                if "weight_destination" in config:
+                    self.factory.connections[key].weight_destination = config[
+                        "weight_destination"
+                    ]
+                if "weight_origin" in config:
+                    self.factory.connections[key].weight_destination = config[
+                        "weight_origin"
+                    ]
 
     def save(self, file_path: str, *, name: str = None, overwrite: bool = False):
         """
