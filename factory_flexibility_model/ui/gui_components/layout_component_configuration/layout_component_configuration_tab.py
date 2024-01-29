@@ -132,9 +132,9 @@ def update_component_configuration_tab(app):
             else:
                 unit = ""
         elif attribute_data["unit_type"] == "thermal_capacity":
-            unit = "kWh / K"
+            unit = "kWh/K"
         elif attribute_data["unit_type"] == "thermal_resistance":
-            unit = "K / kW"
+            unit = "K/kW"
         else:
             unit = ""
 
