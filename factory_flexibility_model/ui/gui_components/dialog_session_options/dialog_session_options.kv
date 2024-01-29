@@ -1,6 +1,8 @@
 #:import toggle_emission_limit factory_flexibility_model.ui.gui_components.dialog_session_options.dialog_session_options.toggle_emission_limit
 #:import toggle_emission_cost factory_flexibility_model.ui.gui_components.dialog_session_options.dialog_session_options.toggle_emission_cost
 #:import toggle_currency factory_flexibility_model.ui.gui_components.dialog_session_options.dialog_session_options.toggle_currency
+#:import validate_int factory_flexibility_model.ui.utility.validate_textfield_inputs.validate_int
+#:import validate_float factory_flexibility_model.ui.utility.validate_textfield_inputs.validate_float
 
 <DialogSessionConfig>
     spacing: "12dp"
@@ -90,6 +92,7 @@
         hint_text: "Number of simulation timesteps"
         helper_text_mode: "on_error"
         helper_text: "Value must be an integer"
+        on_text: validate_int(self)
 
     MDTextField:
         id: textfield_session_timestep_length
@@ -98,6 +101,7 @@
         helper_text_mode: "on_error"
         helper_text: "Value must be a float"
         disabled: True
+        on_text: validate_float(self)
 
     BoxLayout:
         orientation: "horizontal"
@@ -123,6 +127,7 @@
             id: textfield_emission_cost
             helper_text_mode: "on_error"
             helper_text: "Value must be a float"
+            on_text: validate_float(self)
 
     BoxLayout:
         orientation: "horizontal"
@@ -139,3 +144,4 @@
             hint_text: "Set emission limit [kgCO2]"
             helper_text_mode: "on_error"
             helper_text: "Value must be a float"
+            on_text: validate_float(self)

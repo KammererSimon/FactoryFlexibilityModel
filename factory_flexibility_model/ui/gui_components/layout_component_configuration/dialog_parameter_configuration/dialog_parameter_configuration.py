@@ -7,6 +7,9 @@ from kivy_garden.graph import LinePlot
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import IconLeftWidget, IconRightWidget, TwoLineAvatarIconListItem
 
+from factory_flexibility_model.ui.utility.validate_textfield_inputs import (
+    validate_float,
+)
 from factory_flexibility_model.ui.utility.window_handling import close_popup
 
 
@@ -359,20 +362,7 @@ def validate_value(app, textfield):
     """
 
     app.popup.content_cls.ids.button_add_static_value.disabled = True
-    # empty inputs do not have to be validated
-    if textfield.text.strip() == "":
-        textfield.text = ""
-        textfield.error = True
 
-        return
+    validate_float(textfield)
 
-    # Make sure that the input is a number
-    try:
-        textfield.text = textfield.text.replace(",", ".").strip()
-    except:
-        if not textfield.text == "-":
-            textfield.text = textfield.text[:-1]
-            return
-
-    textfield.error = False
     app.popup.content_cls.ids.button_add_static_value.disabled = False
