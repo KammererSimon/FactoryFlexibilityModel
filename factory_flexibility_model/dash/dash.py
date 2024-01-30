@@ -266,24 +266,31 @@ def create_dash(simulation):
             figure={},
             config=dict(responsive=True),
             style={
-                "height": "30vh",
+                "height": "40vh",
             },
         ),
         "thermal2": dcc.Graph(
             figure={},
             config=dict(responsive=True),
             style={
-                "height": "30vh",
+                "height": "40vh",
             },
         ),
         "schedule1": dcc.Graph(
             figure={},
             config=dict(responsive=True),
             style={
-                "height": "30vh",
+                "height": "40vh",
             },
         ),
         "schedule2": dcc.Graph(
+            figure={},
+            config=dict(responsive=True),
+            style={
+                "height": "40vh",
+            },
+        ),
+        "schedule3": dcc.Graph(
             figure={},
             config=dict(responsive=True),
             style={
@@ -1063,30 +1070,25 @@ def create_dash(simulation):
                                             dbc.Row(
                                                 [
                                                     dcc.Markdown(
-                                                        children="#### UTILIZATION",
+                                                        children="#### THERMAL PROFILE",
                                                         style=style["card_title"],
-                                                    )
+                                                    ),
+                                                    dbc.Row([figures["thermal"]]),
                                                 ],
+                                                style=card_style,
                                             ),
                                             dbc.Row(
-                                                figures["thermal"],
-                                                style={
-                                                    "backgroundColor": style[
-                                                        "card_color"
-                                                    ]
-                                                },
-                                            ),
-                                            dbc.Row(
-                                                figures["thermal2"],
-                                                style={
-                                                    "backgroundColor": style[
-                                                        "card_color"
-                                                    ]
-                                                },
+                                                [
+                                                    dcc.Markdown(
+                                                        children="#### ENERGY FLOWS",
+                                                        style=style["card_title"],
+                                                    ),
+                                                    dbc.Row([figures["thermal2"]]),
+                                                ],
+                                                style=card_style,
                                             ),
                                         ],
                                         width=7,
-                                        style=card_style,
                                     ),
                                     dbc.Col(
                                         [
@@ -1114,7 +1116,6 @@ def create_dash(simulation):
                                         width=2,
                                     ),
                                 ],
-                                style={"height": "66vh"},
                             ),
                         ],
                     ),
@@ -1175,11 +1176,11 @@ def create_dash(simulation):
                                                         style={"height": "3vh"},
                                                     ),
                                                     dbc.Row(
-                                                        [figures["schedule2"]],
-                                                        style={"height": "26vh"},
+                                                        [figures["schedule3"]],
+                                                        style={"height": "40vh"},
                                                     ),
                                                 ],
-                                                style=card_style | {"height": "30vh"},
+                                                style=card_style | {"height": "40vh"},
                                             ),
                                         ],
                                         width=2,
@@ -1197,7 +1198,11 @@ def create_dash(simulation):
                                             ),
                                             dbc.Row(
                                                 [figures["schedule1"]],
-                                                style={"height": "60vh"},
+                                                style={"height": "40vh"},
+                                            ),
+                                            dbc.Row(
+                                                [figures["schedule2"]],
+                                                style={"height": "40vh"},
                                             ),
                                         ],
                                         width=7,
@@ -1274,10 +1279,12 @@ def create_dash(simulation):
                             [
                                 [
                                     component_key_list.index(
-                                        simulation.factory.connections[i].source.key
+                                        simulation.factory.connections[i].origin.key
                                     ),
                                     component_key_list.index(
-                                        simulation.factory.connections[i].sink.key
+                                        simulation.factory.connections[
+                                            i
+                                        ].destination.key
                                     ),
                                     sum(
                                         simulation.result[
@@ -1304,10 +1311,12 @@ def create_dash(simulation):
                             [
                                 [
                                     component_key_list.index(
-                                        simulation.factory.connections[i].source.key
+                                        simulation.factory.connections[i].origin.key
                                     ),
                                     component_key_list.index(
-                                        simulation.factory.connections[i].sink.key
+                                        simulation.factory.connections[
+                                            i
+                                        ].destination.key
                                     ),
                                     sum(
                                         simulation.result[
@@ -1333,12 +1342,12 @@ def create_dash(simulation):
                         [
                             [
                                 component_key_list.index(
-                                    simulation.factory.connections[i].source.key
+                                    simulation.factory.connections[i].origin.key
                                 ),
                                 component_key_list.index(
-                                    simulation.factory.connections[i].sink.key
+                                    simulation.factory.connections[i].destination.key
                                 ),
-                                simulation.factory.connections[i].weight_source,
+                                simulation.factory.connections[i].weight_origin,
                                 connection_key_list.index(
                                     simulation.factory.connections[i].key
                                 ),
@@ -1364,10 +1373,12 @@ def create_dash(simulation):
                             [
                                 [
                                     component_key_list.index(
-                                        simulation.factory.connections[i].source.key
+                                        simulation.factory.connections[i].origin.key
                                     ),
                                     component_key_list.index(
-                                        simulation.factory.connections[i].sink.key
+                                        simulation.factory.connections[
+                                            i
+                                        ].destination.key
                                     ),
                                     sum(
                                         simulation.result[
@@ -1398,10 +1409,12 @@ def create_dash(simulation):
                             [
                                 [
                                     component_key_list.index(
-                                        simulation.factory.connections[i].source.key
+                                        simulation.factory.connections[i].origin.key
                                     ),
                                     component_key_list.index(
-                                        simulation.factory.connections[i].sink.key
+                                        simulation.factory.connections[
+                                            i
+                                        ].destination.key
                                     ),
                                     sum(
                                         simulation.result[
@@ -1507,7 +1520,7 @@ def create_dash(simulation):
                     values_in = np.append(
                         values_in, sum(simulation.result[connection.key])
                     )
-                    names_in.append(connection.source.name)
+                    names_in.append(connection.origin.name)
         if user_input == "Material Losses":
             for c in simulation.factory.connections:
                 connection = simulation.factory.connections[c]
@@ -1518,7 +1531,7 @@ def create_dash(simulation):
                     values_in = np.append(
                         values_in, sum(simulation.result[connection.key])
                     )
-                    names_in.append(connection.source.name)
+                    names_in.append(connection.origin.name)
         df_in = {"values": values_in, "names": names_in}
         df_out = {"values": values_out, "names": names_out}
 
@@ -1607,7 +1620,7 @@ def create_dash(simulation):
                 fig.add_trace(
                     go.Scatter(
                         x=x,
-                        y=component.power_min[t0:t1],
+                        y=component.power_min[t0:t1] * component.availability[t0:t1],
                         line_color="rgb(192,0,0)",
                         name="Pmin",
                         line_dash="dot",
@@ -1617,7 +1630,7 @@ def create_dash(simulation):
                 fig.add_trace(
                     go.Scatter(
                         x=x,
-                        y=component.power_max[t0:t1],
+                        y=component.power_max[t0:t1] * component.availability[t0:t1],
                         line_color="rgb(192,0,0)",
                         name="power_max",
                         line_dash="dash",
@@ -1745,17 +1758,17 @@ def create_dash(simulation):
                 )
             else:
                 config = config + f"\n**Pmin**: 0 SU/Δt \n"
-            if component.max_pos_ramp_power < 10000000:
+            if component.power_ramp_max_pos < 10000000:
                 config = (
                     config
-                    + f"\n**Fastest Rampup:** {component.flowtype.get_value_expression(round(component.max_pos_ramp_power), 'flowrate')} \n "
+                    + f"\n**Fastest Rampup:** {component.flowtype.get_value_expression(round(component.power_ramp_max_pos), 'flowrate')} \n "
                 )
             else:
                 config = config + f"\n**Fastest Rampup:** Unlimited \n "
-            if component.max_neg_ramp_power < 10000000:
+            if component.power_ramp_max_neg < 10000000:
                 config = (
                     config
-                    + f"\n**Fastest Rampdown:** {component.flowtype.get_value_expression(round(component.max_neg_ramp_power), 'flowrate')} \n "
+                    + f"\n**Fastest Rampdown:** {component.flowtype.get_value_expression(round(component.power_ramp_max_neg), 'flowrate')} \n "
                 )
             else:
                 config = config + f"\n**Fastest Rampdown:** Unlimited \n "
@@ -1822,7 +1835,7 @@ def create_dash(simulation):
                         mode="lines",
                         stackgroup="one",
                         line_shape=interpolation[linestyle],
-                        name=f" Inflow from {component.inputs[i].source.name}",
+                        name=f" Inflow from {component.inputs[i].origin.name}",
                         line={"color": c[i]},
                     )
                 )
@@ -1843,7 +1856,7 @@ def create_dash(simulation):
                         mode="lines",
                         stackgroup="two",
                         line_shape=interpolation[linestyle],
-                        name=f"Outflow to {component.outputs[i].sink.name}",
+                        name=f"Outflow to {component.outputs[i].destination.name}",
                         line={"color": c[i]},
                     )
                 )
@@ -2141,13 +2154,13 @@ def create_dash(simulation):
             inputs = ""
             input_sum = 0
             for i_input in component.inputs:
-                inputs += f"\n * {i_input.source.name}\n"
+                inputs += f"\n * {i_input.origin.name}\n"
                 input_sum += sum(simulation.result[i_input.key])
 
             outputs = ""
             output_sum = 0
             for i_output in component.outputs:
-                outputs += f"\n * {i_output.sink.name}\n"
+                outputs += f"\n * {i_output.destination.name}\n"
                 output_sum += sum(simulation.result[i_output.key])
 
             config = (
@@ -2204,7 +2217,7 @@ def create_dash(simulation):
         ]
 
         """TEMPERATURE FIGURE"""
-        fig1 = make_subplots(specs=[[{"secondary_y": True, "r": -0.06}]])
+        fig1 = go.Figure()
 
         fig1.add_trace(
             go.Scatter(
@@ -2216,7 +2229,6 @@ def create_dash(simulation):
                 line_dash="dot",
                 name="Lower temperature boundary",
             ),
-            secondary_y=False,
         )
         fig1.add_trace(
             go.Scatter(
@@ -2228,7 +2240,6 @@ def create_dash(simulation):
                 mode="lines",
                 name="Upper temperature boundary",
             ),
-            secondary_y=False,
         )
 
         # print realized temperature
@@ -2241,7 +2252,6 @@ def create_dash(simulation):
                 mode="lines",
                 name="System Temperature",
             ),
-            secondary_y=True,
         )
         fig1.add_trace(
             go.Scatter(
@@ -2252,14 +2262,13 @@ def create_dash(simulation):
                 mode="lines",
                 name="Ambient Temperature",
             ),
-            secondary_y=True,
         )
 
         fig1.update_layout(
             figure_config,
-            title_text="TEMPERATURE PROFILE",
-            xaxis={"visible": False, "showticklabels": False},
-            legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
+            # xaxis={"visible": False, "showticklabels": False},
+            xaxis_title="Timesteps",
+            legend=dict(yanchor="bottom", y=0.99, xanchor="left", x=0.01),
         )
 
         fig1.update_yaxes(
@@ -2279,24 +2288,6 @@ def create_dash(simulation):
                 )
                 * 1.05,
             ],
-            secondary_y=False,
-        )
-        fig1.update_yaxes(
-            visible=False,
-            range=[
-                min(min(component.temperature_min), min(component.temperature_ambient))
-                - 5
-                - 273.15,
-                (
-                    max(
-                        max(component.temperature_max),
-                        max(component.temperature_ambient),
-                    )
-                    - 273.15
-                )
-                * 1.05,
-            ],
-            secondary_y=True,
         )
 
         """IN/OUTFLOW FIGURE"""
@@ -2315,11 +2306,11 @@ def create_dash(simulation):
                     mode="lines",
                     stackgroup="one",
                     line_shape="hv",
-                    name=component.inputs[i].source.name,
+                    name=component.inputs[i].origin.name,
                 )
             )
             total_heating += sum(simulation.result[component.inputs[i].key])
-            inputs += f"\n * {component.inputs[i].source.name}\n"
+            inputs += f"\n * {component.inputs[i].origin.name}\n"
         # add gains
         fig2.add_trace(
             go.Scatter(
@@ -2348,11 +2339,11 @@ def create_dash(simulation):
                     mode="lines",
                     stackgroup="two",
                     line_shape="hv",
-                    name=component.outputs[i].name,
+                    name=component.outputs[i].destination.name,
                 )
             )
             total_cooling += sum(simulation.result[component.outputs[i].key])
-            outputs += f"\n * {component.outputs[i].source.name}\n"
+            outputs += f"\n * {component.outputs[i].origin.name}\n"
         # add losses
         fig2.add_trace(
             go.Scatter(
@@ -2370,7 +2361,6 @@ def create_dash(simulation):
 
         fig2.update_layout(
             figure_config,
-            title_text="HEATING / COOLING / LOSSES",
             xaxis_title="Timesteps",
             yaxis_title="Energy gains / losses [kWh/Δt]",
             legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
@@ -2403,6 +2393,7 @@ def create_dash(simulation):
     @app.callback(
         Output(figures["schedule1"], component_property="figure"),
         Output(figures["schedule2"], component_property="figure"),
+        Output(figures["schedule3"], component_property="figure"),
         Output(component_info["schedule_config"], component_property="children"),
         Output(component_info["schedule_results"], component_property="children"),
         Input(dropdowns["schedule"], component_property="value"),
@@ -2417,123 +2408,114 @@ def create_dash(simulation):
             component = simulation.factory.components[
                 simulation.factory.get_key(user_input)
             ]
-            fig = make_subplots(
-                rows=2, cols=1, subplot_titles=("PARTDEMAND FULLFILMENT", "TOTAL FLOW")
-            )
+
             utilization = simulation.result[component.key]["utilization"].transpose()
             availability = simulation.result[component.key]["availability"].transpose()
 
             # Create utilization-graph
+            fig1 = go.Figure()
+
             data = (
                 sum(utilization[:, t0:t1])
                 / simulation.scenario.timefactor
                 * simulation.factory.timefactor
             )
             if component.power_max_limited:
-                fig.add_trace(
+                fig1.add_trace(
                     go.Scatter(
                         x=x,
                         y=np.ones(t1 - t0) * component.power_max[t0:t1],
                         line_color="rgb(192,0,0)",
                         name="power_max",
                         line_dash="dash",
-                    ),
-                    row=2,
-                    col=1,
+                    )
                 )
-            fig.add_trace(
+            fig1.add_trace(
                 go.Scatter(
                     x=x,
                     y=data,
                     line_shape=interpolation[linestyle],
                     line_color=style["main_color_rgb"],
                     name="Utilization",
-                ),
-                row=2,
-                col=1,
+                )
+            )
+
+            fig1.update_layout(figure_config)
+            fig1.update_xaxes(
+                linecolor=style["axis_color"],
+                showgrid=True,
+                showticklabels=True,
+                title_text="Simulation interval",
+                linewidth=2,
+            )
+            fig1.update_yaxes(
+                title_text=f"Total utilization [{component.flowtype.unit_flow()}]",
+                linewidth=2,
+                range=[0, max(sum(utilization)) * 1.05],
+                linecolor=style["axis_color"],
+                gridcolor=style["grid_color"],
             )
 
             # Create fulfilment-graph
+            fig2 = go.Figure()
             data2 = copy.copy(utilization[:, t0 : t1 - 1])
-            data2[availability[:, t0 : t1 - 1] == 0] = None
+            data2[availability[:, t0 : t1 - 1] == 1] = None
             delete = []
             for z in range(len(data2)):
                 if np.nansum(data2[z, :]) == 0:
                     delete.append(z)
             data2 = np.delete(data2, delete, 0)
-            fig.add_heatmap(
+
+            fig2.add_heatmap(
                 z=data2[::-1, :],
                 colorscale=[[0, "rgb(200,200,200)"], [1, style["main_color_rgb"]]],
-                row=1,
-                col=1,
                 showlegend=False,
                 showscale=False,
             )
 
-            fig.update_layout(figure_config)
-            fig.update_annotations(font_size=style["diagram_title_size"])
-            fig.update_xaxes(
-                title_text="",
-                linewidth=2,
+            fig2.update_layout(figure_config)
+            fig2.update_annotations(font_size=style["diagram_title_size"])
+            fig2.update_xaxes(
                 linecolor=style["axis_color"],
                 showgrid=True,
-                showticklabels=False,
-                row=1,
-                col=1,
-            )
-            fig.update_xaxes(
+                showticklabels=True,
                 title_text="Simulation interval",
                 linewidth=2,
-                linecolor=style["axis_color"],
-                row=2,
-                col=1,
             )
-            fig.update_yaxes(
+            fig2.update_yaxes(
                 title_text="Part demands",
                 linewidth=2,
                 linecolor=style["axis_color"],
                 showgrid=False,
-                showticklabels=False,
-                row=1,
-                col=1,
-            )
-            fig.update_yaxes(
-                title_text=f"{component.flowtype_description} [{component.flowtype.unit.get_unit_flow()}]",
-                linewidth=2,
-                range=[0, max(sum(utilization)) * 1.05],
-                linecolor=style["axis_color"],
-                gridcolor=style["grid_color"],
-                row=2,
-                col=1,
+                showticklabels=True,
             )
 
             # create demand heatmap
-            # duration=Component
             data3 = np.zeros(
-                [max(component.demands[:, 1] - component.demands[:, 0]) + 1, T]
+                [int(max(component.demands[:, 1] - component.demands[:, 0])) + 1, T]
             )
             for i in range(len(component.demands)):
                 data3[
-                    component.demands[i, 1] - component.demands[i, 0],
-                    component.demands[i, 0] - 1,
+                    int(component.demands[i, 1] - component.demands[i, 0]),
+                    int(component.demands[i, 0] - 1),
                 ] = component.demands[i, 3]
 
-            fig2 = go.Figure()
-            fig2.add_heatmap(
+            fig3 = go.Figure()
+            fig3.add_heatmap(
                 z=data3[:, t0 : t1 - 1],
                 legendgrouptitle={"text": "Amount of demand"},
                 colorscale=[[0, "rgb(200,200,200)"], [1, style["main_color_rgb"]]],
             )  # , row=1, col=1,showlegend=False, showscale=False)
-            fig2.update_layout(
+            fig3.update_layout(
                 figure_config,
                 # title_text="DEMANDS",
             )
-            fig2.update_yaxes(
+            fig3.update_yaxes(
                 title_text="Available timeinterval for fullfilment",
                 linewidth=2,
                 linecolor=style["axis_color"],
             )
-            fig2.update_xaxes(
+            fig3.update_xaxes(
                 title_text=f"Timestep of demand occurance",
                 linewidth=2,
                 linecolor=style["axis_color"],
@@ -2559,12 +2541,12 @@ def create_dash(simulation):
 
             results = f"\n **Total Flow:** {component.flowtype.unit.get_value_expression(round(sum(sum(utilization))), 'flow')}\n \n **power_max:** {component.flowtype.unit.get_value_expression(max(sum(utilization)), 'flowrate')}\n"
         else:
-            fig = go.Figure()
             fig2 = go.Figure()
+            fig3 = go.Figure()
             config = ""
             results = ""
 
-        return fig, fig2, config, results
+        return fig1, fig2, fig3, config, results
 
     # Run app
     app.run_server(port=8053)
