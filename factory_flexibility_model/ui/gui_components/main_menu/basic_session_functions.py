@@ -255,6 +255,11 @@ def save_session(app):
     # There are no more unsaved changes now...
     app.unsaved_changes_on_session = False
 
+    # save png of layout
+    app.root.ids.canvas_layout.export_to_png(
+        f"{app.session_data['session_path']}\\layout.png"
+    )
+
     Snackbar(
         text=f"Session successfully saved at {app.session_data['session_path']}"
     ).open()
