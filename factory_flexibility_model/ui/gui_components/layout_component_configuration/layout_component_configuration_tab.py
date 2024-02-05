@@ -1,7 +1,12 @@
 # IMPORTS
 from kivy.properties import StringProperty
 from kivy.uix.boxlayout import BoxLayout
-from kivymd.uix.list import IconLeftWidgetWithoutTouch, TwoLineIconListItem
+from kivymd.uix.list import (
+    IconLeftWidgetWithoutTouch,
+    OneLineIconListItem,
+    TwoLineIconListItem,
+)
+from kivymd.uix.selectioncontrol import MDCheckbox
 
 from factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_converter_ratios.dialog_converter_ratios import (
     show_converter_ratio_dialog,
@@ -29,7 +34,36 @@ class ParameterConfigItem(TwoLineIconListItem):
     unit = StringProperty()
 
 
+class ParameterCheckboxItem(OneLineIconListItem):
+    parameter = StringProperty()
+    value_description = StringProperty()
+    unit = StringProperty()
+
+
 # FUNCTIONS
+
+
+def set_boolean_parameter(app, status, parameter_key):
+    """This function is used to directly set the values of boolean component parameters. The user can directly specify them using the checkbox in the listitem of the parameter and no additional input window is required as for all the other parameters.
+    The function simply checks, if the active value of the checkbox clicked is true or false and then writes a 1 or 0 into the parameters-dict
+
+    :param app: Pointer to the main factory_GUIApp-Object
+    :param status: [Boolean] State of the activated checkbox
+    :param Parameter_key: Key of the component parameter that the current configuration is made for
+    """
+
+    if status:
+        app.session_data["parameters"][app.selected_asset["key"]][parameter_key]["0"][
+            "value"
+        ] = 1
+    else:
+        app.session_data["parameters"][app.selected_asset["key"]][parameter_key]["0"][
+            "value"
+        ] = 0
+
+    update_component_configuration_tab(app)
+
+
 def update_component_configuration_tab(app):
     """
     This function updates the config tab to display the values for the asset currently selected within the session.
@@ -107,8 +141,21 @@ def update_component_configuration_tab(app):
             unit = "%/h"
         elif attribute_data["unit_type"] == "emissions":
             unit = f"kgCO2/{app.selected_asset['flowtype'].unit.get_unit_flow()}"
-        elif attribute_data["unit_type"] == "capacity_charge":
-            unit = f"{app.blueprint.info['currency']}/{app.selected_asset['flowtype'].unit.get_unit_flowrate()}_peak"
+        elif attribute_data["unit_type"] == "capacity_charge_primary_flow":
+            if (
+                "primary_flow" in app.selected_asset["GUI"].keys()
+                and app.selected_asset["GUI"]["primary_flow"] is not None
+            ):
+                flowtype = app.blueprint.components[
+                    app.selected_asset["GUI"]["primary_flow"]
+                ]["flowtype"]
+                unit = f"{app.blueprint.info['currency']} per {flowtype.unit.get_unit_flowrate()} conversion capacity"
+            else:
+                unit = f"{app.blueprint.info['currency']}/?/a"
+        elif attribute_data["unit_type"] == "capacity_charge_flowrate":
+            unit = f"{app.blueprint.info['currency']} per {app.selected_asset['flowtype'].unit.get_unit_flowrate()} peak"
+        elif attribute_data["unit_type"] == "capacity_charge_flow":
+            unit = f"{app.blueprint.info['currency']} per {app.selected_asset['flowtype'].unit.get_unit_flow()} capacity"
         elif attribute_data["unit_type"] == "flowrate_primary":
             if (
                 "primary_flow" in app.selected_asset["GUI"].keys()
@@ -129,6 +176,17 @@ def update_component_configuration_tab(app):
                     app.selected_asset["GUI"]["primary_flow"]
                 ]["flowtype"]
                 unit = f"{flowtype.unit.get_unit_flowrate()} {flowtype.name} /h"
+            else:
+                unit = ""
+        elif attribute_data["unit_type"] == "ramping_cost":
+            if (
+                "primary_flow" in app.selected_asset["GUI"].keys()
+                and app.selected_asset["GUI"]["primary_flow"] is not None
+            ):
+                flowtype = app.blueprint.components[
+                    app.selected_asset["GUI"]["primary_flow"]
+                ]["flowtype"]
+                unit = f"{app.blueprint.info['currency']}/{flowtype.unit.get_unit_flowrate()}"
             else:
                 unit = ""
         elif attribute_data["unit_type"] == "thermal_capacity":
@@ -170,6 +228,8 @@ def update_component_configuration_tab(app):
             if parameter_key == "demands":
                 list_item.secondary_text = f"{len(parameters[parameter_key][0]['value'][0])} individual demands specified"
                 list_icon.icon = "ray-start-arrow"
+            if parameter_key == "direct_throughput":
+                pass
 
             elif len(parameters[parameter_key]) == 1:
                 value = parameters[parameter_key][next(iter(parameters[parameter_key]))]
@@ -197,6 +257,51 @@ def update_component_configuration_tab(app):
             list_item.text_color = app.config["main_color"].rgba
             list_item.secondary_text_color = app.config["main_color"].rgba
             list_item.font_style = "H6"
+        if parameter_key == "direct_throughput":
+            # exception for the direct throughput parameter of storages.
+            # give the list the active colors
+            list_icon.icon = "fast-forward"
+            list_icon.text_color = app.config["main_color"].rgba
+            list_item.text_color = app.config["main_color"].rgba
+            list_item.secondary_text_color = app.config["main_color"].rgba
+            list_item.font_style = "H6"
+            # create a checkbox
+            checkbox = MDCheckbox()
+            checkbox.pos_hint = {"center_x": 0.8}
+
+            try:
+                # set the checkbox as checked or empty as defined in the parameters dict
+                if (
+                    app.session_data["parameters"][app.selected_asset["key"]][
+                        "direct_throughput"
+                    ]["0"]["value"]
+                    == 1
+                ):
+                    list_item.secondary_text = "Allowed"
+                    checkbox.active = True
+                else:
+                    list_item.secondary_text = "Blocked"
+                    checkbox.active = False
+            except:
+                # if the component has not been edited before: initialize the boolean value as
+                app.session_data["parameters"][app.selected_asset["key"]][
+                    "direct_throughput"
+                ] = {
+                    "0": {
+                        "type": "static",
+                        "value": 0,
+                    }
+                }
+                list_item.secondary_text = "Blocked"
+                checkbox.active = False
+
+            checkbox.bind(
+                active=lambda x, status=checkbox, parameter_key=parameter_key: set_boolean_parameter(
+                    app, status, parameter_key
+                )
+            )
+            list_item.add_widget(checkbox)
+
         else:
             list_item.bind(
                 on_release=lambda x, item=list_item: show_parameter_config_dialog(
