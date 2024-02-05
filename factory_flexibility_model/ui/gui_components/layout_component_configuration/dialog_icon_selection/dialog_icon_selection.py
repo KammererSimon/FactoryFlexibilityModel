@@ -35,10 +35,10 @@ def show_icon_selection_dialog(app, caller):
         size = [100, 100]
     elif app.selected_asset["type"] == "sink":
         icon_list = app.config["assets"]["sink_icons"]
-        size = [100, 10]
+        size = [100, 100]
     else:
         icon_list = app.config["assets"]["component_icons"]
-        size = [248, 100]
+        size = [100, 100]
 
     for icon_name, icon_source in icon_list.items():
         image = Image(
