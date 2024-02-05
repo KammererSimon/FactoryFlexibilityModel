@@ -1,10 +1,14 @@
 converter:
   default_icon: converter_default
   parameters:
-    availabiity:
+    availability:
       description: Availability of Pmax
       text: Availability
       unit_type: '%'
+    capacity_charge:
+      description: Annual capital costs for conversion capacity
+      text: Annual capital costs
+      unit_type: capacity_charge_primary_flow
     delta_eta_high:
       description: Rate of efficiency drop when exceeding nominal operating point
       text: Upper Efficiency Drop
@@ -42,6 +46,10 @@ converter:
       description: ''
       text: Inputs/Outputs
       unit_type: ''
+    rampup_cost:
+      description: Cost for ramping up
+      text: Ramping cost
+      unit_type: ramping_cost
 deadtime:
   default_icon: deadtime_default
   parameters:
@@ -100,11 +108,11 @@ source:
       unit_type: '%'
     capacity_charge:
       description: Fixed price charged per maximum utilized flowrate
-      text: Capacity Charge
-      unit_type: capacity_charge
+      text: Annual capacity charge
+      unit_type: capacity_charge_flowrate
     co2_emissions_per_unit:
       description: Caused Emissions
-      text: Emissions Caused
+      text: Emissions caused
       unit_type: emissions
     cost:
       description: Cost per Unit of Utilization
@@ -112,7 +120,7 @@ source:
       unit_type: currency
     determined_power:
       description: Endogenous given Input Volume
-      text: Fixed Output
+      text: Fixed output
       unit_type: flowrate
     power_max:
       description: Maximum Output Flowrate
@@ -120,7 +128,7 @@ source:
       unit_type: flowrate
     power_min:
       description: Minimum Output Flowrate
-      text: Minimum Output
+      text: Minimum output
       unit_type: flowrate
 storage:
   default_icon: storage_default
@@ -129,13 +137,17 @@ storage:
       description: Storage Capacity
       text: Capacity
       unit_type: flow
+    capacity_charge:
+      description: Yearly capital costs for providing one unit of storage capacity
+      text: Annual capital costs
+      unit_type: capacity_charge_flow
     efficiency:
       description: Efficiency at nominal operation point
       text: Base Efficiency
       unit_type: '%'
     leakage_soc:
       description: Relative Leakage over Time
-      text: Relative Leakage
+      text: Relative leakage
       unit_type: leakage_soc
     leakage_time:
       description: Absolute Leakage over Time
@@ -143,7 +155,7 @@ storage:
       unit_type: leakage_time
     power_max_charge:
       description: Max Charging Power
-      text: Max Charging Power
+      text: Max charging power
       unit_type: flowrate
     power_max_discharge:
       description: Max Discharging Power
@@ -151,29 +163,34 @@ storage:
       unit_type: flowrate
     soc_start:
       description: Initial state of Charge
-      text: SOC Start
+      text: SOC start
       unit_type: '%'
+    direct_throughput:
+      description: Charging and discharging at the same allowed?
+      text: Direct throughput
+      unit_type: 'direct_throughput'
+
 thermalsystem:
   default_icon: thermalsystem_default
   parameters:
     C:
-      description: Heat Capacity
+      description: Heat capacity
       text: Thermal Capacity
-      unit_type: float
+      unit_type: thermal_capacity
     R:
       description: Energy Loss Factor
-      text: Thermal Resistance
-      unit_type: float
+      text: Thermal resistance
+      unit_type: thermal_resistance
     temperature_ambient:
       description: Temperature Outside of the System
       text: Ambient Temperature
       unit_type: temperature
     temperature_max:
-      description: Upper Boundary for Valid Internal Temperature
+      description: Upper boundary for valid internal temperature
       text: Maximum Temperature
       unit_type: temperature
     temperature_min:
-      description: Lower Boundary for Valid Internal Temperature
+      description: Lower boundary for valid tnternal temperature
       text: Minimum Temperature
       unit_type: temperature
 triggerdemand:
@@ -181,15 +198,15 @@ triggerdemand:
   parameters:
     load_profile_energy:
       description: Energy throughput timeseries
-      text: Energy Profile
+      text: Energy profile
       unit_type: float
     load_profile_mass:
       description: Mass throughput timeseries
-      text: Mass Profile
+      text: Mass profile
       unit_type: float
     max_parallel:
       description: Max number of parallel executions
-      text: Max Parallel Executions
+      text: Max parallel executions
       unit_type: integer
 pool:
   default_icon: pool_default
