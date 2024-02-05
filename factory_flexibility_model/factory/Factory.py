@@ -135,7 +135,7 @@ class Factory:
                     key=f"{key}_to_Elosses",
                     name=f"{key}_to_Elosses",
                     flowtype="energy_losses",
-                    to_losses=True,
+                    type="losses",
                 )
 
             elif self.components[key].flowtype.unit.is_mass():
@@ -147,7 +147,7 @@ class Factory:
                     key=f"{key}_to_Mlosses",
                     name=f"{key}_to_Mlosses",
                     flowtype="material_losses",
-                    to_losses=True,
+                    type="losses",
                 )
 
             # raise an error if the flowtype of the storage is unspecified
@@ -168,7 +168,7 @@ class Factory:
                 key=f"{key}_to_Elosses",
                 name=f"{key}_to_Elosses",
                 weight=0.01,
-                to_losses=True,
+                type="losses",
             )  # auto generate a connection to losses
 
         elif component_type == "deadtime":
@@ -188,7 +188,7 @@ class Factory:
                 key=f"{key}_to_Elosses",
                 name=f"{self.name}_to_Elosses",
                 flowtype="energy_losses",
-                to_losses=True,
+                type="losses",
             )
 
             # connect the new thermalsystem to ambient_gains
@@ -196,7 +196,7 @@ class Factory:
                 "ambient_gains",
                 key,
                 key=f"ambient_gains_to_{key}",
-                from_gains=True,
+                type="gains",
             )
 
         elif component_type == "triggerdemand":
@@ -230,8 +230,7 @@ class Factory:
         destination: factory_components.Component,
         key: str,
         *,
-        to_losses: bool = False,
-        from_gains: bool = False,
+        type: str = "default",
         name: str = None,
         flowtype: str = None,
         weight: float = None,
@@ -267,8 +266,7 @@ class Factory:
             self.components[origin],
             self.components[destination],
             key,
-            to_losses=to_losses,
-            from_gains=from_gains,
+            type=type,
             flowtype=flowtype,
             weight=weight,
             weight_destination=weight_destination,
@@ -793,7 +791,7 @@ class Factory:
         """
         This function creates a slack for the given Component if necessary and connects it to the corresponding in- and outputs
         :param component_type: converter, pool, etc...
-        :param name: identifier of the Component to be slacked
+        :param key: identifier of the Component to be slacked
         """
 
         # deadtimes, pools and thermalsystems get slacked in both directions
@@ -807,6 +805,7 @@ class Factory:
                 f"{key}_slack",
                 key,
                 key=f"{key}_slack_neg",
+                type="slack",
                 flowtype=self.components[key].flowtype,
                 weight=0.01,
             )
@@ -814,12 +813,13 @@ class Factory:
                 key,
                 f"{key}_slack",
                 key=f"{key}_slack_pos",
+                type="slack",
                 flowtype=self.components[key].flowtype,
                 weight=0.01,
             )
 
         # sinks get slacked on the input side if they are not the losses destination
-        elif component_type == "destination" and not (
+        elif component_type == "sink" and not (
             key == "losses_energy" or key == "losses_material"
         ):
 
@@ -831,6 +831,22 @@ class Factory:
                 f"{key}_slack",
                 key,
                 key=f"{key}_slack_neg",
+                type="slack",
+                flowtype=self.components[key].flowtype,
+                weight=0.01,
+            )
+
+        # sources get slacked on the output side:
+        elif component_type == "source":
+            # create new slack Component
+            self.add_component(f"{key}_slack", "slack")
+
+            # connect it to the input of the destination
+            self.add_connection(
+                key,
+                f"{key}_slack",
+                key=f"{key}_slack",
+                type="slack",
                 flowtype=self.components[key].flowtype,
                 weight=0.01,
             )
