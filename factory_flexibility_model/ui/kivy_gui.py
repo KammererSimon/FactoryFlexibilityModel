@@ -114,6 +114,13 @@ class factory_GUIApp(MDApp):
             "flowtype": self.blueprint.flowtypes["unknown"],
         }
 
+        # Exception: Thermalsystems are always initialized with flowtype heat
+        if component_type == "thermalsystem":
+            self.blueprint.components[component_key][
+                "flowtype"
+            ] = self.blueprint.flowtypes["heat"]
+
+        # initialize converter primary flows as None
         if component_type == "converter":
             self.blueprint.components[component_key]["GUI"]["primary_flow"] = None
 
@@ -212,8 +219,8 @@ class factory_GUIApp(MDApp):
         self.blueprint.connections[connection_key]["to"] = destination_key
         self.blueprint.connections[connection_key]["flowtype"] = connection_flowtype
         self.blueprint.connections[connection_key]["key"] = connection_key
-        self.blueprint.connections[connection_key]["weight_source"] = 1
-        self.blueprint.connections[connection_key]["weight_sink"] = 1
+        self.blueprint.connections[connection_key]["weight_origin"] = 1
+        self.blueprint.connections[connection_key]["weight_destination"] = 1
         self.blueprint.connections[connection_key]["to_losses"] = False
         self.blueprint.connections[connection_key]["type"] = "connection"
 
@@ -479,8 +486,8 @@ class factory_GUIApp(MDApp):
 #         "power_max",
 #         "power_min",
 #         "availability",
-#         "max_pos_ramp_power",
-#         "max_neg_ramp_power",
+#         "power_ramp_max_pos",
+#         "power_ramp_max_neg",
 #         "eta_max",
 #         "power_nominal",
 #         "delta_eta_high",
@@ -661,7 +668,7 @@ class factory_GUIApp(MDApp):
 #
 # def save_changes_on_sink(self):
 #     """
-#     This function takes the user input from the sink configuration tab and stores it in the blueprint
+#     This function takes the user input from the destination configuration tab and stores it in the blueprint
 #     """
 #
 #     # get component_key
@@ -732,7 +739,7 @@ class factory_GUIApp(MDApp):
 #     self.unsaved_changes_on_asset = False
 #     self.unsaved_changes_on_session = True
 #
-#     # update connection names to adapt changes if the name of the sink has changed
+#     # update connection names to adapt changes if the name of the destination has changed
 #     self.update_connection_names()
 #     # update flowtype list to adapt changes if a flowtype has to be locked or unlocked
 #     self.update_flowtype_list()
