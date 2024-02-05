@@ -106,6 +106,7 @@ class Scenario:
                     # add a component entry in the parameters dict if this is the first setting for a component
                     if not key[0] in self.configurations:
                         self.configurations[key[0]] = {}
+
                     # add entry to parameters-dict
                     self.configurations[key[0]][key[1]] = float(value.replace(",", "."))
         except:
@@ -157,5 +158,3 @@ class Scenario:
                 self.configurations[key_component]["demands"] = pd.DataFrame(
                     values
                 ).to_numpy()
-
-                print(self.configurations[key_component]["demands"])
