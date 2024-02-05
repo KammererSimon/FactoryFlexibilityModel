@@ -463,7 +463,7 @@ def update_visualization(app, *args, **kwargs):
         # initialize connection list for later (just to safe a loop)
         connection_list[connection["key"]] = {}
 
-        # calculate distance between roots of source and sink on the canvas
+        # calculate distance between roots of source and destination on the canvas
         diff_x = (
             app.root.ids[f'frame_{connection["from"]}'].pos[0]
             - app.root.ids[f'frame_{connection["to"]}'].pos[0]
@@ -474,8 +474,8 @@ def update_visualization(app, *args, **kwargs):
         )
 
         if abs(diff_x) > abs(diff_y) and diff_x < 0:
-            # the source is left of the sink -> Connection is mostly horizontal
-            # connection must go from right of the source to left of the sink
+            # the origin is left of the destination -> Connection is mostly horizontal
+            # connection must go from right of the source to left of the destination
             # -> Store key of connection in the direction-lists of the components + coordinate difference
             connection_data[connection["from"]]["right"].append(
                 [diff_y / diff_x, connection["key"], "out"]
@@ -485,8 +485,8 @@ def update_visualization(app, *args, **kwargs):
             )
 
         elif diff_y > 0:
-            # the source is over the sink -> connection is mostly vertical and going downwards
-            # connection must go from bottom of the source to the top of the sink
+            # the origin is over the destination -> connection is mostly vertical and going downwards
+            # connection must go from bottom of the origin to the top of the destination
             # -> Store key of connection in the direction-lists of the components + coordinate difference
             connection_data[connection["from"]]["bottom"].append(
                 [-diff_x, connection["key"], "out"]
@@ -496,8 +496,8 @@ def update_visualization(app, *args, **kwargs):
             )
 
         elif diff_y <= 0:
-            # the source is under the sink -> connection is mostly vertical and going upwards
-            # connection must go from top of the source to the bottom of the sink
+            # the originis under the destination -> connection is mostly vertical and going upwards
+            # connection must go from top of the origin to the bottom of the destination
             # -> Store key of connection in the direction-lists of the components + coordinate difference
             connection_data[connection["from"]]["top"].append(
                 [-diff_x, connection["key"], "out"]
@@ -617,7 +617,7 @@ def update_visualization(app, *args, **kwargs):
                 connection["end_y"],
             )
 
-            # get the widths of sink and source component
+            # get the widths of destination and origin component
             source_width = component_width[
                 app.blueprint.components[
                     app.blueprint.connections[connection["key"]]["from"]
