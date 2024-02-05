@@ -244,6 +244,78 @@ class Simulation:
                 )
             )
 
+        # is the converter afflicted with a ramping charge?
+        if component.rampup_cost > 0:
+            # If yes: Add an MVar for calculating the occuring rampups
+            # create single float Mvar
+            self.MVars[f"P_rampup_{component.key}"] = self.m.addMVar(
+                self.T - 1, vtype=GRB.CONTINUOUS, lb=0, name=f"P_rampup_{component.key}"
+            )
+
+            # define the Mvar as the realized rampup
+            self.m.addConstrs(
+                self.MVars[f"P_rampup_{component.key}"]
+                >= self.MVars[f"P_{component.key}"][t + 1]
+                - self.MVars[f"P_{component.key}"][t]
+                for t in range(self.T - 1)
+            )
+
+            # create new cost term
+            self.C_objective.append(
+                self.m.addMVar(
+                    1, vtype=GRB.CONTINUOUS, name=f"C_rampup_{component.key}"
+                )
+            )
+
+            # define the cost term
+            self.m.addConstr(
+                self.C_objective[-1]
+                == gp.quicksum(self.MVars[f"P_rampup_{component.key}"])
+                * component.rampup_cost
+            )
+
+            logging.debug(
+                f"        - CostFactor:   Cost for ramping of {component.name}"
+            )
+
+        # is the converter afflicted with a capacity charge?
+        if component.capacity_charge > 0:
+            # If yes: Add an MVar for the maximum used Power and add cost factor
+            # create single float Mvar
+            self.MVars[f"P_max_{component.key}"] = self.m.addMVar(
+                1, vtype=GRB.CONTINUOUS, name=f"P_max_{component.key}"
+            )
+
+            # define the Mvar as the maximum used utilization
+            self.m.addConstr(
+                self.MVars[f"P_max_{component.key}"][0]
+                == gp.max_(
+                    (self.MVars[f"P_{component.key}"][t] for t in range(self.T)),
+                    constant=0,
+                )
+            )
+
+            # create new cost term
+            self.C_objective.append(
+                self.m.addMVar(
+                    1, vtype=GRB.CONTINUOUS, name=f"C_Capacity_{component.key}"
+                )
+            )
+
+            # define the costs -> capacity_charge is specified on yearly basis and has to be broken down to simulation timeframe
+            self.m.addConstr(
+                self.C_objective[-1]
+                == self.interval_length
+                * self.T
+                / 8760
+                * component.capacity_charge
+                * self.MVars[f"P_max_{component.key}"]
+            )
+
+            logging.debug(
+                f"        - CostFactor:   Cost for capital costs of {component.name}"
+            )
+
     def __add_deadtime(self, component):
         """
         This function adds all necessary MVARS and constraints to the optimization problem that are
@@ -678,7 +750,7 @@ class Simulation:
             # make sure that there is no energy-disposal loophole using illegal losses
             self.m.addConstr(self.MVars[component.to_losses.key] == 0)
 
-        # in case direct thropughput is forbitten or the storage is directly connected to a pool on both sides and the efficiency is 100%: prohibit charging and discharging at the same timestep
+        # in case direct thropughput is forbidden or the storage is directly connected to a pool on both sides and the efficiency is 100%: prohibit charging and discharging at the same timestep
         if (
             component.inputs[0].origin == component.outputs[0].destination
             and component.efficiency == 1
@@ -701,6 +773,44 @@ class Simulation:
 
             logging.debug(
                 f"        - Constraint:   Preventing direct throughput on {component.name}"
+            )
+
+        # is the storage afflicted with a capital cost per used capacity?
+        if component.capacity_cost > 0:
+            # If yes: Add an MVar for the maximum used storage capacity and add cost factor
+            # create single float Mvar
+            self.MVars[f"SOC_max_{component.key}"] = self.m.addMVar(
+                1, vtype=GRB.CONTINUOUS, name=f"SOC_max_{component.key}"
+            )
+
+            # define the Mvar as the maximum used utilization
+            self.m.addConstr(
+                self.MVars[f"SOC_max_{component.key}"][0]
+                == gp.max_(
+                    (self.MVars[f"SOC_{component.key}"][t] for t in range(self.T)),
+                    constant=0,
+                )
+            )
+
+            # create new cost term
+            self.C_objective.append(
+                self.m.addMVar(
+                    1, vtype=GRB.CONTINUOUS, name=f"C_Capacity_{component.key}"
+                )
+            )
+
+            # define the costs -> capacity_charge is specified on yearly basis and has to be broken down to simulation timeframe
+            self.m.addConstr(
+                self.C_objective[-1]
+                == self.interval_length
+                * self.T
+                / 8760
+                * component.capacity_charge
+                * self.MVars[f"SOC_max_{component.key}"]
+            )
+
+            logging.debug(
+                f"        - CostFactor:   Cost for capital costs of {component.name}"
             )
 
     def __add_source(self, component):
@@ -1249,6 +1359,14 @@ class Simulation:
         self.result["energy_generated_offsite"] = np.zeros(self.T)
         self.result["energy_consumed_onsite"] = np.zeros(self.T)
         self.result["energy_consumed_offsite"] = np.zeros(self.T)
+        self.result["costs"] = {
+            "inputs": {},
+            "outputs": {},
+            "converter_ramping": {},
+            "capacity_provision": {},
+            "emission_allowances": {},
+            "slacks": {},
+        }
 
         # collect all Component specific timeseries: iterate over all components
         for component in self.factory.components.values():
@@ -1278,6 +1396,33 @@ class Simulation:
                 utilization = self.MVars[f"P_{component.key}"].X
                 efficiency = self.MVars[f"Eta_{component.key}"].X
 
+                if component.rampup_cost > 0:
+                    rampup_cost = round(
+                        sum(self.MVars[f"P_rampup_{component.key}"].X)
+                        * component.rampup_cost,
+                        2,
+                    )
+                    self.result["costs"]["converter_ramping"][
+                        component.key
+                    ] = rampup_cost
+                else:
+                    rampup_cost = 0
+
+                if component.capacity_charge > 0:
+                    capacity_charge = (
+                        self.MVars[f"P_max_{component.key}"].X
+                        * component.capacity_charge
+                        * self.interval_length
+                        * self.T
+                        / 8760
+                    )
+                    capacity_charge = round(capacity_charge[0], 2)
+                    self.result["costs"]["capacity_provision"][
+                        component.key
+                    ] = capacity_charge
+                else:
+                    capacity_charge = 0
+
                 # apply threshold and rounding on all values
                 utilization = self.__apply_threshold_and_rounding(
                     utilization, threshold, rounding_decimals
@@ -1290,18 +1435,20 @@ class Simulation:
                 self.result[component.key] = {
                     "utilization": utilization,
                     "efficiency": efficiency,
+                    "capacity_charge": capacity_charge,
+                    "rampup_cost": rampup_cost,
                 }
 
             # handle sinks
             if component.type == "sink":
 
-                # is the power of the sinkdetermined?
+                # is the power of the sink determined?
                 if component.determined:
                     # if yes: use the demand timeseries
                     utilization = component.demand[0 : self.T]
 
                 else:
-                    # if no: use the Simulation result
+                    # if no: use the simulation result
                     utilization = self.MVars[f"E_{component.key}"].X
 
                 # apply rounding and threshold
@@ -1317,7 +1464,12 @@ class Simulation:
                     emissions = (
                         utilization * component.co2_emissions_per_unit[0 : self.T]
                     )
-                    emission_cost = sum(emissions) * self.factory.emission_cost
+                    emission_cost = round(
+                        sum(emissions) * self.factory.emission_cost, 2
+                    )
+                    self.result["costs"]["emission_allowances"][
+                        component.key
+                    ] = emission_cost
 
                     # add avoided costs and emissions to the summing variables
                     total_emissions += emissions
@@ -1332,11 +1484,26 @@ class Simulation:
                     emissions = 0
                     emission_cost = 0
 
+                # calculate total costs
+                if component.refundable:
+                    revenue = round(sum(utilization * component.revenue), 2)
+                else:
+                    revenue = 0
+
+                if component.chargeable:
+                    cost = round(sum(utilization * component.cost), 2)
+                else:
+                    cost = 0
+
+                if not cost + revenue == 0:
+                    self.result["costs"]["outputs"][component.key] = cost - revenue
+
                 # write the result into the result-dictionary
                 self.result[component.key] = {
                     "utilization": utilization,
                     "emissions": emissions,
                     "emission_cost": emission_cost,
+                    "utilization_cost": cost - revenue,
                 }
 
                 # add the sinks contribution to onsite/offsite demand calculation
@@ -1373,11 +1540,17 @@ class Simulation:
                     emissions = (
                         utilization * component.co2_emissions_per_unit[0 : self.T]
                     )
-                    emission_cost = sum(emissions) * self.factory.emission_cost
+                    emission_cost = round(
+                        sum(emissions) * self.factory.emission_cost, 2
+                    )
 
                     # add the emissions and cost to the summing variables:
                     total_emissions += emissions
                     total_emission_cost += emission_cost
+
+                    self.result["costs"]["emission_allowances"][
+                        component.key
+                    ] = emission_cost
 
                     logging.info(
                         f"Source {component.key} caused total emissions of {round(sum(emissions),2)} kgCO2, costing additional {round(emission_cost,2)}€"
@@ -1386,11 +1559,18 @@ class Simulation:
                     emissions = 0
                     emission_cost = 0
 
+                if component.chargeable and not component.key == "ambient_gains":
+                    cost = round(sum(component.cost * utilization), 2)
+                    self.result["costs"]["inputs"][component.key] = cost
+                else:
+                    cost = 0
+
                 # write the result into the result-dictionary
                 self.result[component.key] = {
                     "utilization": utilization,
                     "emissions": emissions,
                     "emission_cost": emission_cost,
+                    "utilization_cost": cost,
                 }
 
                 # add the sources contribution to onsite/offsite generation calculation
@@ -1440,6 +1620,11 @@ class Simulation:
                     "utilization": utilization,
                 }
 
+                # add costs to the overview
+                self.result["costs"]["slacks"][component.key] = (
+                    sum(utilization) * 1000000000
+                )
+
             # handle storages
             elif component.type == "storage":
                 # read the result timeseries from the Simulation
@@ -1466,6 +1651,17 @@ class Simulation:
                     soc_start, threshold, rounding_decimals
                 )
 
+                soc_max = max(soc)
+
+                # calculate occuring capacity charge if necessary
+                if component.capacity_cost > 0:
+                    capacity_charge = round(soc_max * component.capacity_cost, 2)
+                    self.result["costs"]["capacity_provision"][
+                        component.key
+                    ] = capacity_charge
+                else:
+                    capacity_charge = 0
+
                 # write the results to the result dictionary
                 self.result[component.key] = {
                     "Pcharge": power_charge,
@@ -1473,6 +1669,8 @@ class Simulation:
                     "SOC": soc,
                     "utilization": power_discharge - power_charge,
                     "SOC_start": soc_start,
+                    "soc_max": soc_max,
+                    "capacity_charge": capacity_charge,
                 }
 
             # handle schedulers
@@ -1548,6 +1746,7 @@ class Simulation:
         self.results_collected = True
 
         logging.info(" -> Results processed")
+        print(self.result["costs"])
 
     def create_dash(self) -> object:
         """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted Simulation"""
