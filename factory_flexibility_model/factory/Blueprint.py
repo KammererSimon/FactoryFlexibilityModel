@@ -337,10 +337,10 @@ class Blueprint:
                 name = connection["name"]
             else:
                 name = None
-            if "to_losses" in connection:
-                to_losses = connection["to_losses"]
+            if "type" in connection:
+                type = connection["type"]
             else:
-                to_losses = False
+                type = "default"
 
             # add specified connection to the factory
             factory.add_connection(
@@ -349,7 +349,7 @@ class Blueprint:
                 name=name,
                 key=key,
                 flowtype=flowtype,
-                to_losses=to_losses,
+                type=type,
                 weight_origin=connection["weight_origin"],
                 weight_destination=connection["weight_destination"],
             )
