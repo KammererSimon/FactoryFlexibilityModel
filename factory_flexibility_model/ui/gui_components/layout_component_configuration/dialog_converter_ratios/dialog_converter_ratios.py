@@ -5,6 +5,12 @@ from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import TwoLineAvatarListItem
 
+from factory_flexibility_model.ui.gui_components.info_popup.info_popup import (
+    show_info_popup,
+)
+from factory_flexibility_model.ui.utility.validate_textfield_inputs import (
+    validate_float,
+)
 from factory_flexibility_model.ui.utility.window_handling import close_dialog
 
 
@@ -23,6 +29,13 @@ class TextfieldCheckboxIconListItem(TwoLineAvatarListItem):
 
 
 # FUNCTIONS
+def process_user_value_input(app, textfield):
+    # make sure that user input is a valid float
+    validate_float(textfield)
+    # update the bilances of the converter
+    update_bilance_calculation(app)
+
+
 def show_converter_ratio_dialog(app):
     """
     This function opens the dialog to specify converter input/output ratios.
@@ -68,7 +81,7 @@ def save_converter_ratios(app):
 
     # make sure that the current values are valid
     if not app.dialog.bilance_valid:
-        app.show_info_popup("The given ratios are invalid!")
+        show_info_popup(app, "The given ratios are invalid!")
         return
 
     # call the update primary flow routine to normalize all the ratio values in case the user changed the ratio of the primary flow manually
@@ -76,22 +89,22 @@ def save_converter_ratios(app):
 
     # iterate over all connections and write their weighting factors into the blueprint
     for input in app.dialog.content_cls.ids.list_converter_inputs_energy.children:
-        app.blueprint.connections[input.connection_key]["weight_sink"] = float(
+        app.blueprint.connections[input.connection_key]["weight_destination"] = float(
             input.ids.list_item_textfield.text
         )
     for input in app.dialog.content_cls.ids.list_converter_inputs_mass.children:
-        app.blueprint.connections[input.connection_key]["weight_sink"] = float(
+        app.blueprint.connections[input.connection_key]["weight_destination"] = float(
             input.ids.list_item_textfield.text
         )
     for output in app.dialog.content_cls.ids.list_converter_outputs_energy.children:
-        app.blueprint.connections[output.connection_key]["weight_source"] = float(
+        app.blueprint.connections[output.connection_key]["weight_origin"] = float(
             output.ids.list_item_textfield.text
         )
         app.blueprint.connections[output.connection_key][
             "to_losses"
         ] = output.ids.list_item_checkbox.active
     for output in app.dialog.content_cls.ids.list_converter_outputs_mass.children:
-        app.blueprint.connections[output.connection_key]["weight_source"] = float(
+        app.blueprint.connections[output.connection_key]["weight_origin"] = float(
             output.ids.list_item_textfield.text
         )
         app.blueprint.connections[output.connection_key][
@@ -112,6 +125,7 @@ def update_bilance_calculation(app):
     :param app: Pointer to the main factory_GUIApp-Object
     :return: None
     """
+
     # Assume the bilance to be valid
     app.dialog.bilance_valid = True
     app.dialog.content_cls.ids.label_energy_out.theme_text_color = "Primary"
@@ -274,7 +288,7 @@ def update_connection_lists(app):
             item.ids.list_item_textfield.helper_text = connection[
                 "flowtype"
             ].unit.get_unit_flow()
-            item.ids.list_item_textfield.text = str(connection["weight_sink"])
+            item.ids.list_item_textfield.text = str(connection["weight_destination"])
             # add list item to the correct  input_list
             if connection["flowtype"].unit.is_energy():
                 if connection["from"] == app.dialog.primary_flow:
@@ -297,7 +311,7 @@ def update_connection_lists(app):
             item.ids.list_item_textfield.helper_text = connection[
                 "flowtype"
             ].unit.get_unit_flow()
-            item.ids.list_item_textfield.text = str(connection["weight_source"])
+            item.ids.list_item_textfield.text = str(connection["weight_origin"])
 
             # add list item to the output_list
             if connection["flowtype"].unit.is_energy():

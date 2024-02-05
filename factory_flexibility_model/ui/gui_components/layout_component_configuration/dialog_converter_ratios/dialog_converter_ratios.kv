@@ -2,6 +2,7 @@
 # The dives an overview of incoming and outgoing connections to/from the selected converter and allows the user to specify all the weights of involved flowtypes
 
 #:import update_bilance_calculation factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_converter_ratios.dialog_converter_ratios.update_bilance_calculation
+#:import process_user_value_input factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_converter_ratios.dialog_converter_ratios.process_user_value_input
 #:import update_primary_flow factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_converter_ratios.dialog_converter_ratios.update_primary_flow
 #:import save_converter_ratios factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_converter_ratios.dialog_converter_ratios.save_converter_ratios
 #:import select_ratio_type factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_converter_ratios.dialog_converter_ratios.select_ratio_type
@@ -155,7 +156,7 @@
             width: dp(100)
             mode: "round"
             helper_text_mode: "persistent"
-            on_text: update_bilance_calculation(app)
+            on_text: process_user_value_input(app,self)
         MDIcon:
             icon: "trash-can-outline"
             pos_hint: {"center_x": .5, "center_y": .5}
@@ -191,7 +192,7 @@
             width: dp(100)
             mode: "round"
             helper_text_mode: "persistent"
-            on_text: update_bilance_calculation(app)
+            on_text: process_user_value_input(app, self)
         MDIcon:
             icon: "key-star"
             pos_hint: {"center_x": .5, "center_y": .5}
