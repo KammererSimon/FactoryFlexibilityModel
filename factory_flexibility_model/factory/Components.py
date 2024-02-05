@@ -23,12 +23,6 @@ class Component:
         else:
             self.name = name
         self.key = key  # Identifier for internal use
-        self.IS_ORIGIN = (
-            False  # Capability to act as an Origin must be specified in subclass
-        )
-        self.IS_DESTINATION = (
-            False  # Capability to act as destination must be specified in subclass
-        )
         self.description = ""  # Placeholder for a description of the Component for better identification
         self.determined = (
             False  # only useful for some subclasses, but defining it for all of
@@ -36,6 +30,12 @@ class Component:
         self.inputs = (
             []
         )  # initialize list, which stores pointers to all input connections
+        self.max_inputs = (
+            1  # maximum number of connectable inputs -> 1 for most components
+        )
+        self.max_outputs = (
+            1  # maximum number of connectable outputs -> 1 for most components
+        )
         self.outputs = (
             []
         )  # initialize list, which stores pointers to all output connections
@@ -71,46 +71,57 @@ class Component:
         This function sets the given connection as an input for the component
         :param connection: [fm.Connection-object]
         """
+        # make sure that the component allows for another input
+        if len(self.inputs) < self.max_inputs or connection.type in [
+            "losses",
+            "gains",
+            "slack",
+        ]:
+            # add connection to the inputs list
+            self.inputs.append(connection)
 
-        if not self.IS_DESTINATION:
+            # if self doesn't have its flowtype already determined it is checked, whether the flowtype can be specified via the connection
+            if self.flowtype.is_unknown():
+                if not connection.flowtype.is_unknown():
+                    self.update_flowtype(connection.flowtype)
+            elif connection.flowtype.is_unknown():
+                connection.update_flowtype(self.flowtype)
+        else:
+            # create exception if the connection is invalid
             logging.critical(
-                f"ERROR: Cannot create inpout connection {connection.name}, because Component {self.name} is not a valid destination"
+                f"ERROR: Cannot create connection '{connection.name}', because component {self.type} {self.name} doesn't accept any more inputs"
             )
             raise Exception
-
-        self.inputs.append(connection)
-
-        # if self doesnt have its flowtype already determined it is checked, whether the flowtype can be specified via the connection
-        if self.flowtype.is_unknown():
-            if not connection.flowtype.is_unknown():
-                self.update_flowtype(connection.flowtype)
-        elif connection.flowtype.is_unknown():
-            connection.update_flowtype(self.flowtype)
 
     def set_output(self, connection: co.Connection):
         """
         This function sets the given connection as an output for the component
         :param connection: [fm.Connection-object]
         """
-        if not self.IS_ORIGIN:
+        # make sure that the component allows for another output
+        if len(self.outputs) < self.max_outputs:
+            # except no loss-connections by default
+            if connection.type == "losses":
+                logging.critical(
+                    f"ERROR: Components of type {self.type} are not allowed to have a connection to losses"
+                )
+                raise Exception
+
+            # add connection to the outputs-list
+            self.outputs.append(connection)
+
+            # if self doesn't have its flowtype already determined it is checked, whether the flowtype can be specified via the connection
+            if self.flowtype.is_unknown():
+                if not connection.flowtype.is_unknown():
+                    self.update_flowtype(connection.flowtype)
+            elif connection.flowtype.is_unknown():
+                connection.update_flowtype(self.flowtype)
+
+        else:
             logging.critical(
                 f"ERROR: Cannot create output connection {connection.name}, because Component {self.name} is not a valid source"
             )
             raise Exception
-
-        if connection.to_losses:
-            logging.critical(
-                f"ERROR: Components of type {self.type} are not allowed to have a connection to losses"
-            )
-            raise Exception
-
-        self.outputs.append(connection)
-
-        if self.flowtype.is_unknown():
-            if not connection.flowtype.is_unknown():
-                self.update_flowtype(connection.flowtype)
-        elif connection.flowtype.is_unknown():
-            connection.update_flowtype(self.flowtype)
 
     def update_flowtype(self, flowtype: str):
         # FLOWTYPE DETERMINATION
@@ -312,24 +323,6 @@ class Component:
                 f" The parameter {parameter} was ignored for Component {self.name}, because it is unknown"
             )
 
-    def is_sink(self) -> bool:
-        """
-        :return: [boolean] True, if the component is a valid destination, otherwise False
-        """
-        if self.type == "sink":
-            return True
-        else:
-            return False
-
-    def is_source(self) -> bool:
-        """
-        :return: [boolean] True, if the component is a valid source, otherwise False
-        """
-        if self.type == "source":
-            return True
-        else:
-            return False
-
 
 class Converter(Component):
     def __init__(self, key: str, factory, name: str = None):
@@ -337,17 +330,19 @@ class Converter(Component):
         super().__init__(key, factory, name=name)
 
         # STRUCTURAL ATTRIBUTES
+        self.capacity_charge = 0  # cost per unit conversion capacity installed.
+
         self.description = (
             "Unspecified Converter"  # Description for better identification in UI
         )
+        self.IS_DESTINATION = True
+        self.IS_ORIGIN = True
         self.inputs_energy = (
             []
         )  # separate list to store information about energy inputs
         self.inputs_material = (
             []
         )  # separate list to store information about material inputs
-        self.IS_ORIGIN = True  # Converters are valid origins
-        self.IS_DESTINATION = True  # Converters are valid destinations
         self.outputs_energy = (
             []
         )  # separate list to store information about energy outputs
@@ -379,6 +374,9 @@ class Converter(Component):
         self.availability = np.ones(
             factory.timesteps
         )  # used for all classes with power_max, to determine the maximum power timedependent. is initialized as all ones, so that it has no effect if not specificly adressed
+        self.rampup_cost = (
+            0  # cost for ramping up the utilization by one conversion unit
+        )
         self.ramp_power_limited = (
             False  # Set "True, if the power gradient of the Component is limited
         )
@@ -402,7 +400,7 @@ class Converter(Component):
 
     def set_input(self, connection: co.Connection):
         """
-        This function sets the given connection as an input for the deadtime-component. The weight is either taken from weight or weight destination.
+        This function sets the given connection as an input for the deadtime-component. The weight is either taken from weight or weight destination. Input limit of parent component is being ignored
         :param connection: [fm.Connection-object]
         """
 
@@ -411,7 +409,7 @@ class Converter(Component):
             self.inputs_energy.append(connection)
         elif connection.flowtype.is_material():
             self.inputs_material.append(connection)
-            # converters do not have a material losses connection by default..check if one is required
+            # converters do not have a material losses connection by default.check if one is required
             if self.to_Mlosses == []:
                 self.factory.add_connection(
                     self.key,
@@ -419,7 +417,7 @@ class Converter(Component):
                     key=f"{self.key}_to_Mlosses",
                     name=f"{self.name}_to_Mlosses",
                     weight=0.01,
-                    to_losses=True,
+                    type="losses",
                 )  # auto generate a connection to losses
         else:
             logging.critical(
@@ -429,11 +427,11 @@ class Converter(Component):
 
     def set_output(self, connection: co.Connection):
         """
-        This function sets the given connection as an output for the component
+        This function sets the given connection as an output for the component. Output limit of parent component is being ignored
         :param connection: [fm.Connection-object]
         """
         # handle connections to losses if specified:
-        if connection.to_losses:
+        if connection.type == "losses":
             if connection.flowtype.is_energy():
                 self.to_Elosses = connection
             elif connection.flowtype.is_material():
@@ -670,8 +668,8 @@ class Deadtime(Component):
 class Pool(Component):
     def __init__(self, key, factory, *, flowtype=None, name: str = None):
         super().__init__(key, factory, flowtype=flowtype, name=name)
-        self.IS_DESTINATION = True  # pools can act as a destination
-        self.IS_ORIGIN = True  # pools can act as an origin
+        self.max_inputs = 20
+        self.max_outputs = 20
         self.type = "pool"  # identify Component as pool
         self.description = "Unspecified Pool"  # Description for identification in UI
         self.flowtype_description = (
@@ -1107,6 +1105,7 @@ class Storage(Component):
     def __init__(self, key: str, factory, *, flowtype: str = None, name: str = None):
         super().__init__(key, factory, flowtype=flowtype, name=name)
         self.capacity = 0  # Storage capacity, initialized as zero, so that the Component has no effect if not explicitly specified
+        self.capacity_cost = 0  # yearly capital costs for storage capacity provision
         self.direct_throughput = False  # Set to true if charging and discharging in the same timestep is allowed
         self.efficiency = (
             1  # ratio of discharged vs charged power, initialized as 1 -> no losses
@@ -1196,7 +1195,7 @@ class Storage(Component):
         :param connection: [fm.Connection-object]
         """
         # handle connections to losses if specified:
-        if connection.to_losses:
+        if connection.type == "losses":
             self.to_losses = connection
         else:
             self.outputs.append(connection)
@@ -1254,10 +1253,10 @@ class Thermalsystem(Component):
         """
 
         # handle connections from external gains:
-        if connection.from_gains:
+        if connection.type == "gains":
             if not self.from_gains == []:
                 logging.warning(
-                    f"{self.name} already had a connection with attribute 'from_gains' (coming from {self.from_gains.source.name}) which has been overwritten now!"
+                    f"{self.name} already had a connection with attribute 'from_gains' (coming from {self.from_gains.origin.name}) which has been overwritten now!"
                 )
             self.from_gains = connection
         # handle normal connections
@@ -1284,7 +1283,7 @@ class Thermalsystem(Component):
             raise Exception
 
         # handle connections to losses if specified:
-        if connection.to_losses:
+        if connection.type == "losses":
             self.to_losses = connection
         else:
             self.outputs.append(connection)
