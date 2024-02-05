@@ -14,10 +14,9 @@ class Connection:
         destination,
         key: str,
         *,
-        from_gains: bool = None,
         flowtype: str = None,
         name: str = None,
-        to_losses: bool = None,
+        type: str = "default",
         weight: float = None,
         weight_origin: float = None,
         weight_destination: float = None,
@@ -28,21 +27,12 @@ class Connection:
             key  # give the connection a unique id in the list of existing connections
         )
         self.origin = origin
+        self.type = (
+            type  # set type of connection {"default", "losses", "gains", "slack"}
+        )
         self.destination = destination
         self.weight_destination = 1
         self.weight_origin = 1
-
-        # check if the connection is meant to deduct losses
-        if to_losses is not None:
-            self.to_losses = to_losses
-        else:
-            self.to_losses = False
-
-        # check if the connection is meant to deduct losses
-        if from_gains is not None:
-            self.from_gains = from_gains
-        else:
-            self.from_gains = False
 
         # set a name for the connection
         if name is not None:
