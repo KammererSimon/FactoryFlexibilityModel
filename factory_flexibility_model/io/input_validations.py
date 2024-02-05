@@ -75,18 +75,28 @@ def validate(input, output_type, *, min=None, max=None, positive=False, timestep
             else:
                 return input
         elif isinstance(input, str):
-            if input == "TRUE" or input == "true" or input == "True":
+            if input == "TRUE" or input == "true" or input == "True" or input == "1":
                 return True
-            if input == "FALSE" or input == "false" or input == "False":
+            if input == "FALSE" or input == "false" or input == "False" or input == "0":
                 return False
             else:
                 logging.critical(
                     f"The given value string '{input}' cannot be identified as 'True' or 'False'!"
                 )
                 raise Exception
+        elif isinstance(input, float):
+            if input == 1:
+                return True
+            if input == 0:
+                return False
+            else:
+                logging.critical(
+                    f"The given value float '{input}' cannot be identified as 'True' or 'False'!"
+                )
+                raise Exception
         else:
             logging.critical(
-                f"Given value is of type {type(input)} and incompatible with requested type (boolean)!"
+                f"Given value ({input}is of type {type(input)} and incompatible with requested type (boolean)!"
             )
             raise Exception
 
