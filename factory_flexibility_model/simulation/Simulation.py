@@ -89,7 +89,7 @@ class Simulation:
             self.T, vtype=GRB.CONTINUOUS, name=f"P_{component.name}"
         )
         logging.debug(
-            f"        - Variable:     P_{component.key} timeseries of the nominal power of {component.name}"
+            f"        - Variable:     P_{component.name} timeseries of the nominal power of {component.name}"
         )
 
         # add variables to express the positive and negative deviations from the nominal operating point
@@ -124,7 +124,7 @@ class Simulation:
             self.T, vtype=GRB.CONTINUOUS, name=f"Eta_{component.name}"
         )
         logging.debug(
-            f"        - Variable:     Eta_{component.key}                              "
+            f"        - Variable:     Eta_{component.name}                              "
             f"(Operating efficiency of {component.name}"
         )
 
@@ -651,7 +651,7 @@ class Simulation:
                 self.MVars[f"SOC_{component.key}_start"] == component.soc_start
             )
             logging.debug(
-                f"        - Constraint:   SOC_start == {component.soc_start} for storage {component.key}"
+                f"        - Constraint:   SOC_start == {component.soc_start} for storage {component.name}"
             )
         else:
             self.m.addConstr(self.MVars[f"SOC_{component.key}_start"] <= 1)
@@ -750,7 +750,7 @@ class Simulation:
             # make sure that there is no energy-disposal loophole using illegal losses
             self.m.addConstr(self.MVars[component.to_losses.key] == 0)
 
-        # in case direct thropughput is forbidden or the storage is directly connected to a pool on both sides and the efficiency is 100%: prohibit charging and discharging at the same timestep
+        # in case direct throughput is forbidden or the storage is directly connected to a pool on both sides and the efficiency is 100%: prohibit charging and discharging at the same timestep
         if (
             component.inputs[0].origin == component.outputs[0].destination
             and component.efficiency == 1
@@ -776,7 +776,7 @@ class Simulation:
             )
 
         # is the storage afflicted with a capital cost per used capacity?
-        if component.capacity_cost > 0:
+        if component.capacity_charge > 0:
             # If yes: Add an MVar for the maximum used storage capacity and add cost factor
             # create single float Mvar
             self.MVars[f"SOC_max_{component.key}"] = self.m.addMVar(
@@ -784,12 +784,10 @@ class Simulation:
             )
 
             # define the Mvar as the maximum used utilization
-            self.m.addConstr(
+            self.m.addConstrs(
                 self.MVars[f"SOC_max_{component.key}"][0]
-                == gp.max_(
-                    (self.MVars[f"SOC_{component.key}"][t] for t in range(self.T)),
-                    constant=0,
-                )
+                >= self.MVars[f"SOC_{component.key}"][t]
+                for t in range(self.T)
             )
 
             # create new cost term
@@ -809,9 +807,7 @@ class Simulation:
                 * self.MVars[f"SOC_max_{component.key}"]
             )
 
-            logging.debug(
-                f"        - CostFactor:   Cost for capital costs of {component.name}"
-            )
+            logging.debug(f"        - CostFactor:   capital costs of {component.name}")
 
     def __add_source(self, component):
         """
@@ -827,7 +823,7 @@ class Simulation:
         )
 
         logging.debug(
-            f"        - Variable:     E_{component.key}                              (timeseries of global inputs from E_{component.name}"
+            f"        - Variable:     E_{component.name}                              (timeseries of global inputs from E_{component.name}"
         )
 
         # set the sum of outgoing flows to meet the fixed supply
@@ -851,7 +847,7 @@ class Simulation:
         )
 
         logging.debug(
-            f"        - Constraint:   E_{component.key} == sum of outgoing flows"
+            f"        - Constraint:   E_{component.name} == sum of outgoing flows"
         )
 
         # is the maximum output power of the source limited? If yes: Add power_max constraint
@@ -866,7 +862,7 @@ class Simulation:
                 <= component.power_max * component.availability
             )
             logging.debug(
-                f"        - Constraint:   P_{component.key} <= P_{component.key}_max"
+                f"        - Constraint:   P_{component.name} <= P_{component.name}_max"
             )
         elif self.factory.enable_slacks:
             self.m.addConstr(
@@ -878,7 +874,7 @@ class Simulation:
                 <= self.big_m
             )
             logging.debug(
-                f"        - Constraint:   P_{component.key} <= P_SECURITY                            -> Prevent Model from being unbounded"
+                f"        - Constraint:   P_{component.name} <= P_SECURITY                            -> Prevent Model from being unbounded"
             )
 
         # is the minimum output power of the source limited? If yes: Add power_min constraint
@@ -894,7 +890,7 @@ class Simulation:
             )
 
             logging.debug(
-                f"        - Constraint:   P_{component.key} >= P_{component.key}_min"
+                f"        - Constraint:   P_{component.name} >= P_{component.name}_min"
             )
 
         # does the utilization of the source cost something? If yes: Add the corresponding cost factors
@@ -921,9 +917,8 @@ class Simulation:
             logging.debug(f"        - CostFactor:   Cost for usage of {component.name}")
 
         # is the source afflicted with a capacity charge?
-        # If yes: Add an MVar for the maximum used Power and add cost factor
         if component.capacity_charge > 0:
-
+            # If yes: Add an MVar for the maximum used Power and add cost factor
             # create single float Mvar
             self.MVars[f"P_max_{component.key}"] = self.m.addMVar(
                 1, vtype=GRB.CONTINUOUS, name=f"P_max_{component.key}"
@@ -945,7 +940,7 @@ class Simulation:
                 )
             )
 
-            # define the costs -> capacity_charge is specified on yearly basis, so only
+            # define the costs -> capacity_charge is specified on yearly basis
             self.m.addConstr(
                 self.C_objective[-1]
                 == self.interval_length
@@ -997,7 +992,7 @@ class Simulation:
             for t in range(self.T)
         )
         logging.debug(
-            f"        - Variable:     E_{component.key}_in                                 (timeseries of incoming thermal energy at {component.name})"
+            f"        - Variable:     E_{component.name}_in                                 (timeseries of incoming thermal energy at {component.name})"
         )
 
         # create a timeseries of decision variables to represent the total outflow going out of the thermal demand:
@@ -1015,7 +1010,7 @@ class Simulation:
             for t in range(self.T)
         )
         logging.debug(
-            f"        - Variable:     E_{component.key}_out                                  (timeseries of removed thermal energy at {component.name})"
+            f"        - Variable:     E_{component.name}_out                                  (timeseries of removed thermal energy at {component.name})"
         )
 
         # create a timeseries for the internal temperature:
@@ -1030,7 +1025,7 @@ class Simulation:
         self.m.addConstr(
             self.MVars[f"T_{component.key}"][0] == component.temperature_start
         )
-        logging.debug(f"        - Constraint:   T_{component.key}[0] = Tstart")
+        logging.debug(f"        - Constraint:   T_{component.name}[0] = Tstart")
 
         # add constraint for the thermal R-C-factory
         self.m.addConstrs(
@@ -1063,7 +1058,7 @@ class Simulation:
             for t in range(self.T)
         )
         logging.debug(
-            f"        - Constraint:   Tmin < T_{component.key} < Tmax for {component.key}"
+            f"        - Constraint:   Tmin < T_{component.name} < Tmax for {component.name}"
         )
 
         # set the end temperature:
@@ -1084,7 +1079,7 @@ class Simulation:
                 / component.C
                 == component.temperature_start
             )
-            logging.debug(f"        - Constraint:   T_{component.key}[T] = Tstart")
+            logging.debug(f"        - Constraint:   T_{component.name}[T] = Tstart")
         else:
             # keep the temperature within allowed boundaries at timestep T+1
             self.m.addConstr(
@@ -1173,7 +1168,7 @@ class Simulation:
             possibilities, vtype=GRB.INTEGER, name=f"{component.key}_executions"
         )
         logging.debug(
-            f"        - Variable:     {component.key}_executions                                 (List of triggered events at triggerdemand {component.name})"
+            f"        - Variable:     {component.name}_executions                                 (List of triggered events at triggerdemand {component.name})"
         )
 
         # guarantee the required amount of executions
@@ -1210,7 +1205,7 @@ class Simulation:
                 name=f"{component.key}_loadprofile_material",
             )
         logging.debug(
-            f"        - Variable:     {component.key}_loadprofile                                 (resulting load profile of triggerdemand {component.name})"
+            f"        - Variable:     {component.name}_loadprofile                                 (resulting load profile of triggerdemand {component.name})"
         )
 
         if component.Tstart > 1:
@@ -1476,7 +1471,7 @@ class Simulation:
                     total_emission_cost += emission_cost
 
                     logging.info(
-                        f"Sink {component.key} caused total emissions of {round(sum(emissions), 2)} kgCO2, costing {round(emission_cost, 2)}€"
+                        f"Sink {component.name} caused total emissions of {round(sum(emissions), 2)} kgCO2, costing {round(emission_cost, 2)}€"
                     )
 
                 else:
@@ -1553,7 +1548,7 @@ class Simulation:
                     ] = emission_cost
 
                     logging.info(
-                        f"Source {component.key} caused total emissions of {round(sum(emissions),2)} kgCO2, costing additional {round(emission_cost,2)}€"
+                        f"Source {component.name} caused total emissions of {round(sum(emissions),2)} kgCO2, costing additional {round(emission_cost,2)}€"
                     )
                 else:
                     emissions = 0
@@ -1565,12 +1560,29 @@ class Simulation:
                 else:
                     cost = 0
 
+                # calculate occuring capacity charge if necessary
+                if component.capacity_charge > 0:
+                    capacity_charge = round(
+                        max(utilization)
+                        * component.capacity_charge
+                        * self.interval_length
+                        * self.T
+                        / 8760,
+                        2,
+                    )
+                    self.result["costs"]["capacity_provision"][
+                        component.key
+                    ] = capacity_charge
+                else:
+                    capacity_charge = 0
+
                 # write the result into the result-dictionary
                 self.result[component.key] = {
                     "utilization": utilization,
                     "emissions": emissions,
                     "emission_cost": emission_cost,
                     "utilization_cost": cost,
+                    "capacity_charge": capacity_charge,
                 }
 
                 # add the sources contribution to onsite/offsite generation calculation
@@ -1654,8 +1666,15 @@ class Simulation:
                 soc_max = max(soc)
 
                 # calculate occuring capacity charge if necessary
-                if component.capacity_cost > 0:
-                    capacity_charge = round(soc_max * component.capacity_cost, 2)
+                if component.capacity_charge > 0:
+                    capacity_charge = round(
+                        soc_max
+                        * component.capacity_charge
+                        * self.interval_length
+                        * self.T
+                        / 8760,
+                        2,
+                    )
                     self.result["costs"]["capacity_provision"][
                         component.key
                     ] = capacity_charge
