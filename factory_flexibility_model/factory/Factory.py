@@ -544,6 +544,23 @@ class Factory:
             "ambient_gains", parameters={"is_onsite": True, "cost": 0.0001}
         )  # Ambient gain gets a tiny cost related to it to avoid a direct feed of energy from ambient gains to thermal losses!
 
+    def get_name(self, key):
+        """
+        This function takes a key of a component or connection and returns the corresponding component name.
+        In case of an invalid key it returns None.
+
+        :param key: [str] -> Key of a component or connection within the factory
+        :return: [str]/[None] -> Component name or none
+        """
+        try:
+            name = self.components[key].name
+        except:
+            try:
+                name = self.connections[key].name
+            except:
+                name = None
+        return name
+
     def get_key(self, name):
         """
         This method takes an asset name and returns the corresponding key that the component or connection can be adressed with
