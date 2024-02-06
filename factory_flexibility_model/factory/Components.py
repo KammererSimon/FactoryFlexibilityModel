@@ -870,11 +870,10 @@ class Sink(Component):
 
             elif parameter == "revenue":
                 if self.determined:
-                    logging.critical(
-                        f"Error: cannot set a revenue for {self.name}, "
-                        f"because the output power is determined"
+                    logging.info(
+                        f"Warning: Revenue set for {self.name}, "
+                        f"even though the output power is determined"
                     )
-                    raise Exception
 
                 if self.chargeable:
                     logging.critical(
@@ -1105,7 +1104,7 @@ class Storage(Component):
     def __init__(self, key: str, factory, *, flowtype: str = None, name: str = None):
         super().__init__(key, factory, flowtype=flowtype, name=name)
         self.capacity = 0  # Storage capacity, initialized as zero, so that the Component has no effect if not explicitly specified
-        self.capacity_cost = 0  # yearly capital costs for storage capacity provision
+        self.capacity_charge = 0  # yearly capital costs for storage capacity provision
         self.direct_throughput = False  # Set to true if charging and discharging in the same timestep is allowed
         self.efficiency = (
             1  # ratio of discharged vs charged power, initialized as 1 -> no losses
@@ -1121,7 +1120,7 @@ class Storage(Component):
         self.power_max_discharge = (
             0  # maximum discharging / unloading speed, initialized as almost unlimited
         )
-        self.soc_start = 0.5  # State of charge at the beginning of the Simulation, initialized as 50%
+        self.soc_start = 0.5  # State of charge at the beginning of the Simulation, initialized as 50% NO EFFECT IF soc_start_determined=False
         self.soc_start_determined = True  # Determines, wether the SOC at the start/end of the Simulation has to be the given value or wether it it up to the solver
         self.sustainable = True  # Determines, wether the SOC has to be the same at the start and end of the Simulation or not.
         self.to_losses = (
