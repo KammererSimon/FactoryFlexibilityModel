@@ -1746,7 +1746,6 @@ class Simulation:
         self.results_collected = True
 
         logging.info(" -> Results processed")
-        print(self.result["costs"])
 
     def create_dash(self) -> object:
         """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted Simulation"""
