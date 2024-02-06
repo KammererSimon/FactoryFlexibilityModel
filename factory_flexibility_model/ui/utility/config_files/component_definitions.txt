@@ -134,7 +134,7 @@ storage:
   default_icon: storage_default
   parameters:
     capacity:
-      description: Storage Capacity
+      description: Maximum storage capacity
       text: Capacity
       unit_type: flow
     capacity_charge:
@@ -146,23 +146,23 @@ storage:
       text: Base Efficiency
       unit_type: '%'
     leakage_soc:
-      description: Relative Leakage over Time
+      description: Relative leakage over time
       text: Relative leakage
       unit_type: leakage_soc
     leakage_time:
-      description: Absolute Leakage over Time
+      description: Absolute leakage over time
       text: Absolute Leakage
       unit_type: leakage_time
     power_max_charge:
-      description: Max Charging Power
+      description: Max charging power
       text: Max charging power
       unit_type: flowrate
     power_max_discharge:
-      description: Max Discharging Power
+      description: Max discharging power
       text: Max Discharging Power
       unit_type: flowrate
     soc_start:
-      description: Initial state of Charge
+      description: Initial state of charge
       text: SOC start
       unit_type: '%'
     direct_throughput:
