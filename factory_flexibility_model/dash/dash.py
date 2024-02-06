@@ -1329,7 +1329,7 @@ def create_dash(simulation):
                 output_sum += sum(simulation.result[i_output.key])
 
             config = (
-                f"\n **Capacity:** {component.flowtype.unit.get_value_expression(component.capacity,'flow')}\n"
+                f"\n **Max usable capacity:** {component.flowtype.unit.get_value_expression(component.capacity,'flow')}\n"
                 f"\n **Base efficiency:** {component.efficiency * 100} %\n"
                 f"\n **SOC start:** {component.flowtype.unit.get_value_expression(component.soc_start * component.capacity,'flow')} ({component.soc_start * 100}%)\n"
                 f"\n **Leakage per timestep:** \n"
@@ -1337,20 +1337,23 @@ def create_dash(simulation):
                 f"\n * {component.leakage_SOC} % of SOC\n"
                 f"\n **Max charging Power:** {component.flowtype.unit.get_value_expression(component.power_max_charge,'flow')}\n"
                 f"\n **Max discharging Power:** {component.flowtype.unit.get_value_expression(component.power_max_discharge,'flow')}\n"
-                f"\n **Inputs:** \n"
+                f"\n **Input:** \n"
                 f"\n {inputs} \n"
-                f"\n **Outputs:** \n"
+                f"\n **Output:** \n"
                 f"\n {outputs} \n"
+                f"\n **Capital cost of used capacity:** {component.capacity_charge} {simulation.factory.currency}/{component.flowtype.unit.get_unit_flow()}\n"
             )
 
             results = (
-                f"\n **Total Inflow:** {component.flowtype.unit.get_value_expression(round(input_sum), 'flow')}\n"
-                f"\n **Total Outflow:** {component.flowtype.unit.get_value_expression(round(output_sum), 'flow')}\n"
-                f"\n **Occuring Losses:** {component.flowtype.unit.get_value_expression(round(sum(simulation.result[component.to_losses.key])), 'flow')} ({round(sum(simulation.result[component.to_losses.key]) / input_sum * 100, 2)}%)\n "
-                f"\n **Max Input Power:** {component.flowtype.unit.get_value_expression(-round(min(simulation.result[component.key]['utilization'])), 'flowrate')}\n "
-                f"\n **Max Output Power:** {component.flowtype.unit.get_value_expression(round(max(simulation.result[component.key]['utilization'])), 'flowrate')}\n "
+                f"\n **Used capacity:** {component.flowtype.unit.get_value_expression(round(simulation.result[component.key]['SOC'].max()), 'flow')}\n"
+                f"\n **Total inflow:** {component.flowtype.unit.get_value_expression(round(input_sum), 'flow')}\n"
+                f"\n **Total outflow:** {component.flowtype.unit.get_value_expression(round(output_sum), 'flow')}\n"
+                f"\n **Occuring losses:** {component.flowtype.unit.get_value_expression(round(sum(simulation.result[component.to_losses.key])), 'flow')} ({round(sum(simulation.result[component.to_losses.key]) / input_sum * 100, 2)}%)\n "
+                f"\n **Max input power:** {component.flowtype.unit.get_value_expression(-round(min(simulation.result[component.key]['utilization'])), 'flowrate')}\n "
+                f"\n **Max output power:** {component.flowtype.unit.get_value_expression(round(max(simulation.result[component.key]['utilization'])), 'flowrate')}\n "
                 f"\n **Average SOC:** {component.flowtype.unit.get_value_expression(round(simulation.result[component.key]['SOC'].mean()), 'flow')}\n "
-                f"\n **Charging circles:** {round(input_sum / (component.capacity + 0.0001))} (Estimated) \n "
+                f"\n **Charging circles:** {round(input_sum / (simulation.result[component.key]['SOC'].max() + 0.0001))} (Estimated) \n "
+                f"\n **Resulting capital cost:** {round(component.capacity_charge / 8760 * simulation.T * round((simulation.result[component.key]['SOC'].max() + 0.0001)),2)}{simulation.factory.currency} \n "
             )
         else:
             fig = go.Figure()
