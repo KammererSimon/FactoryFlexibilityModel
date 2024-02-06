@@ -61,13 +61,14 @@ class Factory:
     def __init__(
         self,
         *,
-        name: str = "New Factory",
-        timesteps: int = 168,
+        currency: str = "€",
         description: str = "Unspecified Factory",
-        enable_slacks: bool = False,
-        timefactor: float = 1,
         emission_limit: float = None,
         emission_cost: float = None,
+        enable_slacks: bool = False,
+        name: str = "New Factory",
+        timesteps: int = 168,
+        timefactor: float = 1,
     ):
 
         # Initialize structure variables
@@ -84,6 +85,7 @@ class Factory:
         # Initialize user configurable variables
         self.timesteps = timesteps
         self.name = iv.validate(name, "string")
+        self.currency = currency
         self.description = iv.validate(description, "string")
         self.enable_slacks = iv.validate(enable_slacks, "boolean")
         self.timefactor = iv.validate(timefactor, "float")

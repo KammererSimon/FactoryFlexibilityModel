@@ -285,6 +285,7 @@ class Blueprint:
         factory = fm.Factory(
             name=self.info["name"],
             timesteps=self.info["timesteps"],
+            currency=self.info["currency"],
             description=self.info["description"],
             enable_slacks=self.info["enable_slacks"],
             emission_limit=self.info["emission_limit"],
