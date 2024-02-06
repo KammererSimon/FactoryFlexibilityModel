@@ -72,16 +72,27 @@ def create_layout_html(
                                             ),
                                             dbc.Row(
                                                 [
-                                                    component_info["pie_in_title"],
-                                                    dbc.Row([figures["pie_in"]]),
+                                                    component_info["detailed_cost"],
                                                 ],
                                                 style=card_style,
                                             ),
                                             dbc.Row(
                                                 [
+                                                    component_info["total_cost"],
+                                                    dcc.Markdown(
+                                                        children="#### OPERATION COST",
+                                                        style=style[
+                                                            "value_description"
+                                                        ],
+                                                    ),
+                                                ],
+                                                style=card_style_contrast,
+                                            ),
+                                            dbc.Row(
+                                                [
                                                     component_info["input_information"],
                                                     dcc.Markdown(
-                                                        children="#### TOTAL INFLOW",
+                                                        children="#### TOTAL THROUGHPUT",
                                                         style=style[
                                                             "value_description"
                                                         ],
@@ -101,27 +112,28 @@ def create_layout_html(
                                                 ]
                                             )
                                         ],
-                                        width=8,
                                         style=card_style
                                         | {
                                             "backgroundColor": style["card_color"],
                                         },
                                     ),
+                                ]
+                            ),
+                            dbc.Row(
+                                [
                                     dbc.Col(
                                         [
                                             dbc.Row(
                                                 [
-                                                    component_info["total_cost"],
-                                                    dcc.Markdown(
-                                                        children="#### TOTAL OPERATION COST",
-                                                        style=style[
-                                                            "value_description"
-                                                        ],
-                                                    ),
-                                                    component_info["detailed_cost"],
+                                                    component_info["pie_in_title"],
+                                                    dbc.Row([figures["pie_in"]]),
                                                 ],
-                                                style=card_style_contrast,
+                                                style=card_style,
                                             ),
+                                        ],
+                                    ),
+                                    dbc.Col(
+                                        [
                                             dbc.Row(
                                                 [
                                                     component_info["pie_out_title"],
@@ -129,25 +141,10 @@ def create_layout_html(
                                                 ],
                                                 style=card_style,
                                             ),
-                                            dbc.Row(
-                                                [
-                                                    component_info[
-                                                        "output_information"
-                                                    ],
-                                                    dcc.Markdown(
-                                                        children="#### TOTAL OUTFLOW",
-                                                        style=style[
-                                                            "value_description"
-                                                        ],
-                                                    ),
-                                                ],
-                                                align="start",
-                                                style=card_style_contrast,
-                                            ),
-                                        ]
+                                        ],
                                     ),
                                 ],
-                            )
+                            ),
                         ],
                     ),
                     dcc.Tab(

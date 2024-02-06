@@ -411,7 +411,6 @@ def create_dash(simulation):
         dropdowns,
         figures,
         simulation,
-        T,
     )
 
     # SET CALLBACKS
@@ -424,7 +423,6 @@ def create_dash(simulation):
         Output(component_info["pie_in_title"], component_property="children"),
         Output(component_info["pie_out_title"], component_property="children"),
         Output(component_info["input_information"], component_property="children"),
-        Output(component_info["output_information"], component_property="children"),
         Output(component_info["total_cost"], component_property="children"),
         Output(component_info["detailed_cost"], component_property="children"),
         Input(dropdowns["sankey"], component_property="value"),
@@ -705,17 +703,14 @@ def create_dash(simulation):
         title_in = ""
         title_out = ""
         input_info = ""
-        output_info = ""
         if user_input == "Energy Flows":
             title_in = "##### DISTRIBUTION OF ENERGY INPUTS"
             title_out = "##### DISTRIBUTION OF ENERGY OUTPUTS"
             input_info = f"## {simulation.factory.units['energy'].get_value_expression(sum(values_in), 'flow')}"
-            output_info = f"## {simulation.factory.units['energy'].get_value_expression(sum(values_out), 'flow')}"
         elif user_input == "Material Flows":
             title_in = "##### DISTRIBUTION OF MATERIAL INPUTS"
             title_out = "##### DISTRIBUTION OF MATERIAL OUTPUTS"
             input_info = f"## {simulation.factory.units['mass'].get_value_expression(sum(values_in), 'flow')}"
-            output_info = f"## {simulation.factory.units['mass'].get_value_expression(sum(values_out), 'flow')}"
         elif user_input == "Energy Losses" or user_input == "Material Losses":
             title_in = "##### ORIGINS OF LOSSES"
             title_out = ""
@@ -750,7 +745,6 @@ def create_dash(simulation):
             title_in,
             title_out,
             input_info,
-            output_info,
             total_cost,
             detailed_costs,
         )  # returned objects are assigned to the Component property of the Output
