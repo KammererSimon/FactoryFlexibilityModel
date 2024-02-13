@@ -29,22 +29,9 @@ import numpy as np
 from gurobipy import GRB
 
 import factory_flexibility_model.io.input_validations as iv
+import factory_flexibility_model.simulation.optimization_components as oc
 from factory_flexibility_model.dash import dash as fd
 from factory_flexibility_model.io.set_logger import set_logging_level
-from factory_flexibility_model.simulation.optimization_components import (
-    add_converter,
-    add_deadtime,
-    add_flows,
-    add_pool,
-    add_schedule,
-    add_sink,
-    add_slack,
-    add_source,
-    add_storage,
-    add_thermalsystem,
-    add_triggerdemand,
-    solve,
-)
 
 
 class Simulation:
@@ -740,7 +727,7 @@ class Simulation:
             self.t_step = time.time()
 
         # CREATE MVARS FOR ALL FLOWS IN THE FACTORY
-        add_flows.add_flows(self)
+        oc.add_flows(self)
         if self.enable_time_tracking:
             logging.info(f"Creating Flows: {round(time.time() - self.t_step, 2)}s")
             self.t_step = time.time()
@@ -748,25 +735,25 @@ class Simulation:
         # CREATE MVARS AND CONSTRAINTS FOR ALL COMPONENTS IN THE FACTORY
         for component in self.factory.components.values():
             if component.type == "source":
-                add_source.add_source(self, component)
+                oc.add_source(self, component)
             elif component.type == "pool":
-                add_pool.add_pool(self, component)
+                oc.add_pool(self, component)
             elif component.type == "sink":
-                add_sink.add_sink(self, component)
+                oc.add_sink(self, component)
             elif component.type == "slack":
-                add_slack.add_slack(self, component)
+                oc.add_slack(self, component)
             elif component.type == "converter":
-                add_converter.add_converter(self, component)
+                oc.add_converter(self, component)
             elif component.type == "deadtime":
-                add_deadtime.add_deadtime(self, component)
+                oc.add_deadtime(self, component)
             elif component.type == "storage":
-                add_storage.add_storage(self, component)
+                oc.add_storage(self, component)
             elif component.add_storagetype == "thermalsystem":
-                add_thermalsystem.add_thermalsystem(self, component)
+                oc.add_thermalsystem(self, component)
             elif component.type == "triggerdemand":
-                add_triggerdemand.add_triggerdemand(self, component)
+                oc.add_triggerdemand(self, component)
             elif component.type == "schedule":
-                add_schedule.add_schedule(self, component)
+                oc.add_schedule(self, component)
 
             if self.enable_time_tracking:
                 logging.info(
@@ -837,7 +824,7 @@ class Simulation:
 
         # CONFIGURE SOLVER
 
-        solve.solve(self, solver_config)
+        oc.solve(self, solver_config)
 
         if not self.m.Status == GRB.TIME_LIMIT:
             # mark Simulation as solved
