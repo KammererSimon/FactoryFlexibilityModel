@@ -153,7 +153,7 @@ class factory_GUIApp(MDApp):
 
     def add_connection(self, destination_key):
         """
-        This function is being called when the user confirms the creation of a new connection within the new_connection_dialog.
+        This function is being called when the user activated the connection creation mode and then clicked on a destination component
         """
 
         # disable connection edit mode
@@ -167,6 +167,40 @@ class factory_GUIApp(MDApp):
         destination_name = self.blueprint.components[destination_key]["name"]
         destination_flowtype = self.blueprint.components[destination_key]["flowtype"]
 
+        # find existing inputs and outputs for source and destination component
+        input_qty = 0
+        output_qty = 0
+        for connection in self.blueprint.connections.values():
+            if connection["from"] == origin_key:
+                output_qty += 1
+            if connection["to"] == destination_key:
+                input_qty += 1
+
+        # check, if origin component can provide another output
+        if output_qty >= 1 and self.blueprint.components[origin_key]["type"] not in [
+            "pool",
+            "converter",
+            "thermalsystem",
+        ]:
+            # in case the origin component is limited to one output and has already an outgoing connection: warn the user
+            show_info_popup(
+                self,
+                f"{origin_name} already has its output connected",
+            )
+            initialize_visualization(self)
+            return
+
+        if input_qty >= 1 and self.blueprint.components[destination_key][
+            "type"
+        ] not in ["pool", "converter", "thermalsystem"]:
+            # in case the destination component is limited to one input and has already an incoming connection: warn the user
+            show_info_popup(
+                self,
+                f"{destination_name} already has its input defined",
+            )
+            initialize_visualization(self)
+            return
+
         # make sure that the connection is not already existing:
         for connection in self.blueprint.connections.values():
             # check all connections in the blueprint
@@ -176,6 +210,7 @@ class factory_GUIApp(MDApp):
                     self,
                     f"There is already a connection from {origin_name} to {destination_name}!",
                 )
+                initialize_visualization(self)
                 return
 
         # check flowtype compatibility of origin and destination
@@ -434,468 +469,3 @@ class factory_GUIApp(MDApp):
             connection[
                 "name"
             ] = f'{self.blueprint.components[connection["from"]]["name"]} -> {self.blueprint.components[connection["to"]]["name"]} '
-
-
-# def save_changes_on_converter(self):
-#     """
-#     This function takes the user input from the converter configuration tab and stores it in the blueprint
-#     """
-#     print("CCHECK")
-#     # store key of old version
-#     key = self.selected_asset["key"]
-#
-#     # make sure that the given name is not taken yet
-#     if not self.blueprint.components[key][
-#         "name"
-#     ] == self.root.ids.textfield_converter_name.text and self.get_key(
-#         self.root.ids.textfield_converter_name.text
-#     ):
-#         show_info_popup(
-#             self, "The given name is already assigned within the factory!"
-#         )
-#         return
-#
-#     if (
-#         not (self.root.ids.textfield_converter_power_max.value_valid)
-#         and (self.root.ids.textfield_converter_power_min.value_valid)
-#         and (self.root.ids.textfield_converter_availability.value_valid)
-#         and (self.root.ids.textfield_converter_rampup.value_valid)
-#         and (self.root.ids.textfield_converter_rampdown.value_valid)
-#         and (self.root.ids.textfield_converter_eta_max.value_valid)
-#         and (self.root.ids.textfield_converter_power_nominal.value_valid)
-#         and (self.root.ids.textfield_converter_delta_eta_high.value_valid)
-#         and (self.root.ids.textfield_converter_delta_eta_low.value_valid)
-#     ):
-#         show_info_popup(
-#             self, "Changes can not be stored due to invalid values remaining"
-#         )
-#         return
-#
-#     self.blueprint.components[key].update(
-#         {
-#             "name": self.root.ids.textfield_converter_name.text,
-#             "description": self.root.ids.textfield_converter_description.text,
-#         }
-#     )
-#     self.blueprint.components[key]["GUI"].update(
-#         {"icon": self.root.ids.image_converter_configuration.source}
-#     )
-#
-#     # go through all numerical parameters
-#     for parameter in [
-#         "power_max",
-#         "power_min",
-#         "availability",
-#         "power_ramp_max_pos",
-#         "power_ramp_max_neg",
-#         "eta_max",
-#         "power_nominal",
-#         "delta_eta_high",
-#         "delta_eta_low",
-#     ]:
-#         # get the pointer to the corresponding textfield
-#         textfield = getattr(self.root.ids, f"textfield_converter_{parameter}")
-#         # check if the user specified it
-#         if not textfield.text == "":
-#             # if yes: safe the value in the parameters dict
-#             self.session_data["parameters"][key][parameter] = float(textfield.text)
-#
-#     # update connection names to adapt changes if the name of the converter has changed
-#     self.update_connection_names()
-#
-#     # set unsaved changes parameters
-#     self.unsaved_changes_on_asset = False
-#     self.unsaved_changes_on_session = True
-#
-#     # redraw the visualisation:
-#     initialize_visualization(self)
-#
-#     # inform the user
-#     Snackbar(text=f"{self.selected_asset['name']} updated!").open()
-#
-#     # storage doppelt vorhanden
-#     """
-# def save_changes_on_storage(self):
-#     """
-#     # This function takes the user input from the storage configuration tab and stores it in the blueprint
-#     """
-#
-#     # store key of old version
-#     component_key = self.get_key(self.selected_asset["name"])
-#
-#     # create a new blueprint entry with given values
-#     storage_new = {}
-#     storage_new = {"name": self.root.ids.textfield_storage_name.text,
-#                    "key": component_key,
-#                    "type": "storage",
-#                    "description": self.root.ids.textfield_storage_description.text,
-#                    #"flow": self.get_key(self.root.ids.textfield_storage_flowtype.text),
-#                    "Maximum charging power": self.root.ids.textfield_storage_charge_max.text,
-#                    "Minimum charging power": self.root.ids.textfield_storage_charge_min.text,
-#                    "Maximum discharging power": self.root.ids.textfield_storage_discharge_max.text,
-#                    "Minimum discharging power": self.root.ids.textfield_storage_discharge_min.text,
-#                    "Capacity": self.root.ids.textfield_storage_capacity.text,
-#                    "SoC Start": self.root.ids.textfield_storage_start.text,
-#                    "leakage time": self.root.ids.textfield_storage_leakage_time.text,
-#                    "leakage SoC": self.root.ids.textfield_storage_leakage_SoC.text,
-#                    "Maximum efficiency": self.root.ids.textfield_storage_efficiency_max.text,
-#                    "icon": self.root.ids.image_storage_configuration.source,
-#                    "position_x": self.selected_asset["GUI"]["position_x"],
-#                    "position_y": self.selected_asset["GUI"]["position_y"]}
-#
-#     # overwrite old entry
-#     self.blueprint.components[component_key] = storage_new
-#
-#     # set selected asset to the updated storage
-#     self.selected_asset = storage_new
-#
-#     # set unsaved changes parameters
-#     self.unsaved_changes_on_asset = False
-#     self.unsaved_changes_on_session = True
-#
-#     # redraw the visualisation:
-#     initialize_visualization(self)
-#
-#     # inform the user
-#     Snackbar(text=f"{self.selected_asset['name']} updated!").open()
-# """
-#
-# def save_changes_on_deadtime(self):
-#     """
-#     This function takes the user input from the deadtime configuration tab and stores it in the blueprint
-#     """
-#
-#     # get component_key
-#     key = self.selected_asset["key"]
-#
-#     # make sure that the given name is not taken yet
-#     if not self.blueprint.components[key][
-#         "name"
-#     ] == self.root.ids.textfield_sink_name.text and self.get_key(
-#         self.root.ids.textfield_sink_name.text
-#     ):
-#         show_info_popup(
-#             self, "The given name is already assigned within the factory!"
-#         )
-#         return
-#
-#     if not (self.root.ids.textfield_deadtime_delay.value_valid):
-#         show_info_popup(
-#             self, "Changes can not be stored due to invalid values remaining"
-#         )
-#         return
-#
-#     # update general attributes and icon
-#     self.blueprint.components[key].update(
-#         {
-#             "name": self.root.ids.textfield_deadtime_name.text,
-#             "description": self.root.ids.textfield_deadtime_description.text,
-#         }
-#     )
-#     self.blueprint.components[key]["GUI"].update(
-#         {"icon": self.root.ids.image_deadtime_configuration.source}
-#     )
-#     # change the flowtype if the user specified a new one
-#     flowtype_key = self.get_key(self.root.ids.textfield_deadtime_flowtype.text)
-#     if not self.blueprint.components[key]["flowtype"].key == flowtype_key:
-#         fd.set_component_flowtype(
-#             self.blueprint, key, self.blueprint.flowtypes[flowtype_key]
-#         )
-#
-#     if not self.root.ids.textfield_deadtime_delay.text == "":
-#         self.session_data["parameters"][key]["delay"] = int(
-#             self.root.ids.textfield_deadtime_delay.text
-#         )
-#
-#     # set unsaved changes parameters
-#     self.unsaved_changes_on_asset = False
-#     self.unsaved_changes_on_session = True
-#
-#     # redraw the visualisation:
-#     initialize_visualization(self)
-#
-#     # inform the user
-#     Snackbar(text=f"{self.selected_asset['name']} updated!").open()
-#
-# def save_changes_on_pool(self):
-#     """
-#     This function takes the user input from the pool configuration tab and stores it in the blueprint
-#     """
-#
-#     # get component_key
-#     key = self.selected_asset["key"]
-#
-#     # make sure that the given name is not taken yet
-#     if not self.blueprint.components[key][
-#         "name"
-#     ] == self.root.ids.textfield_pool_name.text and self.get_key(
-#         self.root.ids.textfield_pool_name.text
-#     ):
-#         show_info_popup(
-#             self, "The given name is already assigned within the factory!"
-#         )
-#         return
-#
-#     # create new blueprint entry
-#     self.blueprint.components[key].update(
-#         {
-#             "name": self.root.ids.textfield_pool_name.text,
-#             "description": self.root.ids.textfield_pool_description.text,
-#         }
-#     )
-#
-#     # change the flowtype if the user specified a new one
-#     flowtype_key = self.get_key(self.root.ids.textfield_pool_flowtype.text)
-#     if not self.blueprint.components[key]["flowtype"].key == flowtype_key:
-#         fd.set_component_flowtype(
-#             self.blueprint, key, self.blueprint.flowtypes[flowtype_key]
-#         )
-#
-#     # update connection names to adapt changes if the name of the pool has changed
-#     self.update_connection_names()
-#     # update flowtype list to adapt changes if a flowtype has to be locked or unlocked
-#     self.update_flowtype_list()
-#
-#     # set unsaved changes parameters
-#     self.unsaved_changes_on_asset = False
-#     self.unsaved_changes_on_session = True
-#
-#     # redraw the preview:
-#     initialize_visualization(self)
-#
-#     # inform the user
-#     Snackbar(text=f"{self.selected_asset['name']} updated!").open()
-#
-# def save_changes_on_sink(self):
-#     """
-#     This function takes the user input from the destination configuration tab and stores it in the blueprint
-#     """
-#
-#     # get component_key
-#     key = self.selected_asset["key"]
-#
-#     # make sure that the given name is not taken yet
-#     if not self.blueprint.components[key][
-#         "name"
-#     ] == self.root.ids.textfield_sink_name.text and self.get_key(
-#         self.root.ids.textfield_sink_name.text
-#     ):
-#         show_info_popup(
-#             self, "The given name is already assigned within the factory!"
-#         )
-#         return
-#
-#     # Check, that all user inputs are valid
-#     if (
-#         not (self.root.ids.textfield_sink_cost.value_valid)
-#         and (self.root.ids.textfield_sink_refund.value_valid)
-#         and (self.root.ids.textfield_sink_co2_emission.value_valid)
-#         and (self.root.ids.textfield_sink_co2_refund.value_valid)
-#         and (self.root.ids.textfield_sink_power_max.value_valid)
-#         and (self.root.ids.textfield_sink_power_min.value_valid)
-#         and (self.root.ids.textfield_sink_demand.value_valid)
-#     ):
-#         show_info_popup(
-#             self, "Changes can not be stored due to invalid values remaining"
-#         )
-#         return
-#
-#     # update general attributes and icon
-#     self.blueprint.components[key].update(
-#         {
-#             "name": self.root.ids.textfield_sink_name.text,
-#             "description": self.root.ids.textfield_sink_description.text,
-#         }
-#     )
-#     self.blueprint.components[key]["GUI"].update(
-#         {"icon": self.root.ids.image_sink_configuration.source}
-#     )
-#
-#     # change the flowtype if the user specified a new one
-#     flowtype_key = self.get_key(self.root.ids.textfield_sink_flowtype.text)
-#     if not self.blueprint.components[key]["flowtype"].key == flowtype_key:
-#         fd.set_component_flowtype(
-#             self.blueprint, key, self.blueprint.flowtypes[flowtype_key]
-#         )
-#
-#     # go through all numerical parameters
-#     for parameter in [
-#         "cost",
-#         "power_max",
-#         "power_min",
-#         "demand",
-#         "revenue",
-#         "co2_emission_per_unit",
-#         "co2_refund_per_unit",
-#     ]:
-#         # get the pointer to the corresponding textfield
-#         textfield = getattr(self.root.ids, f"textfield_sink_{parameter}")
-#         # check if the user specified it
-#         if not textfield.text == "":
-#             # if yes: safe the value in the parameters dict
-#             self.session_data["parameters"][key][parameter] = float(textfield.text)
-#
-#     # set unsaved changes parameters
-#     self.unsaved_changes_on_asset = False
-#     self.unsaved_changes_on_session = True
-#
-#     # update connection names to adapt changes if the name of the destination has changed
-#     self.update_connection_names()
-#     # update flowtype list to adapt changes if a flowtype has to be locked or unlocked
-#     self.update_flowtype_list()
-#
-#     # redraw the preview:
-#     initialize_visualization(self)
-#
-#     # inform the user
-#     Snackbar(text=f"{self.selected_asset['name']} updated!").open()
-#
-# def save_changes_on_storage(self):
-#     """
-#     This function takes the user input from the storage configuration tab and stores it in the blueprint
-#     """
-#
-#     # get component_key
-#     key = self.selected_asset["key"]
-#
-#     # make sure that the given name is not taken yet
-#     if not self.blueprint.components[key][
-#         "name"
-#     ] == self.root.ids.textfield_storage_name.text and self.get_key(
-#         self.root.ids.textfield_storage_name.text
-#     ):
-#         show_info_popup(
-#             self, "The given name is already assigned within the factory!"
-#         )
-#         return
-#
-#     # Check, that all user inputs are valid
-#     if (
-#         not (self.root.ids.textfield_storage_capacity.value_valid)
-#         and (self.root.ids.textfield_storage_power_max_charge.value_valid)
-#         and (self.root.ids.textfield_storage_power_max_discharge.value_valid)
-#         and (self.root.ids.textfield_storage_soc_start.value_valid)
-#         and (self.root.ids.textfield_storage_efficiency.value_valid)
-#         and (self.root.ids.textfield_storage_leakage_time.value_valid)
-#         and (self.root.ids.textfield_storage_leakage_soc.value_valid)
-#     ):
-#         show_info_popup(
-#             self, "Changes can not be stored due to invalid values remaining"
-#         )
-#         return
-#
-#     # update general attributes and icon
-#     self.blueprint.components[key].update(
-#         {
-#             "description": self.root.ids.textfield_storage_description.text,
-#             "name": self.root.ids.textfield_storage_name.text,
-#         }
-#     )
-#     self.blueprint.components[key]["GUI"].update(
-#         {"icon": self.root.ids.image_storage_configuration.source}
-#     )
-#     # change the flowtype if the user specified a new one
-#     flowtype_key = self.get_key(self.root.ids.textfield_storage_flowtype.text)
-#     if not self.blueprint.components[key]["flowtype"].key == flowtype_key:
-#         fd.set_component_flowtype(
-#             self.blueprint, key, self.blueprint.flowtypes[flowtype_key]
-#         )
-#
-#     # go through all numerical parameters
-#     for parameter in [
-#         "capacity",
-#         "power_max_charge",
-#         "power_max_discharge",
-#         "soc_start",
-#         "efficiency",
-#         "leakage_time",
-#         "leakage_soc",
-#     ]:
-#         # get the pointer to the corresponding textfield
-#         textfield = getattr(self.root.ids, f"textfield_storage_{parameter}")
-#         # check if the user specified it
-#         if not textfield.text == "":
-#             # if yes: safe the value in the parameters dict
-#             self.session_data["parameters"][key][parameter] = float(textfield.text)
-#
-#     # update connection names to adapt changes if the name of the storage has changed
-#     self.update_connection_names()
-#
-#     # set unsaved changes parameters
-#     self.unsaved_changes_on_asset = False
-#     self.unsaved_changes_on_session = True
-#
-#     # redraw the preview:
-#     initialize_visualization(self)
-#
-#     # inform the user
-#     Snackbar(text=f"{self.selected_asset['name']} updated!").open()
-#
-# def save_changes_on_thermalsystem(self):
-#         """
-#         This function takes the user input from the thermal system configuration tab and stores it in the blueprint
-#         """
-#
-#         # alle textfelder der komponente durchgehen
-#         # wenn textfeld.aktueller wert gültig = False -> Error popup
-#         # if not (textfield1.valid AND textfield2.valied AND...)
-#         #     error
-#         # Check, that all user inputs are valid
-#         if (
-#             not (self.root.ids.textfield_thermalsystem_temperature_start.value_valid)
-#             and (self.root.ids.textfield_thermalsystem_temperature_.value_valid)
-#             and (self.root.ids.textfield_thermalsystem_temperature_max.value_valid)
-#             and (self.root.ids.textfield_thermalsystem_temperature_min.value_valid)
-#             and (self.root.ids.textfield_thermalsystem_sustainable.value_valid)
-#             and (self.root.ids.textfield_thermalsystem_R.value_valid)
-#             and (self.root.ids.textfield_thermalsystem_C.value_valid)
-#         ):
-#             show_info_popup(
-#                 self, "Changes can not be stored due to invalid values remaining"
-#             )
-#             return
-#
-#         # store key of old version
-#         component_key = self.get_key(self.selected_asset["name"])
-#
-#         # create a new blueprint entry with given values
-#         thermalsystem_new = {}
-#         thermalsystem_new = {
-#             "name": self.root.ids.textfield_thermalsystem_name.text,
-#             "key": component_key,
-#             "type": "thermalsystem",
-#             "description": self.root.ids.textfield_thermalsystem_description.text,
-#             # "flow": self.get_key(self.root.ids.textfield_thermalsystem_flowtype.text),
-#             "Start temperature": self.root.ids.textfield_thermalsystem_temperature_start.text,
-#             "ambient temperature": self.root.ids.textfield_thermalsystem_temperature_ambient.text,
-#             "maximum temperature": self.root.ids.textfield_thermalsystem_temperature_max.text,
-#             "minimum temperature": self.root.ids.textfield_thermalsystem_temperature_min.text,
-#             "sustainable": self.root.ids.textfield_thermalsystem_sustainable.text,
-#             "R": self.root.ids.textfield_thermalsystem_R.text,
-#             "C": self.root.ids.textfield_thermalsystem_C.text,
-#             "icon": self.root.ids.image_thermalsystem_configuration.source,
-#             "position_x": self.selected_asset["GUI"]["position_x"],
-#             "position_y": self.selected_asset["GUI"]["position_y"],
-#             "scenario_temperature_ambient": self.root.ids.switch_thermalsystem_temperature_ambient.active,
-#             "scenario_temperature_max": self.root.ids.switch_thermalsystem_temperature_max.active,
-#             "scenario_temperature_min": self.root.ids.switch_thermalsystem_temperature_min.active,
-#         }
-#
-#         # overwrite old entry
-#         self.blueprint.components[component_key] = thermalsystem_new
-#
-#         # set selected asset to the updated thermalsystem
-#         self.selected_asset = thermalsystem_new
-#
-#         # set unsaved changes parameters
-#         self.unsaved_changes_on_asset = False
-#         self.unsaved_changes_on_session = True
-#
-#         # redraw the visualisation:
-#         initialize_visualization(self)
-#
-#         # inform the user
-#         Snackbar(text=f"{self.selected_asset['name']} updated!").open()
-#
-#         # textfield_thermalsystem_temperature_start = self.screen.ids.textfield_thermalsystem_temperature_start
-#         # textfield_thermalsystem_temperature_ambient = self.screen.ids.textfield_thermalsystem_temperature_ambient
