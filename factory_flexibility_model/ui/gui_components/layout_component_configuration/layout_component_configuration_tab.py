@@ -32,6 +32,7 @@ class ParameterConfigItem(TwoLineIconListItem):
     parameter = StringProperty()
     value_description = StringProperty()
     unit = StringProperty()
+    unit_type = StringProperty()
 
 
 class ParameterCheckboxItem(OneLineIconListItem):
@@ -126,7 +127,7 @@ def update_component_configuration_tab(app):
         elif attribute_data["unit_type"] == "flow":
             unit = app.selected_asset["flowtype"].unit.get_unit_flow()
         elif attribute_data["unit_type"] == "%":
-            unit = "%"
+            unit = "Ratio (0..1)"
         elif attribute_data["unit_type"] in ["float", "integer"]:
             unit = "Units"
         elif attribute_data["unit_type"] == "efficiency_drop":
@@ -203,6 +204,7 @@ def update_component_configuration_tab(app):
             text=attribute_data["text"],
             secondary_text="Not Specified",
             unit=unit,
+            unit_type=attribute_data["unit_type"],
         )
         list_item.parameter = parameter_key
         list_item.value_description = attribute_data["description"]

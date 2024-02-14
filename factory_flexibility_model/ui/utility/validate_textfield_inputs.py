@@ -40,3 +40,29 @@ def validate_int(textfield):
         return
     textfield.error = False
     return
+
+
+def validate_ratio(textfield):
+    """
+    This function can be called by an on_text-callback of any textfield. It ensures, that the user is only able to input strings that can be converted into a valid ratio between 0..1 afterwards
+    """
+
+    # empty inputs do not have to be validated
+    if textfield.text.strip() == "":
+        textfield.text = ""
+        textfield.error = True
+        return
+
+    # Make sure that the input is an integer
+    try:
+        textfield.text = textfield.text.replace(",", ".").strip()
+        value = float(textfield.text)
+        if value > 1:
+            textfield.text = textfield.text[:-1]
+            return
+
+    except:
+        textfield.text = textfield.text[:-1]
+        return
+    textfield.error = False
+    return

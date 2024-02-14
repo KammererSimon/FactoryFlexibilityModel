@@ -9,6 +9,7 @@ from kivymd.uix.list import IconLeftWidget, IconRightWidget, TwoLineAvatarIconLi
 
 from factory_flexibility_model.ui.utility.validate_textfield_inputs import (
     validate_float,
+    validate_ratio,
 )
 from factory_flexibility_model.ui.utility.window_handling import close_popup
 
@@ -155,6 +156,7 @@ def show_parameter_config_dialog(app, caller):
     app.dialog.parameter = caller.parameter
 
     app.dialog.unit = caller.unit
+    app.dialog.unit_type = caller.unit_type
     update_parameter_value_list(app)
     app.dialog.open()
 
@@ -363,6 +365,9 @@ def validate_value(app, textfield):
 
     app.popup.content_cls.ids.button_add_static_value.disabled = True
 
-    validate_float(textfield)
+    if app.dialog.unit_type == "%":
+        validate_ratio(textfield)
+    else:
+        validate_float(textfield)
 
     app.popup.content_cls.ids.button_add_static_value.disabled = False
