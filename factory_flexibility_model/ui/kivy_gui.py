@@ -177,26 +177,30 @@ class factory_GUIApp(MDApp):
                 input_qty += 1
 
         # check, if origin component can provide another output
-        if output_qty >= 1 and self.blueprint.components[origin_key]["type"] not in [
-            "pool",
-            "converter",
-            "thermalsystem",
-        ]:
-            # in case the origin component is limited to one output and has already an outgoing connection: warn the user
+        if (
+            output_qty
+            >= self.config["component_definitions"][
+                self.blueprint.components[origin_key]["type"]
+            ]["max_outputs"]
+        ):
+            # in case the origin component already reached its maximum number of outputs:
             show_info_popup(
                 self,
-                f"{origin_name} already has its output connected",
+                f"{origin_name} already has the maximum number of outputs connected",
             )
             initialize_visualization(self)
             return
 
-        if input_qty >= 1 and self.blueprint.components[destination_key][
-            "type"
-        ] not in ["pool", "converter", "thermalsystem"]:
-            # in case the destination component is limited to one input and has already an incoming connection: warn the user
+        if (
+            input_qty
+            >= self.config["component_definitions"][
+                self.blueprint.components[destination_key]["type"]
+            ]["max_inputs"]
+        ):
+            # in case the origin component already reached its maximum number of inputs:
             show_info_popup(
                 self,
-                f"{destination_name} already has its input defined",
+                f"{destination_name} already has the maximum number of inputs connected",
             )
             initialize_visualization(self)
             return
