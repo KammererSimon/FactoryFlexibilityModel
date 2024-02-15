@@ -16,7 +16,6 @@ from factory_flexibility_model.factory import Connection as factory_connection
 from factory_flexibility_model.factory import Flowtype as ft
 from factory_flexibility_model.factory import Unit
 
-logging.basicConfig(level=logging.DEBUG)
 
 # CODE START
 class Factory:
