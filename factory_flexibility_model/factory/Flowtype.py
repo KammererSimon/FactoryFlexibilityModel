@@ -21,7 +21,7 @@ class Flowtype:
         :param name: [String] name identifier for the new flowtype
         :param unit: [factory_flexibility_model.factory.Unit] Unit description given as a Unit-object
         :param description: [String] Description of the flow, just for GUI and labeling purposes
-        :param color: [String; #XXXXXX] Color code for displaying the flow in GUI and Figures
+        :param color: [factory_flexibility_model.ui.utility.color] Object containing color code for displaying the flow in GUI and Figures
         """
 
         # set the key and name (validate validation happens during factory.add_flow)
