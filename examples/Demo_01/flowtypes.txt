@@ -1,0 +1,43 @@
+energy_losses:
+  color: '#555555'
+  description: Built in default flowtype used to represent all kinds of energy losses
+  name: Energy Losses
+  represents_losses: true
+  unit: energy
+flowtype_0:
+  color: '#66bb6a'
+  description: Flowtype of Unspecified Flowtype 1
+  name: Electricity
+  represents_losses: false
+  unit: energy
+flowtype_1:
+  color: '#80ffff'
+  description: Flowtype of Unspecified Flowtype 1
+  name: Water
+  represents_losses: false
+  unit: mass
+flowtype_2:
+  color: '#999999'
+  description: Flowtype of Unspecified Flowtype 1
+  name: Hydrogen
+  represents_losses: false
+  unit: mass
+heat:
+  color: '#996666'
+  description: Built in default flowtype used to represent all kinds of heat
+  name: Heat
+  represents_losses: false
+  unit: energy
+material_losses:
+  color: '#555555'
+  description: Built in default flowtype used to represent all kinds of material losses
+  name: Material Losses
+  represents_losses: true
+  unit: mass
+unknown:
+  color: '#999999'
+  description: Built in default flowtype used as a fallback option for unspecified
+    situations
+  name: Unknown Flow
+  represents_losses: false
+  unit: unit
