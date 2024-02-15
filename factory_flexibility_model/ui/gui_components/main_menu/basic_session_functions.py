@@ -9,7 +9,8 @@ from tkinter.messagebox import askyesno
 import yaml
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.snackbar import Snackbar
+from kivymd.uix.label import MDLabel
+from kivymd.uix.snackbar.snackbar import MDSnackbar
 
 import factory_flexibility_model.factory.Blueprint as bp
 from factory_flexibility_model.factory.Flowtype import Flowtype
@@ -159,8 +160,10 @@ def create_new_session(app):
     app.unsaved_changes_on_asset = False
 
     # inform the user
-    Snackbar(
-        text=f"New Session '{session_name}' created under '{app.session_data['session_path']}'"
+    MDSnackbar(
+        MDLabel(
+            text=f"New Session '{session_name}' created under '{app.session_data['session_path']}'"
+        )
     ).open()
 
 
@@ -260,8 +263,10 @@ def save_session(app):
         f"{app.session_data['session_path']}\\layout.png"
     )
 
-    Snackbar(
-        text=f"Session successfully saved at {app.session_data['session_path']}"
+    MDSnackbar(
+        MDLabel(
+            text=f"Session successfully saved at {app.session_data['session_path']}"
+        )
     ).open()
 
 
@@ -339,8 +344,10 @@ def load_session(app):
         blueprint_new = bp.Blueprint()
         blueprint_new.import_from_file(app.session_data["session_path"])
     except:
-        Snackbar(
-            text=f"ERROR: Importing Blueprint from {app.session_data['session_path']} failed!"
+        MDSnackbar(
+            MDLabel(
+                text=f"ERROR: Importing Blueprint from {app.session_data['session_path']} failed!"
+            )
         ).open()
         return
 
