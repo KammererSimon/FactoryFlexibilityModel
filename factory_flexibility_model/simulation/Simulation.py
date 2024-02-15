@@ -748,7 +748,7 @@ class Simulation:
                 oc.add_deadtime(self, component)
             elif component.type == "storage":
                 oc.add_storage(self, component)
-            elif component.add_storagetype == "thermalsystem":
+            elif component.type == "thermalsystem":
                 oc.add_thermalsystem(self, component)
             elif component.type == "triggerdemand":
                 oc.add_triggerdemand(self, component)
