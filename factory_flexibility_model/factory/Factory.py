@@ -97,6 +97,8 @@ class Factory:
     def add_component(
         self, key: str, component_type: str, *, flowtype: str = None, name: str = None
     ):
+        if name is None:
+            name = key
 
         # make sure, that the key is still unused
         self.validate_key(key)
@@ -134,7 +136,7 @@ class Factory:
                     key,
                     "losses_energy",
                     key=f"{key}_to_Elosses",
-                    name=f"{key}_to_Elosses",
+                    name=f"{name} -> Losses Energy",
                     flowtype="energy_losses",
                     type="losses",
                 )
@@ -146,7 +148,7 @@ class Factory:
                     key,
                     "losses_material",
                     key=f"{key}_to_Mlosses",
-                    name=f"{key}_to_Mlosses",
+                    name=f"{name} -> Losses Material",
                     flowtype="material_losses",
                     type="losses",
                 )
@@ -167,10 +169,20 @@ class Factory:
                 key,
                 "losses_energy",
                 key=f"{key}_to_Elosses",
-                name=f"{key}_to_Elosses",
+                name=f"{name} -> Losses Energy",
                 weight=0.01,
                 type="losses",
-            )  # auto generate a connection to losses
+            )
+
+            # connect the new converter to losses_energy
+            self.add_connection(
+                key,
+                "losses_material",
+                key=f"{key}_to_Mlosses",
+                name=f"{name} -> Losses Material",
+                weight=0.01,
+                type="losses",
+            )
 
         elif component_type == "deadtime":
             # call deadtime constructor
@@ -187,7 +199,7 @@ class Factory:
                 key,
                 "losses_energy",
                 key=f"{key}_to_Elosses",
-                name=f"{self.name}_to_Elosses",
+                name=f"{name} -> Losses Energy",
                 flowtype="energy_losses",
                 type="losses",
             )
@@ -197,6 +209,7 @@ class Factory:
                 "ambient_gains",
                 key,
                 key=f"ambient_gains_to_{key}",
+                name=f"Ambient Gains -> {name}",
                 type="gains",
             )
 
@@ -863,7 +876,7 @@ class Factory:
             self.add_connection(
                 key,
                 f"{key}_slack",
-                key=f"{key}_slack",
+                key=f"{key}_slack_pos",
                 type="slack",
                 flowtype=self.components[key].flowtype,
                 weight=0.01,
