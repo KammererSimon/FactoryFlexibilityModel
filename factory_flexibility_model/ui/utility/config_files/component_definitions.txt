@@ -1,5 +1,7 @@
 converter:
   default_icon: converter_default
+  max_inputs: 10
+  max_outputs: 10
   parameters:
     availability:
       description: Availability of Pmax
@@ -52,6 +54,8 @@ converter:
       unit_type: ramping_cost
 deadtime:
   default_icon: deadtime_default
+  max_inputs: 1
+  max_outputs: 1
   parameters:
     delay:
       description: Delay Number of Timesteps
@@ -70,6 +74,8 @@ schedule:
       unit_type: flowrate
 sink:
   default_icon: sink_default
+  max_inputs: 1
+  max_outputs: 1
   parameters:
     co2_emissions_per_unit:
       description: Caused Emissions
@@ -101,6 +107,8 @@ sink:
       unit_type: currency
 source:
   default_icon: source_default
+  max_inputs: 1
+  max_outputs: 1
   parameters:
     availability:
       description: Ratio of Maximum Output that is available at any time
@@ -132,6 +140,8 @@ source:
       unit_type: flowrate
 storage:
   default_icon: storage_default
+  max_inputs: 1
+  max_outputs: 1
   parameters:
     capacity:
       description: Maximum storage capacity
@@ -172,6 +182,8 @@ storage:
 
 thermalsystem:
   default_icon: thermalsystem_default
+  max_inputs: 10
+  max_outputs: 10
   parameters:
     C:
       description: Heat capacity
@@ -195,6 +207,8 @@ thermalsystem:
       unit_type: temperature
 triggerdemand:
   default_icon: triggerdemand_default
+  max_inputs: 1
+  max_outputs: 1
   parameters:
     load_profile_energy:
       description: Energy throughput timeseries
@@ -210,4 +224,6 @@ triggerdemand:
       unit_type: integer
 pool:
   default_icon: pool_default
+  max_inputs: 10
+  max_outputs: 10
   parameters:

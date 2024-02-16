@@ -192,3 +192,6 @@ fabric.properties
 migrations/
 
 *.ini
+/poetry.lock
+/examples/Demo_01/simulations/
+/examples/Demo_02/simulations/

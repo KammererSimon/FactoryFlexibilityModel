@@ -1,12 +1,10 @@
 # FACTORY MODEL MAIN
 #     This skript is used to call the main functionalities of the factory flexibility model
 
-
 import logging
 import os
 import sys
 
-#
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.simulation.Scenario as sc
 

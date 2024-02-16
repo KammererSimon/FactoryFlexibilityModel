@@ -1,0 +1,706 @@
+components:
+  component_1:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sources\Solar.png
+      position_x: 6.0
+      position_y: 29.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_1
+    name: PV
+    type: source
+  component_10:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Shredder.png
+      position_x: 41.0
+      position_y: 10.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_10
+    name: Schredder-Strom
+    type: sink
+  component_11:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 17.0
+      position_y: 14.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_11
+    name: Batterie Bagger
+    type: storage
+  component_12:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
+      position_x: 29.0
+      position_y: 12.0
+      primary_flow: null
+    description: ''
+    flowtype: unknown
+    key: component_12
+    name: "Schwerm\xFCllprocessing"
+    type: converter
+  component_13:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
+      position_x: 22.0
+      position_y: 3.0
+      primary_flow: component_17
+    description: ''
+    flowtype: unknown
+    key: component_13
+    name: "Leichtm\xFCllprocessing"
+    type: converter
+  component_14:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\components\forward.png
+      position_x: 35.0
+      position_y: 7.0
+      primary_flow: null
+    description: ''
+    flowtype: unknown
+    key: component_14
+    name: Durchsatzlimit
+    type: converter
+  component_15:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 30.0
+      position_y: 7.0
+    description: ''
+    flowtype: flowtype_3
+    key: component_15
+    name: Summierung Recycling
+    type: pool
+  component_16:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 10.0
+      position_y: 9.0
+    description: ''
+    flowtype: flowtype_2
+    key: component_16
+    name: "Lager Schwerm\xFCll"
+    type: storage
+  component_17:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 10.0
+      position_y: 3.0
+    description: ''
+    flowtype: flowtype_1
+    key: component_17
+    name: "Lager Leichtm\xFCll"
+    type: storage
+  component_18:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 14.0
+      position_y: 12.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_18
+    name: Stapler-Energie
+    type: pool
+  component_19:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 7.0
+      position_y: 17.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_19
+    name: Batterie Stapler 1
+    type: storage
+  component_2:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 21.0
+      position_y: 25.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_2
+    name: Bilanzierungspunkt
+    type: pool
+  component_20:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 14.0
+      position_y: 17.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_20
+    name: Batterie Stapler 2
+    type: storage
+  component_21:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 24.0
+      position_y: 15.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_21
+    name: Bagger-Energie
+    type: pool
+  component_22:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\components\Electricity House.png
+      position_x: 32.0
+      position_y: 18.0
+    description: ''
+    flowtype: heat
+    key: component_22
+    name: Raumtemperatur
+    type: thermalsystem
+  component_23:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
+      position_x: 25.0
+      position_y: 22.0
+      primary_flow: null
+    description: ''
+    flowtype: unknown
+    key: component_23
+    name: Heizung
+    type: converter
+  component_24:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
+      position_x: 37.0
+      position_y: 19.0
+      primary_flow: null
+    description: ''
+    flowtype: unknown
+    key: component_24
+    name: "K\xFChlung"
+    type: converter
+  component_25:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Temperature Factory.png
+      position_x: 41.0
+      position_y: 17.0
+    description: ''
+    flowtype: heat
+    key: component_25
+    name: "Abw\xE4rme"
+    type: sink
+  component_26:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\schedule.png
+      position_x: 33.0
+      position_y: 30.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_26
+    name: LKW 1 Ladebedarf
+    type: schedule
+  component_27:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 37.0
+      position_y: 29.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_27
+    name: Summe LKW Laden
+    type: pool
+  component_28:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\schedule.png
+      position_x: 33.0
+      position_y: 27.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_28
+    name: LKW 2 Ladebedarf
+    type: schedule
+  component_29:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Car Charging.png
+      position_x: 41.0
+      position_y: 29.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_29
+    name: LKW Ladebedarf
+    type: sink
+  component_3:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Electricity House.png
+      position_x: 41.0
+      position_y: 21.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_3
+    name: TGA Energiebedarf
+    type: sink
+  component_30:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 33.0
+      position_y: 10.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_30
+    name: Strom Schredder
+    type: pool
+  component_4:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Car Charging.png
+      position_x: 41.0
+      position_y: 24.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_4
+    name: Ext Ladebedarf
+    type: sink
+  component_5:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 21.0
+      position_y: 28.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_5
+    name: Speicher
+    type: storage
+  component_6:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sources\Powerpole.png
+      position_x: 6.0
+      position_y: 25.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_6
+    name: Netzanbindung
+    type: source
+  component_7:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sources\Deliveries.png
+      position_x: 6.0
+      position_y: 9.0
+    description: ''
+    flowtype: flowtype_2
+    key: component_7
+    name: "Schwerm\xFCll Input"
+    type: source
+  component_8:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sources\Transport.png
+      position_x: 6.0
+      position_y: 3.0
+    description: ''
+    flowtype: flowtype_1
+    key: component_8
+    name: "Leichterm\xFCll Input"
+    type: source
+  component_9:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Losses.png
+      position_x: 41.0
+      position_y: 7.0
+    description: ''
+    flowtype: flowtype_3
+    key: component_9
+    name: Recycling Output
+    type: sink
+connections:
+  connection_0:
+    flowtype: flowtype_0
+    from: component_1
+    key: connection_0
+    name: PV -> Unspecified pool 1
+    to: component_2
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_1:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_1
+    name: Bilanzierungspunkt -> Speicher
+    to: component_5
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_10:
+    flowtype: flowtype_2
+    from: component_7
+    key: connection_10
+    name: "Atomm\xFCll Input -> Unspecified storage 1"
+    to: component_16
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_11:
+    flowtype: flowtype_2
+    from: component_16
+    key: connection_11
+    name: "Unspecified storage 1 -> Atomm\xFCllprocessing"
+    to: component_12
+    to_losses: false
+    type: connection
+    weight_destination: 1.0
+    weight_origin: 1
+  connection_12:
+    flowtype: flowtype_1
+    from: component_8
+    key: connection_12
+    name: "Leichter M\xFCll Input -> Unspecified storage 2"
+    to: component_17
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_13:
+    flowtype: flowtype_1
+    from: component_17
+    key: connection_13
+    name: "Unspecified storage 2 -> Leichtm\xFCllprocessing"
+    to: component_13
+    to_losses: false
+    type: connection
+    weight_destination: 1.0
+    weight_origin: 1
+  connection_14:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_14
+    name: "Bilanzierungspunkt -> Leichtm\xFCllprocessing"
+    to: component_13
+    to_losses: false
+    type: connection
+    weight_destination: 0.021
+    weight_origin: 1
+  connection_15:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_15
+    name: Bilanzierungspunkt -> Unspecified sink 1
+    to: component_3
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_16:
+    flowtype: flowtype_0
+    from: component_30
+    key: connection_16
+    name: Strom Schredder -> Unspecified sink 1
+    to: component_10
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_18:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_18
+    name: Bilanzierungspunkt -> Bagger-Energie
+    to: component_11
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_19:
+    flowtype: flowtype_0
+    from: component_11
+    key: connection_19
+    name: Batterie Bagger -> Unspecified pool 1
+    to: component_21
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_2:
+    flowtype: flowtype_0
+    from: component_5
+    key: connection_2
+    name: Speicher -> Bilanzierungspunkt
+    to: component_2
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_20:
+    flowtype: flowtype_0
+    from: component_18
+    key: connection_20
+    name: "Unspecified pool 1 -> Atomm\xFCllprocessing"
+    to: component_12
+    to_losses: false
+    type: connection
+    weight_destination: 0.00157
+    weight_origin: 1
+  connection_21:
+    flowtype: flowtype_0
+    from: component_18
+    key: connection_21
+    name: "Unspecified pool 1 -> Leichtm\xFCllprocessing"
+    to: component_13
+    to_losses: false
+    type: connection
+    weight_destination: 0.00157
+    weight_origin: 1
+  connection_22:
+    flowtype: flowtype_0
+    from: component_19
+    key: connection_22
+    name: Unspecified storage 1 -> Stapler-Energie
+    to: component_18
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_23:
+    flowtype: flowtype_0
+    from: component_20
+    key: connection_23
+    name: Batterie Stapler 2 -> Stapler-Energie
+    to: component_18
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_24:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_24
+    name: Bilanzierungspunkt -> Batterie Stapler 2
+    to: component_20
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_25:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_25
+    name: Bilanzierungspunkt -> Batterie Stapler 1
+    to: component_19
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_26:
+    flowtype: flowtype_0
+    from: component_21
+    key: connection_26
+    name: "Bagger-Energie -> Schwerm\xFCllprocessing"
+    to: component_12
+    to_losses: false
+    type: connection
+    weight_destination: 0.00485
+    weight_origin: 1
+  connection_27:
+    flowtype: flowtype_0
+    from: component_21
+    key: connection_27
+    name: "Bagger-Energie -> Leichtm\xFCllprocessing"
+    to: component_13
+    to_losses: false
+    type: connection
+    weight_destination: 0.00485
+    weight_origin: 1
+  connection_28:
+    flowtype: heat
+    from: component_23
+    key: connection_28
+    name: Heizung -> Unspecified thermalsystem 1
+    to: component_22
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_29:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_29
+    name: Bilanzierungspunkt -> Heizung
+    to: component_23
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_3:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_3
+    name: Bilanzierungspunkt -> Ladebedarf
+    to: component_4
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_30:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_30
+    name: Bilanzierungspunkt -> Unspecified converter 1
+    to: component_24
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_31:
+    flowtype: heat
+    from: component_22
+    key: connection_31
+    name: "Unspecified thermalsystem 1 -> K\xFChlung"
+    to: component_24
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_32:
+    flowtype: heat
+    from: component_24
+    key: connection_32
+    name: "K\xFChlung -> Abw\xE4rme"
+    to: component_25
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_33:
+    flowtype: flowtype_0
+    from: component_26
+    key: connection_33
+    name: LKW 1 Ladebedarf -> Summe LKW Laden
+    to: component_27
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_34:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_34
+    name: Bilanzierungspunkt -> LKW 1 Ladebedarf
+    to: component_26
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_35:
+    flowtype: flowtype_0
+    from: component_27
+    key: connection_35
+    name: Summe LKW Laden -> LKW Ladebedarf
+    to: component_29
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_36:
+    flowtype: flowtype_0
+    from: component_28
+    key: connection_36
+    name: Unspecified schedule 1 -> Summe LKW Laden
+    to: component_27
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_37:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_37
+    name: Bilanzierungspunkt -> Unspecified schedule 1
+    to: component_28
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_38:
+    flowtype: flowtype_0
+    from: component_12
+    key: connection_38
+    name: "Schwerm\xFCllprocessing -> Unspecified pool 1"
+    to: component_30
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 0.043
+  connection_39:
+    flowtype: flowtype_0
+    from: component_13
+    key: connection_39
+    name: "Leichtm\xFCllprocessing -> Unspecified pool 1"
+    to: component_30
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 0.021
+  connection_4:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_4
+    name: "Bilanzierungspunkt -> Atomm\xFCllprocessing"
+    to: component_12
+    to_losses: false
+    type: connection
+    weight_destination: 0.043
+    weight_origin: 1
+  connection_5:
+    flowtype: flowtype_0
+    from: component_6
+    key: connection_5
+    name: Unspecified source 1 -> Bilanzierungspunkt
+    to: component_2
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1
+  connection_6:
+    flowtype: flowtype_3
+    from: component_15
+    key: connection_6
+    name: Unspecified pool 1 -> Durchsatzlimit
+    to: component_14
+    to_losses: false
+    type: connection
+    weight_destination: 1.0
+    weight_origin: 1
+  connection_7:
+    flowtype: flowtype_3
+    from: component_14
+    key: connection_7
+    name: Durchsatzlimit -> Recycling Output
+    to: component_9
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1.0
+  connection_8:
+    flowtype: flowtype_3
+    from: component_12
+    key: connection_8
+    name: Unspecified converter 1 -> Unspecified pool 1
+    to: component_15
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1.0
+  connection_9:
+    flowtype: flowtype_3
+    from: component_13
+    key: connection_9
+    name: Unspecified converter 2 -> Unspecified pool 1
+    to: component_15
+    to_losses: false
+    type: connection
+    weight_destination: 1
+    weight_origin: 1.0
+info:
+  currency: "\u20AC"
+  description: Tooltestcase einer innovativen Abfallverwertung
+  emission_cost: null
+  emission_limit: null
+  enable_slacks: false
+  name: Demo_02
+  timestep_length: 1.0
+  timesteps: 680
