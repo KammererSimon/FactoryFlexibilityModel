@@ -1,4 +1,4 @@
-# FACTORY COMPONENTS ###
+# FACTORY COMPONENTS
 # This script contains the classes that specify all the components used to create a factory architecture.
 # "Component" is a general parent class, all other classes are children representing a specific technical behaviour.
 
@@ -12,7 +12,7 @@ import factory_flexibility_model.factory.Flowtype as ft
 import factory_flexibility_model.io.input_validations as iv
 
 
-# CODE START
+# COMPONENT PARENT CLASS
 class Component:
     def __init__(self, key: str, factory, *, flowtype: str = None, name: str = None):
         self.factory = (
@@ -27,6 +27,9 @@ class Component:
         self.determined = (
             False  # only useful for some subclasses, but defining it for all of
         )
+        self.from_slack = (
+            None  # Placeholder for a possible connection coming from a slack component
+        )
         self.inputs = (
             []
         )  # initialize list, which stores pointers to all input connections
@@ -39,6 +42,9 @@ class Component:
         self.outputs = (
             []
         )  # initialize list, which stores pointers to all output connections
+        self.to_slack = (
+            None  # Placeholder for a possible connection to a slack component
+        )
         self.type = "unknown"  # set keyword "unknown" if no type is specified
 
         # delivered by the scenario
@@ -71,12 +77,14 @@ class Component:
         This function sets the given connection as an input for the component
         :param connection: [fm.Connection-object]
         """
-        # make sure that the component allows for another input
-        if len(self.inputs) < self.max_inputs or connection.type in [
-            "losses",
-            "gains",
-            "slack",
-        ]:
+
+        # If the input comes from a slack: store it within .from_slack
+        if connection.type == "slack":
+            self.from_slack = connection
+
+        # Otherwise make sure that the component allows for another input
+        elif len(self.inputs) < self.max_inputs:
+
             # add connection to the inputs list
             self.inputs.append(connection)
 
@@ -86,10 +94,11 @@ class Component:
                     self.update_flowtype(connection.flowtype)
             elif connection.flowtype.is_unknown():
                 connection.update_flowtype(self.flowtype)
+
+        # If not: create exception
         else:
-            # create exception if the connection is invalid
             logging.critical(
-                f"ERROR: Cannot create connection '{connection.name}', because component {self.type} {self.name} doesn't accept any more inputs"
+                f"ERROR: Cannot create connection '{connection.name}', because {self.name} doesn't accept any more inputs"
             )
             raise Exception
 
@@ -98,14 +107,20 @@ class Component:
         This function sets the given connection as an output for the component
         :param connection: [fm.Connection-object]
         """
-        # make sure that the component allows for another output
-        if len(self.outputs) < self.max_outputs:
-            # except no loss-connections by default
-            if connection.type == "losses":
-                logging.critical(
-                    f"ERROR: Components of type {self.type} are not allowed to have a connection to losses"
-                )
-                raise Exception
+
+        # If the output goes to a slack: store it within .to_slack
+        if connection.type == "slack":
+            self.to_slack = connection
+
+        # If the output goes to losses: Raise exception! Valid loss-connections are handled by components individually
+        elif connection.type == "losses":
+            logging.critical(
+                f"ERROR: Components of type {self.type} are not allowed to have a connection to losses"
+            )
+            raise Exception
+
+        # If the connection is valid till now: make sure that the component allows for another output
+        elif len(self.outputs) < self.max_outputs:
 
             # add connection to the outputs-list
             self.outputs.append(connection)
@@ -117,9 +132,10 @@ class Component:
             elif connection.flowtype.is_unknown():
                 connection.update_flowtype(self.flowtype)
 
+        # If no further output is possible: raise exception
         else:
             logging.critical(
-                f"ERROR: Cannot create output connection {connection.name}, because Component {self.name} is not a valid source"
+                f"ERROR: Cannot create output connection {connection.name}, because {self.name} doesn't accept any more outputs"
             )
             raise Exception
 
@@ -129,10 +145,10 @@ class Component:
             f"            (UPDATE) The flowtype of Component {self.name} is now defined as {flowtype.name}"
         )
         self.flowtype = flowtype
-        if self.IS_DESTINATION:
+        if self.max_inputs > 0:
             for i in self.inputs:
                 i.update_flowtype(flowtype)
-        if self.IS_ORIGIN:
+        if self.max_outputs > 0:
             for i in self.outputs:
                 i.update_flowtype(flowtype)
 
@@ -156,14 +172,12 @@ class Component:
             "Pramp_Limited": "Pmax_ramp_pos or Pmax_ramp_neg",
         }
 
-        # define list of boolean constants that have to remain untouched in general
+        # define list of constants that have to remain untouched in general
         constants = {
-            "IS_ORIGIN",
-            "IS_DESTINATION",
             "type",
             "factory",
             "inputs",
-            "outputs",
+            "max_inputs" "max_outputs" "outputs",
             "key",
             "fixed_ratio_output",
         }
@@ -324,6 +338,7 @@ class Component:
             )
 
 
+# INHERITED COMPONENT CLASSES
 class Converter(Component):
     def __init__(self, key: str, factory, name: str = None):
         # STANDARD COMPONENT ATTRIBUTES
@@ -335,14 +350,14 @@ class Converter(Component):
         self.description = (
             "Unspecified Converter"  # Description for better identification in UI
         )
-        self.IS_DESTINATION = True
-        self.IS_ORIGIN = True
         self.inputs_energy = (
             []
         )  # separate list to store information about energy inputs
         self.inputs_material = (
             []
         )  # separate list to store information about material inputs
+        self.max_inputs = 20  # converters allow for multiple inputs
+        self.max_outputs = 20  # converters allow for multiple outputs
         self.outputs_energy = (
             []
         )  # separate list to store information about energy outputs
@@ -585,57 +600,15 @@ class Deadtime(Component):
         # STANDARD COMPONENT ATTRIBUTES
         super().__init__(key, factory, name=name)
 
-        # STRUCTURAL ATTRIBUTES
-        self.type = "deadtime"  # specify Component as deadtime
-        self.IS_DESTINATION = True  # Deadtimes are valid destinations
-        self.IS_ORIGIN = True  # Deadtimes are valid origins
-
-        # FUNCTIONAL ATTRIBUTES
         self.delay = (
             0  # how many timesteps does the deadtime delay the flow? Iniutialized as 0
         )
 
+        self.type = "deadtime"  # specify Component as deadtime
+
         logging.debug(
             f"        - New deadtime {self.name} created with Component-key {self.key}"
         )
-
-    def set_input(self, connection: co.Connection):
-        """
-        This function sets the given connection as the input for the deadtime-component
-        :param connection: [fm.Connection-object]
-        """
-        # If self doesnt have its flowtype already determined: check whether the flowtype can be specified via the connection
-        if len(self.inputs) == 1:
-            if not self.inputs[0].source.type == "slack":
-                logging.critical(
-                    f"ERROR: Cannot add {connection.name} to {self.name}, "
-                    f"since deadtime-components are only allowed to have one input and {self.name} "
-                    f"already has {self.inputs[0].name} as input!"
-                )
-                raise Exception
-
-        # set the connection-object "connection" as an input for self.
-        self.inputs.append(connection)
-        if self.flowtype.is_unknown() and not connection.flowtype.is_unknown():
-            self.update_flowtype(connection.flowtype)
-
-    def set_output(self, connection: co.Connection):
-        """
-        This function sets the given connection as an output for the component
-        :param connection: [fm.Connection-object]
-        """
-        if len(self.outputs) == 1:
-            if not self.outputs[0].sink.type == "slack":
-                logging.critical(
-                    f"ERROR: Cannot add {connection.name} to {self.name}, "
-                    f"since deadtime-components are only allowed to have one output and {self.name} "
-                    f"already has {self.outputs[0].name} as output!"
-                )
-                raise Exception
-
-        self.outputs.append(connection)
-        if self.flowtype.is_unknown() and not connection.flowtype.is_unknown():
-            self.update_flowtype(connection.flowtype)
 
     def set_configuration(self, timesteps: int, parameters: dict) -> bool:
         """
@@ -714,7 +687,6 @@ class Sink(Component):
         )
         self.determined = False  # True -> Output is determined by timeseries; False -> Output is result of optimization
         self.flowtype_description = ""  # A clearer description of the flowtype (e.g. "Room Heating for Main Office"), just for the visualisation
-        self.IS_DESTINATION = True  # sinks can act as a destination
         self.is_onsite = True  # Set to False if the flowtype is leaving the factory without being consumed
         self.max_total_input_limited = (
             False  # specify if maximum cummulative input is limited
@@ -915,6 +887,17 @@ class Sink(Component):
 
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
+    def set_input(self, connection: co.Connection):
+        """
+        This function sets the given connection as the input for the triggerdemand-component.
+        The parent class method is overridden because triggerdemands have to distinct between material and energy inputs.
+        :param connection: [fm.Connecntion-object]
+        """
+
+        # check, that there is no more than one energy and material input each
+        if connection.type == "losses":
+            self.inputs.append(connection)
+
 
 class Source(Component):
     def __init__(self, key: str, factory, *, flowtype: str = None, name: str = None):
@@ -937,14 +920,13 @@ class Source(Component):
         )
         self.determined_power = []  # must be specified by set_configuration
         self.flowtype_description = ""
-        self.IS_ORIGIN = True  # sources can obviously act as a source
         self.is_onsite = False  # determines wether the input is generated within the factory or comes from outside. This is used to calculate the self sufficiency in the end
         self.power_max_limited = False  # specify if maximum output is limited
         self.power_max = []  # must be specified by set_configuration
         self.power_min_limited = False  # specify if the minimum output power is limited
         self.power_min = []  # must be specified by set_configuration
         self.refundable = False  # Just a dummy to shorten the code at later points
-        self.type = "source"  # specify Component as global source
+        self.type = "source"  # specify component as global source
 
         logging.debug(
             f"        - New source {self.name} created with Component-key {self.key}"
@@ -1103,15 +1085,13 @@ class Source(Component):
 class Storage(Component):
     def __init__(self, key: str, factory, *, flowtype: str = None, name: str = None):
         super().__init__(key, factory, flowtype=flowtype, name=name)
-        self.capacity = 0  # Storage capacity, initialized as zero, so that the Component has no effect if not explicitly specified
+        self.capacity = 0  # Storage capacity, initialized as zero, so that the component has no effect if not explicitly specified
         self.capacity_charge = 0  # yearly capital costs for storage capacity provision
         self.direct_throughput = False  # Set to true if charging and discharging in the same timestep is allowed
         self.efficiency = (
             1  # ratio of discharged vs charged power, initialized as 1 -> no losses
         )
         self.flowtype_description = ""  # Optional string shown as explanation in GUI
-        self.IS_DESTINATION = True  # storages can act as a destination
-        self.IS_ORIGIN = True  # storages can act as a source
         self.leakage_time = 0  # fixed % of capacity that leaks per timestep
         self.leakage_SOC = 0  # % of the stored ressource that leaks per timestep
         self.power_max_charge = (
@@ -1120,12 +1100,10 @@ class Storage(Component):
         self.power_max_discharge = (
             0  # maximum discharging / unloading speed, initialized as almost unlimited
         )
-        self.soc_start = 0.5  # State of charge at the beginning of the Simulation, initialized as 50% NO EFFECT IF soc_start_determined=False
+        self.soc_start = 0.5  # State of charge at the beginning of the Simulation, initialized as 50%; NO EFFECT IF soc_start_determined=False
         self.soc_start_determined = True  # Determines, wether the SOC at the start/end of the Simulation has to be the given value or wether it it up to the solver
         self.sustainable = True  # Determines, wether the SOC has to be the same at the start and end of the Simulation or not.
-        self.to_losses = (
-            []
-        )  # placeholder for a pointer directing to the correct losses destination
+        self.to_losses = None  # placeholder for a pointer directing to the correct losses destination
         self.type = "storage"  # specify Component as storage
 
         logging.debug(
@@ -1174,35 +1152,18 @@ class Storage(Component):
 
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
-    def set_input(self, connection: co.Connection):
-        """
-        This function sets the given connection as an input for the storage-component
-        :param connection: [fm.Connection-object]
-        """
-        self.inputs.append(connection)
-
-        # if self doesnt have its flowtype already determined it is checked, whether the flowtype can be specified via the connection
-        if self.flowtype.is_unknown():
-            if not connection.flowtype.is_unknown():
-                self.update_flow(connection.flowtype)
-        elif connection.flowtype.is_unknown():
-            connection.update_flowtype(self.flowtype)
-
     def set_output(self, connection: co.Connection):
         """
-        This function sets the given connection as an output for the component
+        This function sets the given connection as an output for the storage. Overriding function is required because losses exist as an additional special output.
         :param connection: [fm.Connection-object]
         """
+
         # handle connections to losses if specified:
         if connection.type == "losses":
             self.to_losses = connection
         else:
-            self.outputs.append(connection)
-        if self.flowtype.is_unknown():
-            if not connection.flowtype.is_unknown():
-                self.update_flow(connection.flowtype)
-        elif connection.flowtype.is_unknown():
-            connection.update_flowtype(self.flowtype)
+            # call parent function to add connection
+            super().set_output(connection)
 
 
 class Thermalsystem(Component):
@@ -1218,8 +1179,8 @@ class Thermalsystem(Component):
         self.from_gains = (
             []
         )  # placeholder for a pointer directing to the source of thermal gains from outside
-        self.IS_DESTINATION = True  # thermal systems are a sinks
-        self.IS_ORIGIN = True  # thermal systems are sources
+        self.max_inputs = 10  # thermal systems may have multiple inputs
+        self.max_outputs = 10  # thermal systems may have multiple outputs
         self.R = 10  # Thermal loss factor
         self.sustainable = True  # Does the thermal system have to retain to it's starting temperature at the end of the Simulation?
         self.temperature_ambient = (
@@ -1247,7 +1208,7 @@ class Thermalsystem(Component):
 
     def set_input(self, connection: co.Connection):
         """
-        This function sets the given connection as the input for the thermalsystem-component
+        This function sets the given connection as the input for the thermalsystem-component. Overriding function is required because gains exists as an additional special input.
         :param connection: [fm.Connection-object]
         """
 
@@ -1258,26 +1219,21 @@ class Thermalsystem(Component):
                     f"{self.name} already had a connection with attribute 'from_gains' (coming from {self.from_gains.origin.name}) which has been overwritten now!"
                 )
             self.from_gains = connection
+
         # handle normal connections
         else:
-            self.inputs.append(connection)
-
-        # if self doesnt have its flowtype already determined it is checked, whether the flowtype can be specified via the connection
-        if self.flowtype.is_unknown():
-            if not connection.flowtype.is_unknown():
-                self.update_flow(connection.flowtype)
-        elif connection.flowtype.is_unknown():
-            connection.update_flowtype(self.flowtype)
+            # call parent function to add connection
+            super().set_input(connection)
 
     def set_output(self, connection: co.Connection):
         """
-        This function sets the given connection as an output for the component
+        This function sets the given connection as an output for the thermal system. Overriding function is required because losses exist as an additional special output.
         :param connection: [fm.Connection-object]
         """
         # prohibit direct connections between two thermalsystems:
         if connection.destination.type == "thermalsystem":
             logging.critical(
-                f" Error during factory setup: Connecting two Thermalsystems ({self.name} -> {connection.destination.name}) is not possible. Integrate at least one converter between them!"
+                f" Error during factory setup: Connecting two thermalsystems ({self.name} -> {connection.destination.name}) is not possible. Integrate at least one component between them!"
             )
             raise Exception
 
@@ -1285,13 +1241,8 @@ class Thermalsystem(Component):
         if connection.type == "losses":
             self.to_losses = connection
         else:
-            self.outputs.append(connection)
-
-        if self.flowtype.is_unknown():
-            if not connection.flowtype.is_unknown():
-                self.update_flow(connection.flowtype)
-        elif connection.flowtype.is_unknown():
-            connection.update_flowtype(self.flowtype)
+            # call parent function to add connection
+            super().set_output(connection)
 
     def set_configuration(self, timesteps: int, parameters: dict) -> bool:
         """
@@ -1368,8 +1319,6 @@ class Triggerdemand(Component):
         )
         self.input_energy = None  # energy input
         self.input_material = None  # material input
-        self.IS_DESTINATION = True  # triggerdemands are a destination
-        self.IS_ORIGIN = True  # triggerdemands are an origin
         self.load_profile_energy = (
             []
         )  # profiles of the energy load that has to be fulfilled on execution
@@ -1377,6 +1326,8 @@ class Triggerdemand(Component):
             []
         )  # profiles of the energy load that has to be fulfilled on execution
         self.max_parallel = 0  # maximum number of parallel executions. Initialized as 0 = no restrictions
+        self.max_inputs = 2  # triggerdemands are allowed to have each one material and one energy input
+        self.max_outputs = 2  # triggerdemands are allowed to have each one material and one energy output
         self.output_energy = []  # output energy
         self.output_material = []  # output material
         self.profile_length = []  # length of the given load profile
@@ -1442,7 +1393,8 @@ class Triggerdemand(Component):
 
     def set_input(self, connection: co.Connection):
         """
-        This function sets the given connection as the input for the triggerdemand-component
+        This function sets the given connection as the input for the triggerdemand-component.
+        The parent class method is overridden because triggerdemands have to distinct between material and energy inputs.
         :param connection: [fm.Connecntion-object]
         """
 
@@ -1470,7 +1422,8 @@ class Triggerdemand(Component):
 
     def set_output(self, connection: co.Connection):
         """
-        This function sets the given connection as an output for the component
+        This function sets the given connection as an output for the component.
+        The parent class method is overridden because triggerdemands have to distinct between material and energy outputs.
         :param connection: [fm.Connection-object]
         """
         # check, that there is no more than one energy and material output each
@@ -1502,48 +1455,13 @@ class Triggerdemand(Component):
 class Slack(Component):
     def __init__(self, key: str, factory, name: str = None):
         super().__init__(key, factory, name=name)
-        self.IS_DESTINATION = True  # pools can act as a destination
-        self.IS_ORIGIN = True  # pools can act as a origin
         self.type = "slack"  # identify Component as slack
         self.cost = (
             np.ones(factory.timesteps) * 1000000000
-        )  # Cost of utilization is set to a big M -> 1.000.000€/kW
+        )  # Cost of utilization is set to a big M -> 1.000.000€/Unit
         logging.debug(
             f"        - New Slack {self.name} created with Component-key {self.key}"
         )
-
-    def set_input(self, connection: co.Connection):
-        """
-        This function sets the given connection as the input for the slack-component
-        :param connection: [fm.Connecntion-object]
-        """
-        # if self doesnt have its flowtype already determined it is checked, whether the flowtype can be specified via the connection
-        if not len(self.inputs) == 0:
-            logging.critical(
-                f"Slack {self.name} already has {connection.name} assigned as input. Slacks are limited to one single input."
-            )
-            raise Exception
-
-        self.inputs.append(connection)
-        if self.flowtype == "unknown":
-            if not connection.flowtype == "unknown":
-                self.update_flowtype(connection.flowtype)
-
-    def set_output(self, connection: co.Connection):
-        """
-        This function sets the given connection as an output for the component
-        :param connection: [fm.Connection-object]
-        """
-        if not len(self.outputs) == 0:
-            logging.critical(
-                f"Slack {self.name} already has {connection.name} assigned as output. Slacks are limited to one single output."
-            )
-            raise Exception
-
-        self.outputs.append(connection)
-        if self.flowtype == "unknown":
-            if not connection.flowtype == "unknown":
-                self.update_flowtype(connection.flowtype)
 
 
 class Schedule(Component):
@@ -1552,8 +1470,6 @@ class Schedule(Component):
         self.demands = np.array(
             [[0, 0, 0, 0]]
         )  # Initialize Demand as a single partdemand with a volume of zero
-        self.IS_DESTINATION = True  # schedules can act as a destination
-        self.IS_ORIGIN = True  # schedules can act as an origin
         self.power_max_limited = (
             False  # define, if the maximum total power of all part demands is limited
         )
@@ -1563,40 +1479,6 @@ class Schedule(Component):
         logging.debug(
             f"        - New schedule Component {self.name} created with Component-id {self.key}"
         )
-
-    def set_input(self, connection: co.Connection):
-        """
-        This function sets the given connection as an input for the schedule-component
-        :param connection: [fm.Connecntion-object]
-        """
-        # if self doesnt have its flowtype already determined it is checked, whether the flowtype can be specified via the connection
-        if not len(self.inputs) == 0:
-            logging.critical(
-                f"Schedule {self.name} already has {connection.name} assigned as input. Schedules are limited to one single input."
-            )
-            raise Exception
-        self.inputs.append(connection)
-        if self.flowtype.is_unknown():
-            self.update_flowtype(connection.flowtype)
-            if not connection.flowtype == "unknown":
-                self.update_flowtype(connection.flowtype)
-
-    def set_output(self, connection: co.Connection):
-        """
-        This function sets the given connection as an output for the component
-        :param connection: [fm.Connection-object]
-        """
-        if not len(self.outputs) < 2:
-            logging.critical(
-                f"Schedules {self.name} already has two outputs, which is the maximum allowed number"
-            )
-            raise Exception
-
-        self.outputs.append(connection)
-        if self.flowtype.is_unknown():
-            self.update_flowtype(connection.flowtype)
-            if not connection.flowtype == "unknown":
-                self.update_flowtype(connection.flowtype)
 
     def set_configuration(self, timesteps: int, parameters: dict) -> bool:
         """

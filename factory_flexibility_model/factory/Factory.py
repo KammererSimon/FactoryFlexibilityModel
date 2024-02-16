@@ -236,7 +236,7 @@ class Factory:
         # are slacks required?
         if self.enable_slacks:
             # create a slack for the new Component
-            self.__slack_component(component_type, key)
+            self.__slack_component(component_type, key, name=name)
 
     def add_connection(
         self,
@@ -818,18 +818,23 @@ class Factory:
         # all checks passed? -> return the pointer to the actual flowtype object
         return self.flowtypes[flowtype_name]
 
-    def __slack_component(self, component_type: str, key: str):
+    def __slack_component(self, component_type: str, key: str, name: str = None):
         """
         This function creates a slack for the given Component if necessary and connects it to the corresponding in- and outputs
         :param component_type: converter, pool, etc...
         :param key: identifier of the Component to be slacked
         """
 
+        if name is None:
+            name = f"{key}_Slack"
+        else:
+            name = f"{name}_Slack"
+
         # deadtimes, pools and thermalsystems get slacked in both directions
         if component_type in ["deadtime", "pool", "thermalsystem"]:
 
             # create new slack Component
-            self.add_component(f"{key}_slack", "slack")
+            self.add_component(f"{key}_slack", "slack", name=name)
 
             # connect it to the input and output of the Component
             self.add_connection(
@@ -855,7 +860,7 @@ class Factory:
         ):
 
             # create new slack Component
-            self.add_component(f"{key}_slack", "slack")
+            self.add_component(f"{key}_slack", "slack", name=name)
 
             # connect it to the input of the destination
             self.add_connection(
@@ -870,7 +875,7 @@ class Factory:
         # sources get slacked on the output side:
         elif component_type == "source":
             # create new slack Component
-            self.add_component(f"{key}_slack", "slack")
+            self.add_component(f"{key}_slack", "slack", name=name)
 
             # connect it to the input of the destination
             self.add_connection(

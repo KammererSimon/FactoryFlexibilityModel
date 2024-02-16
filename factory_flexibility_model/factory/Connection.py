@@ -40,7 +40,7 @@ class Connection:
             self.name = iv.validate(name, "str")
         else:
             # otherwise generate generic name
-            self.name = f"{origin.name}_to_{destination.name}"
+            self.name = f"{origin.name} -> {destination.name}"
 
         # check, if weights have been specified
         if weight is not None:
