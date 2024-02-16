@@ -728,9 +728,6 @@ class Simulation:
 
         # CREATE MVARS FOR ALL FLOWS IN THE FACTORY
         oc.add_flows(self)
-        if self.enable_time_tracking:
-            logging.info(f"Creating Flows: {round(time.time() - self.t_step, 2)}s")
-            self.t_step = time.time()
 
         # CREATE MVARS AND CONSTRAINTS FOR ALL COMPONENTS IN THE FACTORY
         for component in self.factory.components.values():
@@ -823,7 +820,6 @@ class Simulation:
             self.t_start = time.time()  # reset timer
 
         # CONFIGURE SOLVER
-
         oc.solve(self, solver_config)
 
         if not self.m.Status == GRB.TIME_LIMIT:

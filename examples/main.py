@@ -31,7 +31,7 @@ def simulate_session():
     This function takes the path to a session folder and conducts the simulation.
     """
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     session_folder = sys.argv[1]
 
@@ -49,7 +49,7 @@ def simulate_session():
 
     # setup, run and save simulation
     simulation = fs.Simulation(factory=factory, scenario=scenario)
-    simulation.simulate(threshold=0.000001)
+    simulation.simulate(threshold=0.000001, solver_config={"log_solver": False})
     simulation.save(rf"{session_folder}\simulations")
 
     # run dashboard

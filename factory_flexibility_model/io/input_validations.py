@@ -187,7 +187,7 @@ def validate(input, output_type, *, min=None, max=None, positive=False, timestep
                 if input:
                     return 1
                 else:
-                    logging.info(
+                    logging.debug(
                         "Given value was a boolean and not a value between 0 and 1. It has been translated to True=1, False=0"
                     )
                     return 0
@@ -287,7 +287,7 @@ def validate(input, output_type, *, min=None, max=None, positive=False, timestep
             if isinstance(input, int):
                 return input
             elif isinstance(input, float):
-                logging.info(
+                logging.debug(
                     "Given value was a float and has been rounded to next int!"
                 )
                 return round(input)
@@ -398,7 +398,7 @@ def validate(input, output_type, *, min=None, max=None, positive=False, timestep
 
                 try:
                     input = float(input)
-                    logging.info("Given value has been converted to float")
+                    logging.debug("Given value has been converted to float")
                 except:
                     print(f"input {input}")
                     logging.critical(

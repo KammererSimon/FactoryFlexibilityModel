@@ -362,7 +362,7 @@ class Factory:
             # if yes: check if overwriting is allowed
             if not overwrite:
                 # warn the user if the given flowtype could not be used
-                logging.warning(
+                logging.debug(
                     f"The factory already contains a flowtype with key {flowtype.key}"
                 )
             return
@@ -477,8 +477,8 @@ class Factory:
             # if yes: check if overwriting is allowed
             if not overwrite:
                 # warn the user if the given flowtype could not be used
-                logging.warning(
-                    f"The factory already contains a flowtype with key {unit.key}"
+                logging.debug(
+                    f"The factory already contains a unit with key {unit.key}"
                 )
             return
         else:
