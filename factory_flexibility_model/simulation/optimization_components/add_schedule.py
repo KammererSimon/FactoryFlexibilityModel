@@ -35,7 +35,7 @@ def add_schedule(simulation, component):
         (simulation.T, rows), vtype=GRB.CONTINUOUS, name=f"{component.name}_Pin"
     )
     logging.debug(
-        f"        - Variable(s):  Ein for {rows} part demands of {component.name}"
+        f"        - Variable(s):  Energy_in for {rows} part demands of {component.name}"
     )
 
     # define constraint: input and output must be equal at any timestep to ensure, that the Component just does flowtype control
@@ -44,7 +44,7 @@ def add_schedule(simulation, component):
         == simulation.MVars[component.inputs[0].key][t]
         for t in range(simulation.T)
     )
-    logging.debug(f"        - Constraint:   E_in == E_out for {component.name}")
+    logging.debug(f"        - Constraint:   Energy_in == Energy_out for {component.name}")
 
     # define constraint: taken inputs for demand fulfillment must equal the used input in every timestep
     simulation.m.addConstrs(
@@ -53,7 +53,7 @@ def add_schedule(simulation, component):
         for t in range(simulation.T)
     )
     logging.debug(
-        f"        - Constraint:   E_demands must be fed by inputs within {component.name}"
+        f"        - Constraint:   Energy demands must be fed by inputs within {component.name}"
     )
 
     # define constraint: each part demand must have its individual demand fulfilled

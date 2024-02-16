@@ -1,6 +1,6 @@
 # Installation:
 
-The following prerequisites have to be installed:
+Follow those steps to set up the model on a new system:
 
 ### 1) Install Pycharm (or other IDE)
 

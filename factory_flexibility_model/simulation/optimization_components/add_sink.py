@@ -25,7 +25,7 @@ def add_sink(simulation, component):
         simulation.T, vtype=GRB.CONTINUOUS, name=f"E_{component.name}"
     )
     logging.debug(
-        f"        - Variable:     E_{component.key}                                  (timeseries of global outflows to {component.name}"
+        f"        - Variable:     {component.name}                                  (timeseries of global outflows to {component.name})"
     )
 
     if component.determined:
@@ -39,7 +39,7 @@ def add_sink(simulation, component):
             == component.demand
         )
         logging.debug(
-            f"        - Constraint:   Sum of incoming flows == determined total demand              (E_{component.name} determined by timeseries)"
+            f"        - Constraint:   Sum of incoming flows == determined total demand              ({component.name} determined by timeseries)"
         )
 
     # add constraints to calculate the total outflow from the system as the sum of all weighted energys of incoming connections
@@ -50,7 +50,7 @@ def add_sink(simulation, component):
         )
         == simulation.MVars[f"E_{component.key}"]
     )
-    logging.debug(f"        - Constraint:   E_{component.key} == sum of incoming flows")
+    logging.debug(f"        - Constraint:   {component.name} == sum of incoming flows")
 
     # is the total cumulative input of the destination limited? If yes: add sum constraint
     if component.max_total_input_limited:
@@ -59,7 +59,7 @@ def add_sink(simulation, component):
             <= component.max_total_input
         )
         logging.debug(
-            f"        - Constraint:   sum(E_{component.key}(t)) <= E_{component.name}_max_total"
+            f"        - Constraint:   sum({component.name}(t)) <= {component.name}_max_total"
         )
 
     # is the maximum output power of the destination limited? If yes: Add power_max constraint
@@ -69,7 +69,7 @@ def add_sink(simulation, component):
             <= component.power_max * component.availability * simulation.interval_length
         )
         logging.debug(
-            f"        - Constraint:   P_{component.key} <= P_{component.name}_max"
+            f"        - Constraint:   {component.key} <= {component.name}_max"
         )
 
     # is the minimum output power of the source limited? If yes: Add power_min constraint
@@ -80,7 +80,7 @@ def add_sink(simulation, component):
             for t in range(simulation.T)
         )
         logging.debug(
-            f"        - Constraint:   P_{component.key} >= P_{component.key}_min"
+            f"        - Constraint:   {component.name} >= {component.name}_min"
         )
 
     # does the utilization of the destination cost something? If yes: Add the corresponding cost factors

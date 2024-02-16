@@ -23,7 +23,7 @@ def add_source(simulation, component):
     )
 
     logging.debug(
-        f"        - Variable:     E_{component.name}                              (timeseries of global inputs from E_{component.name}"
+        f"        - Variable:     {component.name}                              (timeseries of global inputs from E_{component.name})"
     )
 
     # set the sum of outgoing flows to meet the fixed supply
@@ -47,7 +47,7 @@ def add_source(simulation, component):
     )
 
     logging.debug(
-        f"        - Constraint:   E_{component.name} == sum of outgoing flows"
+        f"        - Constraint:   {component.name} == sum of outgoing flows"
     )
 
     # is the maximum output power of the source limited? If yes: Add power_max constraint
@@ -62,7 +62,7 @@ def add_source(simulation, component):
             <= component.power_max * component.availability
         )
         logging.debug(
-            f"        - Constraint:   P_{component.name} <= P_{component.name}_max"
+            f"        - Constraint:   {component.name} <= P_{component.name}_max"
         )
     elif simulation.factory.enable_slacks:
         simulation.m.addConstr(
@@ -74,7 +74,7 @@ def add_source(simulation, component):
             <= simulation.big_m
         )
         logging.debug(
-            f"        - Constraint:   P_{component.name} <= P_SECURITY                            -> Prevent Model from being unbounded"
+            f"        - Constraint:   {component.name} <= SECURITY                            -> Prevent Model from being unbounded"
         )
 
     # is the minimum output power of the source limited? If yes: Add power_min constraint
@@ -90,7 +90,7 @@ def add_source(simulation, component):
         )
 
         logging.debug(
-            f"        - Constraint:   P_{component.name} >= P_{component.name}_min"
+            f"        - Constraint:   {component.name} >= {component.name}_min"
         )
 
     # does the utilization of the source cost something? If yes: Add the corresponding cost factors
