@@ -703,7 +703,7 @@ class Sink(Component):
         self.type = "sink"  # specify Component as a global destination
 
         logging.debug(
-            f"        - New destination {self.name} of flowtype {self.flowtype.unit.quantity_type} "
+            f"        - New sink {self.name} of flowtype {self.flowtype.unit.quantity_type} "
             f"created with Component-key {self.key}"
         )
 
@@ -865,7 +865,7 @@ class Sink(Component):
                     parameters["co2_emissions_per_unit"], "float", timesteps=timesteps
                 )
 
-                # set the destination to avoid emissions:
+                # set the sink to avoid emissions:
                 self.causes_emissions = True
 
             # handle is_onsite definition

@@ -111,7 +111,7 @@ class Factory:
             )
 
         elif component_type == "sink":
-            # call destination constructor
+            # call sink constructor
             self.components[key] = factory_components.Sink(
                 key, self, flowtype=flowtype, name=name
             )
