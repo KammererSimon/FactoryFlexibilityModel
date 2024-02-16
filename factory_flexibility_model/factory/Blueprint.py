@@ -210,7 +210,6 @@ class Blueprint:
 
         for connection in self.connections.values():
             data["connections"][connection["key"]] = {
-                "name": connection["name"],
                 "from": connection["from"],
                 "to": connection["to"],
                 "flowtype": connection["flowtype"].key,
@@ -334,10 +333,6 @@ class Blueprint:
                 flowtype = connection["flowtype"]
             else:
                 flowtype = None
-            if "name" in connection:
-                name = connection["name"]
-            else:
-                name = None
             if "type" in connection:
                 type = connection["type"]
             else:
@@ -347,7 +342,6 @@ class Blueprint:
             factory.add_connection(
                 connection["from"],
                 connection["to"],
-                name=name,
                 key=key,
                 flowtype=flowtype,
                 type=type,

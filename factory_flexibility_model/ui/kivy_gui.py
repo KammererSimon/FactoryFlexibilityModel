@@ -251,9 +251,6 @@ class factory_GUIApp(MDApp):
 
         # create a new connection:
         self.blueprint.connections[connection_key] = {}
-        self.blueprint.connections[connection_key][
-            "name"
-        ] = f"{origin_name} -> {destination_name}"
         self.blueprint.connections[connection_key]["from"] = origin_key
         self.blueprint.connections[connection_key]["to"] = destination_key
         self.blueprint.connections[connection_key]["flowtype"] = connection_flowtype

@@ -245,7 +245,6 @@ class Factory:
         key: str,
         *,
         type: str = "default",
-        name: str = None,
         flowtype: str = None,
         weight: float = None,
         weight_destination: float = None,
@@ -285,7 +284,6 @@ class Factory:
             weight=weight,
             weight_destination=weight_destination,
             weight_origin=weight_origin,
-            name=name,
         )
 
         # set new connection as output for the source Component
