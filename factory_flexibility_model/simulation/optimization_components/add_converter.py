@@ -22,7 +22,7 @@ def add_converter(simulation, component):
         simulation.T, vtype=GRB.CONTINUOUS, name=f"P_{component.name}"
     )
     logging.debug(
-        f"        - Variable:     P_{component.name} timeseries of the nominal power of {component.name}"
+        f"        - Variable:     {component.name} (timeseries of the nominal power of {component.name})"
     )
 
     # add variables to express the positive and negative deviations from the nominal operating point
@@ -40,7 +40,7 @@ def add_converter(simulation, component):
             <= component.power_max * component.availability
         )
         logging.debug(
-            f"        - Constraint:   P_{component.key} <= P_{component.name}_max"
+            f"        - Constraint:   {component.key} <= {component.name}_max"
         )
 
     if component.power_min_limited:
@@ -49,7 +49,7 @@ def add_converter(simulation, component):
             >= component.power_min * component.availability
         )
         logging.debug(
-            f"        - Constraint:   P_{component.key} >= P_{component.key}_min"
+            f"        - Constraint:   {component.key} >= {component.key}_min"
         )
 
     # Calculate the efficiency of operation for each timestep based on the deviations
@@ -57,7 +57,7 @@ def add_converter(simulation, component):
         simulation.T, vtype=GRB.CONTINUOUS, name=f"Eta_{component.name}"
     )
     logging.debug(
-        f"        - Variable:     Eta_{component.name}                              "
+        f"        - Variable:     {component.name}                              "
         f"(Operating efficiency of {component.name}"
     )
 
@@ -79,7 +79,7 @@ def add_converter(simulation, component):
             for t in range(simulation.T)
         )
         logging.debug(
-            f"        - Constraint:   Eta(t) for {component.name} fixed to 100%"
+            f"        - Constraint:   {component.name} fixed to 100%"
         )
 
     # calculate the absolute operating point out of the nominal operating point, the deviations and the switching state
@@ -147,7 +147,7 @@ def add_converter(simulation, component):
                 * simulation.MVars[f"Eta_{component.key}"]
             )
             logging.debug(
-                f"        - added energy output calculation with losses for {connection.name}"
+                f"        - Added energy output calculation with losses for {connection.name}"
             )
         else:
             simulation.m.addConstr(
@@ -157,7 +157,7 @@ def add_converter(simulation, component):
                 * simulation.interval_length
             )
             logging.debug(
-                f"        - added material output calculation for {connection.name}"
+                f"        - Added material output calculation for {connection.name}"
             )
 
     # calculate the resulting energy losses: losses(t) = sum(inputs(t)) - sum(outputs(t))

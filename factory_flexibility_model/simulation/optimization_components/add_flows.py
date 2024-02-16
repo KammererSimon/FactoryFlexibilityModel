@@ -21,5 +21,5 @@ def add_flows(simulation):
         )
 
         logging.debug(
-            f"        - Variable:     E_Flow_{connection.key}                                (timeseries of flowtype on connection {connection.name})"
+            f"        - Variable:     {connection.name}                                (timeseries of flowtype on connection {connection.name})"
         )

@@ -31,7 +31,7 @@ def add_thermalsystem(simulation, component):
         for t in range(simulation.T)
     )
     logging.debug(
-        f"        - Variable:     E_{component.name}_in                                 (timeseries of incoming thermal energy at {component.name})"
+        f"        - Variable:     {component.name}_in                                 (timeseries of incoming thermal energy at {component.name})"
     )
 
     # create a timeseries of decision variables to represent the total outflow going out of the thermal demand:
@@ -49,7 +49,7 @@ def add_thermalsystem(simulation, component):
         for t in range(simulation.T)
     )
     logging.debug(
-        f"        - Variable:     E_{component.name}_out                                  (timeseries of removed thermal energy at {component.name})"
+        f"        - Variable:     {component.name}_out                                  (timeseries of removed thermal energy at {component.name})"
     )
 
     # create a timeseries for the internal temperature:
@@ -57,14 +57,14 @@ def add_thermalsystem(simulation, component):
         simulation.T, vtype=GRB.CONTINUOUS, name=f"T_{component.key}"
     )
     logging.debug(
-        f"        - Variable:     T_{component.key}                                  (Internal Temperature of {component.name})"
+        f"        - Variable:     {component.key}                                  (Internal Temperature of {component.name})"
     )
 
     # set the starting temperature:
     simulation.m.addConstr(
         simulation.MVars[f"T_{component.key}"][0] == component.temperature_start
     )
-    logging.debug(f"        - Constraint:   T_{component.name}[0] = Tstart")
+    logging.debug(f"        - Constraint:   {component.name}[0] = Tstart")
 
     # add constraint for the thermal R-C-factory
     simulation.m.addConstrs(

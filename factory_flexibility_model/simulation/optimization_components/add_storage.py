@@ -120,7 +120,7 @@ def add_storage(simulation, component):
             for t in range(simulation.T)
         )
         logging.debug(
-            f"        - Constraint:   E_losses = E_discharge * (1-efficiency) for {component.name}"
+            f"        - Constraint:   Energy_losses = Energy_discharge * (1-efficiency) for {component.name}"
         )
     else:
         # make sure that there is no energy-disposal loophole using illegal losses
