@@ -1,5 +1,6 @@
 # IMPORTS
 from kivy.uix.boxlayout import BoxLayout
+from kivymd.uix.label import MDLabel
 from kivymd.uix.list import (
     IconLeftWidget,
     IconLeftWidgetWithoutTouch,
@@ -7,7 +8,7 @@ from kivymd.uix.list import (
     OneLineIconListItem,
     TwoLineAvatarIconListItem,
 )
-from kivymd.uix.snackbar import Snackbar
+from kivymd.uix.snackbar.snackbar import MDSnackbar
 
 import factory_flexibility_model.factory.Flowtype as ft
 from factory_flexibility_model.ui.gui_components.layout_canvas.factory_visualisation import (
@@ -113,7 +114,7 @@ def save_changes_on_flowtype(app):
     initialize_visualization(app)
 
     # inform the user
-    Snackbar(text=f"{flowtype.name} updated!").open()
+    MDSnackbar(MDLabel(text=f"{flowtype.name} updated!")).open()
 
 
 def select_flowtype(app, flowtype):
