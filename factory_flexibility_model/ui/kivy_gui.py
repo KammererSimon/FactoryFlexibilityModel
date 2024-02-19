@@ -426,11 +426,6 @@ class factory_GUIApp(MDApp):
             if component["name"] == given_name:
                 return component["key"]
 
-        # search name in connection dict
-        for connection in self.blueprint.connections.values():
-            if connection["name"] == given_name:
-                return connection["key"]
-
         # search name in flow dict
         for flowtype in self.blueprint.flowtypes.values():
             if flowtype.name == given_name:
