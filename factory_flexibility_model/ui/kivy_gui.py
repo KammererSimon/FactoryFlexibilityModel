@@ -459,9 +459,3 @@ class factory_GUIApp(MDApp):
 
     def set_unsaved_changes_on_asset(self, boolean):
         self.unsaved_changes_on_asset = boolean
-
-    def update_connection_names(self):
-        for connection in self.blueprint.connections.values():
-            connection[
-                "name"
-            ] = f'{self.blueprint.components[connection["from"]]["name"]} -> {self.blueprint.components[connection["to"]]["name"]} '
