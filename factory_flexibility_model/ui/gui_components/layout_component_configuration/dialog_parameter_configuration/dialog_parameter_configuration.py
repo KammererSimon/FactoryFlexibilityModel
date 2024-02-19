@@ -46,13 +46,8 @@ def add_static_parameter_value(app):
     asset_key = app.selected_asset["key"]
     parameter_key = app.dialog.parameter
 
-    # create a key to adress the variation
-    variation = 0
-    while variation in app.session_data["parameters"][asset_key][parameter_key].keys():
-        variation += 1
-
     # store the value under the determined key
-    app.session_data["parameters"][asset_key][parameter_key][variation] = {
+    app.session_data["parameters"][asset_key][parameter_key] = {
         "type": "static",
         "value": value,
     }
@@ -72,13 +67,8 @@ def add_timeseries_parameter_value(app):
     # close popup
     close_popup(app)
 
-    # create a key to adress the variation
-    variation = 0
-    while variation in app.session_data["parameters"][asset_key][parameter_key].keys():
-        variation += 1
-
     # store the value under the determined key
-    app.session_data["parameters"][asset_key][parameter_key][variation] = {
+    app.session_data["parameters"][asset_key][parameter_key] = {
         "type": "timeseries",
         "value": app.popup.selected_timeseries,
     }
@@ -226,35 +216,27 @@ def update_parameter_value_list(app):
         app.session_data["parameters"][app.selected_asset["key"]][parameter] = {}
         return
 
-    # iterate over all currently specified values for the component and parameter
-    for variation, value in app.session_data["parameters"][app.selected_asset["key"]][
-        parameter
-    ].items():
+    # get actual parameter value from the session data
+    parameter = app.session_data["parameters"][app.selected_asset["key"]][parameter]
 
-        # define list entry depending on the kind of value that is being handled
-        if value["type"] == "timeseries":
-            text = "Timeseries"
-            secondary_text = value["value"]
-            icon = "chart-line"
-        else:
-            text = "Static Value"
-            icon = "numeric"
-            secondary_text = f"{value['value']} {app.dialog.unit}"
+    # define list entry depending on the kind of value that is being handled
+    if parameter["type"] == "timeseries":
+        text = "Timeseries"
+        secondary_text = parameter["value"]["key"]
+        icon = "chart-line"
+    else:
+        text = "Static Value"
+        icon = "numeric"
+        secondary_text = f"{parameter['value']} {app.dialog.unit}"
 
-        # create a list item with the current value
-        item = TwoLineAvatarIconListItem(
-            IconLeftWidget(icon=icon),
-            IconRightWidget(
-                icon="delete",
-                on_release=lambda x, value_key=variation: delete_parameter_value(
-                    app, value_key
-                ),
-            ),
-            text=text,
-            secondary_text=secondary_text,
-        )
-        # add list item to the value list
-        app.dialog.content_cls.ids.list_parameter_variations.add_widget(item)
+    # create a list item with the current value
+    item = TwoLineAvatarIconListItem(
+        IconLeftWidget(icon=icon),
+        text=text,
+        secondary_text=secondary_text,
+    )
+    # add list item to the value list
+    app.dialog.content_cls.ids.list_parameter_variations.add_widget(item)
 
 
 def update_timeseries_list(app):
