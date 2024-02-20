@@ -151,7 +151,7 @@ class Simulation:
 
                 # get the sum of the throughput as timeseries
                 utilization = sum(
-                    component.inputs[input_id].weight_destination
+                    component.inputs[input_id].weight
                     * self.MVars[component.inputs[input_id].key].X
                     for input_id in range(len(component.inputs))
                 )
@@ -562,14 +562,11 @@ class Simulation:
 
             # set weights of connections
             if key in self.factory.connections.keys():
-                if "weight_destination" in config:
-                    self.factory.connections[key].weight_destination = config[
-                        "weight_destination"
-                    ]
-                if "weight_origin" in config:
-                    self.factory.connections[key].weight_destination = config[
-                        "weight_origin"
-                    ]
+                if "weight" in config.keys():
+                    self.factory.connections[key].weight = config["weight"]
+                if "to_losses" in config.keys():
+                    if config["to_losses"]:
+                        self.factory.connections[key].type = "losses"
 
     def save(self, file_path: str, *, name: str = None, overwrite: bool = False):
         """
