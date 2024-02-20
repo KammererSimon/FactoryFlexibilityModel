@@ -1,5 +1,6 @@
 # IMPORTS
-from kivymd.uix.snackbar import Snackbar
+from kivymd.uix.label import MDLabel
+from kivymd.uix.snackbar.snackbar import MDSnackbar
 
 from factory_flexibility_model.ui.gui_components.layout_canvas.factory_visualisation import (
     initialize_visualization,
@@ -38,7 +39,8 @@ def delete_selected_component(app):
             delete_list.append(connection)
 
     # delete all parameters saved for the component
-    del app.session_data["parameters"][app.selected_asset["key"]]
+    for scenario in app.session_data["scenarios"].values():
+        del scenario[app.selected_asset["key"]]
 
     # make sure that no connection to the component is set as a primary flow at any converter
     for component in app.blueprint.components.values():
@@ -46,16 +48,17 @@ def delete_selected_component(app):
             if component["GUI"]["primary_flow"] == app.selected_asset["key"]:
                 component["GUI"]["primary_flow"] = None
 
-    # delete the component
+    # delete connections related to the component
     for connection in delete_list:
-        Snackbar(
-            text=f"Connection {app.blueprint.connections[connection]['name']} has been deleted!"
-        ).open()
+        # delete connection itself
         del app.blueprint.connections[connection]
+        # delete scenario configurations concerning the connection
+        for scenario in app.session_data["scenarios"].values():
+            if connection in scenario:
+                del scenario[connection]
 
     # inform the user
-    Snackbar(text=f"{app.selected_asset['name']} has been deleted!").open()
-
+    MDSnackbar(MDLabel(text=f"{app.selected_asset['name']} has been deleted!")).open()
     # delete the component out of the blueprint
     del app.blueprint.components[app.selected_asset["key"]]
 
