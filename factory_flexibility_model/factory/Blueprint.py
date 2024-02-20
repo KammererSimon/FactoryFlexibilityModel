@@ -72,7 +72,7 @@ class Blueprint:
         }
         self.units = {}  # list of units
 
-    def import_from_file(self, folder: str, *, overwrite: bool = False) -> bool:
+    def import_from_file(self, blueprint_file: str, *, overwrite: bool = False) -> bool:
         """
         .. _import_from_file():
         This function imports a  blueprint stored as .factory-file and sets all attributes of the blueprint according to the specified confidurations of the file
@@ -93,11 +93,11 @@ class Blueprint:
 
         # open yaml-file given by the user
         try:
-            with open(f"{folder}\\Layout.factory") as file:
+            with open(blueprint_file) as file:
                 data = yaml.load(file, Loader=yaml.UnsafeLoader)
         except:
             logging.error(
-                rf"The given file is not a valid .factory - blueprint file! ({folder}\Layout.factory"
+                rf"The given file is not a valid .factory - blueprint file! ({file}"
             )
             raise Exception
 
@@ -176,8 +176,6 @@ class Blueprint:
                 "to": connection["to"],
                 "flowtype": connection["flowtype"].key,
                 "key": connection["key"],
-                "weight_origin": connection["weight_origin"],
-                "weight_destination": connection["weight_destination"],
                 "to_losses": connection["to_losses"],
                 "type": connection["type"],
             }
@@ -210,8 +208,10 @@ class Blueprint:
             with open(f"{path}\\Layout.factory", "w") as file:
                 yaml.dump(data, file)
             logging.info(f"Blueprint saved under {path}")
+            return True
         except:
             logging.error(f"Saving blueprint under '{path}' failed!")
+            return False
 
     def to_factory(self) -> fm.Factory:
         """
@@ -295,8 +295,6 @@ class Blueprint:
                 key=key,
                 flowtype=flowtype,
                 type=type,
-                weight_origin=connection["weight_origin"],
-                weight_destination=connection["weight_destination"],
             )
 
         factory.check_validity()
