@@ -20,7 +20,7 @@ def add_sink(simulation, component):
     # In the first case a constraint is created, that forces all connected inputs to meet the desired power in total
     # In the second case a MVar reflecting the resulting inflow is created, together with a constraint to calculate it
 
-    # create a timeseries of decision variables to represent the total inflow (energy/material) going into the destination
+    # create a timeseries of decision variables to represent the total inflow (energy/material) going into the sink
     simulation.MVars[f"E_{component.key}"] = simulation.m.addMVar(
         simulation.T, vtype=GRB.CONTINUOUS, name=f"E_{component.name}"
     )
@@ -29,14 +29,9 @@ def add_sink(simulation, component):
     )
 
     if component.determined:
-        # set the sum of incoming flows to meet the power demand
+        # set the incoming flow to meet the power demand
         simulation.m.addConstr(
-            gp.quicksum(
-                component.inputs[o].weight_destination
-                * simulation.MVars[component.inputs[o].key]
-                for o in range(len(component.inputs))
-            )
-            == component.demand
+            simulation.MVars[component.inputs[0].key] == component.demand
         )
         logging.debug(
             f"        - Constraint:   Sum of incoming flows == determined total demand              ({component.name} determined by timeseries)"
@@ -44,10 +39,7 @@ def add_sink(simulation, component):
 
     # add constraints to calculate the total outflow from the system as the sum of all weighted energys of incoming connections
     simulation.m.addConstr(
-        gp.quicksum(
-            simulation.MVars[component.inputs[o].key]
-            for o in range(len(component.inputs))
-        )
+        simulation.MVars[component.inputs[0].key]
         == simulation.MVars[f"E_{component.key}"]
     )
     logging.debug(f"        - Constraint:   {component.name} == sum of incoming flows")
