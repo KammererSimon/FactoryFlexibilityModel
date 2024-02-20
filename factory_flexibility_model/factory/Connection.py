@@ -18,8 +18,6 @@ class Connection:
         name: str = None,
         type: str = "default",
         weight: float = None,
-        weight_origin: float = None,
-        weight_destination: float = None,
     ):
 
         # define attributes
@@ -31,8 +29,6 @@ class Connection:
             type  # set type of connection {"default", "losses", "gains", "slack"}
         )
         self.destination = destination
-        self.weight_destination = 1
-        self.weight_origin = 1
 
         # set a name for the connection
         if name is not None:
@@ -45,16 +41,9 @@ class Connection:
         # check, if weights have been specified
         if weight is not None:
             # If just one "weight" is specified: use it for input and output
-            self.weight_destination = iv.validate(weight, "float")
-            self.weight_origin = iv.validate(weight, "float")
-
-        # check if weight for destination is specified
-        if weight_destination is not None:
-            self.weight_destination = iv.validate(weight_destination, "float")
-
-            # check if weight for origin is specified
-        if weight_origin is not None:
-            self.weight_origin = iv.validate(weight_origin, "float")
+            self.weight = iv.validate(weight, "float")
+        else:
+            self.weight = 1
 
         # if a flowtype is specified: adapt it and check for compatibility
         if flowtype is not None:
