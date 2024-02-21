@@ -54,14 +54,18 @@ def set_boolean_parameter(app, status, parameter_key):
     """
 
     if status:
-        app.session_data["parameters"][app.selected_asset["key"]][parameter_key] = {
+        app.session_data["scenarios"][app.selected_scenario][app.selected_asset["key"]][
+            parameter_key
+        ] = {
             "type": "boolean",
-            "value": 1,
+            "value": True,
         }
     else:
-        app.session_data["parameters"][app.selected_asset["key"]][parameter_key] = {
+        app.session_data["scenarios"][app.selected_scenario][app.selected_asset["key"]][
+            parameter_key
+        ] = {
             "type": "boolean",
-            "value": 0,
+            "value": False,
         }
 
     update_component_configuration_tab(app)
@@ -114,7 +118,11 @@ def update_component_configuration_tab(app):
     # CREATE LAYOUT FOR CONFIGURATION
     layout_config = LayoutComponentConfiguration()
     # update parameter list items
-    parameters = app.session_data["parameters"][asset_key]
+    try:
+        parameters = app.session_data["scenarios"][app.selected_scenario][asset_key]
+    except:
+        app.session_data["scenarios"][app.selected_scenario][asset_key] = {}
+        parameters = {}
 
     # get component parameter list
     component_parameter_list = app.config["component_definitions"][asset_type][
@@ -239,7 +247,6 @@ def update_component_configuration_tab(app):
             # handle attributes with static values or timeseries:
             else:
                 value = parameters[parameter_key]
-                print(value)
                 # handle static values
                 if value["type"] == "static":
                     list_item.secondary_text = (
@@ -278,12 +285,9 @@ def update_component_configuration_tab(app):
 
             try:
                 # set the checkbox as checked or empty as defined in the parameters dict
-                if (
-                    app.session_data["parameters"][app.selected_asset["key"]][
-                        parameter_key
-                    ]["value"]
-                    == 1
-                ):
+                if app.session_data["scenarios"][app.selected_scenario][
+                    app.selected_asset["key"]
+                ][parameter_key]["value"]:
                     list_item.secondary_text = "Allowed"
                     checkbox.active = True
                 else:
@@ -291,9 +295,9 @@ def update_component_configuration_tab(app):
                     checkbox.active = False
             except:
                 # if the component has not been edited before: initialize the boolean value as false
-                app.session_data["parameters"][app.selected_asset["key"]][
+                app.session_data["scenarios"][app.selected_scenario][asset_key][
                     parameter_key
-                ] = {"type": "boolean", "value": 0}
+                ] = {"type": "boolean", "value": False}
 
                 list_item.secondary_text = "Blocked"
                 checkbox.active = False
