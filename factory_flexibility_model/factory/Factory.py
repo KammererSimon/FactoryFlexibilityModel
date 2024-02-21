@@ -136,7 +136,6 @@ class Factory:
                     key,
                     "losses_energy",
                     key=f"{key}_to_Elosses",
-                    name=f"{name} -> Losses Energy",
                     flowtype="energy_losses",
                     type="losses",
                 )
@@ -148,7 +147,6 @@ class Factory:
                     key,
                     "losses_material",
                     key=f"{key}_to_Mlosses",
-                    name=f"{name} -> Losses Material",
                     flowtype="material_losses",
                     type="losses",
                 )
@@ -169,7 +167,6 @@ class Factory:
                 key,
                 "losses_energy",
                 key=f"{key}_to_Elosses",
-                name=f"{name} -> Losses Energy",
                 weight=0.01,
                 type="losses",
             )
@@ -179,7 +176,6 @@ class Factory:
                 key,
                 "losses_material",
                 key=f"{key}_to_Mlosses",
-                name=f"{name} -> Losses Material",
                 weight=0.01,
                 type="losses",
             )
@@ -199,7 +195,6 @@ class Factory:
                 key,
                 "losses_energy",
                 key=f"{key}_to_Elosses",
-                name=f"{name} -> Losses Energy",
                 flowtype="energy_losses",
                 type="losses",
             )
@@ -209,7 +204,6 @@ class Factory:
                 "ambient_gains",
                 key,
                 key=f"ambient_gains_to_{key}",
-                name=f"Ambient Gains -> {name}",
                 type="gains",
             )
 
