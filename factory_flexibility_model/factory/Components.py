@@ -897,6 +897,8 @@ class Sink(Component):
         # check, that there is no more than one energy and material input each
         if connection.type == "losses":
             self.inputs.append(connection)
+        else:
+            super().set_input(connection)
 
 
 class Source(Component):
