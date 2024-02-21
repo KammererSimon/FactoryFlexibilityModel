@@ -131,9 +131,6 @@ class factory_GUIApp(MDApp):
         self.root.ids.canvas_layout.add_widget(component_framelabel)
         self.root.ids[f"frame_{component_key}"] = component_framelabel
 
-        # add parameter-dict for the new component
-        self.session_data["parameters"][component_key] = {}
-
         # close the component selection menu
         self.root.ids.component_shelf.set_state("closed")
 
