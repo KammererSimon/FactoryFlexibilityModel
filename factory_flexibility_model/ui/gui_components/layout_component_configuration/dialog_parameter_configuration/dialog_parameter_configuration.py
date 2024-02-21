@@ -47,7 +47,7 @@ def add_static_parameter_value(app):
     parameter_key = app.dialog.parameter
 
     # store the value under the determined key
-    app.session_data["parameters"][asset_key][parameter_key] = {
+    app.session_data["scenarios"][app.selected_scenario][asset_key][parameter_key] = {
         "type": "static",
         "value": value,
     }
@@ -68,7 +68,7 @@ def add_timeseries_parameter_value(app):
     close_popup(app)
 
     # store the value under the determined key
-    app.session_data["parameters"][asset_key][parameter_key] = {
+    app.session_data["scenarios"][app.selected_scenario][asset_key][parameter_key] = {
         "type": "timeseries",
         "value": app.popup.selected_timeseries,
     }
@@ -211,18 +211,24 @@ def update_parameter_value_list(app):
     # if no value for the parameter has been defined yet: create an empty dict and abort
     if (
         parameter
-        not in app.session_data["parameters"][app.selected_asset["key"]].keys()
+        not in app.session_data["scenarios"][app.selected_scenario][
+            app.selected_asset["key"]
+        ].keys()
     ):
-        app.session_data["parameters"][app.selected_asset["key"]][parameter] = {}
+        app.session_data["scenarios"][app.selected_scenario][app.selected_asset["key"]][
+            parameter
+        ] = {}
         return
 
     # get actual parameter value from the session data
-    parameter = app.session_data["parameters"][app.selected_asset["key"]][parameter]
+    parameter = app.session_data["scenarios"][app.selected_scenario][
+        app.selected_asset["key"]
+    ][parameter]
 
     # define list entry depending on the kind of value that is being handled
     if parameter["type"] == "timeseries":
         text = "Timeseries"
-        secondary_text = parameter["value"]["key"]
+        secondary_text = parameter["value"]
         icon = "chart-line"
     else:
         text = "Static Value"
