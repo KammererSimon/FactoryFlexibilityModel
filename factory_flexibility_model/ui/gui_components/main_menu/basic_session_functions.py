@@ -1,7 +1,6 @@
 # This file contains the basic functions required to create, save and load sessions within the factory model gui.
 
 # IMPORTS
-import csv
 import os
 from tkinter import filedialog
 from tkinter.messagebox import askyesno
@@ -91,23 +90,24 @@ def create_session_folder(root_folder, session_name: str = "New Session"):
     if not os.path.exists(subfolder_path):
         os.makedirs(subfolder_path)
 
-    # create list of files to be initialized
-    files = [
-        "parameters.txt",
-        "flowtypes.txt",
-        "units.txt",
-        "Layout.factory",
-    ]
-
-    # create empty files
-    for file in files:
-        with open(os.path.join(subfolder_path, file), "w") as f:
-            pass
-
     # create a subfolder for simulations
     simulations_path = os.path.join(subfolder_path, "simulations")
     if not os.path.exists(simulations_path):
         os.makedirs(simulations_path)
+
+    # create a subfolder for scenarios
+    scenarios_path = os.path.join(subfolder_path, "scenarios")
+    if not os.path.exists(scenarios_path):
+        os.makedirs(scenarios_path)
+
+    # create a subfolder for the layout
+    layout_path = os.path.join(subfolder_path, "layout")
+    if not os.path.exists(layout_path):
+        os.makedirs(layout_path)
+
+    # create empty Factory.factory - file
+    with open(os.path.join(layout_path, "Layout.factory"), "w") as f:
+        pass
 
 
 def create_new_session(app):
@@ -141,13 +141,21 @@ def create_new_session(app):
     # initialize units and flowtypes
     initialize_units_and_flowtypes(app)
 
-    # reset the session timeseries list
-    app.session_data["timeseries"] = {}
-    app.session_data["show_component_config_dialog_on_creation"] = False
+    # take standard session config from config file
+    app.session_data["show_component_config_dialog_on_creation"] = app.config[
+        "show_component_config_dialog_on_creation"
+    ]
     app.session_data["session_active"] = True
 
     # set the selected asset to none
     app.selected_asset = None
+
+    # reset the session timeseries list
+    app.session_data["timeseries"] = {}
+
+    # initialize a scenario list with just an empty default scenario and select it.
+    app.session_data["scenarios"] = {"default": {}}
+    app.selected_scenario = "default"
 
     # initialize the GUI
     initialize_visualization(app)
@@ -187,80 +195,38 @@ def save_session(app):
         )
         return
 
-    # SAVE SESSION DATA
+    # SAVE RELEVANT PARTS OF SESSION DATA
+    data = {
+        "display_scaling_factor": app.session_data["display_scaling_factor"],
+        "session_path": app.session_data["session_path"],
+        "show_component_config_dialog_on_creation": app.session_data[
+            "show_component_config_dialog_on_creation"
+        ],
+        "timeseries": app.session_data["timeseries"],
+    }
+
     with open(
         f"{app.session_data['session_path']}\\{app.blueprint.info['name']}.ffm",
         "w",
     ) as file:
-        yaml.dump(app.session_data, file)
+        yaml.dump(data, file)
 
     # SAVE THE BLUEPRINT
-    app.blueprint.save(path=app.session_data["session_path"])
+    app.blueprint.save(path=f"{app.session_data['session_path']}\\layout")
 
-    # CREATE parameters.txt, timeseries.txt and demands.txt
-    entries_parameters = []
-    entries_timeseries = []
-    entries_demands = {}
-    # iterate over all components
-    for key_component, dict_parameters in app.session_data["parameters"].items():
-        # make sure that there are parameters to save
-        if dict_parameters is None:
-            continue
-        # iterate over all parameters of the current component
-        for key_parameter, dict_variations in dict_parameters.items():
-            # iterate over all variations given for the current parameter
-            for index, variation in dict_variations.items():
-                # handle static values
-                if variation["type"] == "static":
-                    entries_parameters.append(
-                        f"{key_component}/{key_parameter}\t{variation['value']}\n"
-                    )
-
-                # handle timeseries
-                elif variation["type"] == "timeseries":
-                    row = [key_component, key_parameter]
-                    values = app.session_data["timeseries"][variation["value"]][
-                        "values"
-                    ]
-                    if (
-                        app.session_data["timeseries"][variation["value"]]["type"]
-                        == "full"
-                        or len(values) >= app.blueprint.info["timesteps"]
-                    ):
-                        row.extend(values[0 : app.blueprint.info["timesteps"]])
-                    else:
-                        row.extend(values)
-                    entries_timeseries.append(row)
-
-                # handle demands
-                elif variation["type"] == "demands":
-                    # make sure that component key exists within entries_demands
-                    if key_component not in entries_demands.keys():
-                        entries_demands[key_component] = {}
-                    # add values of current variation to the dict
-                    entries_demands[key_component][index] = variation["value"]
-
-    # write files
-    with open(f"{app.session_data['session_path']}\\parameters.txt", "w") as file:
-        for line in entries_parameters:
-            file.write(line)
-    with open(
-        f"{app.session_data['session_path']}\\timeseries.csv", "w", newline=""
-    ) as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerows(entries_timeseries)
-    with open(
-        f"{app.session_data['session_path']}\\demands.txt",
-        "w",
-    ) as file:
-        yaml.dump(entries_demands, file)
+    # Iterate over all scenarios and create scenario.txt documents
+    for key_scenario, scenario in app.session_data["scenarios"].items():
+        with open(
+            f"{app.session_data['session_path']}/scenarios/{key_scenario}.sc", "w"
+        ) as file:
+            yaml.dump(scenario, file)
 
     # There are no more unsaved changes now...
     app.unsaved_changes_on_session = False
 
     # save png of layout
     app.root.ids.canvas_layout.export_to_png(
-        f"{app.session_data['session_path']}\\layout.png"
+        f"{app.session_data['session_path']}\\layout\\layout.png"
     )
 
     MDSnackbar(
@@ -336,20 +302,39 @@ def load_session(app):
     with open(filepath) as file:
         app.session_data = yaml.load(file, Loader=yaml.SafeLoader)
 
+    # set session path
     app.session_data["session_path"] = os.path.dirname(filepath)
+
+    # there is an active session now
     app.session_data["session_active"] = True
 
     # IMPORT blueprint including flowtypes and units
     try:
         blueprint_new = bp.Blueprint()
-        blueprint_new.import_from_file(app.session_data["session_path"])
+        blueprint_new.import_from_file(
+            f'{app.session_data["session_path"]}\\layout\\Layout.factory'
+        )
     except:
         MDSnackbar(
             MDLabel(
-                text=f"ERROR: Importing Blueprint from {app.session_data['session_path']} failed!"
+                text=f"ERROR: Importing Blueprint from '{app.session_data['session_path']}\\layout\\Layout.factory' failed!"
             )
         ).open()
         return
+
+    # IMPORT Scenarios
+    app.session_data["scenarios"] = {}
+
+    # iterate over all files within the scenario-dict
+    for scenario_file in os.listdir(f"{app.session_data['session_path']}/scenarios"):
+        if scenario_file.endswith(".sc"):
+            with open(
+                f"{app.session_data['session_path']}/scenarios/{scenario_file}"
+            ) as file:
+                dict_key = os.path.splitext(scenario_file)[0]
+                app.session_data["scenarios"][dict_key] = yaml.load(
+                    file, Loader=yaml.SafeLoader
+                )
 
     # Did all imports work till here? -> Overwrite internal attributes
     app.blueprint = blueprint_new
@@ -360,6 +345,9 @@ def load_session(app):
 
     # there is no component selected initially
     app.selected_asset = None
+
+    # select the first scenario out of the scenario list
+    app.selected_scenario = list(app.session_data["scenarios"].keys())[0]
 
     # update the GUI to display the data
     app.root.ids.asset_config_screens.current = "flowtype_list"
