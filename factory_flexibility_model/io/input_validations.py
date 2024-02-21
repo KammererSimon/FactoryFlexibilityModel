@@ -311,6 +311,16 @@ def validate(input, output_type, *, min=None, max=None, positive=False, timestep
 
     if output_type == "float":
 
+        # transform strings to floats if possible
+        if isinstance(input, str):
+            try:
+                input = float(input)
+            except:
+                logging.critical(
+                    f"ERROR: Given value {input} is not convertable to a float"
+                )
+                raise Exception
+
         if timeseries:
             if isinstance(input, float) or isinstance(input, int):
                 if upperlimit and input > max:
