@@ -31,7 +31,7 @@ def simulate_session():
     This function takes the path to a session folder and conducts the simulation.
     """
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
 
     session_folder = sys.argv[1]
 
@@ -40,11 +40,11 @@ def simulate_session():
         raise FileNotFoundError(f"The given path ({session_folder}) does not exist!")
 
     # create scenario
-    scenario = sc.Scenario(session_folder=session_folder)
+    scenario = sc.Scenario(scenario_file=f"{session_folder}\\scenarios\\default.txt")
 
     # create factory
     blueprint = bp.Blueprint()
-    blueprint.import_from_file(session_folder)
+    blueprint.import_from_file(f"{session_folder}\\layout\\Layout.factory")
     factory = blueprint.to_factory()
 
     # setup, run and save simulation
