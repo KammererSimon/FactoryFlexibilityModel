@@ -3,8 +3,13 @@ from tkinter import filedialog
 
 import numpy as np
 import pandas as pd
-from kivymd.uix.snackbar import Snackbar
-from factory_flexibility_model.ui.gui_components.info_popup.info_popup import show_info_popup
+from kivymd.uix.label import MDLabel
+from kivymd.uix.snackbar.snackbar import MDSnackbar
+
+from factory_flexibility_model.ui.gui_components.info_popup.info_popup import (
+    show_info_popup,
+)
+
 
 # FUNCTIONS
 def import_timeseries_xlsx(app):
@@ -18,8 +23,9 @@ def import_timeseries_xlsx(app):
 
     # make sure that there is a session initialized
     if app.session_data["session_path"] is None:
-        show_info_popup(app,
-            "Cannot import timeseries before a session has been created or imported!"
+        show_info_popup(
+            app,
+            "Cannot import timeseries before a session has been created or imported!",
         )
         return
 
@@ -46,6 +52,8 @@ def import_timeseries_xlsx(app):
                 "values": np.array(timeseries_values[2:].dropna()).tolist(),
             }
         # inform the user
-        Snackbar(
-            text=f"{len(app.session_data['timeseries'].keys())} new timeseries imported"
+        MDSnackbar(
+            MDLabel(
+                text=f"{len(app.session_data['timeseries'].keys())} new timeseries imported"
+            )
         ).open()
