@@ -29,14 +29,10 @@ def add_sink(simulation, component):
     )
 
     if component.determined:
+        print(component.name)
         # set the sum of incoming flows to meet the power demand
         simulation.m.addConstr(
-            gp.quicksum(
-                component.inputs[o].weight_destination
-                * simulation.MVars[component.inputs[o].key]
-                for o in range(len(component.inputs))
-            )
-            == component.demand
+            simulation.MVars[component.inputs[0].key] == component.demand
         )
         logging.debug(
             f"        - Constraint:   Sum of incoming flows == determined total demand              ({component.name} determined by timeseries)"
