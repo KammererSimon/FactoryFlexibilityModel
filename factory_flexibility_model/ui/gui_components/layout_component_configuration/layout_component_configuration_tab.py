@@ -255,7 +255,7 @@ def update_component_configuration_tab(app):
                     list_icon.icon = "ray-start-arrow"
                 # handle timeseries
                 else:
-                    list_item.secondary_text = f"Timeseries: {value['value']}"
+                    list_item.secondary_text = f"Timeseries: {value['key']}"
                     list_icon.icon = "chart-line"
 
         # handle special cases where different functions than the standard data input form have to be used

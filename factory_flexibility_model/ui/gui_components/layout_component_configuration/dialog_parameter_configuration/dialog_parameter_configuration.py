@@ -70,7 +70,8 @@ def add_timeseries_parameter_value(app):
     # store the value under the determined key
     app.session_data["scenarios"][app.selected_scenario][asset_key][parameter_key] = {
         "type": "timeseries",
-        "value": app.popup.selected_timeseries,
+        "key": app.popup.selected_timeseries,
+        "value": None,
     }
 
     update_parameter_value_list(app)
@@ -228,7 +229,7 @@ def update_parameter_value_list(app):
     # define list entry depending on the kind of value that is being handled
     if parameter["type"] == "timeseries":
         text = "Timeseries"
-        secondary_text = parameter["value"]
+        secondary_text = parameter["key"]
         icon = "chart-line"
     else:
         text = "Static Value"
