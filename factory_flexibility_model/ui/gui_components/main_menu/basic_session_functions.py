@@ -76,6 +76,29 @@ def initiate_new_session(app):
         show_new_session_dialog(app)
 
 
+def collect_timeseries_data(app):
+    """
+    This function is responsible for providing the actual timeseries data for component parameters within the scenario.sc files that are stored within the session folder.
+    During GUI runtime only the keys of timeseries as adressable within session_data[timeseries] are handled. When saving the session for simulation the timeseries arrays have to be provided with the required number of timesteps.
+    This function goes through all scenarios and searches for component-parameters that have to be defined as timeseries. For those parameters the timeseries are looked up and shortened to the length od app.blueprint.info[timeseries]
+    :param app: Object of the GUI instance
+    :return: None; app.session_data["scenarios"] is modified
+    """
+
+    # iterate over all scenarios
+    for scenario in app.session_data["scenarios"].values():
+        # iterate over all components that have parameters specified
+        for component in scenario.values():
+            # iterate over all parameters of the component
+            for parameter in component.values():
+                # check, if the parameter is a timeseries
+                if parameter["type"] == "timeseries":
+                    # get the actual timeseries with the required length and write it into the "value" field of the parameter
+                    parameter["value"] = app.session_data["timeseries"][
+                        parameter["key"]
+                    ]["values"][0 : app.blueprint.info["timesteps"]]
+
+
 def create_session_folder(root_folder, session_name: str = "New Session"):
     """
     This function initializes a session folder with all required files and subfolders
@@ -214,8 +237,12 @@ def save_session(app):
     # SAVE THE BLUEPRINT
     app.blueprint.save(path=f"{app.session_data['session_path']}\\layout")
 
+    # Get the required timeseries-data for all parameters specified as timeseries with the correct length
+    collect_timeseries_data(app)
+
     # Iterate over all scenarios and create scenario.txt documents
     for key_scenario, scenario in app.session_data["scenarios"].items():
+
         with open(
             f"{app.session_data['session_path']}/scenarios/{key_scenario}.sc", "w"
         ) as file:
