@@ -136,7 +136,6 @@ class Factory:
                     key,
                     "losses_energy",
                     key=f"{key}_to_Elosses",
-                    name=f"{name} -> Losses Energy",
                     flowtype="energy_losses",
                     type="losses",
                 )
@@ -148,7 +147,6 @@ class Factory:
                     key,
                     "losses_material",
                     key=f"{key}_to_Mlosses",
-                    name=f"{name} -> Losses Material",
                     flowtype="material_losses",
                     type="losses",
                 )
