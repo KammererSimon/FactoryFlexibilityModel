@@ -95,23 +95,19 @@ class Scenario:
         try:
             # open the given file
             with open(scenario_file) as file:
-                # iterate over all lines in the file
-                for line in file:
-                    # split line into key and value
-                    key, value = line.strip().split("\t")
-                    # split key into component and parameter
-                    key = key.split("/")
-
-                    # add a component entry in the parameters dict if this is the first setting for a component
-                    if not key[0] in self.configurations:
-                        self.configurations[key[0]] = {}
-
-                    # add entry to parameters-dict
-                    self.configurations[key[0]][key[1]] = float(value.replace(",", "."))
+                # write the imported dict with specified parameters to self.configurations
+                self.configurations = yaml.load(file, Loader=yaml.SafeLoader)
         except:
             raise ValueError(
                 f"The given parameters.txt-config file is invalid, has a wrong format or is corrupted! ({scenario_file})"
             )
+
+        # iterate over all components + their parameters and reduce them to just the relevant numerical or boolean value
+        for component_key, component_parameters in self.configurations.items():
+            for parameter_key, parameter_data in component_parameters.items():
+                self.configurations[component_key][parameter_key] = parameter_data[
+                    "value"
+                ]
         print(self.configurations)
 
     def _import_timeseries(self, timeseries_file: str) -> bool:
