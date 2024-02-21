@@ -37,7 +37,7 @@ def add_static_parameter_value(app):
     """
 
     # get the value to store
-    value = app.popup.content_cls.ids.textfield_value.text
+    value = float(app.popup.content_cls.ids.textfield_value.text)
 
     # close popup
     close_popup(app)
