@@ -40,7 +40,7 @@ def simulate_session():
         raise FileNotFoundError(f"The given path ({session_folder}) does not exist!")
 
     # create scenario
-    scenario = sc.Scenario(scenario_file=f"{session_folder}\\scenarios\\default.txt")
+    scenario = sc.Scenario(scenario_file=f"{session_folder}\\scenarios\\default.sc")
 
     # create factory
     blueprint = bp.Blueprint()
