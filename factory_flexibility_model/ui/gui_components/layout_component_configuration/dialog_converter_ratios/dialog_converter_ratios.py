@@ -30,8 +30,10 @@ class TextfieldCheckboxIconListItem(TwoLineAvatarListItem):
 
 # FUNCTIONS
 def process_user_value_input(app, textfield):
+
     # make sure that user input is a valid float
     validate_float(textfield)
+
     # update the bilances of the converter
     update_bilance_calculation(app)
 
@@ -89,27 +91,27 @@ def save_converter_ratios(app):
 
     # iterate over all connections and write their weighting factors into the blueprint
     for input in app.dialog.content_cls.ids.list_converter_inputs_energy.children:
-        app.blueprint.connections[input.connection_key]["weight_destination"] = float(
-            input.ids.list_item_textfield.text
-        )
+        app.session_data["scenarios"][app.selected_scenario][input.connection_key][
+            "weight"
+        ]["value"] = float(input.ids.list_item_textfield.text)
     for input in app.dialog.content_cls.ids.list_converter_inputs_mass.children:
-        app.blueprint.connections[input.connection_key]["weight_destination"] = float(
-            input.ids.list_item_textfield.text
-        )
+        app.session_data["scenarios"][app.selected_scenario][input.connection_key][
+            "weight"
+        ]["value"] = float(input.ids.list_item_textfield.text)
     for output in app.dialog.content_cls.ids.list_converter_outputs_energy.children:
-        app.blueprint.connections[output.connection_key]["weight_origin"] = float(
-            output.ids.list_item_textfield.text
-        )
-        app.blueprint.connections[output.connection_key][
+        app.session_data["scenarios"][app.selected_scenario][output.connection_key][
+            "weight"
+        ]["value"] = float(output.ids.list_item_textfield.text)
+        app.session_data["scenarios"][app.selected_scenario][output.connection_key][
             "to_losses"
-        ] = output.ids.list_item_checkbox.active
+        ]["value"] = output.ids.list_item_checkbox.active
     for output in app.dialog.content_cls.ids.list_converter_outputs_mass.children:
-        app.blueprint.connections[output.connection_key]["weight_origin"] = float(
-            output.ids.list_item_textfield.text
-        )
-        app.blueprint.connections[output.connection_key][
+        app.session_data["scenarios"][app.selected_scenario][output.connection_key][
+            "weight"
+        ]["value"] = float(output.ids.list_item_textfield.text)
+        app.session_data["scenarios"][app.selected_scenario][output.connection_key][
             "to_losses"
-        ] = output.ids.list_item_checkbox.active
+        ]["value"] = output.ids.list_item_checkbox.active
 
     # save the primary input/output of the converter
     app.selected_asset["GUI"]["primary_flow"] = app.dialog.primary_flow
@@ -165,7 +167,8 @@ def update_bilance_calculation(app):
             output.ids.list_item_textfield.error = True
 
     if loss_connection is not None:
-        loss_connection.ids.list_item_textfield.text = str(
+        # calculate required weight for the loss connection
+        loss_target = str(
             round(
                 (sum_energy_input - sum_energy_output)
                 / app.blueprint.connections[loss_connection.connection_key][
@@ -174,6 +177,10 @@ def update_bilance_calculation(app):
                 3,
             )
         )
+        # overwrite weight of loss connection in case it has to be altered
+        if not loss_connection.ids.list_item_textfield.text == loss_target:
+            loss_connection.ids.list_item_textfield.text = loss_target
+
         if sum_energy_input - sum_energy_output < 0:
             # error detected...
             app.dialog.bilance_valid = False
@@ -195,6 +202,7 @@ def update_bilance_calculation(app):
         app.dialog.bilance_valid = False
 
     # Calculate mass input sum
+    loss_connection = None
     sum_mass_input = 0
     for input in app.dialog.content_cls.ids.list_converter_inputs_mass.children:
         try:
@@ -226,7 +234,8 @@ def update_bilance_calculation(app):
             output.ids.list_item_textfield.error = True
 
     if loss_connection is not None:
-        loss_connection.ids.list_item_textfield.text = str(
+        # calculate required weight for the loss connection
+        loss_target = str(
             round(
                 (sum_mass_input - sum_mass_output)
                 / app.blueprint.connections[loss_connection.connection_key][
@@ -235,6 +244,10 @@ def update_bilance_calculation(app):
                 3,
             )
         )
+        # overwrite weight of loss connection in case it has to be altered
+        if not loss_connection.ids.list_item_textfield.text == loss_target:
+            loss_connection.ids.list_item_textfield.text = loss_target
+
         if sum_mass_input - sum_mass_output < 0:
             # error detected...
             app.dialog.bilance_valid = False
@@ -288,8 +301,25 @@ def update_connection_lists(app):
             item.ids.list_item_textfield.helper_text = connection[
                 "flowtype"
             ].unit.get_unit_flow()
-            item.ids.list_item_textfield.text = str(connection["weight_destination"])
-            # add list item to the correct  input_list
+
+            # get value of the connection weight from scenario if possible
+            try:
+                item.ids.list_item_textfield.text = str(
+                    app.session_data["scenarios"][app.selected_scenario][
+                        connection["key"]
+                    ]["weight"]["value"]
+                )
+            except:
+                # otherwise set weight to one and initialize an entry in the scenario dict
+                item.ids.list_item_textfield.text = "1"
+                app.session_data["scenarios"][app.selected_scenario][
+                    connection["key"]
+                ] = {
+                    "weight": {"type": "static", "value": 1},
+                    "to_losses": {"type": "boolean", "value": False},
+                }
+
+            # add list item to the correct input_list
             if connection["flowtype"].unit.is_energy():
                 if connection["from"] == app.dialog.primary_flow:
                     item.ids.list_item_primary.active = True
@@ -311,14 +341,32 @@ def update_connection_lists(app):
             item.ids.list_item_textfield.helper_text = connection[
                 "flowtype"
             ].unit.get_unit_flow()
-            item.ids.list_item_textfield.text = str(connection["weight_origin"])
+
+            # get value of the connection weight from scenario if possible
+            try:
+                item.ids.list_item_textfield.text = str(
+                    app.session_data["scenarios"][app.selected_scenario][
+                        connection["key"]
+                    ]["weight"]["value"]
+                )
+            except:
+                # otherwise set weight to one and initialize an entry in the scenario dict
+                item.ids.list_item_textfield.text = "1"
+                app.session_data["scenarios"][app.selected_scenario][
+                    connection["key"]
+                ] = {
+                    "weight": {"type": "static", "value": 1},
+                    "to_losses": {"type": "boolean", "value": False},
+                }
 
             # add list item to the output_list
             if connection["flowtype"].unit.is_energy():
                 # add the checkbox to the correct group
                 item.ids.list_item_checkbox.group = "energy"
                 # check, if the current connection is meant to deduct losses
-                if connection["to_losses"]:
+                if app.session_data["scenarios"][app.selected_scenario][
+                    connection["key"]
+                ]["to_losses"]["value"]:
                     item.ids.list_item_checkbox.active = True
                 if connection["to"] == app.dialog.primary_flow:
                     item.ids.list_item_primary.active = True
@@ -330,7 +378,9 @@ def update_connection_lists(app):
                 # add the checkbox to the correct group
                 item.ids.list_item_checkbox.group = "mass"
                 # check, if the current connection is meant to deduct losses
-                if connection["to_losses"]:
+                if app.session_data["scenarios"][app.selected_scenario][
+                    connection["key"]
+                ]["to_losses"]["value"]:
                     item.ids.list_item_checkbox.active = True
                 if connection["to"] == app.dialog.primary_flow:
                     item.ids.list_item_primary.active = True
