@@ -239,8 +239,10 @@ def update_component_configuration_tab(app):
 
             # handle special cases of demands
             if parameter_key == "demands":
-                list_item.secondary_text = f"{len(parameters[parameter_key][0]['value'][0])} individual demands specified"
+                # write the length of the current demand list into the info section of the parameter list element
+                list_item.secondary_text = f"List of {len(parameters[parameter_key]['value'][0])} individual demands"
                 list_icon.icon = "ray-start-arrow"
+
             # handle special cases of boolean attributes
             elif parameter_key in ["direct_throughput"]:
                 pass
