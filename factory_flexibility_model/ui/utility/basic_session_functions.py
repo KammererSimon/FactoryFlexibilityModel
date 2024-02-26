@@ -26,6 +26,7 @@ from factory_flexibility_model.ui.gui_components.layout_flowtype_configuration.l
 from factory_flexibility_model.ui.gui_components.main_menu.dialog_new_session import (
     show_new_session_dialog,
 )
+from factory_flexibility_model.ui.utility.io.import_scenarios import import_scenarios
 from factory_flexibility_model.ui.utility.window_handling import close_dialog
 
 # FUNCTIONS
@@ -350,18 +351,9 @@ def load_session(app):
         return
 
     # IMPORT Scenarios
-    app.session_data["scenarios"] = {}
-
-    # iterate over all files within the scenario-dict
-    for scenario_file in os.listdir(f"{app.session_data['session_path']}/scenarios"):
-        if scenario_file.endswith(".sc"):
-            with open(
-                f"{app.session_data['session_path']}/scenarios/{scenario_file}"
-            ) as file:
-                dict_key = os.path.splitext(scenario_file)[0]
-                app.session_data["scenarios"][dict_key] = yaml.load(
-                    file, Loader=yaml.SafeLoader
-                )
+    app.session_data["scenarios"] = import_scenarios(
+        f"{app.session_data['session_path']}/scenarios"
+    )
 
     # Did all imports work till here? -> Overwrite internal attributes
     app.blueprint = blueprint_new
@@ -373,8 +365,8 @@ def load_session(app):
     # there is no component selected initially
     app.selected_asset = None
 
-    # select the first scenario out of the scenario list
-    app.selected_scenario = list(app.session_data["scenarios"].keys())[0]
+    # select the default scenario of the session
+    app.selected_scenario = "default"
 
     # update the GUI to display the data
     app.root.ids.asset_config_screens.current = "flowtype_list"
