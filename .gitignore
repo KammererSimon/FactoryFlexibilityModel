@@ -195,3 +195,4 @@ migrations/
 /poetry.lock
 /examples/Demo_01/simulations/
 /examples/Demo_02/simulations/
+/factory_flexibility_model/ui/FactoryGUI.bat
