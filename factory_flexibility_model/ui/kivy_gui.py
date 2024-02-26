@@ -1,5 +1,4 @@
 # IMPORTS
-
 from kivy.core.window import Window
 from kivy.lang import Builder
 from kivymd.app import MDApp
@@ -316,6 +315,7 @@ class factory_GUIApp(MDApp):
         Window.bind(on_resize=resize_window)
         Window.bind(on_maximize=resize_window)
         Window.bind(on_restore=resize_window)
+        self.title = "Factory Flexibility Model"
 
         return screen
 
