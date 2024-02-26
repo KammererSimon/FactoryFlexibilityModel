@@ -1499,7 +1499,9 @@ class Schedule(Component):
                 )
 
             elif parameter == "demands" and hasattr(self, parameter):
-                self.demands = parameters["demands"]
+                # store the given demands in self.demands as numpy array
+                self.demands = iv.validate(parameters["demands"], "np.ndarray")
+
                 check = (self.demands[:, 0] - self.demands[:, 1]) > 0
                 if check.any():
                     logging.critical(
