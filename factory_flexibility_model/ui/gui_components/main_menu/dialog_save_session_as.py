@@ -20,7 +20,7 @@ def show_dialog_save_session_as(app):
     is being called.
     """
 
-    from factory_flexibility_model.ui.gui_components.main_menu.basic_session_functions import (
+    from factory_flexibility_model.ui.utility.basic_session_functions import (
         save_session_as,
     )
 
