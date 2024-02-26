@@ -1,9 +1,7 @@
 # SCENARIO
 
-import csv
 import os
 
-import numpy as np
 import yaml
 
 
@@ -64,19 +62,11 @@ class Scenario:
 
         self.configurations = {}
 
+        self.global_co2_limit = None
+
         # read in parameters.txt
         if scenario_file is not None:
             self._import_scenario(scenario_file)
-
-        # # read in timeseries.txt
-        # timeseries_file = rf"{session_folder}\timeseries.csv"
-        # if timeseries_file is not None:
-        #     self._import_timeseries(timeseries_file)
-        #
-        # # read in scheduler demands
-        # demands_file = rf"{session_folder}\demands.txt"
-        # if timeseries_file is not None:
-        #     self._import_demands(demands_file)
 
     def _import_scenario(self, scenario_file: str) -> bool:
         """
@@ -107,27 +97,3 @@ class Scenario:
                 self.configurations[component_key][parameter_key] = parameter_data[
                     "value"
                 ]
-
-    def _import_timeseries(self, timeseries_file: str) -> bool:
-        """
-        This function opens the .txt file given as "timeseries_file" and returns the contained timeseries as a dictionary with one key: [array] pair per timeseries specified
-        :param timeseries_file: [string] Path to a .txt file containing the key: [array] pairs
-        :return: [boolean] True if import was successfull
-        """
-
-        # Make sure that the requested file exists
-        if not os.path.exists(timeseries_file):
-            raise FileNotFoundError(
-                f"Requested timeseries.txt-file does not exists: {timeseries_file}"
-            )
-
-        with open(timeseries_file) as csvfile:
-            reader = csv.reader(csvfile)
-            for row in reader:
-                print(row)
-                key_component, key_parameter = row[0], row[1]
-                values = np.array([float(value) for value in row[2:]])
-                # make sure that the component key exists in the configurations dict
-                if not key_component in self.configurations:
-                    self.configurations[key_component] = {}
-                self.configurations[key_component][key_parameter] = values
