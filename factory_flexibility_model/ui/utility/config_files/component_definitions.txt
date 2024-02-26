@@ -224,6 +224,6 @@ triggerdemand:
       unit_type: integer
 pool:
   default_icon: pool_default
-  max_inputs: 10
-  max_outputs: 10
+  max_inputs: 20
+  max_outputs: 20
   parameters:
