@@ -4,7 +4,6 @@ import csv
 import os
 
 import numpy as np
-import pandas as pd
 import yaml
 
 
@@ -108,7 +107,6 @@ class Scenario:
                 self.configurations[component_key][parameter_key] = parameter_data[
                     "value"
                 ]
-        print(self.configurations)
 
     def _import_timeseries(self, timeseries_file: str) -> bool:
         """
@@ -133,24 +131,3 @@ class Scenario:
                 if not key_component in self.configurations:
                     self.configurations[key_component] = {}
                 self.configurations[key_component][key_parameter] = values
-
-    def _import_demands(self, demands_file: str) -> bool:
-        """
-        This function opens the .txt file given as "demands_file" and returns the contained demandlist as a dictionary with one key: [pd.df] pair per demand specified
-        :param demand_file: [string] Path to a .txt file containing the key: [pd.df] pairs
-        :return: [boolean] True if import was successfull
-        """
-        # open file
-        with open(demands_file) as file:
-            demands_data = yaml.load(file, Loader=yaml.SafeLoader)
-
-        for key_component, demands in demands_data.items():
-            for values in demands.values():
-                # make sure that the component key exists in the configurations dict
-                if not key_component in self.configurations:
-                    self.configurations[key_component] = {}
-
-                # write the dataframe to the configurations dict
-                self.configurations[key_component]["demands"] = pd.DataFrame(
-                    values
-                ).to_numpy()
