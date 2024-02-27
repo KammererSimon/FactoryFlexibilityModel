@@ -92,7 +92,7 @@ def add_timeseries_parameter_value(app):
     )
 
 
-def delete_parameter_value(app, value_key):
+def delete_parameter_value(app):
     """
     This function takes a pointer to a currently running app and a key to one of the values in the currently opened parametervalue definitiondialog.
     It deletes the referenced parameter from the current scenario dict and refreshes the value list in the dialog.
@@ -269,9 +269,13 @@ def update_parameter_value_list(app):
     # create a list item with the current value
     item = TwoLineAvatarIconListItem(
         IconLeftWidget(icon=icon),
+        IconRightWidget(
+            icon="delete", on_release=lambda x: delete_parameter_value(app)
+        ),
         text=text,
         secondary_text=secondary_text,
     )
+
     # add list item to the value list
     app.dialog.content_cls.ids.list_parameter_variations.add_widget(item)
 
@@ -293,7 +297,6 @@ def update_timeseries_list(app):
         search_text = app.popup.content_cls.ids.textfield_search.text
         if search_text.upper() not in key.upper():
             continue
-
         # create list item
         item = TwoLineAvatarIconListItem(
             IconLeftWidget(icon="chart-line"),
