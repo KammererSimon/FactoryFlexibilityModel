@@ -5,8 +5,8 @@
 from tkinter import filedialog
 
 import pandas as pd
-from kivymd.uix.label import MDLabel
-from kivymd.uix.snackbar import MDSnackbar
+
+from factory_flexibility_model.ui.utility.GUI_logging import log_event
 
 
 # FUNCTIONS
@@ -33,31 +33,34 @@ def import_scheduler_demands(app):
             filepath, usecols="A:D", header=None, skiprows=1
         )
     except:
-        MDSnackbar(
-            MDLabel(
-                text="Error during import of the given file. Please make sure, that the given file is in the specified standard format."
-            )
-        ).open()
+        # inform the user
+        log_event(
+            app,
+            "Error during import of the given file. Please make sure, that the given file is in the specified standard format.",
+            "ERROR",
+        )
 
     # make sure all start and end times are integers
     if (
         not imported_demands[0].apply(lambda x: isinstance(x, int)).all()
         or not imported_demands[1].apply(lambda x: isinstance(x, int)).all()
     ):
-        MDSnackbar(
-            MDLabel(
-                text="Cannot import scheduler demands, because at least one start or end time is not an integer"
-            )
-        ).open()
+        # inform the user
+        log_event(
+            app,
+            "Cannot import scheduler demands, because at least one start or end time is not an integer",
+            "ERROR",
+        )
         return
 
     # make sure that no demand starts before timestep 1
     if (imported_demands[0] < 1).any():
-        MDSnackbar(
-            MDLabel(
-                text="Cannot import scheduler demands, because at least one partdemand starts before timestep 1."
-            )
-        ).open()
+        # inform the user
+        log_event(
+            app,
+            "Cannot import scheduler demands, because at least one partdemand starts before timestep 1.",
+            "ERROR",
+        )
         return
 
     # write imported demands into the scenarios dict
@@ -66,6 +69,4 @@ def import_scheduler_demands(app):
     ] = {"type": "demands", "value": imported_demands.to_dict()}
 
     # inform the user
-    MDSnackbar(
-        MDLabel(text=f"Given excel file with part demands successfully imported")
-    ).open()
+    log_event(app, f"Given excel file with part demands successfully imported", "INFO")

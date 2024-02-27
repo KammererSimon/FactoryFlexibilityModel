@@ -12,6 +12,7 @@ from factory_flexibility_model.ui.gui_components.layout_canvas.factory_visualisa
 from factory_flexibility_model.ui.gui_components.layout_component_configuration.layout_component_configuration_tab import (
     update_component_configuration_tab,
 )
+from factory_flexibility_model.ui.utility.GUI_logging import log_event
 from factory_flexibility_model.ui.utility.window_handling import close_dialog
 
 
@@ -60,7 +61,13 @@ def save_component_definition(app):
 
     # make sure that the given name is not taken yet
     if not app.selected_asset["name"] == name and app.get_key(name):
-        app.show_info_popup("The given name is already assigned within the factory!")
+        # inform the user
+        log_event(
+            app,
+            f"The given name is already assigned within the factory!",
+            "INFO",
+            f"User tried to rename {app.selected_asset['name']} and got the warning:",
+        )
         return
 
     # write configuration into the blueprint

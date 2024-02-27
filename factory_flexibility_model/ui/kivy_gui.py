@@ -8,9 +8,6 @@ import factory_flexibility_model.ui.utility.flowtype_determination as fd
 from factory_flexibility_model.ui.gui_components.import_gui_components import (
     import_gui_components,
 )
-from factory_flexibility_model.ui.gui_components.info_popup.info_popup import (
-    show_info_popup,
-)
 from factory_flexibility_model.ui.gui_components.layout_canvas.drag_label.draglabel import (
     DragLabel,
 )
@@ -31,6 +28,7 @@ from factory_flexibility_model.ui.gui_components.layout_component_creation.layou
 from factory_flexibility_model.ui.gui_components.main_menu.layout_main_menu import (
     main_menu,
 )
+from factory_flexibility_model.ui.utility.GUI_logging import log_event
 from factory_flexibility_model.ui.utility.io.import_config_files import import_config
 from factory_flexibility_model.ui.utility.window_handling import resize_window
 
@@ -76,9 +74,10 @@ class factory_GUIApp(MDApp):
 
         # abort if there is no session yet
         if self.session_data["session_path"] is None:
-            show_info_popup(
+            log_event(
                 self,
                 "Cannot create components before initializing or importing a session!",
+                "ERROR",
             )
             # close the component selection menu
             self.root.ids.component_shelf.set_state("closed")
@@ -147,6 +146,11 @@ class factory_GUIApp(MDApp):
         # set unsaved changes to true
         self.unsaved_changes_on_session = True
 
+        # write log
+        log_event(
+            self, f"New {component_type} created with key '{component_key}'", "DEBUG"
+        )
+
     def add_connection(self, destination_key):
         """
         This function is being called when the user activated the connection creation mode and then clicked on a destination component
@@ -180,9 +184,10 @@ class factory_GUIApp(MDApp):
             ]["max_outputs"]
         ):
             # in case the origin component already reached its maximum number of outputs:
-            show_info_popup(
+            log_event(
                 self,
                 f"{origin_name} already has the maximum number of outputs connected",
+                "ERROR",
             )
             initialize_visualization(self)
             return
@@ -194,9 +199,10 @@ class factory_GUIApp(MDApp):
             ]["max_inputs"]
         ):
             # in case the origin component already reached its maximum number of inputs:
-            show_info_popup(
+            log_event(
                 self,
                 f"{destination_name} already has the maximum number of inputs connected",
+                "ERROR",
             )
             initialize_visualization(self)
             return
@@ -206,9 +212,10 @@ class factory_GUIApp(MDApp):
             # check all connections in the blueprint
             if connection["from"] == origin_key and connection["to"] == destination_key:
                 # if current connection is equal to the one to be created: abort and warn the user
-                show_info_popup(
+                log_event(
                     self,
-                    f"There is already a connection from {origin_name} to {destination_name}!",
+                    f"Creating connection failed: There is already a connection from {origin_name} to {destination_name}!",
+                    "ERROR",
                 )
                 initialize_visualization(self)
                 return
@@ -233,9 +240,10 @@ class factory_GUIApp(MDApp):
                 )
             elif not destination_flowtype.key == origin_flowtype.key:
                 # if destination flowtype diverges from origin flowtype -> abort and show an error
-                show_info_popup(
+                log_event(
                     self,
-                    f"Cannot create this connection, because {origin_name} and {destination_name} already have different flowtypes assigned!",
+                    f"Creating connection failed: {origin_name} and {destination_name} have incompatible flowtypes!",
+                    "ERROR",
                 )
                 return
 
@@ -261,6 +269,13 @@ class factory_GUIApp(MDApp):
 
         # set unsaved changes to true
         self.unsaved_changes_on_session = True
+
+        # write log
+        log_event(
+            self,
+            f"New connection created from {origin_name} to {destination_name} with key '{connection_key}'",
+            "DEBUG",
+        )
 
     def build(self):
         """
@@ -293,14 +308,15 @@ class factory_GUIApp(MDApp):
         self.selected_asset = None  # the asset that the user has currently selected
         self.session_data = {
             "display_scaling_factor": self.config["display_scaling_factor"],
+            "log": [],  # initialize an empty list to collect log messages
+            "parameters": {},
             "show_component_config_dialog_on_creation": self.config[
                 "show_component_config_dialog_on_creation"
             ],
             "session_path": None,
             "session_active": False,
-            "parameters": {},
-            "timeseries": {},
             "simulations": {},
+            "timeseries": {},
         }
 
         # Style Config for GUI

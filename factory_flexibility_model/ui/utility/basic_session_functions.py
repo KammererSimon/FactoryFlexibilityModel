@@ -8,15 +8,10 @@ from tkinter.messagebox import askyesno
 import yaml
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.label import MDLabel
-from kivymd.uix.snackbar.snackbar import MDSnackbar
 
 import factory_flexibility_model.factory.Blueprint as bp
 from factory_flexibility_model.factory.Flowtype import Flowtype
 from factory_flexibility_model.factory.Unit import Unit
-from factory_flexibility_model.ui.gui_components.info_popup.info_popup import (
-    show_info_popup,
-)
 from factory_flexibility_model.ui.gui_components.layout_canvas.factory_visualisation import (
     initialize_visualization,
 )
@@ -26,6 +21,7 @@ from factory_flexibility_model.ui.gui_components.layout_flowtype_configuration.l
 from factory_flexibility_model.ui.gui_components.main_menu.dialog_new_session import (
     show_new_session_dialog,
 )
+from factory_flexibility_model.ui.utility.GUI_logging import log_event
 from factory_flexibility_model.ui.utility.io.import_scenarios import import_scenarios
 from factory_flexibility_model.ui.utility.window_handling import close_dialog
 
@@ -181,6 +177,9 @@ def create_new_session(app):
     app.session_data["scenarios"] = {"default": {}}
     app.selected_scenario = "default"
 
+    # initialize an empty log
+    app.session_data["log"] = []
+
     # initialize the GUI
     initialize_visualization(app)
     update_flowtype_list(app)
@@ -192,11 +191,11 @@ def create_new_session(app):
     app.unsaved_changes_on_asset = False
 
     # inform the user
-    MDSnackbar(
-        MDLabel(
-            text=f"New Session '{session_name}' created under '{app.session_data['session_path']}'"
-        )
-    ).open()
+    log_event(
+        app,
+        f"New Session '{session_name}' created under '{app.session_data['session_path']}'",
+        "INFO",
+    )
 
 
 def save_session(app):
@@ -214,8 +213,12 @@ def save_session(app):
 
     # make sure that there is a session to save
     if app.session_data["session_path"] is None:
-        show_info_popup(
-            app, "Cannot save before a session has been created or imported!"
+        # inform the user
+        log_event(
+            app,
+            "Cannot save before a session has been created or imported!",
+            "INFO",
+            "The user tried to save the session and got the following warning:",
         )
         return
 
@@ -227,6 +230,7 @@ def save_session(app):
             "show_component_config_dialog_on_creation"
         ],
         "timeseries": app.session_data["timeseries"],
+        "log": app.session_data["log"],
     }
 
     with open(
@@ -257,11 +261,10 @@ def save_session(app):
         f"{app.session_data['session_path']}\\layout\\layout.png"
     )
 
-    MDSnackbar(
-        MDLabel(
-            text=f"Session successfully saved at {app.session_data['session_path']}"
-        )
-    ).open()
+    # inform the user
+    log_event(
+        app, f"Session successfully saved at {app.session_data['session_path']}", "INFO"
+    )
 
 
 def save_session_as(app):
@@ -343,11 +346,13 @@ def load_session(app):
             f'{app.session_data["session_path"]}\\layout\\Layout.factory'
         )
     except:
-        MDSnackbar(
-            MDLabel(
-                text=f"ERROR: Importing Blueprint from '{app.session_data['session_path']}\\layout\\Layout.factory' failed!"
-            )
-        ).open()
+        # inform the user
+        log_event(
+            app,
+            f"Importing Blueprint from '{app.session_data['session_path']}\\layout\\Layout.factory' failed!",
+            "ERROR",
+            f"The user tried to import session '{filepath}' and got the following error:",
+        )
         return
 
     # IMPORT Scenarios
@@ -373,6 +378,13 @@ def load_session(app):
     app.root.ids.label_session_name.text = app.blueprint.info["name"]
     initialize_visualization(app)
     update_flowtype_list(app)
+
+    # inform the user
+    log_event(
+        app,
+        f"Session '{app.session_data['session_path']}' has been successfully imported",
+        "DEBUG",
+    )
 
 
 def initialize_units_and_flowtypes(app):

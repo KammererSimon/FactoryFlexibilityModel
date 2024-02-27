@@ -7,6 +7,7 @@ from kivy_garden.graph import LinePlot
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import IconLeftWidget, IconRightWidget, TwoLineAvatarIconListItem
 
+from factory_flexibility_model.ui.utility.GUI_logging import log_event
 from factory_flexibility_model.ui.utility.validate_textfield_inputs import (
     validate_float,
     validate_ratio,
@@ -54,6 +55,13 @@ def add_static_parameter_value(app):
 
     update_parameter_value_list(app)
 
+    # write log
+    log_event(
+        app,
+        f"New parameter configuration: Parameter {parameter_key} of component {app.selected_asset['name']} is now specified as a static value.",
+        "DEBUG",
+    )
+
 
 def add_timeseries_parameter_value(app):
     """
@@ -76,18 +84,33 @@ def add_timeseries_parameter_value(app):
 
     update_parameter_value_list(app)
 
+    # write log
+    log_event(
+        app,
+        f"New parameter configuration: Parameter {parameter_key} of component {app.selected_asset['name']} is now specified as a timeseries.",
+        "DEBUG",
+    )
+
 
 def delete_parameter_value(app, value_key):
     """
-    This function takes a pointer to a currently running app and a key to one of the values in the currently opened parametervalue definitiondialog. It deletes the referenced parameter from the app.session_data["parameters"] dict and refreshes the value list in the dialog.
+    This function takes a pointer to a currently running app and a key to one of the values in the currently opened parametervalue definitiondialog.
+    It deletes the referenced parameter from the current scenario dict and refreshes the value list in the dialog.
     :param app: Pointer to the currently running app instance
     :param value_key: [str] Key to one value within the parameterlist of the selected asset
     :return: true
     """
-    del app.session_data["parameters"][app.selected_asset["key"]][app.dialog.parameter][
-        value_key
+    del app.session_data["scenarios"][app.selected_scenario][app.selected_asset["key"]][
+        app.dialog.parameter
     ]
     update_parameter_value_list(app)
+
+    # write log
+    log_event(
+        app,
+        f"Parameter configuration of parameter {app.dialog.parameter} at component {app.selected_asset['name']} has been deleted",
+        "DEBUG",
+    )
 
 
 def delete_timeseries(app, timeseries_key):
@@ -97,6 +120,13 @@ def delete_timeseries(app, timeseries_key):
     """
     del app.session_data["timeseries"][timeseries_key]
     update_timeseries_list(app)
+
+    # write log
+    log_event(
+        app,
+        f"Timeseries with key {timeseries_key} has been deleted from the session timeseries database",
+        "DEBUG",
+    )
 
 
 def select_timeseries_list_item(app, list_item, touch):

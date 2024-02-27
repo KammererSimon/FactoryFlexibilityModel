@@ -1,10 +1,8 @@
 # IMPORTS
-from kivymd.uix.label import MDLabel
-from kivymd.uix.snackbar.snackbar import MDSnackbar
-
 from factory_flexibility_model.ui.gui_components.layout_canvas.factory_visualisation import (
     initialize_visualization,
 )
+from factory_flexibility_model.ui.utility.GUI_logging import log_event
 from factory_flexibility_model.ui.utility.window_handling import close_dialog
 
 
@@ -58,7 +56,8 @@ def delete_selected_component(app):
                 del scenario[connection]
 
     # inform the user
-    MDSnackbar(MDLabel(text=f"{app.selected_asset['name']} has been deleted!")).open()
+    log_event(app, f"Component {app.selected_asset['name']} has been deleted!", "INFO")
+
     # delete the component out of the blueprint
     del app.blueprint.components[app.selected_asset["key"]]
 

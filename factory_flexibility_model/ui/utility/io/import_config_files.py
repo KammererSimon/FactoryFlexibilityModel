@@ -1,4 +1,5 @@
 # IMPORTS
+import logging
 import os
 
 import yaml
@@ -105,6 +106,20 @@ def import_config():
         "show_component_config_dialog_on_creation": config_file[
             "show_component_config_dialog_on_creation"
         ],
+        "log_logger": config_file["log_logger"],
+        "log_snackbar": config_file["log_snackbar"],
+        "log_console": config_file["log_console"],
     }
+
+    print(config_file["logger_level"])
+    # set logger level
+    if config_file["logger_level"] == "DEBUG":
+        logging.basicConfig(level=logging.DEBUG)
+    elif config_file["logger_level"] == "INFO":
+        logging.basicConfig(level=logging.INFO)
+    elif config_file["logger_level"] == "WARNING":
+        logging.basicConfig(level=logging.WARNING)
+    elif config_file["logger_level"] == "ERROR":
+        logging.basicConfig(level=logging.ERROR)
 
     return config

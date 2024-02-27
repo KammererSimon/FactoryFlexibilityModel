@@ -5,9 +5,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import TwoLineAvatarListItem
 
-from factory_flexibility_model.ui.gui_components.info_popup.info_popup import (
-    show_info_popup,
-)
+from factory_flexibility_model.ui.utility.GUI_logging import log_event
 from factory_flexibility_model.ui.utility.validate_textfield_inputs import (
     validate_float,
 )
@@ -83,7 +81,13 @@ def save_converter_ratios(app):
 
     # make sure that the current values are valid
     if not app.dialog.bilance_valid:
-        show_info_popup(app, "The given ratios are invalid!")
+        # inform the user
+        log_event(
+            app,
+            "The given ratios are invalid!",
+            "ERROR",
+            f"The user tried to save the ratio definition for {app.selected_asset['name']} and got the following warning:",
+        )
         return
 
     # call the update primary flow routine to normalize all the ratio values in case the user changed the ratio of the primary flow manually
