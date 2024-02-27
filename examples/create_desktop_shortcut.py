@@ -37,7 +37,7 @@ def create_desktop_shortcut():
     shortcut.Targetpath = batch_path
     shortcut.WorkingDirectory = os.path.dirname(batch_path)
     shortcut.IconLocation = (
-        f"{session_path}\\factory_flexibility_model\\ui\\assets\\FM_shortcut.ico"
+        f"{session_path}\\factory_flexibility_model\\ui\\assets\\FFM_shortcut.ico"
     )
     shortcut.WindowStyle = 7  # open shell in minimized mode
     shortcut.Description = "Factory Flexibility Model"
