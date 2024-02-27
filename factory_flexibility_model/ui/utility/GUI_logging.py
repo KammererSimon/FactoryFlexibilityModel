@@ -11,7 +11,9 @@ from kivymd.uix.snackbar.snackbar import MDSnackbar
 
 
 # CODE START
-def log_event(app, message: str, type: str, event_info: str = ""):
+def log_event(
+    app, message: str, type: str, event_info: str = "", icon: str = None
+) -> None:
     """
     This is a logging function for the GUI application.
     It is used instead of the default logging function to create a session-specific log to be stored with the session and to provide user feedback during runtime.
@@ -31,8 +33,26 @@ def log_event(app, message: str, type: str, event_info: str = ""):
     # append event type and time to message:
     log_message = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} \t {type} \t {event_info} \t {message}"
 
+    # select correct icon
+    if icon is not None:
+        pass
+    elif type == "ERROR":
+        icon = "alert"
+    elif type == "DEBUG":
+        icon = "chevron-right"
+    elif type == "INFO":
+        icon = "information-outline"
+
     # append new message to the log within session data
-    app.session_data["log"].append(log_message)
+    app.session_data["log"].append(
+        {
+            "time": f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            "message": message,
+            "event_info": event_info,
+            "icon": icon,
+            "type": type,
+        }
+    )
 
     # handover message to python logger if specified in config
     if app.config["log_logger"]:

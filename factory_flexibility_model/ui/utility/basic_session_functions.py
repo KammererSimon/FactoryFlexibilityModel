@@ -333,6 +333,9 @@ def load_session(app):
     with open(filepath) as file:
         app.session_data = yaml.load(file, Loader=yaml.SafeLoader)
 
+    if app.session_data["log"] is None:
+        app.session_data["log"] = []
+
     # set session path
     app.session_data["session_path"] = os.path.dirname(filepath)
 
@@ -382,8 +385,8 @@ def load_session(app):
     # inform the user
     log_event(
         app,
-        f"Session '{app.session_data['session_path']}' has been successfully imported",
-        "DEBUG",
+        f"Session '{app.session_data['session_path']}' has been imported",
+        "INFO",
     )
 
 

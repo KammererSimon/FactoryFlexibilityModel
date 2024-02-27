@@ -188,6 +188,7 @@ class factory_GUIApp(MDApp):
                 self,
                 f"{origin_name} already has the maximum number of outputs connected",
                 "ERROR",
+                "Adding a new connection failed:",
             )
             initialize_visualization(self)
             return
@@ -203,6 +204,7 @@ class factory_GUIApp(MDApp):
                 self,
                 f"{destination_name} already has the maximum number of inputs connected",
                 "ERROR",
+                "Adding a new connection failed:",
             )
             initialize_visualization(self)
             return
@@ -214,8 +216,9 @@ class factory_GUIApp(MDApp):
                 # if current connection is equal to the one to be created: abort and warn the user
                 log_event(
                     self,
-                    f"Creating connection failed: There is already a connection from {origin_name} to {destination_name}!",
+                    f"There is already a connection from {origin_name} to {destination_name}!",
                     "ERROR",
+                    "Adding a new connection failed:",
                 )
                 initialize_visualization(self)
                 return
@@ -242,8 +245,9 @@ class factory_GUIApp(MDApp):
                 # if destination flowtype diverges from origin flowtype -> abort and show an error
                 log_event(
                     self,
-                    f"Creating connection failed: {origin_name} and {destination_name} have incompatible flowtypes!",
+                    f"Cannot create connection, because {origin_name} and {destination_name} have incompatible flowtypes!",
                     "ERROR",
+                    "Adding a new connection failed:",
                 )
                 return
 
