@@ -88,12 +88,24 @@ def collect_timeseries_data(app):
         for component in scenario.values():
             # iterate over all parameters of the component
             for parameter in component.values():
-                # check, if the parameter is a timeseries
-                if parameter["type"] == "timeseries":
+                # continue, if the parameter is not a timeseries
+                if not parameter["type"] == "timeseries":
+                    continue
+
+                try:
                     # get the actual timeseries with the required length and write it into the "value" field of the parameter
                     parameter["value"] = app.session_data["timeseries"][
                         parameter["key"]
                     ]["values"][0 : app.blueprint.info["timesteps"]]
+                except KeyError:
+                    # file an error if the key wasn't found
+                    log_event(
+                        app,
+                        f"The timeseries with key '{parameter['key']}' could not be found. Saving session aborted!",
+                        "ERROR",
+                        "During saving session the following error occured:",
+                    )
+                    raise Exception
 
 
 def create_session_folder(root_folder, session_name: str = "New Session"):
@@ -142,6 +154,10 @@ def create_new_session(app):
     """
     # get requested name, description and directory
     session_name = app.dialog.content_cls.ids.textfield_new_session_name.text
+
+    # eliminate all spaces by replacing them with underscores
+    session_name = session_name.replace(" ", "_")
+
     try:
         path = app.dialog.content_cls.ids.label_session_folder.text
     except:
@@ -195,6 +211,7 @@ def create_new_session(app):
         app,
         f"New Session '{session_name}' created under '{app.session_data['session_path']}'",
         "INFO",
+        icon="new-box",
     )
 
 
@@ -222,7 +239,7 @@ def save_session(app):
         )
         return
 
-    # SAVE RELEVANT PARTS OF SESSION DATA
+    # PREPARE RELEVANT PARTS OF SESSION DATA
     data = {
         "display_scaling_factor": app.session_data["display_scaling_factor"],
         "session_path": app.session_data["session_path"],
@@ -233,17 +250,14 @@ def save_session(app):
         "log": app.session_data["log"],
     }
 
-    with open(
-        f"{app.session_data['session_path']}\\{app.blueprint.info['name']}.ffm",
-        "w",
-    ) as file:
-        yaml.dump(data, file)
+    # Get the required timeseries-data for all parameters specified as timeseries with the correct length
+    try:
+        collect_timeseries_data(app)
+    except:
+        return
 
     # SAVE THE BLUEPRINT
     app.blueprint.save(path=f"{app.session_data['session_path']}\\layout")
-
-    # Get the required timeseries-data for all parameters specified as timeseries with the correct length
-    collect_timeseries_data(app)
 
     # Iterate over all scenarios and create scenario.txt documents
     for key_scenario, scenario in app.session_data["scenarios"].items():
@@ -261,9 +275,18 @@ def save_session(app):
         f"{app.session_data['session_path']}\\layout\\layout.png"
     )
 
+    with open(
+        f"{app.session_data['session_path']}\\{app.blueprint.info['name']}.ffm",
+        "w",
+    ) as file:
+        yaml.dump(data, file)
+
     # inform the user
     log_event(
-        app, f"Session successfully saved at {app.session_data['session_path']}", "INFO"
+        app,
+        f"Session successfully saved at {app.session_data['session_path']}",
+        "INFO",
+        icon="content-save-check",
     )
 
 
@@ -387,6 +410,7 @@ def load_session(app):
         app,
         f"Session '{app.session_data['session_path']}' has been imported",
         "INFO",
+        icon="folder-open-outline",
     )
 
 
