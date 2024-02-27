@@ -1,7 +1,6 @@
 # This file is not part of the factory flexibility model itself. It is just a standalone function to be executed directly from poetry to create a desktop shortcut for the tool GUI
 
 # IMPORTS
-import logging
 import os
 
 import win32com.client
@@ -44,4 +43,4 @@ def create_desktop_shortcut():
     shortcut.Description = "Factory Flexibility Model"
     shortcut.save()
 
-    logging.info(f"Desktop shortcut for standalone GUI execution successfully created!")
+    print("Desktop shortcut for standalone GUI execution successfully created!")
