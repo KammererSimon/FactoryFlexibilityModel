@@ -152,7 +152,7 @@ class Component:
             for i in self.outputs:
                 i.update_flowtype(flowtype)
 
-    def set_parameter(self, timesteps: int, parameter: str, parameters: dict):
+    def set_parameter(self, timesteps: int, parameter: str, parameters: dict) -> bool:
         """
         This function is mostly an input validation, that checks, if the parameters that the user wants to set are compatible to each other and fullfill the data requirements of the Simulation.
         # If all checks are passed the parameter given will be written to self
@@ -331,11 +331,15 @@ class Component:
                 f"The attribute {parameter} was found in {self.name}, but is not part of the ordinary configuration routine. It has been set to the given value without input validation. This could lead to errors during the Simulation"
             )
 
-        # handle attributes that are not part of the specific Component
+        # if no option matched so far the parameter is unknown or invalid
         else:
+            # warn the user
             logging.warning(
                 f" The parameter {parameter} was ignored for Component {self.name}, because it is unknown"
             )
+            return False
+
+        return True
 
 
 # INHERITED COMPONENT CLASSES
@@ -587,7 +591,9 @@ class Converter(Component):
 
             # HANDLE GENERAL PARAMETERS
             else:
-                super().set_parameter(timesteps, parameter, parameters)
+                if not super().set_parameter(timesteps, parameter, parameters):
+                    # in case the function failed to set the parameter it returns false
+                    continue
 
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
         if self.eta_variable:
@@ -881,9 +887,11 @@ class Sink(Component):
             ]:
                 pass
 
-            # Handle requests that are general attributes of components or generic attributes:
+            # HANDLE GENERAL PARAMETERS
             else:
-                super().set_parameter(timesteps, parameter, parameters)
+                if not super().set_parameter(timesteps, parameter, parameters):
+                    # in case the function failed to set the parameter it returns false
+                    continue
 
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
@@ -1077,9 +1085,11 @@ class Source(Component):
                 # define the source to cause emissions:
                 self.causes_emissions = True
 
-            # Handle requests that are general attributes of components or generic attributes:
+            # HANDLE GENERAL PARAMETERS
             else:
-                super().set_parameter(timesteps, parameter, parameters)
+                if not super().set_parameter(timesteps, parameter, parameters):
+                    # in case the function failed to set the parameter it returns false
+                    continue
 
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
@@ -1149,8 +1159,9 @@ class Storage(Component):
 
             # HANDLE GENERAL PARAMETERS
             else:
-                print(parameter)
-                super().set_parameter(timesteps, parameter, parameters)
+                if not super().set_parameter(timesteps, parameter, parameters):
+                    # in case the function failed to set the parameter it returns false
+                    continue
 
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
@@ -1290,7 +1301,9 @@ class Thermalsystem(Component):
 
             # HANDLE GENERAL PARAMETERS
             else:
-                super().set_parameter(timesteps, parameter, parameters)
+                if not super().set_parameter(timesteps, parameter, parameters):
+                    # in case the function failed to set the parameter it returns false
+                    continue
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
         # Validation of given inputs:
@@ -1389,7 +1402,9 @@ class Triggerdemand(Component):
 
             # HANDLE GENERAL PARAMETERS
             else:
-                super().set_parameter(timesteps, parameter, parameters)
+                if not super().set_parameter(timesteps, parameter, parameters):
+                    # in case the function failed to set the parameter it returns false
+                    continue
 
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
@@ -1549,6 +1564,8 @@ class Schedule(Component):
 
             # HANDLE GENERAL PARAMETERS
             else:
-                super().set_parameter(timesteps, parameter, parameters)
+                if not super().set_parameter(timesteps, parameter, parameters):
+                    # in case the function failed to set the parameter it returns false
+                    continue
 
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
