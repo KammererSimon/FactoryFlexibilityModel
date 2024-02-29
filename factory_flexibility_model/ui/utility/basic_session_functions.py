@@ -88,10 +88,17 @@ def collect_timeseries_data(app):
         for component in scenario.values():
             # iterate over all parameters of the component
             for parameter in component.values():
-                # continue, if the parameter is not a timeseries
-                if not parameter["type"] == "timeseries":
+                # continue, if the parameter is not specified or not  a timeseries
+                if parameter == {}:
+                    log_event(
+                        app,
+                        f"There is an empty parameter key {parameter} for component {component} within the scenario dict! There must be a glitch somewhere in the parameter definition methods or the scenario file has been externally modified",
+                        "ERROR",
+                        icon="bug",
+                    )
                     continue
-
+                elif not parameter["type"] == "timeseries":
+                    continue
                 try:
                     # get the actual timeseries with the required length and write it into the "value" field of the parameter
                     parameter["value"] = app.session_data["timeseries"][
@@ -303,6 +310,10 @@ def save_session_as(app):
 
     # get requested name, description and directory
     session_name = app.dialog.content_cls.ids.textfield_new_session_name.text
+
+    # eliminate all spaces by replacing them with underscores
+    session_name = session_name.replace(" ", "_")
+
     session_description = (
         app.dialog.content_cls.ids.textfield_new_session_description.text
     )
