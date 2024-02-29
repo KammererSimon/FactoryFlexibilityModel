@@ -100,6 +100,8 @@ def delete_parameter_value(app):
     :param value_key: [str] Key to one value within the parameterlist of the selected asset
     :return: true
     """
+
+    # delete the dict entry for the current parameter
     del app.session_data["scenarios"][app.selected_scenario][app.selected_asset["key"]][
         app.dialog.parameter
     ]
@@ -239,16 +241,13 @@ def update_parameter_value_list(app):
     # clear the current list
     app.dialog.content_cls.ids.list_parameter_variations.clear_widgets()
 
-    # if no value for the parameter has been defined yet: create an empty dict and abort
+    # if no value for the parameter has been defined yet: abort
     if (
         parameter
         not in app.session_data["scenarios"][app.selected_scenario][
             app.selected_asset["key"]
         ].keys()
     ):
-        app.session_data["scenarios"][app.selected_scenario][app.selected_asset["key"]][
-            parameter
-        ] = {}
         return
 
     # get actual parameter value from the session data
