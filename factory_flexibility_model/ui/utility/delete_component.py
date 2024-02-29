@@ -38,7 +38,8 @@ def delete_selected_component(app):
 
     # delete all parameters saved for the component
     for scenario in app.session_data["scenarios"].values():
-        del scenario[app.selected_asset["key"]]
+        if app.selected_asset["key"] in scenario.keys():
+            del scenario[app.selected_asset["key"]]
 
     # make sure that no connection to the component is set as a primary flow at any converter
     for component in app.blueprint.components.values():
