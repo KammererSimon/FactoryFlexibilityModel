@@ -111,7 +111,6 @@ def import_config():
         "log_console": config_file["log_console"],
     }
 
-    print(config_file["logger_level"])
     # set logger level
     if config_file["logger_level"] == "DEBUG":
         logging.basicConfig(level=logging.DEBUG)
