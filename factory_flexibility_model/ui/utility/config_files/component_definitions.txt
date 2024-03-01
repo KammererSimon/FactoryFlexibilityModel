@@ -24,11 +24,11 @@ converter:
       description: Maximum Efficiency at nominal operating Point
       text: Best Efficiency
       unit_type: '%'
-    max_neg_ramp_power:
+    power_ramp_max_neg:
       description: Maximum Ramp Down
       text: Negative Ramping
       unit_type: ramping
-    max_pos_ramp_power:
+    power_ramp_max_pos:
       description: Maximum Ramp Up
       text: Positive Ramping
       unit_type: ramping

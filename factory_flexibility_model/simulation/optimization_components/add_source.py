@@ -30,8 +30,7 @@ def add_source(simulation, component):
     if component.determined:
         simulation.m.addConstr(
             gp.quicksum(
-                component.outputs[o].weight_origin
-                * simulation.MVars[component.outputs[o].key]
+                simulation.MVars[component.outputs[o].key]
                 for o in range(len(component.outputs))
             )
             == component.determined_power
@@ -46,16 +45,13 @@ def add_source(simulation, component):
         == simulation.MVars[f"E_{component.key}"]
     )
 
-    logging.debug(
-        f"        - Constraint:   {component.name} == sum of outgoing flows"
-    )
+    logging.debug(f"        - Constraint:   {component.name} == sum of outgoing flows")
 
     # is the maximum output power of the source limited? If yes: Add power_max constraint
     if component.power_max_limited:
         simulation.m.addConstr(
             gp.quicksum(
-                component.outputs[o].weight_origin
-                * simulation.MVars[component.outputs[o].key]
+                simulation.MVars[component.outputs[o].key]
                 for o in range(len(component.outputs))
             )
             / simulation.interval_length
@@ -67,8 +63,7 @@ def add_source(simulation, component):
     elif simulation.factory.enable_slacks:
         simulation.m.addConstr(
             gp.quicksum(
-                component.outputs[o].weight_origin
-                * simulation.MVars[component.outputs[o].key]
+                simulation.MVars[component.outputs[o].key]
                 for o in range(len(component.outputs))
             )
             <= simulation.big_m
@@ -81,8 +76,7 @@ def add_source(simulation, component):
     if component.power_min_limited:
         simulation.m.addConstr(
             gp.quicksum(
-                component.outputs[o].weight_origin
-                * simulation.MVars[component.outputs[o].key]
+                simulation.MVars[component.outputs[o].key]
                 for o in range(len(component.outputs))
             )
             / simulation.interval_length

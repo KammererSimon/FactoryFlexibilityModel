@@ -5,11 +5,10 @@
 
 # TODO: Refactor this to get rid of the excessive if/elif-nesting!
 
+# IMPORTS
 import logging
 
 import numpy as np
-
-# IMPORT 3RD PARTY PACKAGES
 import pandas as pd
 
 
@@ -309,7 +308,18 @@ def validate(input, output_type, *, min=None, max=None, positive=False, timestep
                 )
                 raise Exception
 
+    # FLOATS
     if output_type == "float":
+
+        # transform strings to floats if possible
+        if isinstance(input, str):
+            try:
+                input = float(input)
+            except:
+                logging.critical(
+                    f"ERROR: Given value {input} is not convertable to a float"
+                )
+                raise Exception
 
         if timeseries:
             if isinstance(input, float) or isinstance(input, int):
@@ -413,6 +423,28 @@ def validate(input, output_type, *, min=None, max=None, positive=False, timestep
                 raise Exception
             return input
 
+    # TIMESERIES DATA
     if output_type == "timeseries":
         logging.critical("This function call is no longer supported")
         raise Exception
+
+    # NUMPY MATRICES
+    if output_type == "np.ndarray":
+
+        if isinstance(input, np.ndarray):
+            # if the input is already a numpy array: just return it
+            return input
+
+        elif isinstance(input, dict):
+            # if it is a dict: transform it to a dataframe and then to a np.ndarray
+            input = pd.DataFrame(input)
+            return input.to_numpy()
+
+        elif isinstance(input, pd.DataFrame):
+            # if it is a dataframe: convert it to numpy
+            return input.to_numpy()
+
+        else:
+            raise Exception(
+                f"Given configuration for demands of component {self.name} could not be processed since they are not handed over as a dict or pd.DataFrame"
+            )

@@ -54,13 +54,19 @@ def set_boolean_parameter(app, status, parameter_key):
     """
 
     if status:
-        app.session_data["parameters"][app.selected_asset["key"]][parameter_key]["0"][
-            "value"
-        ] = 1
+        app.session_data["scenarios"][app.selected_scenario][app.selected_asset["key"]][
+            parameter_key
+        ] = {
+            "type": "boolean",
+            "value": True,
+        }
     else:
-        app.session_data["parameters"][app.selected_asset["key"]][parameter_key]["0"][
-            "value"
-        ] = 0
+        app.session_data["scenarios"][app.selected_scenario][app.selected_asset["key"]][
+            parameter_key
+        ] = {
+            "type": "boolean",
+            "value": False,
+        }
 
     update_component_configuration_tab(app)
 
@@ -112,7 +118,11 @@ def update_component_configuration_tab(app):
     # CREATE LAYOUT FOR CONFIGURATION
     layout_config = LayoutComponentConfiguration()
     # update parameter list items
-    parameters = app.session_data["parameters"][asset_key]
+    try:
+        parameters = app.session_data["scenarios"][app.selected_scenario][asset_key]
+    except:
+        app.session_data["scenarios"][app.selected_scenario][asset_key] = {}
+        parameters = {}
 
     # get component parameter list
     component_parameter_list = app.config["component_definitions"][asset_type][
@@ -227,31 +237,35 @@ def update_component_configuration_tab(app):
             list_item.secondary_text_color = app.config["main_color"].rgba
             list_item.font_style = "H6"
 
+            # handle special cases of demands
             if parameter_key == "demands":
-                list_item.secondary_text = f"{len(parameters[parameter_key][0]['value'][0])} individual demands specified"
+                # write the length of the current demand list into the info section of the parameter list element
+                list_item.secondary_text = f"List of {len(parameters[parameter_key]['value'][0])} individual demands"
                 list_icon.icon = "ray-start-arrow"
-            if parameter_key == "direct_throughput":
-                pass
 
-            elif len(parameters[parameter_key]) == 1:
-                value = parameters[parameter_key][next(iter(parameters[parameter_key]))]
+            # handle special cases of boolean attributes
+            elif parameter_key in ["direct_throughput"]:
+                pass
+            # handle attributes with static values or timeseries:
+            else:
+                value = parameters[parameter_key]
+                # handle static values
                 if value["type"] == "static":
                     list_item.secondary_text = (
                         f"{round(float(value['value']),2)} {unit}"
                     )
                     list_icon.icon = "ray-start-arrow"
+                # handle timeseries
                 else:
-                    list_item.secondary_text = f"Timeseries: {value['value']}"
+                    list_item.secondary_text = f"Timeseries: {value['key']}"
                     list_icon.icon = "chart-line"
-            elif len(parameters[parameter_key]) > 1:
-                list_item.secondary_text = (
-                    f"{len(parameters[parameter_key])} Variations Specified"
-                )
-                list_icon.icon = "multicast"
 
+        # handle special cases where different functions than the standard data input form have to be used
         if parameter_key == "demands":
+            # link excel-import script for scheduler demands
             list_item.bind(on_release=lambda x: import_scheduler_demands(app))
         elif parameter_key == "ratios":
+            # link converter_ratio_window for converter ratios
             list_item.bind(on_release=lambda x: show_converter_ratio_dialog(app))
             list_icon.icon = "cog"
             list_item.secondary_text = "Show Conversion Ratio Definition"
@@ -259,7 +273,7 @@ def update_component_configuration_tab(app):
             list_item.text_color = app.config["main_color"].rgba
             list_item.secondary_text_color = app.config["main_color"].rgba
             list_item.font_style = "H6"
-        if parameter_key == "direct_throughput":
+        elif parameter_key in ["direct_throughput"]:
             # exception for the direct throughput parameter of storages.
             # give the list the active colors
             list_icon.icon = "fast-forward"
@@ -273,27 +287,20 @@ def update_component_configuration_tab(app):
 
             try:
                 # set the checkbox as checked or empty as defined in the parameters dict
-                if (
-                    app.session_data["parameters"][app.selected_asset["key"]][
-                        "direct_throughput"
-                    ]["0"]["value"]
-                    == 1
-                ):
+                if app.session_data["scenarios"][app.selected_scenario][
+                    app.selected_asset["key"]
+                ][parameter_key]["value"]:
                     list_item.secondary_text = "Allowed"
                     checkbox.active = True
                 else:
                     list_item.secondary_text = "Blocked"
                     checkbox.active = False
             except:
-                # if the component has not been edited before: initialize the boolean value as
-                app.session_data["parameters"][app.selected_asset["key"]][
-                    "direct_throughput"
-                ] = {
-                    "0": {
-                        "type": "static",
-                        "value": 0,
-                    }
-                }
+                # if the component has not been edited before: initialize the boolean value as false
+                app.session_data["scenarios"][app.selected_scenario][asset_key][
+                    parameter_key
+                ] = {"type": "boolean", "value": False}
+
                 list_item.secondary_text = "Blocked"
                 checkbox.active = False
 
@@ -305,6 +312,7 @@ def update_component_configuration_tab(app):
             list_item.add_widget(checkbox)
 
         else:
+            # if none of the exceptions applies: bind the standard parameter definition window
             list_item.bind(
                 on_release=lambda x, item=list_item: show_parameter_config_dialog(
                     app, item

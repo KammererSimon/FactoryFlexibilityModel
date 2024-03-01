@@ -72,7 +72,7 @@ class Blueprint:
         }
         self.units = {}  # list of units
 
-    def import_from_file(self, folder: str, *, overwrite: bool = False) -> bool:
+    def import_from_file(self, blueprint_file: str, *, overwrite: bool = False) -> bool:
         """
         .. _import_from_file():
         This function imports a  blueprint stored as .factory-file and sets all attributes of the blueprint according to the specified confidurations of the file
@@ -91,21 +91,38 @@ class Blueprint:
                 )
                 return False
 
-        # Import Units
-        self.__import_units(folder)
-
-        # Import Flowtypes
-        self.__import_flowtypes(folder)
-
         # open yaml-file given by the user
         try:
-            with open(f"{folder}\\Layout.factory") as file:
+            with open(blueprint_file) as file:
                 data = yaml.load(file, Loader=yaml.UnsafeLoader)
         except:
             logging.error(
-                rf"The given file is not a valid .factory - blueprint file! ({folder}\Layout.factory"
+                rf"The given file is not a valid .factory - blueprint file! ({file}"
             )
             raise Exception
+
+        # recreate unit objects
+        for unit_key, unit in data["units"].items():
+            self.units[unit_key] = un.Unit(
+                key=unit_key,
+                quantity_type=unit["quantity_type"],
+                conversion_factor=unit["conversion_factor"],
+                magnitudes=unit["magnitudes"],
+                units_flow=unit["units_flow"],
+                units_flowrate=unit["units_flowrate"],
+                name=unit["name"],
+            )
+
+        # recreate flowtype objects
+        for flowtype_key, flowtype in data["flowtypes"].items():
+            self.flowtypes[flowtype_key] = ft.Flowtype(
+                key=flowtype_key,
+                unit=self.units[flowtype["unit"]],
+                description=flowtype["description"],
+                represents_losses=flowtype["represents_losses"],
+                name=flowtype["name"],
+                color=flowtype["color"],
+            )
 
         # exchange flowtype keys with their objects
         for component in data["components"].values():
@@ -121,64 +138,6 @@ class Blueprint:
 
         logging.info("Blueprint import successfull")
 
-    def __import_flowtypes(self, session_folder: str) -> bool:
-        """
-        This function checks for the file 'flowtypes.txt' in the session folder and imports all the information regarding required flowtypes for the layout and stores it in blueprint format under self.flowtypes.
-        :param session_folder: [str] Path to the root folder of the current session
-        :return: True if successfull
-        """
-        # open yaml-file given by the user
-        try:
-            with open(f"{session_folder}\\flowtypes.txt") as file:
-                data = yaml.load(file, Loader=yaml.UnsafeLoader)
-        except:
-            logging.error(
-                f"Flowtype definition file is missing or corrupted! ({session_folder}/flowtypes.txt"
-            )
-            raise Exception
-
-        # recreate flowtype objects
-        for key, flowtype in data.items():
-            self.flowtypes[key] = ft.Flowtype(
-                key=key,
-                unit=self.units[flowtype["unit"]],
-                description=flowtype["description"],
-                represents_losses=flowtype["represents_losses"],
-                name=flowtype["name"],
-                color=flowtype["color"],
-            )
-
-    def __import_units(self, session_folder: str) -> bool:
-        """
-        This function checks for the file 'units.txt' in the session folder and imports all the information regarding required unit types for the layout and stores it in blueprint format under self.units.
-        :param session_folder: [str] Path to the root folder of the current session
-        :return: True if successfull
-        """
-        # open yaml-file given by the user
-        try:
-            with open(f"{session_folder}\\units.txt") as file:
-                data = yaml.load(file, Loader=yaml.UnsafeLoader)
-        except:
-            logging.error(
-                f"Unit definition file is missing or corrupted! ({session_folder}/units.txt"
-            )
-            raise Exception
-
-        # recreate unit objects
-        try:
-            for key, unit in data.items():
-                self.units[key] = un.Unit(
-                    key=key,
-                    quantity_type=unit["quantity_type"],
-                    conversion_factor=unit["conversion_factor"],
-                    magnitudes=unit["magnitudes"],
-                    units_flow=unit["units_flow"],
-                    units_flowrate=unit["units_flowrate"],
-                    name=unit["name"],
-                )
-        except:
-            raise TypeError(f"Definition of unit {key} is incomplete or corrupted")
-
     def save(self, *, path: str = None) -> bool:
         """
         .. _save():
@@ -193,6 +152,8 @@ class Blueprint:
         data = {
             "components": {},
             "connections": {},
+            "flowtypes": {},
+            "units": {},
             "info": self.info,
         }
 
@@ -208,60 +169,49 @@ class Blueprint:
                 "flowtype": component["flowtype"].key,
             }
 
+        # adding connections as dict
         for connection in self.connections.values():
             data["connections"][connection["key"]] = {
                 "from": connection["from"],
                 "to": connection["to"],
                 "flowtype": connection["flowtype"].key,
                 "key": connection["key"],
-                "weight_origin": connection["weight_origin"],
-                "weight_destination": connection["weight_destination"],
                 "to_losses": connection["to_losses"],
                 "type": connection["type"],
             }
 
-        # store the Layout as json file
+        # adding units as dict
+        # iteration is required because magnitudes are not serializable
+        for unit_key, unit in self.units.items():
+            data["units"][unit_key] = {
+                "name": unit.name,
+                "key": unit.key,
+                "quantity_type": unit.quantity_type,
+                "conversion_factor": unit.conversion_factor,
+                "units_flow": unit.units_flow,
+                "units_flowrate": unit.units_flowrate,
+                "magnitudes": unit.magnitudes.tolist(),
+            }
+
+        # adding flowtypes as dict
+        for flowtype_key, flowtype in self.flowtypes.items():
+            data["flowtypes"][flowtype_key] = {
+                "key": flowtype_key,
+                "color": flowtype.color.hex,
+                "unit": flowtype.unit.key,
+                "description": flowtype.description,
+                "name": flowtype.name,
+                "represents_losses": flowtype.represents_losses,
+            }
+
         try:
             with open(f"{path}\\Layout.factory", "w") as file:
                 yaml.dump(data, file)
             logging.info(f"Blueprint saved under {path}")
+            return True
         except:
             logging.error(f"Saving blueprint under '{path}' failed!")
-
-        # Create units.txt
-        units_data = {}
-        for key, unit in self.units.items():
-            units_data[key] = {}
-            units_data[key]["name"] = unit.name
-            units_data[key]["quantity_type"] = unit.quantity_type
-            units_data[key]["conversion_factor"] = unit.conversion_factor
-            units_data[key]["units_flow"] = unit.units_flow
-            units_data[key]["units_flowrate"] = unit.units_flowrate
-            units_data[key]["magnitudes"] = unit.magnitudes.tolist()
-
-        try:
-            with open(f"{path}\\units.txt", "w") as file:
-                yaml.dump(units_data, file)
-            logging.info(f"units.txt saved under {path}")
-        except:
-            logging.error(f"Saving units.txt under '{path}' failed!")
-
-        # Create flowtypes.txt
-        flowtypes_data = {}
-        for key, flowtype in self.flowtypes.items():
-            flowtypes_data[key] = {}
-            flowtypes_data[key]["color"] = flowtype.color.hex
-            flowtypes_data[key]["unit"] = flowtype.unit.key
-            flowtypes_data[key]["description"] = flowtype.description
-            flowtypes_data[key]["name"] = flowtype.name
-            flowtypes_data[key]["represents_losses"] = flowtype.represents_losses
-
-        try:
-            with open(f"{path}\\flowtypes.txt", "w") as file:
-                yaml.dump(flowtypes_data, file)
-            logging.info(f"flowtypes.txt saved under {path}")
-        except:
-            logging.error(f"Saving flowtypes.txt under '{path}' failed!")
+            return False
 
     def to_factory(self) -> fm.Factory:
         """
@@ -345,8 +295,6 @@ class Blueprint:
                 key=key,
                 flowtype=flowtype,
                 type=type,
-                weight_origin=connection["weight_origin"],
-                weight_destination=connection["weight_destination"],
             )
 
         factory.check_validity()

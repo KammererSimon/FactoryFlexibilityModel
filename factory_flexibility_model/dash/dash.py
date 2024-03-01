@@ -511,7 +511,7 @@ def create_dash(simulation):
                                 component_key_list.index(
                                     simulation.factory.connections[i].destination.key
                                 ),
-                                simulation.factory.connections[i].weight_origin,
+                                simulation.factory.connections[i].weight,
                                 connection_key_list.index(
                                     simulation.factory.connections[i].key
                                 ),
@@ -1353,7 +1353,7 @@ def create_dash(simulation):
                 f"\n **Max output power:** {component.flowtype.unit.get_value_expression(round(max(simulation.result[component.key]['utilization'])), 'flowrate')}\n "
                 f"\n **Average SOC:** {component.flowtype.unit.get_value_expression(round(simulation.result[component.key]['SOC'].mean()), 'flow')}\n "
                 f"\n **Charging circles:** {round(input_sum / (simulation.result[component.key]['SOC'].max() + 0.0001))} (Estimated) \n "
-                f"\n **Resulting capital cost:** {round(component.capacity_charge / 8760 * simulation.T * round((simulation.result[component.key]['SOC'].max() + 0.0001)),2)}{simulation.factory.currency} \n "
+                f"\n **Resulting capital cost:** {round(component.capacity_charge / 8760 * simulation.T * round(simulation.result[component.key]['SOC'].max() + 0.0001),2)}{simulation.factory.currency} \n "
             )
         else:
             fig = go.Figure()

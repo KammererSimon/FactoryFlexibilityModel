@@ -48,9 +48,7 @@ def add_converter(simulation, component):
             simulation.MVars[f"P_{component.key}"]
             >= component.power_min * component.availability
         )
-        logging.debug(
-            f"        - Constraint:   {component.key} >= {component.key}_min"
-        )
+        logging.debug(f"        - Constraint:   {component.key} >= {component.key}_min")
 
     # Calculate the efficiency of operation for each timestep based on the deviations
     simulation.MVars[f"Eta_{component.key}"] = simulation.m.addMVar(
@@ -78,9 +76,7 @@ def add_converter(simulation, component):
             simulation.MVars[f"Eta_{component.key}"][t] == 1
             for t in range(simulation.T)
         )
-        logging.debug(
-            f"        - Constraint:   {component.name} fixed to 100%"
-        )
+        logging.debug(f"        - Constraint:   {component.name} fixed to 100%")
 
     # calculate the absolute operating point out of the nominal operating point, the deviations and the switching state
     # Can the Converter be turned on/off regardless of the power constraints?
@@ -132,7 +128,7 @@ def add_converter(simulation, component):
         simulation.m.addConstr(
             simulation.MVars[connection.key]
             == simulation.MVars[f"P_{component.key}"]
-            * connection.weight_destination
+            * connection.weight
             * simulation.interval_length
         )
 
@@ -142,7 +138,7 @@ def add_converter(simulation, component):
             simulation.m.addConstr(
                 simulation.MVars[connection.key]
                 == simulation.MVars[f"P_{component.key}"]
-                * connection.weight_origin
+                * connection.weight
                 * simulation.interval_length
                 * simulation.MVars[f"Eta_{component.key}"]
             )
@@ -153,7 +149,7 @@ def add_converter(simulation, component):
             simulation.m.addConstr(
                 simulation.MVars[connection.key]
                 == simulation.MVars[f"P_{component.key}"]
-                * connection.weight_origin
+                * connection.weight
                 * simulation.interval_length
             )
             logging.debug(

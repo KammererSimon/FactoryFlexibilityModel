@@ -5,19 +5,15 @@ from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.datatables import MDDataTable
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.label import MDLabel
 from kivymd.uix.list import (
     IconLeftWidget,
     IconLeftWidgetWithoutTouch,
     OneLineIconListItem,
     TwoLineIconListItem,
 )
-from kivymd.uix.snackbar.snackbar import MDSnackbar
 
 import factory_flexibility_model.factory.Unit as Unit
-from factory_flexibility_model.ui.gui_components.info_popup.info_popup import (
-    show_info_popup,
-)
+from factory_flexibility_model.ui.utility.GUI_logging import log_event
 from factory_flexibility_model.ui.utility.window_handling import close_popup
 
 
@@ -177,7 +173,7 @@ def save_changes_on_unit(app, *args):
     update_unit_list(app)
 
     # inform the user
-    MDSnackbar(MDLabel(text=f"{unit.name} updated!")).open()
+    log_event(app, f"Specification of unit {unit.name} has been updated!", "INFO")
 
 
 def select_unit_list_item(app, list_item):
@@ -280,8 +276,12 @@ def show_unit_config_dialog(app):
 
     # abort if there is no session yet
     if app.session_data["session_path"] is None:
-        show_info_popup(
-            app, "Cannot configure units before creating or importing a session!"
+        # inform the user
+        log_event(
+            app,
+            "Cannot configure units before creating or importing a session!",
+            "INFO",
+            "User tried to show unit configuration dialog and got the warning:",
         )
         return
 

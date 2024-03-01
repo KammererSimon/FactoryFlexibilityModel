@@ -1,9 +1,12 @@
+# This script contains the function import_scheduler_demands. The function is being called via an callback event that is created for parameter-config.list items within the parameter config tab.
+# The binding is initialized during layout_component_configuration_tab.update_update_component_configuration_tab
+
 # IMPORTS
 from tkinter import filedialog
 
 import pandas as pd
-from kivymd.uix.label import MDLabel
-from kivymd.uix.snackbar.snackbar import MDSnackbar
+
+from factory_flexibility_model.ui.utility.GUI_logging import log_event
 
 
 # FUNCTIONS
@@ -19,51 +22,51 @@ def import_scheduler_demands(app):
     filetype = [("xlsx", "*.xlsx")]
     filepath = filedialog.askopenfilename(defaultextension=filetype, filetypes=filetype)
 
-    if not filepath == "":
-        # import the excel sheet
+    # abort if the user canceled the path-dialog
+    if filepath == "":
+        return
+
+    # import the Excel sheet
+    try:
+        # import file under given path to a pandas dataframe
         imported_demands = pd.read_excel(
             filepath, usecols="A:D", header=None, skiprows=1
         )
-
-        # make sure all start and end times are integers
-        if (
-            not imported_demands[0].apply(lambda x: isinstance(x, int)).all()
-            or not imported_demands[1].apply(lambda x: isinstance(x, int)).all()
-        ):
-            MDSnackbar(
-                MDLabel(
-                    text="Cannot import scheduler demands, because at least one start or endtime is not an integer"
-                )
-            ).open()
-            return
-
-        # make sure that no demand starts before timestep 1
-        if (imported_demands[0] < 1).any():
-            MDSnackbar(
-                MDLabel(
-                    text="Cannot import scheduler demands, because at least one partdemand starts before timestep 1."
-                )
-            ).open()
-            return
-
-        # make sure that the key "demands" exists within the parameter list of the current compoent
-        if (
-            "demands"
-            not in app.session_data["parameters"][app.selected_asset["key"]].keys()
-        ):
-            app.session_data["parameters"][app.selected_asset["key"]]["demands"] = {}
-
-        # create a key to adress the variation
-        # variation = 0
-        # while variation in app.session_data["parameters"][app.selected_asset["key"]]["demands"].keys():
-        #    variation += 1
-        # TODO: activate multiple variations again when the model is capable of handling them
-
-        variation = 0
-
-        app.session_data["parameters"][app.selected_asset["key"]]["demands"][
-            variation
-        ] = {"type": "demands", "value": imported_demands.to_dict()}
-
+    except:
         # inform the user
-        MDSnackbar(MDLabel(text=f"Excelfile successfully imported")).open()
+        log_event(
+            app,
+            "Error during import of the given file. Please make sure, that the given file is in the specified standard format.",
+            "ERROR",
+        )
+
+    # make sure all start and end times are integers
+    if (
+        not imported_demands[0].apply(lambda x: isinstance(x, int)).all()
+        or not imported_demands[1].apply(lambda x: isinstance(x, int)).all()
+    ):
+        # inform the user
+        log_event(
+            app,
+            "Cannot import scheduler demands, because at least one start or end time is not an integer",
+            "ERROR",
+        )
+        return
+
+    # make sure that no demand starts before timestep 1
+    if (imported_demands[0] < 1).any():
+        # inform the user
+        log_event(
+            app,
+            "Cannot import scheduler demands, because at least one partdemand starts before timestep 1.",
+            "ERROR",
+        )
+        return
+
+    # write imported demands into the scenarios dict
+    app.session_data["scenarios"][app.selected_scenario][app.selected_asset["key"]][
+        "demands"
+    ] = {"type": "demands", "value": imported_demands.to_dict()}
+
+    # inform the user
+    log_event(app, f"Given excel file with part demands successfully imported", "INFO")

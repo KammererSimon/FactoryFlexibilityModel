@@ -1,6 +1,7 @@
 # IMPORTS
 from kivy.lang import Builder
 
+
 # FUNCTIONS
 def import_gui_components():
     """
@@ -34,22 +35,24 @@ def import_gui_components():
     gui_components_path = "factory_flexibility_model\\ui\\gui_components"
 
     # specify all layouts to import
-    gui_components = ["dialog_session_options\\dialog_session_options.kv",
-                      "dialog_unit_definition\\dialog_unit_definition.kv",
-                      "layout_component_configuration\\dialog_converter_ratios\\dialog_converter_ratios.kv",
-                      "layout_component_configuration\\dialog_component_definition\\dialog_component_definition.kv",
-                      "layout_component_configuration\\dialog_icon_selection\\dialog_icon_selection.kv",
-                      "layout_component_configuration\\dialog_parameter_configuration\\dialog_parameter_configuration.kv",
-                      "layout_component_configuration\\dialog_parameter_configuration\\popup_add_static_value.kv",
-                      "layout_component_configuration\\dialog_parameter_configuration\\popup_add_timeseries.kv",
-                      "layout_component_configuration\\layout_component_configuration_tab.kv",
-                      "layout_flowtype_configuration\\dialog_flowtype_definition\\dialog_flowtype_definition.kv",
-                      "layout_flowtype_configuration\\layout_flowtype_list.kv",
-                      "main_menu\\dialog_new_session.kv",
-                      "main_menu\\dialog_save_session_as.kv",
-                      "main_menu\\layout_main_menu.kv",
-                      "layout_canvas\\drag_label\\draglabel.kv"
-                      ]
+    gui_components = [
+        "dialog_session_options\\dialog_session_options.kv",
+        "dialog_session_log\\dialog_session_log.kv",
+        "dialog_unit_definition\\dialog_unit_definition.kv",
+        "layout_component_configuration\\dialog_converter_ratios\\dialog_converter_ratios.kv",
+        "layout_component_configuration\\dialog_component_definition\\dialog_component_definition.kv",
+        "layout_component_configuration\\dialog_icon_selection\\dialog_icon_selection.kv",
+        "layout_component_configuration\\dialog_parameter_configuration\\dialog_parameter_configuration.kv",
+        "layout_component_configuration\\dialog_parameter_configuration\\popup_add_static_value.kv",
+        "layout_component_configuration\\dialog_parameter_configuration\\popup_add_timeseries.kv",
+        "layout_component_configuration\\layout_component_configuration_tab.kv",
+        "layout_flowtype_configuration\\dialog_flowtype_definition\\dialog_flowtype_definition.kv",
+        "layout_flowtype_configuration\\layout_flowtype_list.kv",
+        "main_menu\\dialog_new_session.kv",
+        "main_menu\\dialog_save_session_as.kv",
+        "main_menu\\layout_main_menu.kv",
+        "layout_canvas\\drag_label\\draglabel.kv",
+    ]
 
     # iterate over all layouts and call Builder-method
     for component_file in gui_components:

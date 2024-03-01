@@ -7,6 +7,7 @@ from kivy_garden.graph import LinePlot
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import IconLeftWidget, IconRightWidget, TwoLineAvatarIconListItem
 
+from factory_flexibility_model.ui.utility.GUI_logging import log_event
 from factory_flexibility_model.ui.utility.validate_textfield_inputs import (
     validate_float,
     validate_ratio,
@@ -37,7 +38,7 @@ def add_static_parameter_value(app):
     """
 
     # get the value to store
-    value = app.popup.content_cls.ids.textfield_value.text
+    value = float(app.popup.content_cls.ids.textfield_value.text)
 
     # close popup
     close_popup(app)
@@ -46,18 +47,20 @@ def add_static_parameter_value(app):
     asset_key = app.selected_asset["key"]
     parameter_key = app.dialog.parameter
 
-    # create a key to adress the variation
-    variation = 0
-    while variation in app.session_data["parameters"][asset_key][parameter_key].keys():
-        variation += 1
-
     # store the value under the determined key
-    app.session_data["parameters"][asset_key][parameter_key][variation] = {
+    app.session_data["scenarios"][app.selected_scenario][asset_key][parameter_key] = {
         "type": "static",
         "value": value,
     }
 
     update_parameter_value_list(app)
+
+    # write log
+    log_event(
+        app,
+        f"New parameter configuration: Parameter {parameter_key} of component {app.selected_asset['name']} is now specified as a static value.",
+        "DEBUG",
+    )
 
 
 def add_timeseries_parameter_value(app):
@@ -72,31 +75,44 @@ def add_timeseries_parameter_value(app):
     # close popup
     close_popup(app)
 
-    # create a key to adress the variation
-    variation = 0
-    while variation in app.session_data["parameters"][asset_key][parameter_key].keys():
-        variation += 1
-
     # store the value under the determined key
-    app.session_data["parameters"][asset_key][parameter_key][variation] = {
+    app.session_data["scenarios"][app.selected_scenario][asset_key][parameter_key] = {
         "type": "timeseries",
-        "value": app.popup.selected_timeseries,
+        "key": app.popup.selected_timeseries,
+        "value": None,
     }
 
     update_parameter_value_list(app)
 
+    # write log
+    log_event(
+        app,
+        f"New parameter configuration: Parameter {parameter_key} of component {app.selected_asset['name']} is now specified as a timeseries.",
+        "DEBUG",
+    )
 
-def delete_parameter_value(app, value_key):
+
+def delete_parameter_value(app):
     """
-    This function takes a pointer to a currently running app and a key to one of the values in the currently opened parametervalue definitiondialog. It deletes the referenced parameter from the app.session_data["parameters"] dict and refreshes the value list in the dialog.
+    This function takes a pointer to a currently running app and a key to one of the values in the currently opened parametervalue definitiondialog.
+    It deletes the referenced parameter from the current scenario dict and refreshes the value list in the dialog.
     :param app: Pointer to the currently running app instance
     :param value_key: [str] Key to one value within the parameterlist of the selected asset
     :return: true
     """
-    del app.session_data["parameters"][app.selected_asset["key"]][app.dialog.parameter][
-        value_key
+
+    # delete the dict entry for the current parameter
+    del app.session_data["scenarios"][app.selected_scenario][app.selected_asset["key"]][
+        app.dialog.parameter
     ]
     update_parameter_value_list(app)
+
+    # write log
+    log_event(
+        app,
+        f"Parameter configuration of parameter {app.dialog.parameter} at component {app.selected_asset['name']} has been deleted",
+        "DEBUG",
+    )
 
 
 def delete_timeseries(app, timeseries_key):
@@ -106,6 +122,13 @@ def delete_timeseries(app, timeseries_key):
     """
     del app.session_data["timeseries"][timeseries_key]
     update_timeseries_list(app)
+
+    # write log
+    log_event(
+        app,
+        f"Timeseries with key {timeseries_key} has been deleted from the session timeseries database",
+        "DEBUG",
+    )
 
 
 def select_timeseries_list_item(app, list_item, touch):
@@ -218,43 +241,42 @@ def update_parameter_value_list(app):
     # clear the current list
     app.dialog.content_cls.ids.list_parameter_variations.clear_widgets()
 
-    # if no value for the parameter has been defined yet: create an empty dict and abort
+    # if no value for the parameter has been defined yet: abort
     if (
         parameter
-        not in app.session_data["parameters"][app.selected_asset["key"]].keys()
+        not in app.session_data["scenarios"][app.selected_scenario][
+            app.selected_asset["key"]
+        ].keys()
     ):
-        app.session_data["parameters"][app.selected_asset["key"]][parameter] = {}
         return
 
-    # iterate over all currently specified values for the component and parameter
-    for variation, value in app.session_data["parameters"][app.selected_asset["key"]][
-        parameter
-    ].items():
+    # get actual parameter value from the session data
+    parameter = app.session_data["scenarios"][app.selected_scenario][
+        app.selected_asset["key"]
+    ][parameter]
 
-        # define list entry depending on the kind of value that is being handled
-        if value["type"] == "timeseries":
-            text = "Timeseries"
-            secondary_text = value["value"]
-            icon = "chart-line"
-        else:
-            text = "Static Value"
-            icon = "numeric"
-            secondary_text = f"{value['value']} {app.dialog.unit}"
+    # define list entry depending on the kind of value that is being handled
+    if parameter["type"] == "timeseries":
+        text = "Timeseries"
+        secondary_text = parameter["key"]
+        icon = "chart-line"
+    else:
+        text = "Static Value"
+        icon = "numeric"
+        secondary_text = f"{parameter['value']} {app.dialog.unit}"
 
-        # create a list item with the current value
-        item = TwoLineAvatarIconListItem(
-            IconLeftWidget(icon=icon),
-            IconRightWidget(
-                icon="delete",
-                on_release=lambda x, value_key=variation: delete_parameter_value(
-                    app, value_key
-                ),
-            ),
-            text=text,
-            secondary_text=secondary_text,
-        )
-        # add list item to the value list
-        app.dialog.content_cls.ids.list_parameter_variations.add_widget(item)
+    # create a list item with the current value
+    item = TwoLineAvatarIconListItem(
+        IconLeftWidget(icon=icon),
+        IconRightWidget(
+            icon="delete", on_release=lambda x: delete_parameter_value(app)
+        ),
+        text=text,
+        secondary_text=secondary_text,
+    )
+
+    # add list item to the value list
+    app.dialog.content_cls.ids.list_parameter_variations.add_widget(item)
 
 
 def update_timeseries_list(app):
@@ -274,7 +296,6 @@ def update_timeseries_list(app):
         search_text = app.popup.content_cls.ids.textfield_search.text
         if search_text.upper() not in key.upper():
             continue
-
         # create list item
         item = TwoLineAvatarIconListItem(
             IconLeftWidget(icon="chart-line"),

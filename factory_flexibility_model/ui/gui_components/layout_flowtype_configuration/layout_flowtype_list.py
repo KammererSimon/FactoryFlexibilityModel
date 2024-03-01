@@ -1,6 +1,5 @@
 # IMPORTS
 from kivy.uix.boxlayout import BoxLayout
-from kivymd.uix.label import MDLabel
 from kivymd.uix.list import (
     IconLeftWidget,
     IconLeftWidgetWithoutTouch,
@@ -8,7 +7,6 @@ from kivymd.uix.list import (
     OneLineIconListItem,
     TwoLineAvatarIconListItem,
 )
-from kivymd.uix.snackbar.snackbar import MDSnackbar
 
 import factory_flexibility_model.factory.Flowtype as ft
 from factory_flexibility_model.ui.gui_components.layout_canvas.factory_visualisation import (
@@ -18,6 +16,7 @@ from factory_flexibility_model.ui.gui_components.layout_flowtype_configuration.d
     show_flowtype_config_dialog,
 )
 from factory_flexibility_model.ui.utility.color import color
+from factory_flexibility_model.ui.utility.GUI_logging import log_event
 
 
 # CLASSES
@@ -61,6 +60,9 @@ def add_flowtype(app):
 
     # set unsaved changes to true
     app.unsaved_changes_on_session = True
+
+    # write log
+    log_event(app, f"New flowtype added with key '{flowtype_key}'", "DEBUG")
 
 
 def save_changes_on_flowtype(app):
@@ -114,7 +116,7 @@ def save_changes_on_flowtype(app):
     initialize_visualization(app)
 
     # inform the user
-    MDSnackbar(MDLabel(text=f"{flowtype.name} updated!")).open()
+    log_event(app, f"Flowtype {flowtype.name} has been updated!", "INFO")
 
 
 def select_flowtype(app, flowtype):

@@ -5,6 +5,8 @@ from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.dialog import MDDialog
 
+from factory_flexibility_model.ui.utility.GUI_logging import log_event
+
 
 # CLASSES
 class DialogSaveSessionAs(BoxLayout):
@@ -20,7 +22,7 @@ def show_dialog_save_session_as(app):
     is being called.
     """
 
-    from factory_flexibility_model.ui.gui_components.main_menu.basic_session_functions import (
+    from factory_flexibility_model.ui.utility.basic_session_functions import (
         save_session_as,
     )
 
@@ -31,8 +33,12 @@ def show_dialog_save_session_as(app):
 
     # make sure that there is a session to save
     if app.session_data["session_path"] is None:
-        app.show_info_popup(
-            "Cannot save before a session has been created or imported!"
+        # inform the user
+        log_event(
+            app,
+            "Cannot save before a session has been created or imported!",
+            "INFO",
+            "The user tried to save the session and got the following warning:",
         )
         return
 

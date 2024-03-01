@@ -241,8 +241,6 @@ class Factory:
         type: str = "default",
         flowtype: str = None,
         weight: float = None,
-        weight_destination: float = None,
-        weight_origin: float = None,
     ):
         """
         This function ads a new connection between two components to the factory
@@ -251,8 +249,6 @@ class Factory:
         :param to_losses: Set to true if the new connection is meant to deduct losses from its source
         :param flowtype: Name of a flowtype object that determines the flowtype transported n the connection
         :param name: String that is used as a name for the connection
-        :param weight_destination: [float] Specifies the weighting factor of the connection at the destination
-        :param weight_origin: [float] Specifies the weighting factor of the connection at the source
         :param weight: [float] Specifies the weighting factors of the connection both at the destination and source
         """
 
@@ -276,8 +272,6 @@ class Factory:
             type=type,
             flowtype=flowtype,
             weight=weight,
-            weight_destination=weight_destination,
-            weight_origin=weight_origin,
         )
 
         # set new connection as output for the source Component
@@ -655,12 +649,12 @@ class Factory:
                     # check if the input refers to energy or material
                     if input_i.flowtype.unit.is_energy():
                         # if energy: add the weight of the incoming connection to the sum of energy input weights
-                        weightsum_input_energy += input_i.weight_destination
+                        weightsum_input_energy += input_i.weight
 
                     elif input_i.flowtype.unit.is_mass():
 
                         # if material: add the weight of the incoming connection to the sum of material input weights
-                        weightsum_input_material += input_i.weight_destination
+                        weightsum_input_material += input_i.weight
 
                     else:
 
@@ -681,11 +675,11 @@ class Factory:
                     # if energy: add the weight of the outgoing connection to the sum of energy input weights
                     if output_i.flowtype.unit.is_energy():
                         # if energy:
-                        weightsum_output_energy += output_i.weight_origin
+                        weightsum_output_energy += output_i.weight
 
                     elif output_i.flowtype.unit.is_mass():
                         # if material: add the weight of the outgoing connection to the sum of material input weights
-                        weightsum_output_material += output_i.weight_origin
+                        weightsum_output_material += output_i.weight
 
                     else:
                         # otherwise the type of the flowtype remained unspecified during factory setup und therefore is invalid

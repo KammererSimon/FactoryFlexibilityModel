@@ -47,11 +47,21 @@ In the python terminal execute:
 poetry install
 ```
 
+### 7) Create Desktop Shortcut to Tool GUI
+
+In the python terminal execute:
+
+```
+poetry run create_shortcut
+```
+
+This will create a batch file to execute the kivy-gui as well as a shortcut to it on your Desktop
+
 # Quickstart Instructions
 
 ### 1) Opening the GUI
 
-To start the user interface for simulation architecture setup, use the command:
+To start the user interface for simulation architecture setup, use the desktop shortcut or run the following command:
 
 ```shell
 poetry run gui

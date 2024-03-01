@@ -3,6 +3,7 @@
 # IMPORTS
 import os
 from tkinter import filedialog
+
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.dialog import MDDialog
@@ -22,7 +23,7 @@ def show_new_session_dialog(app):
     is being called.
     """
 
-    from factory_flexibility_model.ui.gui_components.main_menu.basic_session_functions import (
+    from factory_flexibility_model.ui.utility.basic_session_functions import (
         create_new_session,
     )
 

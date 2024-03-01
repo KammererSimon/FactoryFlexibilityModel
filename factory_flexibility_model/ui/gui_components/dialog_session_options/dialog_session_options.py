@@ -3,9 +3,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.dialog import MDDialog
 
-from factory_flexibility_model.ui.gui_components.info_popup.info_popup import (
-    show_info_popup,
-)
+from factory_flexibility_model.ui.utility.GUI_logging import log_event
 from factory_flexibility_model.ui.utility.window_handling import close_dialog
 
 
@@ -99,9 +97,12 @@ def show_session_config_dialog(app):
 
     # abort if there is no session yet
     if app.session_data["session_path"] is None:
-        show_info_popup(
+        # inform the user
+        log_event(
             app,
             "Cannot set session configuration before initializing or importing a session!",
+            "INFO",
+            "User tried to open the session config menu without having a session loaded and got the following warning:",
         )
         # close the component selection menu
         app.root.ids.component_shelf.set_state("closed")
