@@ -33,6 +33,10 @@
         helper_text: "Name is already assigned within the factory"
         on_text: button_flowtype_save.disabled = False
     MDLabel:
+        size_hint_y: None
+        height: dp(30)
+
+    MDLabel:
         text: "Description"
         size_hint_y: None
         height: dp(30)
@@ -89,6 +93,8 @@
     Widget:
     MDBoxLayout:
         orientation: "horizontal"
+        spacing: 20
+        padding: 20
         MDRaisedButton:
             id: button_flowtype_save
             text: "Save changes"
