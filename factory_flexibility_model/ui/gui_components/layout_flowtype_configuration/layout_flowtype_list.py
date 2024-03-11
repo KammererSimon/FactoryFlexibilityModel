@@ -17,6 +17,7 @@ from factory_flexibility_model.ui.gui_components.layout_flowtype_configuration.d
 )
 from factory_flexibility_model.ui.utility.color import color
 from factory_flexibility_model.ui.utility.GUI_logging import log_event
+from factory_flexibility_model.ui.utility.window_handling import close_dialog
 
 
 # CLASSES
@@ -114,6 +115,8 @@ def save_changes_on_flowtype(app):
 
     # refresh visualisation to adapt new color
     initialize_visualization(app)
+
+    close_dialog(app)
 
     # inform the user
     log_event(app, f"Flowtype {flowtype.name} has been updated!", "INFO")
