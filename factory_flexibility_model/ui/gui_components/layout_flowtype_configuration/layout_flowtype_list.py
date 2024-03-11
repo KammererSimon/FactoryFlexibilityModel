@@ -157,6 +157,9 @@ def select_flowtype_list_item(app, list_item):
 
     if list_item.text == "Add Flowtype":
         app.add_flowtype()
+    elif list_item.text in ["Material Losses", "Energy Losses",  "Heat", "Unknown Flow"]:
+        # TODO: change this list of keys to a dynamic list from the config file once the standard flowtypes are imported instead of hardcoded
+        log_event(app, "Cannot change the predefined Flowtypes", "ERROR", f"User tried to alter Flowtype {list_item.text} and got the following message: ")
     else:
         show_flowtype_config_dialog(app)
         select_flowtype(app, app.blueprint.flowtypes[app.get_key(list_item.text)])
