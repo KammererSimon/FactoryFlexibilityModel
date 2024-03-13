@@ -96,7 +96,7 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         plant.connections[plant.get_key("Pool Electricity -> CCS")].weight = model_parameters["electricity_mwh_per_t_sequestered"]
 
         # SET MARKET SCENARIO
-        scenario.configurations[plant.get_key("Oxygen Sales")] = {"cost": model_parameters["cost_oxygen_€_per_to2"]}
+        scenario.configurations[plant.get_key("Oxygen Sales")] = {"revenue": model_parameters["revenue_oxygen_€_per_to2"]}
         scenario.configurations[plant.get_key("Source Iron Ore")] = {"cost": model_parameters["cost_iron_ore_€_per_t"]}
         scenario.configurations[plant.get_key("Source Lime")] = {"cost": model_parameters["cost_lime_€_per_t"]}
         scenario.configurations[plant.get_key("Source Oxygen")] = {"cost": model_parameters["cost_oxygen_€_per_to2"]}
@@ -126,7 +126,7 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         plant.connections[plant.get_key("Pool Electricity -> DRI Compactor")].weight = model_parameters["hbi_compact_electricity_mwh_per_tDRI"] + model_parameters["hbi_reheat_electricity_mwh_per_tDRI"]
 
         plant.connections[plant.get_key("Source Water -> PEM")].weight = model_parameters["water_t_per_th2"]//model_parameters["electricity_mwh_per_th2"]
-        #plant.connections[plant.get_key("Pool Electricity -> PEM")].weight = model_parameters["electricity_mwh_per_th2"]
+        plant.connections[plant.get_key("Pool Electricity -> PEM")].weight = model_parameters["electricity_mwh_per_th2"]
         plant.connections[plant.get_key("PEM -> Pool Oxygen")].weight = model_parameters["oxygen_out_t_per_th2"]//model_parameters["electricity_mwh_per_th2"]
 
         plant.connections[plant.get_key("Pool Hydrogen -> Hydrogen DRI")].weight = model_parameters["h2_gas_preheat_t_per_tdri"]

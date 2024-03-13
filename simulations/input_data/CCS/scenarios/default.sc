@@ -5,15 +5,15 @@ component_13: {}
 component_15: {}
 component_16: {}
 component_17: {}
+component_18:
+  direct_throughput:
+    type: boolean
+    value: true
+component_19: {}
 component_2: {}
 component_20: {}
 component_21: {}
 component_22: {}
-component_25:
-  direct_throughput:
-    type: boolean
-    value: true
-component_26: {}
 component_27: {}
 component_3: {}
 component_30: {}

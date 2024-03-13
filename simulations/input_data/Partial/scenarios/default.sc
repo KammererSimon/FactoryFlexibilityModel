@@ -16,7 +16,7 @@ component_23: {}
 component_25:
   direct_throughput:
     type: boolean
-    value: false
+    value: true
 component_26: {}
 component_27: {}
 component_28: {}

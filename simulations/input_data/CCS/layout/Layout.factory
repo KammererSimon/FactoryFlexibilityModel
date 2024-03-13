@@ -93,6 +93,26 @@ components:
     key: component_17
     name: DRI Compactor
     type: converter
+  component_18:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 36.0
+      position_y: 6.0
+    description: ''
+    flowtype: flowtype_7
+    key: component_18
+    name: HBI Storage
+    type: storage
+  component_19:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\deadtime.png
+      position_x: 31.0
+      position_y: 6.0
+    description: ''
+    flowtype: flowtype_7
+    key: component_19
+    name: HBI Storage Deadtime
+    type: deadtime
   component_2:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sources\Powerpole.png
@@ -143,26 +163,6 @@ components:
     key: component_24
     name: Pool DRI
     type: pool
-  component_25:
-    GUI:
-      icon: factory_flexibility_model\\ui\\assets\\components\Component Storage.png
-      position_x: 34.0
-      position_y: 6.0
-    description: ''
-    flowtype: flowtype_7
-    key: component_25
-    name: HBI Storage
-    type: storage
-  component_26:
-    GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\deadtime.png
-      position_x: 37.0
-      position_y: 6.0
-    description: ''
-    flowtype: flowtype_7
-    key: component_26
-    name: Reheat Time
-    type: deadtime
   component_27:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
@@ -380,6 +380,20 @@ connections:
     to: component_14
     to_losses: false
     type: connection
+  connection_22:
+    flowtype: flowtype_7
+    from: component_17
+    key: connection_22
+    to: component_19
+    to_losses: false
+    type: connection
+  connection_23:
+    flowtype: flowtype_7
+    from: component_19
+    key: connection_23
+    to: component_18
+    to_losses: false
+    type: connection
   connection_24:
     flowtype: flowtype_6
     from: component_24
@@ -389,22 +403,8 @@ connections:
     type: connection
   connection_25:
     flowtype: flowtype_7
-    from: component_17
+    from: component_18
     key: connection_25
-    to: component_25
-    to_losses: false
-    type: connection
-  connection_26:
-    flowtype: flowtype_7
-    from: component_25
-    key: connection_26
-    to: component_26
-    to_losses: false
-    type: connection
-  connection_27:
-    flowtype: flowtype_7
-    from: component_26
-    key: connection_27
     to: component_27
     to_losses: false
     type: connection

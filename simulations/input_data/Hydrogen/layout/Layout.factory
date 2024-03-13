@@ -63,14 +63,14 @@ components:
     type: converter
   component_15:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\triggerdemand.png
-      position_x: 34.0
-      position_y: 28.0
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 38.0
+      position_y: 24.0
     description: ''
     flowtype: flowtype_8
     key: component_15
-    name: EAF Trigger
-    type: triggerdemand
+    name: Pool Crude Steel
+    type: pool
   component_16:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
@@ -106,7 +106,7 @@ components:
   component_19:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\components\Gauge.png
-      position_x: 11.0
+      position_x: 7.0
       position_y: 10.0
     description: ''
     flowtype: flowtype_2
@@ -155,14 +155,14 @@ components:
     type: sink
   component_23:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\source.png
-      position_x: 20.0
-      position_y: 7.0
+      icon: factory_flexibility_model\\ui\\assets\\components\Component Storage.png
+      position_x: 39.0
+      position_y: 6.0
     description: ''
-    flowtype: flowtype_6
+    flowtype: flowtype_7
     key: component_23
-    name: Unspecified source 1
-    type: source
+    name: HBI Storage
+    type: storage
   component_24:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
@@ -175,28 +175,18 @@ components:
     type: pool
   component_25:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\components\Component Storage.png
-      position_x: 34.0
+      icon: factory_flexibility_model\\ui\\assets\\defaults\deadtime.png
+      position_x: 35.0
       position_y: 6.0
     description: ''
     flowtype: flowtype_7
     key: component_25
-    name: HBI Storage
-    type: storage
-  component_26:
-    GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\deadtime.png
-      position_x: 37.0
-      position_y: 6.0
-    description: ''
-    flowtype: flowtype_7
-    key: component_26
     name: HBI Storage Deadtime
     type: deadtime
   component_27:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
-      position_x: 40.0
+      position_x: 43.0
       position_y: 6.0
       primary_flow: null
     description: ''
@@ -286,14 +276,14 @@ components:
     type: source
   component_5:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
-      position_x: 38.0
-      position_y: 28.0
+      icon: factory_flexibility_model\\ui\\assets\\defaults\triggerdemand.png
+      position_x: 33.0
+      position_y: 24.0
     description: ''
     flowtype: flowtype_8
     key: component_5
-    name: Pool Crude Steel
-    type: pool
+    name: EAF Trigger
+    type: triggerdemand
   component_6:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sources\Oxygen.png
@@ -388,21 +378,21 @@ connections:
     flowtype: flowtype_8
     from: component_16
     key: connection_15
-    to: component_15
+    to: component_5
     to_losses: false
     type: connection
   connection_16:
     flowtype: flowtype_8
-    from: component_15
+    from: component_5
     key: connection_16
-    to: component_5
+    to: component_15
     to_losses: false
     type: connection
   connection_17:
     flowtype: flowtype_8
-    from: component_5
+    from: component_15
     key: connection_17
-    to: component_3
+    to: component_22
     to_losses: false
     type: connection
   connection_18:
@@ -428,9 +418,9 @@ connections:
     type: connection
   connection_20:
     flowtype: flowtype_8
-    from: component_5
+    from: component_15
     key: connection_20
-    to: component_22
+    to: component_3
     to_losses: false
     type: connection
   connection_21:
@@ -441,10 +431,17 @@ connections:
     to_losses: false
     type: connection
   connection_22:
-    flowtype: flowtype_6
-    from: component_23
+    flowtype: flowtype_7
+    from: component_17
     key: connection_22
-    to: component_24
+    to: component_25
+    to_losses: false
+    type: connection
+  connection_23:
+    flowtype: flowtype_7
+    from: component_25
+    key: connection_23
+    to: component_23
     to_losses: false
     type: connection
   connection_24:
@@ -456,22 +453,8 @@ connections:
     type: connection
   connection_25:
     flowtype: flowtype_7
-    from: component_17
+    from: component_23
     key: connection_25
-    to: component_25
-    to_losses: false
-    type: connection
-  connection_26:
-    flowtype: flowtype_7
-    from: component_25
-    key: connection_26
-    to: component_26
-    to_losses: false
-    type: connection
-  connection_27:
-    flowtype: flowtype_7
-    from: component_26
-    key: connection_27
     to: component_27
     to_losses: false
     type: connection

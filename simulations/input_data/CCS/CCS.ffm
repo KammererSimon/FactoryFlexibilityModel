@@ -1256,6 +1256,50 @@ log:
   message: Component Slag Out has been deleted!
   time: '2024-03-12 16:14:35'
   type: INFO
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/CCS'
+    has been imported
+  time: '2024-03-13 14:36:52'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component Reheat Time has been deleted!
+  time: '2024-03-13 14:37:05'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component HBI Storage has been deleted!
+  time: '2024-03-13 14:37:08'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New storage created with key 'component_18'
+  time: '2024-03-13 14:37:11'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New deadtime created with key 'component_19'
+  time: '2024-03-13 14:37:15'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from DRI Compactor to Unspecified deadtime 1 with
+    key 'connection_22'
+  time: '2024-03-13 14:37:19'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified deadtime 1 to Unspecified storage
+    1 with key 'connection_23'
+  time: '2024-03-13 14:37:20'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified storage 1 to HBI Preheater with
+    key 'connection_25'
+  time: '2024-03-13 14:37:22'
+  type: DEBUG
 session_path: C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/CCS
 show_component_config_dialog_on_creation: false
 timeseries: {}

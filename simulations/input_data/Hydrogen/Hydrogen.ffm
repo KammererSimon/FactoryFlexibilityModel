@@ -1121,6 +1121,312 @@ log:
     1 is now specified as a static value.'
   time: '2024-03-12 17:39:40'
   type: DEBUG
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen'
+    has been imported
+  time: '2024-03-13 13:43:44'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component Unspecified source 1 has been deleted!
+  time: '2024-03-13 13:43:55'
+  type: INFO
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
+  time: '2024-03-13 13:44:02'
+  type: INFO
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
+  time: '2024-03-13 13:44:43'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New source created with key 'component_23'
+  time: '2024-03-13 13:55:02'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified source 1 to Pool DRI with key 'connection_22'
+  time: '2024-03-13 13:55:04'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: 'New parameter configuration: Parameter cost of component Unspecified source
+    1 is now specified as a static value.'
+  time: '2024-03-13 13:55:11'
+  type: DEBUG
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
+  time: '2024-03-13 13:55:14'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component Unspecified source 1 has been deleted!
+  time: '2024-03-13 14:03:49'
+  type: INFO
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
+  time: '2024-03-13 14:03:51'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component HBI Storage Deadtime has been deleted!
+  time: '2024-03-13 14:04:38'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component HBI Storage has been deleted!
+  time: '2024-03-13 14:04:41'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New triggerdemand created with key 'component_23'
+  time: '2024-03-13 14:04:46'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New storage created with key 'component_25'
+  time: '2024-03-13 14:04:50'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from DRI Compactor to Unspecified triggerdemand
+    1 with key 'connection_22'
+  time: '2024-03-13 14:04:52'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified triggerdemand 1 to Unspecified
+    storage 1 with key 'connection_23'
+  time: '2024-03-13 14:04:54'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified storage 1 to HBI Preheater with
+    key 'connection_25'
+  time: '2024-03-13 14:04:57'
+  type: DEBUG
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
+  time: '2024-03-13 14:05:26'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component HBI Storage Deadtime has been deleted!
+  time: '2024-03-13 14:06:17'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New deadtime created with key 'component_23'
+  time: '2024-03-13 14:06:23'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from DRI Compactor to Unspecified deadtime 1 with
+    key 'connection_22'
+  time: '2024-03-13 14:06:27'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified deadtime 1 to HBI Storage with
+    key 'connection_23'
+  time: '2024-03-13 14:06:29'
+  type: DEBUG
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
+  time: '2024-03-13 14:06:54'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component EAF Trigger has been deleted!
+  time: '2024-03-13 14:10:31'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from EAF to Pool Crude Steel with key 'connection_15'
+  time: '2024-03-13 14:10:36'
+  type: DEBUG
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen'
+    has been imported
+  time: '2024-03-13 14:14:45'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component Pool Crude Steel has been deleted!
+  time: '2024-03-13 14:14:54'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New triggerdemand created with key 'component_5'
+  time: '2024-03-13 14:14:58'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New pool created with key 'component_15'
+  time: '2024-03-13 14:15:01'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from EAF to Unspecified triggerdemand 1 with key
+    'connection_15'
+  time: '2024-03-13 14:15:03'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from EAF Trigger to Unspecified pool 1 with key
+    'connection_16'
+  time: '2024-03-13 14:15:12'
+  type: DEBUG
+- event_info: 'Adding a new connection failed:'
+  icon: alert
+  message: EAF Trigger already has the maximum number of outputs connected
+  time: '2024-03-13 14:15:14'
+  type: ERROR
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified pool 1 to Crude Steel Overflow
+    with key 'connection_17'
+  time: '2024-03-13 14:15:17'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified pool 1 to Demand Schedule with
+    key 'connection_20'
+  time: '2024-03-13 14:15:19'
+  type: DEBUG
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
+  time: '2024-03-13 14:15:32'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New storage created with key 'component_26'
+  time: '2024-03-13 14:16:44'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified storage 1 to Pool Oxygen with key
+    'connection_26'
+  time: '2024-03-13 14:16:46'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Pool Oxygen to Unspecified storage 1 with key
+    'connection_27'
+  time: '2024-03-13 14:16:50'
+  type: DEBUG
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen'
+    has been imported
+  time: '2024-03-13 14:27:35'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component HBI Storage Deadtime has been deleted!
+  time: '2024-03-13 14:29:28'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component HBI Storage has been deleted!
+  time: '2024-03-13 14:29:32'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New storage created with key 'component_23'
+  time: '2024-03-13 14:29:35'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New deadtime created with key 'component_25'
+  time: '2024-03-13 14:29:38'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from DRI Compactor to Unspecified storage 1 with
+    key 'connection_22'
+  time: '2024-03-13 14:29:41'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified storage 1 to Unspecified deadtime
+    1 with key 'connection_23'
+  time: '2024-03-13 14:29:43'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified deadtime 1 to HBI Preheater with
+    key 'connection_25'
+  time: '2024-03-13 14:29:45'
+  type: DEBUG
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
+  time: '2024-03-13 14:30:10'
+  type: INFO
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
+  time: '2024-03-13 14:30:28'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component Oxygen Storage has been deleted!
+  time: '2024-03-13 14:30:51'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component HBI Storage Deadtime has been deleted!
+  time: '2024-03-13 14:32:25'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component HBI Storage has been deleted!
+  time: '2024-03-13 14:32:30'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New storage created with key 'component_23'
+  time: '2024-03-13 14:32:39'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New deadtime created with key 'component_25'
+  time: '2024-03-13 14:32:45'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from DRI Compactor to Unspecified deadtime 1 with
+    key 'connection_22'
+  time: '2024-03-13 14:32:55'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified deadtime 1 to Unspecified storage
+    1 with key 'connection_23'
+  time: '2024-03-13 14:32:57'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified storage 1 to HBI Preheater with
+    key 'connection_25'
+  time: '2024-03-13 14:32:59'
+  type: DEBUG
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
+  time: '2024-03-13 14:33:28'
+  type: INFO
 session_path: C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
 show_component_config_dialog_on_creation: false
 timeseries: {}

@@ -54,6 +54,10 @@ def simulate_dri(simulation_task, model_parameters, simulation_config, total_sim
     simulation_task["factory"].emission_cost = simulation_task["co2_price"]
 
     # perform simulation
+    if simulation_config["enable_log_simulation_setup"]:
+        logging.getLogger().setLevel(logging.DEBUG)
+    else:
+        logging.getLogger().setLevel(logging.ERROR)
     simulation = fs.Simulation(factory=simulation_task["factory"],
                                scenario=scenario)
     simulation.simulate(threshold=simulation_config["threshold"],

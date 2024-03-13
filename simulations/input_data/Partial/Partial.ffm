@@ -871,6 +871,50 @@ log:
   message: Component Slag Out has been deleted!
   time: '2024-03-12 16:11:44'
   type: INFO
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Partial'
+    has been imported
+  time: '2024-03-13 14:38:12'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component HBI Storage has been deleted!
+  time: '2024-03-13 14:38:16'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component Reheat Time has been deleted!
+  time: '2024-03-13 14:38:20'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New storage created with key 'component_25'
+  time: '2024-03-13 14:38:26'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New deadtime created with key 'component_26'
+  time: '2024-03-13 14:38:28'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified storage 1 to HBI Preheater with
+    key 'connection_25'
+  time: '2024-03-13 14:38:34'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified deadtime 1 to Unspecified storage
+    1 with key 'connection_26'
+  time: '2024-03-13 14:38:37'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from DRI Compactor to Unspecified deadtime 1 with
+    key 'connection_27'
+  time: '2024-03-13 14:38:39'
+  type: DEBUG
 session_path: C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Partial
 show_component_config_dialog_on_creation: false
 timeseries: {}

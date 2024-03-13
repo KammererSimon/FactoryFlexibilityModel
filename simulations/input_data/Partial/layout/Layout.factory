@@ -177,8 +177,8 @@ components:
     type: pool
   component_25:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\components\Component Storage.png
-      position_x: 34.0
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 37.0
       position_y: 6.0
     description: ''
     flowtype: flowtype_7
@@ -188,12 +188,12 @@ components:
   component_26:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\deadtime.png
-      position_x: 37.0
+      position_x: 34.0
       position_y: 6.0
     description: ''
     flowtype: flowtype_7
     key: component_26
-    name: Reheat Time
+    name: HBI Storage Deadtime
     type: deadtime
   component_27:
     GUI:
@@ -505,23 +505,23 @@ connections:
     type: connection
   connection_25:
     flowtype: flowtype_7
-    from: component_17
+    from: component_25
     key: connection_25
-    to: component_25
+    to: component_27
     to_losses: false
     type: connection
   connection_26:
     flowtype: flowtype_7
-    from: component_25
+    from: component_26
     key: connection_26
-    to: component_26
+    to: component_25
     to_losses: false
     type: connection
   connection_27:
     flowtype: flowtype_7
-    from: component_26
+    from: component_17
     key: connection_27
-    to: component_27
+    to: component_26
     to_losses: false
     type: connection
   connection_28:
