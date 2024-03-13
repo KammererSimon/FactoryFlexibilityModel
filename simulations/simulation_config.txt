@@ -1,9 +1,9 @@
-enable_log_factory_setup: False
+enable_log_factory_setup: ERROR
 enable_log_simulation_setup: False
 enable_log_simulation_iteration: True
 enable_log_solver: False
 enable_slacks: False
-max_solver_time: 100
+max_solver_time: 120
 overwrite_existing_simulations: False
 parallel_workers: 1
 threshold: 0.001

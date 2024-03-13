@@ -412,10 +412,10 @@ class Simulation:
                     "utilization": utilization,
                 }
 
+                print(utilization)
+
                 # add costs to the overview
-                self.result["costs"]["slacks"][component.key] = (
-                    sum(utilization) * 1000000000
-                )
+                self.result["costs"]["slacks"][component.key] =sum(utilization) * 1000000000
 
             # handle storages
             elif component.type == "storage":
@@ -655,7 +655,9 @@ class Simulation:
         if self.enable_time_tracking:
             self.t_start = time.time()
 
+
         if "logger_level" in solver_config:
+            print(solver_config["logger_level"])
             set_logging_level(solver_config["logger_level"])
 
         # PREPARATIONS

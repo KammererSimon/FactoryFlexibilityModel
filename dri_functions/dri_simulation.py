@@ -13,7 +13,7 @@ from factory_flexibility_model.io.set_logger import set_logging_level
 
 # FUNCTIONS
 def simulate_dri(simulation_task, model_parameters, simulation_config, total_sim_count):
-    simulation_filename = f"{simulation_task['layout']}_NG{simulation_task['natural_gas_cost']}_EL{simulation_task['avg_electricity_price']}_VOL{simulation_task['volatility']}_CO2{simulation_task['co2_price']}_Reduction{simulation_task['co2_reduction']}_{simulation_task['month']}"
+    simulation_filename = f"{simulation_task['layout']}_{simulation_task['timeseries']}_NG{simulation_task['natural_gas_cost']}_EL{simulation_task['avg_electricity_price']}_VOL{simulation_task['volatility']}_CO2{simulation_task['co2_price']}_Reduction{simulation_task['co2_reduction']}_{simulation_task['month']}"
 
     if not simulation_config["overwrite_existing_simulations"]:
         # check if simulation is already solved
@@ -37,11 +37,18 @@ def simulate_dri(simulation_task, model_parameters, simulation_config, total_sim
     scenario.configurations[simulation_task["factory"].get_key("Electricity Grid")] = {"cost": cost_electricity,
                                                                                        "co2_emissions_per_unit": simulation_task["emissions_electricity"]}
 
+    # set slack costs
+    scenario.configurations[simulation_task["factory"].get_key("Electricity Slack")] = {"cost": 1000000,
+                                                                                        "co2_emissions_per_unit": 0}
+    scenario.configurations[simulation_task["factory"].get_key("CO2 Slack")] = {"cost": 1000000,
+                                                                                "co2_emissions_per_unit": 0}
+    scenario.configurations[simulation_task["factory"].get_key("CO2 Emissions")] = {"co2_emissions_per_unit": 1}
+
     # set emission limit
     emission_limit = model_parameters["annual_dri_production_mtons"] \
                      * 1000000 * model_parameters["emission_baseline"] \
                      * (1 - simulation_task["co2_reduction"] / 100) \
-                     * 720 / 8760
+                     * simulation_task["factory"].timesteps / 8760
     simulation_task["factory"].emission_accounting = True
     simulation_task["factory"].emission_limit = emission_limit
     simulation_task["factory"].emission_cost = simulation_task["co2_price"]
@@ -78,7 +85,7 @@ def simulate_dri_wrapper(simulation_task, model_parameters, simulation_config, t
 
 
 def worker_init():
-    logging.getLogger().setLevel(logging.WARNING)
+    logging.getLogger().setLevel(logging.DEBUG)
 
 
 def iterate_dri_simulations():
@@ -102,10 +109,10 @@ def iterate_dri_simulations():
 
 
     # iterate over the list of required simulations and call the simulation routine
-    set_logging_level(simulation_config["enable_log_simulation_setup"])
 
     if simulation_config["parallel_workers"] == 1:
         # if only one worker is required: just iterate over the list
+
         for simulation_task in simulation_list:
             simulate_dri(simulation_task,
                          model_parameters,
@@ -211,7 +218,7 @@ def count_simulations(scenario_variations):
            len(scenario_variations["CO2_prices"]) * \
            len(scenario_variations["plant_types"]) * \
            len(scenario_variations["CO2_reduction"]) * \
-           1 #2 # month
+           12 # month
 
 
 def create_simulation_list(simulation_config, model_parameters, timeseries_data, scenario_variations):
@@ -233,7 +240,7 @@ def create_simulation_list(simulation_config, model_parameters, timeseries_data,
                     for co2_price in scenario_variations["CO2_prices"]:
                         for co2_reduction in scenario_variations["CO2_reduction"]:
                             for timeseries in scenario_variations["market_timeseries"]:
-                                for month in [1]: #list(range(1, 13)):
+                                for month in list(range(1, 13)):
                                     simulation_list.append({"avg_electricity_price": avg_electricity_price,
                                                             "layout": plant_type,
                                                             "natural_gas_cost": natural_gas_cost,
@@ -243,10 +250,11 @@ def create_simulation_list(simulation_config, model_parameters, timeseries_data,
                                                             "scenario": scenario,
                                                             "factory": factory,
                                                             "month": month,
+                                                            "timeseries": timeseries,
                                                             "cost_electricity": timeseries_data[f"{timeseries}_cost"][
-                                                                                (month - 1) * 720 + 1:month * 720+1],
+                                                                                (month - 1) * factory.timesteps + 1:month * factory.timesteps+1],
                                                             "emissions_electricity": timeseries_data[
                                                                                          f"{timeseries}_emissions"][
-                                                                                     (month - 1) * 720 + 1:month * 720+1],
+                                                                                     (month - 1) * factory.timesteps + 1:month * factory.timesteps+1],
                                                             "simulation_number": len(simulation_list) + 1})
     return simulation_list

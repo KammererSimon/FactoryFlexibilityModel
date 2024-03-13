@@ -22,8 +22,8 @@ components:
   component_11:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sinks\Gas Grid.png
-      position_x: 40.0
-      position_y: 13.0
+      position_x: 42.0
+      position_y: 12.0
     description: ''
     flowtype: flowtype_3
     key: component_11
@@ -53,8 +53,8 @@ components:
   component_14:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\components\DRI.png
-      position_x: 14.0
-      position_y: 14.0
+      position_x: 15.0
+      position_y: 11.0
       primary_flow: null
     description: ''
     flowtype: unknown
@@ -63,15 +63,14 @@ components:
     type: converter
   component_15:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\components\DRI.png
-      position_x: 21.0
-      position_y: 5.0
-      primary_flow: null
+      icon: factory_flexibility_model\\ui\\assets\\defaults\triggerdemand.png
+      position_x: 34.0
+      position_y: 28.0
     description: ''
-    flowtype: unknown
+    flowtype: flowtype_8
     key: component_15
-    name: Natural Gas DRI
-    type: converter
+    name: EAF Trigger
+    type: triggerdemand
   component_16:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
@@ -138,7 +137,7 @@ components:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sources\Deliveries.png
       position_x: 5.0
-      position_y: 7.0
+      position_y: 6.0
     description: ''
     flowtype: flowtype_4
     key: component_21
@@ -146,25 +145,24 @@ components:
     type: source
   component_22:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
-      position_x: 25.0
-      position_y: 10.0
+      icon: factory_flexibility_model\\ui\\assets\\defaults\sink.png
+      position_x: 42.0
+      position_y: 28.0
     description: ''
-    flowtype: flowtype_6
+    flowtype: flowtype_8
     key: component_22
-    name: DRI Componsition
-    type: pool
+    name: Crude Steel Overflow
+    type: sink
   component_23:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
-      position_x: 29.0
-      position_y: 10.0
-      primary_flow: null
+      icon: factory_flexibility_model\\ui\\assets\\defaults\source.png
+      position_x: 20.0
+      position_y: 7.0
     description: ''
-    flowtype: unknown
+    flowtype: flowtype_6
     key: component_23
-    name: DRI Restrictions
-    type: converter
+    name: Unspecified source 1
+    type: source
   component_24:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
@@ -193,7 +191,7 @@ components:
     description: ''
     flowtype: flowtype_7
     key: component_26
-    name: Reheat Time
+    name: HBI Storage Deadtime
     type: deadtime
   component_27:
     GUI:
@@ -209,38 +207,28 @@ components:
   component_28:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sinks\Sales.png
-      position_x: 40.0
-      position_y: 21.0
+      position_x: 23.0
+      position_y: 22.0
     description: ''
     flowtype: flowtype_1
     key: component_28
     name: Oxygen Sales
     type: sink
-  component_29:
-    GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\triggerdemand.png
-      position_x: 32.0
-      position_y: 26.0
-    description: ''
-    flowtype: flowtype_8
-    key: component_29
-    name: EAF Trigger
-    type: triggerdemand
   component_3:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\sources\Gas Grid.png
-      position_x: 5.0
-      position_y: 3.0
+      icon: factory_flexibility_model\\ui\\assets\\defaults\schedule.png
+      position_x: 38.0
+      position_y: 21.0
     description: ''
-    flowtype: flowtype_5
+    flowtype: flowtype_8
     key: component_3
-    name: Source Natural Gas
-    type: source
+    name: Demand Schedule
+    type: schedule
   component_30:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sinks\Delivery.png
-      position_x: 40.0
-      position_y: 26.0
+      position_x: 42.0
+      position_y: 21.0
     description: ''
     flowtype: flowtype_8
     key: component_30
@@ -269,8 +257,8 @@ components:
   component_34:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sinks\Emissions.png
-      position_x: 40.0
-      position_y: 19.0
+      position_x: 42.0
+      position_y: 18.0
     description: ''
     flowtype: flowtype_13
     key: component_34
@@ -279,42 +267,12 @@ components:
   component_35:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sinks\Emissions.png
-      position_x: 40.0
-      position_y: 16.0
+      position_x: 42.0
+      position_y: 15.0
     description: ''
     flowtype: flowtype_13
     key: component_35
     name: CO2 Slack
-    type: sink
-  component_36:
-    GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
-      position_x: 35.0
-      position_y: 28.0
-    description: ''
-    flowtype: flowtype_8
-    key: component_36
-    name: Pool crude steel
-    type: pool
-  component_37:
-    GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\schedule.png
-      position_x: 38.0
-      position_y: 27.0
-    description: ''
-    flowtype: flowtype_8
-    key: component_37
-    name: Demand Schedule
-    type: schedule
-  component_38:
-    GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\sink.png
-      position_x: 39.0
-      position_y: 30
-    description: ''
-    flowtype: flowtype_8
-    key: component_38
-    name: Crude Steel Overflow
     type: sink
   component_4:
     GUI:
@@ -329,12 +287,12 @@ components:
   component_5:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
-      position_x: 14.0
-      position_y: 7.0
+      position_x: 38.0
+      position_y: 28.0
     description: ''
-    flowtype: flowtype_4
+    flowtype: flowtype_8
     key: component_5
-    name: Pool Iron Ore
+    name: Pool Crude Steel
     type: pool
   component_6:
     GUI:
@@ -427,31 +385,31 @@ connections:
     to_losses: false
     type: connection
   connection_15:
-    flowtype: flowtype_4
-    from: component_21
+    flowtype: flowtype_8
+    from: component_16
     key: connection_15
-    to: component_5
+    to: component_15
     to_losses: false
     type: connection
   connection_16:
-    flowtype: flowtype_4
-    from: component_5
+    flowtype: flowtype_8
+    from: component_15
     key: connection_16
-    to: component_14
+    to: component_5
     to_losses: false
     type: connection
   connection_17:
-    flowtype: flowtype_4
+    flowtype: flowtype_8
     from: component_5
     key: connection_17
-    to: component_15
+    to: component_3
     to_losses: false
     type: connection
   connection_18:
-    flowtype: flowtype_5
+    flowtype: flowtype_8
     from: component_3
     key: connection_18
-    to: component_15
+    to: component_30
     to_losses: false
     type: connection
   connection_19:
@@ -462,37 +420,30 @@ connections:
     to_losses: false
     type: connection
   connection_2:
-    flowtype: flowtype_0
-    from: component_12
+    flowtype: flowtype_4
+    from: component_21
     key: connection_2
-    to: component_15
+    to: component_14
     to_losses: false
     type: connection
   connection_20:
-    flowtype: flowtype_6
-    from: component_14
+    flowtype: flowtype_8
+    from: component_5
     key: connection_20
     to: component_22
     to_losses: false
     type: connection
   connection_21:
     flowtype: flowtype_6
-    from: component_15
+    from: component_14
     key: connection_21
-    to: component_22
+    to: component_24
     to_losses: false
     type: connection
   connection_22:
     flowtype: flowtype_6
-    from: component_22
-    key: connection_22
-    to: component_23
-    to_losses: false
-    type: connection
-  connection_23:
-    flowtype: flowtype_6
     from: component_23
-    key: connection_23
+    key: connection_22
     to: component_24
     to_losses: false
     type: connection
@@ -550,20 +501,6 @@ connections:
     from: component_20
     key: connection_30
     to: component_28
-    to_losses: false
-    type: connection
-  connection_31:
-    flowtype: flowtype_8
-    from: component_36
-    key: connection_31
-    to: component_37
-    to_losses: false
-    type: connection
-  connection_32:
-    flowtype: flowtype_8
-    from: component_37
-    key: connection_32
-    to: component_30
     to_losses: false
     type: connection
   connection_33:
@@ -629,13 +566,6 @@ connections:
     to: component_33
     to_losses: false
     type: connection
-  connection_42:
-    flowtype: flowtype_13
-    from: component_15
-    key: connection_42
-    to: component_33
-    to_losses: false
-    type: connection
   connection_43:
     flowtype: flowtype_13
     from: component_33
@@ -648,27 +578,6 @@ connections:
     from: component_33
     key: connection_44
     to: component_35
-    to_losses: false
-    type: connection
-  connection_45:
-    flowtype: flowtype_8
-    from: component_16
-    key: connection_45
-    to: component_29
-    to_losses: false
-    type: connection
-  connection_46:
-    flowtype: flowtype_8
-    from: component_29
-    key: connection_46
-    to: component_36
-    to_losses: false
-    type: connection
-  connection_47:
-    flowtype: flowtype_8
-    from: component_36
-    key: connection_47
-    to: component_38
     to_losses: false
     type: connection
   connection_5:
@@ -836,14 +745,14 @@ flowtypes:
     represents_losses: false
     unit: unit
 info:
-  currency: "\u20AC"
-  description: Undefined
+  currency: $
+  description: ''
   emission_cost: null
   emission_limit: null
   enable_slacks: false
-  name: Partial
-  timestep_length: 1
-  timesteps: 168
+  name: Hydrogen
+  timestep_length: 1.0
+  timesteps: 720
 units:
   energy:
     conversion_factor: 1

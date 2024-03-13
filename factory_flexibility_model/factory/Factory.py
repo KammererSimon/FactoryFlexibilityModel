@@ -246,9 +246,7 @@ class Factory:
         This function ads a new connection between two components to the factory
         :param origin: name-string of the source Component
         :param destination: name-string of the destination
-        :param to_losses: Set to true if the new connection is meant to deduct losses from its source
         :param flowtype: Name of a flowtype object that determines the flowtype transported n the connection
-        :param name: String that is used as a name for the connection
         :param weight: [float] Specifies the weighting factors of the connection both at the destination and source
         """
 

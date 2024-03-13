@@ -12,7 +12,11 @@ component_19:
     value: false
 component_2: {}
 component_21: {}
-component_23: {}
+component_22: {}
+component_23:
+  cost:
+    type: static
+    value: 50000.0
 component_25:
   direct_throughput:
     type: boolean
@@ -20,13 +24,10 @@ component_25:
 component_26: {}
 component_27: {}
 component_28: {}
-component_29: {}
 component_3: {}
 component_30: {}
 component_34: {}
 component_35: {}
-component_37: {}
-component_38: {}
 component_4: {}
 component_6: {}
 component_7: {}

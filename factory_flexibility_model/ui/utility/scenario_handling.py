@@ -35,7 +35,6 @@ def create_scenario_table_data(parameters, scenario_list=None, row_data=None, in
     for key in parameters[parameter_name]:
 
         row_data.append(parameters[parameter_name][key]["value"])
-        print(row_data)
         scenario_list[parameter_name] = parameters[parameter_name][key]
         yield from create_scenario_table_data(
             parameters, scenario_list, row_data, index + 1
@@ -103,7 +102,6 @@ def update_scenario_list(app):
     app.root.ids.simulation_screens.add_widget(data_table)
 
     simulations = list(create_simulation_list(variable_parameters))
-    print(simulations)
 
     # #data_tables.bind(on_row_press=self.on_row_press)
     # #data_tables.bind(on_check_press=self.on_check_press)
