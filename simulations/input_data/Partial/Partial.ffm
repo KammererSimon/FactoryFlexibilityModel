@@ -915,6 +915,12 @@ log:
     key 'connection_27'
   time: '2024-03-13 14:38:39'
   type: DEBUG
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Partial'
+    has been imported
+  time: '2024-03-15 09:49:27'
+  type: INFO
 session_path: C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Partial
 show_component_config_dialog_on_creation: false
 timeseries: {}
