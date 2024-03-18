@@ -700,7 +700,6 @@ class Factory:
                     component.eta_base = (
                         weightsum_output_energy / weightsum_input_energy
                     )
-                    return False
 
                 # check, if the combination of input and output weight sums is valid
                 if weightsum_output_energy > weightsum_input_energy:
@@ -739,7 +738,7 @@ class Factory:
 
             elif component.type == "triggerdemand":
                 # check, that the combinations of input and outputs connected is valid
-                if not (component.input_energy or component.output_energy):
+                if not (component.input_energy or component.input_material):
                     logging.critical(
                         f"Triggerdemand {component.name} has no inputs connected!"
                     )
