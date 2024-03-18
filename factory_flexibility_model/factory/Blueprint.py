@@ -297,6 +297,6 @@ class Blueprint:
                 type=type,
             )
 
-        factory.check_validity()
+        #factory.check_validity()
 
         return factory
