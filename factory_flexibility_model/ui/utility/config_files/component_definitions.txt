@@ -63,6 +63,8 @@ deadtime:
       unit_type: timesteps
 schedule:
   default_icon: schedule_default
+  max_inputs: 1
+  max_outputs: 1
   parameters:
     demands:
       description: List of individual Demands
