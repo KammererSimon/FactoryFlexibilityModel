@@ -12,9 +12,11 @@ from factory_flexibility_model.ui.gui_components.layout_canvas.drag_label.dragla
     DragLabel,
 )
 from factory_flexibility_model.ui.gui_components.layout_canvas.factory_visualisation import (
+    draw_connection_preview,
+    highlight_selected_asset,
     initialize_visualization,
+    place_new_connection_button,
     save_component_positions,
-    update_visualization,
 )
 from factory_flexibility_model.ui.gui_components.layout_component_configuration.dialog_component_definition.dialog_component_definition import (
     show_component_definition_dialog,
@@ -45,11 +47,13 @@ class factory_GUIApp(MDApp):
         :return: None
         """
         self.root.ids.main_menu.add_widget(main_menu())
+
+        # initialize the factory layout
         initialize_visualization(self)
 
     def abort_new_connection(self, touch):
         self.connection_edit_mode = False
-        Window.unbind(mouse_pos=update_visualization(self))
+        Window.unbind(mouse_pos=draw_connection_preview(self))
         initialize_visualization(self)
 
     def add_component(self, instance, touch):
@@ -158,7 +162,7 @@ class factory_GUIApp(MDApp):
 
         # disable connection edit mode
         self.connection_edit_mode = False
-        Window.unbind(mouse_pos=update_visualization(self))
+        Window.unbind(mouse_pos=draw_connection_preview(self))
 
         # get the origin
         origin_name = self.selected_asset["name"]
@@ -328,6 +332,12 @@ class factory_GUIApp(MDApp):
         self.theme_cls.accent_palette = "Blue"
         self.theme_cls.primary_palette = "Blue"
         self.theme_cls.theme_style = "Light"
+        self.factory_canvas = {
+            "canvas_scaling_factor": self.config["display_scaling_factor"],
+            "component_height": 0,
+            "component_width": {},
+            "line_width": 7,
+        }
 
         # set window configuration
         Window.maximize()  # start in fullscreen
@@ -366,8 +376,11 @@ class factory_GUIApp(MDApp):
         # update the config_tab to show the selected asset
         update_component_configuration_tab(self)
 
-        # update visualisation to highlight selected asset
-        update_visualization(self)
+        # update the component highlight shadow on the canvas
+        highlight_selected_asset(self)
+
+        # place the new connection button next to it if necessary
+        place_new_connection_button(self)
 
     def click_on_component(self, instance, touch):
         """
@@ -394,30 +407,6 @@ class factory_GUIApp(MDApp):
         # otherwise just select the component that has been clicked on
         self.initiate_asset_selection(instance.id)
         save_component_positions(self)
-
-    def delete_connection(self, key):
-        """
-        This function deletes the currently selected connection
-        """
-
-        # close the opened dialog
-        self.dialog.dismiss
-
-        # remove connection from blueprint
-        del self.blueprint.connections[key]
-
-        # delete currently selected asset
-        self.selected_asset = None
-
-        # show neutral screen on the right
-        self.root.ids.asset_config_screens.current = "welcome_screen"
-
-        # there are no more unsaved changes on the selected asset, but therefore on the session
-        self.unsaved_changes_on_asset = False
-        self.unsaved_changes_on_session = True
-
-        # redraw the preview without the connection
-        initialize_visualization(self)
 
     def flowtype_used(self, flowtype_key):
         """
@@ -467,7 +456,9 @@ class factory_GUIApp(MDApp):
     def initiate_new_connection(self, *args):
         print("NEW CONNECTION BUTTON PRESSED")
         self.connection_edit_mode = True
-        Window.bind(mouse_pos=lambda _, pos: update_visualization(self, mouse_pos=pos))
+        Window.bind(
+            mouse_pos=lambda _, pos: draw_connection_preview(self, mouse_pos=pos)
+        )
 
         self.root.ids["new_connection"].text = "Cancel"
         self.root.ids["new_connection"].icon = "cancel"
