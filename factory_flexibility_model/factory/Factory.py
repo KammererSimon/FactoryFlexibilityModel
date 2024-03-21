@@ -631,8 +631,11 @@ class Factory:
         """
 
         logging.info(f"Validating factory architecture...")
+
+        delete_list = []
+
         # iterate over all components
-        for component in self.components.values():
+        for key, component in self.components.items():
 
             # conducted validations depend on the Component type...
             if component.type == "converter":
@@ -764,6 +767,23 @@ class Factory:
                     )
                     raise Exception
 
+            elif component.type == "sink":
+                if len(component.inputs) == 0:
+                    delete_list.append(key)
+                    logging.warning(
+                        f"Sink {component.name} did not have any inputs and has been removed!"
+                    )
+
+            elif component.type == "source":
+                if len(component.outputs) == 0:
+                    delete_list.append(key)
+                    logging.warning(
+                        f"Source {component.name} did not have any outputs and has been removed!"
+                    )
+
+        for component in delete_list:
+            del self.components[component]
+
         logging.info(f"Factory architecture validation successful")
         return True
 
@@ -841,7 +861,7 @@ class Factory:
 
         # sinks get slacked on the input side if they are not the losses destination
         elif component_type == "sink" and not (
-            key == "losses_energy" or key == "losses_material"
+            key in ["losses_energy", "losses_material"]
         ):
 
             # create new slack Component
@@ -859,6 +879,9 @@ class Factory:
 
         # sources get slacked on the output side:
         elif component_type == "source":
+            # ambient gains do not have to be slacked
+            if key == "ambient_gains":
+                return
             # create new slack Component
             self.add_component(f"{key}_slack", "slack", name=name)
 
