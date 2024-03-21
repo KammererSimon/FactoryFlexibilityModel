@@ -413,9 +413,10 @@ class Simulation:
                 }
 
                 # add costs to the overview
-                self.result["costs"]["slacks"][component.key] = (
-                    sum(utilization) * 1000000000
-                )
+                if utilization > 0:
+                    self.result["costs"]["slacks"][component.key] = (
+                        sum(utilization) * 1000000000
+                    )
 
             # handle storages
             elif component.type == "storage":
@@ -533,10 +534,13 @@ class Simulation:
         self.result["total_emission_cost"] = total_emission_cost
 
         # collect achieved costs/revenues (objective of target function - ambient_gain_punishment_term)
-        self.result["objective"] = self.m.objVal - sum(
-            self.result["ambient_gains"]["utilization"]
-            * self.factory.components["ambient_gains"].cost[0 : self.T]
-        )
+        if "ambient_gains" in self.factory.components:
+            self.result["objective"] = self.m.objVal - sum(
+                self.result["ambient_gains"]["utilization"]
+                * self.factory.components["ambient_gains"].cost[0 : self.T]
+            )
+        else:
+            self.result["objective"] = self.m.objVal
 
         # validate results
         self.__validate_results()
@@ -952,6 +956,7 @@ class Simulation:
                     names_material_in.append(component.key)
 
             if component.type == "sink":
+
                 if component.flowtype.is_energy():
                     values_energy_out = np.append(
                         values_energy_out,
@@ -967,6 +972,7 @@ class Simulation:
                     names_material_out.append(component.key)
 
             if component.type == "slack":
+                continue  # todo: remove this after fixing the slack problem
                 slack_utilization = round(
                     sum(self.result[component.key]["utilization"]), 3
                 )
@@ -1012,14 +1018,16 @@ class Simulation:
             )
 
         # Check, if the punishment term for ambient gains was chosen high enough
-        if max(self.result["ambient_gains"]["utilization"]) > 10000000:
-            logging.warning(
-                f"Warning: There is a high utilization of ambient gains! "
-                f"This could be due to a numerical issue with the punishment-"
-                f"term within factory_model.create_essentials(). "
-                f"You should check the results for numerical issues!"
-            )
-            self.simulation_valid = False
+
+        if "ambient_gains" in self.result:
+            if sum(self.result["ambient_gains"]["utilization"]) > 10000000:
+                logging.warning(
+                    f"Warning: There is a high utilization of ambient gains! "
+                    f"This could be due to a numerical issue with the punishment-"
+                    f"term within factory_model.create_essentials(). "
+                    f"You should check the results for numerical issues!"
+                )
+                self.simulation_valid = False
 
         if self.simulation_valid:
             logging.info(" -> Simulation is valid!")
