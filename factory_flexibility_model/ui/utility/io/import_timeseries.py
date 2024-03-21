@@ -51,13 +51,16 @@ def import_timeseries_xlsx(app):
         )
         return
 
+    updated = 0
+    new = 0
+
     for timeseries_key, timeseries_values in imported_timeseries.items():
         # make sure, that the key is unique
         if timeseries_key in app.session_data["timeseries"].keys():
-            index = 1
-            while f"{timeseries_key}_{index}" in app.session_data["timeseries"].keys():
-                index += 1
-            timeseries_key = f"{timeseries_key}_{index}"
+            updated += 1
+        else:
+            new += 1
+
         app.session_data["timeseries"][timeseries_key] = {
             "description": timeseries_values[0],
             "type": timeseries_values[1],
@@ -66,6 +69,6 @@ def import_timeseries_xlsx(app):
     # inform the user
     log_event(
         app,
-        f"{len(app.session_data['timeseries'].keys())} new timeseries imported from '{filepath}'",
+        f"{updated} timeseries have been updated and {new} timeseries imported from '{filepath}'",
         "INFO",
     )
