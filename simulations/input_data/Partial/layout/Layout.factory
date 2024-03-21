@@ -152,7 +152,7 @@ components:
     description: ''
     flowtype: flowtype_6
     key: component_22
-    name: DRI Componsition
+    name: DRI Composition
     type: pool
   component_23:
     GUI:

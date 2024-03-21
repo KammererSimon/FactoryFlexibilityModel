@@ -667,6 +667,7 @@ class Factory:
                 weightsum_output_energy = 0
                 weightsum_output_material = 0
 
+
                 # iterate over all output connections
                 for output_i in component.outputs:
 
@@ -691,14 +692,14 @@ class Factory:
                     logging.critical(
                         f"ERROR: converter {component.name} does not have any inputs connected!"
                     )
-                    raise Exception
+                    return False
+
 
                 # if there is energy involved: calculate the base energy efficiency (used for visualisations later)
                 if weightsum_input_energy > 0:
                     component.eta_base = (
                         weightsum_output_energy / weightsum_input_energy
                     )
-                    return False
 
                 # check, if the combination of input and output weight sums is valid
                 if weightsum_output_energy > weightsum_input_energy:
@@ -709,9 +710,11 @@ class Factory:
 
                 if weightsum_output_material > weightsum_input_material:
                     logging.critical(
-                        f"Error in the factory architecture: The sum of weights at the material output of converter '{component.name}' ({weightsum_output_material}) is greater that the sum of input weights {weightsum_input_material}!"
+                        f"Error in the factory architecture: The sum of weights at the material output of converter '{component.name}' ({weightsum_output_material}) is greater that the sum of input weights ({weightsum_input_material})!"
                     )
                     raise Exception
+
+
 
             elif component.type == "deadtime":
                 # if Component is a deadtime: make sure that there is at least one input
@@ -737,7 +740,7 @@ class Factory:
 
             elif component.type == "triggerdemand":
                 # check, that the combinations of input and outputs connected is valid
-                if not (component.input_energy or component.output_energy):
+                if not (component.input_energy or component.input_material):
                     logging.critical(
                         f"Triggerdemand {component.name} has no inputs connected!"
                     )
