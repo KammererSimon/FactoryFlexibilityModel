@@ -15,13 +15,13 @@ from factory_flexibility_model.io.set_logger import set_logging_level
 def simulate_dri(simulation_task, model_parameters, simulation_config, total_sim_count):
     simulation_filename = f"{simulation_task['layout']}_{simulation_task['timeseries']}_NG{simulation_task['natural_gas_cost']}_EL{simulation_task['avg_electricity_price']}_VOL{simulation_task['volatility']}_CO2{simulation_task['co2_price']}_Reduction{simulation_task['co2_reduction']}_{simulation_task['month']}"
 
-    solved_sim_count = len(os.listdir(simulation_config['filepath_solved']))+len(os.listdir(simulation_config['filepath_problem']))
+
 
     if not simulation_config["overwrite_existing_simulations"]:
         # check if simulation is already solved
         if os.path.isfile(rf"{simulation_config['filepath_solved']}\{simulation_filename}.sim") or os.path.isfile(rf"{simulation_config['filepath_problem']}\{simulation_filename}.sim"):
-            if simulation_config["enable_log_simulation_iteration"]:
-                print(f"({solved_sim_count}/{total_sim_count} | {round((solved_sim_count+1)/total_sim_count*100, 2)}%) \t Simulation {simulation_task['simulation_number']} is already solved")
+            # if simulation_config["enable_log_simulation_iteration"]:
+            #     print(f"{round(simulation_task['simulation_number'] / total_sim_count * 100, 2)}%     Simulation {simulation_task['simulation_number']} is already solved")
             return
 
     # get scenario
@@ -69,18 +69,24 @@ def simulate_dri(simulation_task, model_parameters, simulation_config, total_sim
     # write metadata into simulation object
     simulation_task["solver_time"] = time.time()-t_start
     simulation.info = simulation_task
+
+
     if simulation.simulated:
         simulation.save(simulation_config["filepath_solved"],
                         name=simulation_filename,
                         overwrite=True)
         if simulation_config["enable_log_simulation_iteration"]:
-            print(f"({solved_sim_count}/{total_sim_count} | {round((solved_sim_count+1)/total_sim_count*100, 2)}%) \t Simulation number {simulation_task['simulation_number']} finished within: {round((time.time()-t_start), 2)} s")
+            solved_sim_count = len(os.listdir(simulation_config['filepath_solved'])) + len(
+                os.listdir(simulation_config['filepath_problem']))
+            print(f"({solved_sim_count}/{total_sim_count} | {round(solved_sim_count/total_sim_count*100, 2)}%) \t Simulation number {simulation_task['simulation_number']} finished within: {round((time.time()-t_start), 2)} s")
     else:
         simulation.save(simulation_config["filepath_problem"],
                         name=simulation_filename,
                         overwrite=True)
         if simulation_config["enable_log_simulation_iteration"]:
-            print(f"({solved_sim_count}/{total_sim_count} | {round((solved_sim_count+1)/total_sim_count*100, 2)}%) \t Simulation number {simulation_task['simulation_number']} aborted due to solver timeout")
+            solved_sim_count = len(os.listdir(simulation_config['filepath_solved'])) + len(
+                os.listdir(simulation_config['filepath_problem']))
+            print(f"({solved_sim_count}/{total_sim_count} | {round(solved_sim_count/total_sim_count*100, 2)}%) \t Simulation number {simulation_task['simulation_number']} aborted due to solver timeout")
 
 
 def simulate_dri_wrapper(simulation_task, model_parameters, simulation_config, total_sim_count):

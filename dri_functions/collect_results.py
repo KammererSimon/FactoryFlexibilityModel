@@ -37,7 +37,10 @@ def collect_results():
             if file.endswith(".sim"):
                 file_list.append(os.path.join(root, file))
 
+    i= 0
     for file in file_list:
+        i+=1
+        print(f"importing file {i}")
         simulation = import_simulation(file)
         factory = simulation.factory
 
@@ -60,8 +63,8 @@ def collect_results():
 
         # calculate ratio of H2 and NG used for DRI
         if simulation.info["layout"] == "Partial":
-            rate_h2_in_dri = sum(simulation.result[factory.get_key('Hydrogen DRI -> DRI Composition')]) / sum(
-                simulation.result[factory.get_key("DRI Composition")]["utilization"])
+            rate_h2_in_dri = sum(simulation.result[factory.get_key('Hydrogen DRI -> DRI Componsition')]) / sum(
+                simulation.result[factory.get_key("DRI Componsition")]["utilization"])
         elif simulation.info["layout"] == "CCS":
             rate_h2_in_dri = 0
         else:
@@ -84,9 +87,13 @@ def collect_results():
             simulation.result[factory.get_key("Pool DRI")]["utilization"])
 
         # calculate achieved electricity price
-        cost_electricity = sum(simulation.result[factory.get_key('Electricity Grid')][
-                                   "utilization"] * simulation.scenario.configurations[factory.get_key("Electricity Grid")]["cost"]) / sum(
-            simulation.result[factory.get_key('Electricity Grid')]["utilization"])
+
+        cost_electricity = (sum(simulation.result[factory.get_key('Electricity Grid')]["utilization"] *
+                                simulation.scenario.configurations[factory.get_key("Electricity Grid")]["cost"])+
+                            sum(simulation.result[factory.get_key('Electricity Slack')]["utilization"] *
+                                simulation.scenario.configurations[factory.get_key("Electricity Slack")]["cost"]))/ (
+            sum(simulation.result[factory.get_key('Electricity Slack')]["utilization"])
+            + sum(simulation.result[factory.get_key('Electricity Grid')]["utilization"]))
 
         electricity_savings_ratio = cost_electricity / simulation.info["avg_electricity_price"]
 
@@ -106,7 +113,5 @@ def collect_results():
                             "solver_time": simulation.info["solver_time"],
                             "cost_electricity": cost_electricity,
                             "electricity_savings_ratio": electricity_savings_ratio}, ignore_index=True)
-
-
 
     data.to_excel(filepath, index=False)
