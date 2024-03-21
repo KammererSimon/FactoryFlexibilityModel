@@ -30,7 +30,7 @@ def simulate_dri(simulation_task, model_parameters, simulation_config, total_sim
 
     # set prices
     if not simulation_task["layout"] == "Hydrogen":
-        scenario.configurations["Source Natural Gas"] = {"cost": simulation_task["natural_gas_cost"]}
+        scenario.configurations[simulation_task["factory"].get_key("Source Natural Gas")] = {"cost": simulation_task["natural_gas_cost"]}
 
     # scale timeseries to scenario parameters -> a explanation of this method can be found in the papers appendix
     cost_electricity = simulation_task["cost_electricity"]

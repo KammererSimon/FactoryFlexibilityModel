@@ -559,6 +559,9 @@ class Simulation:
             # set parameters for components
             if key in self.factory.components.keys():
                 self.factory.set_configuration(key, parameters=config)
+            else:
+                if key is not None:
+                    raise Exception(f"ERROR: Key '{key}' not found in factory")
 
             # set weights of connections
             if key in self.factory.connections.keys():
@@ -657,7 +660,6 @@ class Simulation:
 
 
         if "logger_level" in solver_config:
-            print(solver_config["logger_level"])
             set_logging_level(solver_config["logger_level"])
 
         # PREPARATIONS
