@@ -30,6 +30,7 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         # SET MASS BALANCES
         plant.connections[plant.get_key("EAF -> Pool CO2")].weight = model_parameters["co2_out_t_per_tls"] * (1 - model_parameters["scrap_share_per_tls"])
         plant.connections[plant.get_key("Hydrogen DRI -> Pool CO2")].weight = model_parameters["h2_setup_co2_out_t_per_tdri"]
+        plant.connections[plant.get_key("Hydrogen DRI -> Water Out")].weight = model_parameters["water_out_t_per_tdri"]
         plant.connections[plant.get_key("Natural Gas DRI -> Pool CO2")].weight = model_parameters["co2_out_t_per_tdri"]
         plant.connections[plant.get_key("PEM -> Pool Oxygen")].weight = model_parameters["oxygen_out_t_per_th2"]
         plant.connections[plant.get_key("Pool DRI -> EAF")].weight = model_parameters["dri_t_per_tls"] * (1 - model_parameters["scrap_share_per_tls"])
