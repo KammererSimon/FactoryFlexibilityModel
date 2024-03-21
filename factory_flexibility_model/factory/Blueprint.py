@@ -131,7 +131,7 @@ class Blueprint:
         for connection in data["connections"].values():
             connection["flowtype"] = self.flowtypes[connection["flowtype"]]
 
-        # store imported date into the object
+        # store imported data into the object
         self.components.update(data["components"])
         self.connections.update(data["connections"])
         self.info.update(data["info"])
