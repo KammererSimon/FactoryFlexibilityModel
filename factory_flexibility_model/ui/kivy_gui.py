@@ -138,7 +138,6 @@ class factory_GUIApp(MDApp):
 
         # catch the position of the new component and update the visualisation to show it in the correct place
         save_component_positions(self)
-        initialize_visualization(self)
 
         # select the new asset
         self.change_selected_asset(component_key)

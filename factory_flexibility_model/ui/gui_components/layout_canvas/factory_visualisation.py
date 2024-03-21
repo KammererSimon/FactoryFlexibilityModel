@@ -805,8 +805,6 @@ def update_visualization(app, calling_component=None, mouse_pos=None):
     highlight_selected_asset(app)
     place_new_connection_button(app)
 
-    print(time.time() - start_time)
-
 
 def update_connection_position(app, connection):
     """
