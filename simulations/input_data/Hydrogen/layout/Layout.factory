@@ -230,9 +230,9 @@ components:
       position_x: 23.0
       position_y: 19.0
     description: ''
-    flowtype: flowtype_9
+    flowtype: flowtype_5
     key: component_31
-    name: Pool Carbon
+    name: Pool Natural Gas
     type: pool
   component_33:
     GUI:
@@ -300,9 +300,9 @@ components:
       position_x: 5.0
       position_y: 20.0
     description: ''
-    flowtype: flowtype_9
+    flowtype: flowtype_5
     key: component_7
-    name: Source Carbon
+    name: Source Natural Gas
     type: source
   component_8:
     GUI:
@@ -487,21 +487,21 @@ connections:
     to_losses: false
     type: connection
   connection_33:
-    flowtype: flowtype_9
+    flowtype: flowtype_5
     from: component_7
     key: connection_33
     to: component_31
     to_losses: false
     type: connection
   connection_34:
-    flowtype: flowtype_9
+    flowtype: flowtype_5
     from: component_31
     key: connection_34
     to: component_14
     to_losses: false
     type: connection
   connection_35:
-    flowtype: flowtype_9
+    flowtype: flowtype_5
     from: component_31
     key: connection_35
     to: component_16

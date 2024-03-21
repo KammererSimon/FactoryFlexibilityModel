@@ -64,7 +64,7 @@ components:
   component_15:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\components\DRI.png
-      position_x: 21.0
+      position_x: 20.0
       position_y: 5.0
       primary_flow: null
     description: ''
@@ -147,7 +147,7 @@ components:
   component_22:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
-      position_x: 25.0
+      position_x: 24.0
       position_y: 10.0
     description: ''
     flowtype: flowtype_6
@@ -220,7 +220,7 @@ components:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\triggerdemand.png
       position_x: 32.0
-      position_y: 26.0
+      position_y: 24.0
     description: ''
     flowtype: flowtype_8
     key: component_29
@@ -228,9 +228,9 @@ components:
     type: triggerdemand
   component_3:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\sources\Gas Grid.png
+      icon: factory_flexibility_model\\ui\\assets\\defaults\source.png
       position_x: 5.0
-      position_y: 3.0
+      position_y: 20.0
     description: ''
     flowtype: flowtype_5
     key: component_3
@@ -240,7 +240,7 @@ components:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sinks\Delivery.png
       position_x: 40.0
-      position_y: 26.0
+      position_y: 24.0
     description: ''
     flowtype: flowtype_8
     key: component_30
@@ -252,9 +252,9 @@ components:
       position_x: 23.0
       position_y: 19.0
     description: ''
-    flowtype: flowtype_9
+    flowtype: flowtype_5
     key: component_31
-    name: Pool Carbon
+    name: Pool Natural Gas
     type: pool
   component_33:
     GUI:
@@ -299,8 +299,8 @@ components:
   component_37:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\schedule.png
-      position_x: 38.0
-      position_y: 27.0
+      position_x: 36.0
+      position_y: 24.0
     description: ''
     flowtype: flowtype_8
     key: component_37
@@ -309,8 +309,8 @@ components:
   component_38:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\sink.png
-      position_x: 39.0
-      position_y: 30
+      position_x: 40.0
+      position_y: 28.0
     description: ''
     flowtype: flowtype_8
     key: component_38
@@ -345,16 +345,6 @@ components:
     flowtype: flowtype_1
     key: component_6
     name: Source Oxygen
-    type: source
-  component_7:
-    GUI:
-      icon: factory_flexibility_model\\ui\\assets\\sources\Transport.png
-      position_x: 5.0
-      position_y: 20.0
-    description: ''
-    flowtype: flowtype_9
-    key: component_7
-    name: Source Carbon
     type: source
   component_8:
     GUI:
@@ -451,7 +441,7 @@ connections:
     flowtype: flowtype_5
     from: component_3
     key: connection_18
-    to: component_15
+    to: component_31
     to_losses: false
     type: connection
   connection_19:
@@ -567,21 +557,21 @@ connections:
     to_losses: false
     type: connection
   connection_33:
-    flowtype: flowtype_9
-    from: component_7
+    flowtype: flowtype_5
+    from: component_31
     key: connection_33
-    to: component_31
+    to: component_15
     to_losses: false
     type: connection
   connection_34:
-    flowtype: flowtype_9
+    flowtype: flowtype_5
     from: component_31
     key: connection_34
     to: component_14
     to_losses: false
     type: connection
   connection_35:
-    flowtype: flowtype_9
+    flowtype: flowtype_5
     from: component_31
     key: connection_35
     to: component_16

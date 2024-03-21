@@ -1,4 +1,4 @@
-display_scaling_factor: 0.9773367760664655
+display_scaling_factor: 1.0694526286936934
 log:
 - event_info: ''
   icon: new-box
@@ -921,6 +921,55 @@ log:
     has been imported
   time: '2024-03-15 09:49:27'
   type: INFO
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Partial'
+    has been imported
+  time: '2024-03-15 12:11:41'
+  type: INFO
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Partial
+  time: '2024-03-15 13:28:20'
+  type: INFO
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Partial
+  time: '2024-03-15 13:28:43'
+  type: INFO
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Partial'
+    has been imported
+  time: '2024-03-21 16:01:00'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component Source Carbon has been deleted!
+  time: '2024-03-21 16:01:27'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component Source Natural Gas has been deleted!
+  time: '2024-03-21 16:01:35'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New source created with key 'component_3'
+  time: '2024-03-21 16:01:40'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Source Natural Gas to Pool Carbon with key
+    'connection_18'
+  time: '2024-03-21 16:02:00'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Pool Natural Gas to Natural Gas DRI with key
+    'connection_33'
+  time: '2024-03-21 16:02:15'
+  type: DEBUG
 session_path: C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Partial
 show_component_config_dialog_on_creation: false
 timeseries: {}

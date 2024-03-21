@@ -37,12 +37,14 @@ def add_sink(simulation, component):
             f"        - Constraint:   Sum of incoming flows == determined total demand              ({component.name} determined by timeseries)"
         )
 
+
     # add constraints to calculate the total outflow from the system as the sum of all weighted energys of incoming connections
-    simulation.m.addConstr(
-        simulation.MVars[component.inputs[0].key]
-        == simulation.MVars[f"E_{component.key}"]
-    )
-    logging.debug(f"        - Constraint:   {component.name} == sum of incoming flows")
+    if len(component.inputs)>0:
+        simulation.m.addConstr(
+            simulation.MVars[component.inputs[0].key]
+            == simulation.MVars[f"E_{component.key}"]
+        )
+        logging.debug(f"        - Constraint:   {component.name} == sum of incoming flows")
 
     # is the total cumulative input of the destination limited? If yes: add sum constraint
     if component.max_total_input_limited:

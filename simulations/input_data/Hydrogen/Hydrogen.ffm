@@ -1427,6 +1427,12 @@ log:
   message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
   time: '2024-03-13 14:33:28'
   type: INFO
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen'
+    has been imported
+  time: '2024-03-21 15:52:06'
+  type: INFO
 session_path: C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
 show_component_config_dialog_on_creation: false
 timeseries: {}

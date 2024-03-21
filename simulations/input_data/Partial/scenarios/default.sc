@@ -29,6 +29,5 @@ component_37: {}
 component_38: {}
 component_4: {}
 component_6: {}
-component_7: {}
 component_8: {}
 component_9: {}
