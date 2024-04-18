@@ -1300,6 +1300,44 @@ log:
     key 'connection_25'
   time: '2024-03-13 14:37:22'
   type: DEBUG
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/CCS'
+    has been imported
+  time: '2024-04-18 21:22:45'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New pool created with key 'component_23'
+  time: '2024-04-18 21:23:23'
+  type: DEBUG
+- event_info: ''
+  icon: information-outline
+  message: Component Source Oxygen has been deleted!
+  time: '2024-04-18 21:23:28'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New source created with key 'component_6'
+  time: '2024-04-18 21:23:31'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified source 1 to Unspecified pool 1
+    with key 'connection_3'
+  time: '2024-04-18 21:23:34'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified pool 1 to EAF with key 'connection_26'
+  time: '2024-04-18 21:23:48'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified pool 1 to Natural Gas DRI with
+    key 'connection_27'
+  time: '2024-04-18 21:23:50'
+  type: DEBUG
 session_path: C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/CCS
 show_component_config_dialog_on_creation: false
 timeseries: {}

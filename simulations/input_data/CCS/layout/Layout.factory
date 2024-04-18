@@ -153,6 +153,16 @@ components:
     key: component_22
     name: Crude Steel overflow
     type: sink
+  component_23:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 13.0
+      position_y: 25.0
+    description: ''
+    flowtype: flowtype_1
+    key: component_23
+    name: Pool Oxygen
+    type: pool
   component_24:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
@@ -236,9 +246,9 @@ components:
     type: pool
   component_6:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\sources\Oxygen.png
-      position_x: 24.0
-      position_y: 18.0
+      icon: factory_flexibility_model\\ui\\assets\\defaults\source.png
+      position_x: 6.0
+      position_y: 26.0
     description: ''
     flowtype: flowtype_1
     key: component_6
@@ -408,6 +418,20 @@ connections:
     to: component_27
     to_losses: false
     type: connection
+  connection_26:
+    flowtype: flowtype_1
+    from: component_23
+    key: connection_26
+    to: component_16
+    to_losses: false
+    type: connection
+  connection_27:
+    flowtype: flowtype_1
+    from: component_23
+    key: connection_27
+    to: component_15
+    to_losses: false
+    type: connection
   connection_28:
     flowtype: flowtype_6
     from: component_27
@@ -426,7 +450,7 @@ connections:
     flowtype: flowtype_1
     from: component_6
     key: connection_3
-    to: component_16
+    to: component_23
     to_losses: false
     type: connection
   connection_30:
