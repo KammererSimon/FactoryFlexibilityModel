@@ -521,6 +521,13 @@ connections:
     to: component_16
     to_losses: false
     type: connection
+  connection_38:
+    flowtype: flowtype_1
+    from: component_20
+    key: connection_38
+    to: component_14
+    to_losses: false
+    type: connection
   connection_39:
     flowtype: flowtype_3
     from: component_14

@@ -3,9 +3,12 @@ enable_log_simulation_setup: False
 enable_log_simulation_iteration: True
 enable_log_solver: False
 enable_slacks: False
+filepath_solved: C:\Users\smsikamm\PycharmProjects\FactoryFlexibilityModel\simulations\output_data\simulations_solved
+filepath_problem: C:\Users\smsikamm\PycharmProjects\FactoryFlexibilityModel\simulations\output_data\simulations_failed
 max_solver_time: 1800
+mip_gap: 0.01
 overwrite_existing_simulations: False
-parallel_workers: 1
+parallel_workers: 32
 threshold: 0.01
 
 

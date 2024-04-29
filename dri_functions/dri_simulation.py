@@ -13,7 +13,7 @@ from factory_flexibility_model.io.set_logger import set_logging_level
 
 # FUNCTIONS
 def simulate_dri(simulation_task, model_parameters, simulation_config, total_sim_count):
-    simulation_filename = f"{simulation_task['layout']}_{simulation_task['timeseries']}_NG{simulation_task['natural_gas_cost']}_EL{simulation_task['avg_electricity_price']}_VOL{simulation_task['volatility']}_CO2{simulation_task['co2_price']}_Reduction{simulation_task['co2_reduction']}_{simulation_task['month']}"
+    simulation_filename = f"{simulation_task['layout']}_{simulation_task['timeseries']}_NG{simulation_task['natural_gas_cost']}_EL{simulation_task['avg_electricity_price']}_VOL{simulation_task['volatility']}_CO2{simulation_task['co2_price']}_Reduction{simulation_task['co2_reduction']}_{simulation_task['month']}_ElectricityEmissions_{simulation_task['electricity_emissions']}"
 
 
 
@@ -63,6 +63,7 @@ def simulate_dri(simulation_task, model_parameters, simulation_config, total_sim
                                scenario=scenario)
     simulation.simulate(threshold=simulation_config["threshold"],
                         solver_config={"max_solver_time": simulation_config["max_solver_time"],
+                                       "mip_gap": simulation_config["mip_gap"],
                                        "log_solver": simulation_config["enable_log_solver"]})
 
     # write metadata into simulation object
@@ -111,8 +112,8 @@ def iterate_dri_simulations():
     simulation_list = create_simulation_list(simulation_config, model_parameters, timeseries_data, scenario_variations)
 
     # make sure that the required output folders exist
-    simulation_config["filepath_solved"] = f"{os.getcwd()}\\simulations\\output_data\\simulations_solved"
-    simulation_config["filepath_problem"] = f"{os.getcwd()}\\simulations\\output_data\\simulations_failed"
+    #simulation_config["filepath_solved"] = "F:\\FactoryFlexibilityModel\\DRI Simulations\\simulations_solved"
+    #simulation_config["filepath_problem"] = "F:\\FactoryFlexibilityModel\\DRI Simulations\\simulations_failed"
     if not os.path.exists(simulation_config["filepath_solved"]):
         os.makedirs(simulation_config["filepath_solved"])
     if not os.path.exists(simulation_config["filepath_problem"]):
@@ -229,7 +230,8 @@ def count_simulations(scenario_variations):
            len(scenario_variations["CO2_prices"]) * \
            len(scenario_variations["plant_types"]) * \
            len(scenario_variations["CO2_reduction"]) * \
-           12 # month
+           len(scenario_variations["electricity_emissions"]) * \
+        12 # month
 
 
 def create_simulation_list(simulation_config, model_parameters, timeseries_data, scenario_variations):
@@ -251,21 +253,23 @@ def create_simulation_list(simulation_config, model_parameters, timeseries_data,
                     for co2_price in scenario_variations["CO2_prices"]:
                         for co2_reduction in scenario_variations["CO2_reduction"]:
                             for timeseries in scenario_variations["market_timeseries"]:
-                                for month in list(range(1, 13)):
-                                    simulation_list.append({"avg_electricity_price": avg_electricity_price,
-                                                            "layout": plant_type,
-                                                            "natural_gas_cost": natural_gas_cost,
-                                                            "volatility": volatility,
-                                                            "co2_price": co2_price,
-                                                            "co2_reduction": co2_reduction,
-                                                            "scenario": scenario,
-                                                            "factory": factory,
-                                                            "month": month,
-                                                            "timeseries": timeseries,
-                                                            "cost_electricity": timeseries_data[f"{timeseries}_cost"][
-                                                                                (month - 1) * factory.timesteps + 1:month * factory.timesteps+1],
-                                                            "emissions_electricity": timeseries_data[
-                                                                                         f"{timeseries}_emissions"][
-                                                                                     (month - 1) * factory.timesteps + 1:month * factory.timesteps+1],
-                                                            "simulation_number": len(simulation_list) + 1})
+                                for electricity_emissions in scenario_variations["electricity_emissions"]:
+                                    for month in list(range(1, 13)):
+                                        simulation_list.append({"avg_electricity_price": avg_electricity_price,
+                                                                "layout": plant_type,
+                                                                "natural_gas_cost": natural_gas_cost,
+                                                                "volatility": volatility,
+                                                                "co2_price": co2_price,
+                                                                "co2_reduction": co2_reduction,
+                                                                "scenario": scenario,
+                                                                "factory": factory,
+                                                                "month": month,
+                                                                "timeseries": timeseries,
+                                                                "cost_electricity": timeseries_data[f"{timeseries}_cost"][
+                                                                                    (month - 1) * factory.timesteps + 1:month * factory.timesteps+1],
+                                                                "emissions_electricity": timeseries_data[
+                                                                                             f"{timeseries}_emissions"][
+                                                                                         (month - 1) * factory.timesteps + 1:month * factory.timesteps+1]*electricity_emissions,
+                                                                "electricity_emissions": electricity_emissions,
+                                                                "simulation_number": len(simulation_list) + 1})
     return simulation_list

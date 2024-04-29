@@ -821,6 +821,7 @@ class Simulation:
             self.t_start = time.time()  # reset timer
 
         # CONFIGURE SOLVER
+        self.m.setParam("MIPGap", solver_config["mip_gap"])
         oc.solve(self, solver_config)
 
         if not self.m.Status == GRB.TIME_LIMIT:

@@ -63,8 +63,8 @@ def collect_results():
 
         # calculate ratio of H2 and NG used for DRI
         if simulation.info["layout"] == "Partial":
-            rate_h2_in_dri = sum(simulation.result[factory.get_key('Hydrogen DRI -> DRI Componsition')]) / sum(
-                simulation.result[factory.get_key("DRI Componsition")]["utilization"])
+            rate_h2_in_dri = sum(simulation.result[factory.get_key('Hydrogen DRI -> DRI Composition')]) / sum(
+                simulation.result[factory.get_key("DRI Composition")]["utilization"])
         elif simulation.info["layout"] == "CCS":
             rate_h2_in_dri = 0
         else:

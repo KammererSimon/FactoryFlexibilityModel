@@ -69,8 +69,10 @@ def write_results_to_xlsx(
             worksheet.write(1, col, result_dict[key])
         else:
             for row in range(len(result_dict[key])):
-                worksheet.write(row + 1, col, result_dict[key][row])
-
+                try:
+                    worksheet.write(row + 1, col, result_dict[key][row])
+                except:
+                    pass
         # continue with next column in excel sheet
         col += 1
 

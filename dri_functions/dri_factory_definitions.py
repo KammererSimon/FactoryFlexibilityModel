@@ -39,15 +39,17 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         plant.connections[plant.get_key("Pool Hydrogen -> Hydrogen DRI")].weight = model_parameters["h2_gas_preheat_t_per_tdri"]
         plant.connections[plant.get_key("Pool Iron Ore -> Hydrogen DRI")].weight = model_parameters["iron_ore_pellets_t_per_tdri"]
         plant.connections[plant.get_key("Pool Natural Gas -> Hydrogen DRI")].weight = model_parameters["carbon_h2_t_per_tdri"]
+        plant.connections[plant.get_key("Pool Oxygen -> Hydrogen DRI")].weight = model_parameters["oxygen_t_per_tdri"]
         plant.connections[plant.get_key("Pool Electricity -> Hydrogen DRI")].weight = model_parameters["electricity_mwh_per_tdri"]
         plant.connections[plant.get_key("Hydrogen DRI -> Pool CO2")].weight = model_parameters["h2_setup_co2_out_t_per_tdri"]
         plant.connections[plant.get_key("Hydrogen DRI -> Water Out")].weight = model_parameters["water_out_t_per_tdri"]
 
         #NG DRI
         plant.connections[plant.get_key("Pool Iron Ore -> Natural Gas DRI")].weight = model_parameters["iron_ore_pellets_t_per_tdri"]
-        plant.connections[plant.get_key("Natural Gas DRI -> Pool CO2")].weight = model_parameters["co2_out_t_per_tdri"]
+        plant.connections[plant.get_key("Pool Oxygen -> Natural Gas DRI")].weight = model_parameters["oxygen_t_per_tdri"]
         plant.connections[plant.get_key("Pool Electricity -> Natural Gas DRI")].weight = model_parameters["electricity_mwh_per_tdri"]
         plant.connections[plant.get_key("Pool Natural Gas -> Natural Gas DRI")].weight = model_parameters["natural_gas_t_per_tdri"]
+        plant.connections[plant.get_key("Natural Gas DRI -> Pool CO2")].weight = model_parameters["co2_out_t_per_tdri"]
 
         #EAF
         plant.connections[plant.get_key("EAF -> Pool CO2")].weight = model_parameters["co2_out_t_per_tls"] * (1 - model_parameters["scrap_share_per_tls"])
@@ -91,17 +93,26 @@ def create_steel_plant(model_parameters, plant_type, config = None):
 
     elif plant_type == "CCS":
         # SET MASS BALANCES
-        plant.connections[plant.get_key("EAF -> Pool CO2 Emissions")].weight = model_parameters["co2_out_t_per_tls"] * (1 - model_parameters["scrap_share_per_tls"])
-        plant.connections[plant.get_key("Natural Gas DRI -> Pool CO2")].weight = model_parameters["co2_out_t_per_tdri"]
-        plant.connections[plant.get_key("Pool DRI -> EAF")].weight = model_parameters["dri_t_per_tls"] * (1 - model_parameters["scrap_share_per_tls"])
-        plant.connections[plant.get_key("Pool Electricity -> DRI Compactor")].weight = model_parameters["hbi_compact_electricity_mwh_per_tDRI"] + model_parameters["hbi_reheat_electricity_mwh_per_tDRI"]
-        plant.connections[plant.get_key("Pool Electricity -> Natural Gas DRI")].weight = model_parameters["electricity_mwh_per_tdri"]
-        plant.connections[plant.get_key("Source Oxygen -> EAF")].weight = model_parameters["oxygen_t_per_tls"]
-        plant.connections[plant.get_key("Source Iron Ore -> Natural Gas DRI")].weight = model_parameters["iron_ore_pellets_t_per_tdri"]
-        plant.connections[plant.get_key("Source Lime -> EAF")].weight = model_parameters["lime_t_per_tls"]
+
+        # NG DRI
         plant.connections[plant.get_key("Source Natural Gas -> Natural Gas DRI")].weight = model_parameters["natural_gas_t_per_tdri"]
+        plant.connections[plant.get_key("Pool Electricity -> Natural Gas DRI")].weight = model_parameters["electricity_mwh_per_tdri"]
+        plant.connections[plant.get_key("Source Iron Ore -> Natural Gas DRI")].weight = model_parameters["iron_ore_pellets_t_per_tdri"]
+        plant.connections[plant.get_key("Pool Oxygen -> Natural Gas DRI")].weight = model_parameters["oxygen_t_per_tdri"]
+        plant.connections[plant.get_key("Natural Gas DRI -> Pool CO2")].weight = model_parameters["co2_out_t_per_tdri"]
+
+        # EAF
+        plant.connections[plant.get_key("Pool DRI -> EAF")].weight = model_parameters["dri_t_per_tls"] * (1 - model_parameters["scrap_share_per_tls"])
+        plant.connections[plant.get_key("Pool Oxygen -> EAF")].weight = model_parameters["oxygen_t_per_tls"]
+        plant.connections[plant.get_key("Source Lime -> EAF")].weight = model_parameters["lime_t_per_tls"]
         plant.connections[plant.get_key("Source Scrap -> EAF")].weight = model_parameters["dri_t_per_tls"] * model_parameters["scrap_share_per_tls"]
         plant.connections[plant.get_key("Source Carbon -> EAF")].weight = model_parameters["carbon_t_per_tls"]
+        plant.connections[plant.get_key("EAF -> Pool CO2 Emissions")].weight = model_parameters["co2_out_t_per_tls"] * (1 - model_parameters["scrap_share_per_tls"])
+
+        # HBI STORAGE
+        plant.connections[plant.get_key("Pool Electricity -> DRI Compactor")].weight = model_parameters["hbi_compact_electricity_mwh_per_tDRI"] + model_parameters["hbi_reheat_electricity_mwh_per_tDRI"]
+
+        # CCS
         plant.connections[plant.get_key("CCS -> Pool CO2 Emissions")].weight = 1-model_parameters["ccs_efficiency"]
         plant.connections[plant.get_key("CCS -> CO2 Storage")].weight = model_parameters["ccs_efficiency"]
         plant.connections[plant.get_key("Pool Electricity -> CCS")].weight = model_parameters["electricity_mwh_per_t_sequestered"]
@@ -112,6 +123,7 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         scenario.configurations[plant.get_key("Source Lime")] = {"cost": model_parameters["cost_lime_€_per_t"]}
         scenario.configurations[plant.get_key("Source Oxygen")] = {"cost": model_parameters["cost_oxygen_€_per_to2"]}
         scenario.configurations[plant.get_key("Source Scrap")] = {"cost": model_parameters["cost_scrap_€_per_t"]}
+        scenario.configurations[plant.get_key("CO2 Storage")] = {"cost": model_parameters["cost_co2_storage_€_per_t"]}
 
         # SET COMPONENT OPERATING CONSTRAINTS
         scenario.configurations[plant.get_key("DRI Compactor")] = {"power_max": model_parameters["dri_power_max"]}
@@ -144,6 +156,7 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         plant.connections[plant.get_key("Pool Hydrogen -> Hydrogen DRI")].weight = model_parameters["h2_electric_preheat_t_per_tdri"]
         plant.connections[plant.get_key("Source Iron Ore -> Hydrogen DRI")].weight = model_parameters["iron_ore_pellets_t_per_tdri"]
         plant.connections[plant.get_key("Pool Natural Gas -> Hydrogen DRI")].weight = model_parameters["carbon_h2_t_per_tdri"]
+        plant.connections[plant.get_key("Pool Oxygen -> Hydrogen DRI")].weight = model_parameters["oxygen_t_per_tdri"]
         plant.connections[plant.get_key("Pool Electricity -> Hydrogen DRI")].weight = model_parameters["electricity_mwh_per_tdri"] + model_parameters["preheater_electricity_mwh_per_tdri"]
         plant.connections[plant.get_key("Hydrogen DRI -> Pool CO2")].weight = model_parameters["h2_setup_co2_out_t_per_tdri"]
         plant.connections[plant.get_key("Hydrogen DRI -> Water Out")].weight = model_parameters["water_out_t_per_tdri"]
