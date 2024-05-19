@@ -17,6 +17,7 @@ from factory_flexibility_model.ui.gui_components.layout_component_configuration.
 from factory_flexibility_model.ui.utility.io.import_scheduler_demands import (
     import_scheduler_demands,
 )
+from factory_flexibility_model.ui.utility.io.import_cop_profile import import_cop_profile
 
 
 # CLASSES
@@ -242,6 +243,10 @@ def update_component_configuration_tab(app):
                 # write the length of the current demand list into the info section of the parameter list element
                 list_item.secondary_text = f"List of {len(parameters[parameter_key]['value'][0])} individual demands"
                 list_icon.icon = "ray-start-arrow"
+            elif parameter_key == "cop_profile":
+                # confirm that a profile has been imported
+                list_item.secondary_text = f"Profile successfully imported"
+                list_icon.icon = "ray-start-arrow"
 
             # handle special cases of boolean attributes
             elif parameter_key in ["direct_throughput"]:
@@ -264,6 +269,9 @@ def update_component_configuration_tab(app):
         if parameter_key == "demands":
             # link excel-import script for scheduler demands
             list_item.bind(on_release=lambda x: import_scheduler_demands(app))
+        if parameter_key == "cop_profile":
+            # link excel-import script for cop profile
+            list_item.bind(on_release=lambda x: import_cop_profile(app))
         elif parameter_key == "ratios":
             # link converter_ratio_window for converter ratios
             list_item.bind(on_release=lambda x: show_converter_ratio_dialog(app))

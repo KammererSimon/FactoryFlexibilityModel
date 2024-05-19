@@ -304,6 +304,20 @@ def create_dash(simulation):
                 "height": "30vh",
             },
         ),
+        "heatpump_utilization": dcc.Graph(
+            figure={},
+            config=dict(responsive=True),
+            style={
+                "height": "30vh",
+            },
+        ),
+        "heatpump_cop": dcc.Graph(
+            figure={},
+            config=dict(responsive=True),
+            style={
+                "height": "30vh",
+            },
+        ),
     }
 
     # Textboxes
@@ -337,6 +351,11 @@ def create_dash(simulation):
         "thermal_config": dcc.Markdown(style={"marginLeft": "10px"}),
         "thermal_results": dcc.Markdown(style={"marginLeft": "10px"}),
         "deadtime": dcc.Markdown(style={"marginLeft": "10px"}),
+        "heatpump_config": dcc.Markdown(style={"marginLeft": "10px"}),
+        "heatpump_sum": dcc.Markdown(style=style["highlight_value"]),
+        "heatpump_minmax": dcc.Markdown(style=style["highlight_value"]),
+        "heatpump_avg": dcc.Markdown(style=style["highlight_value"]),
+        "heatpump_avg_cop": dcc.Markdown(style=style["highlight_value"]),
     }
     # Dropdowns
     dropdowns = {
@@ -373,16 +392,17 @@ def create_dash(simulation):
         ),
     }
     options = {
+        "converter": [],
+        "deadtime": [],
+        "heatpump": [],
         "pool": [],
         "sink": [],
         "source": [],
         "storage": [],
         "slack": [],
-        "converter": [],
         "schedule": [],
         "thermalsystem": [],
         "triggerdemand": [],
-        "deadtime": [],
     }
     for c in simulation.factory.components:
         options[simulation.factory.components[c].type].append(
@@ -976,6 +996,9 @@ def create_dash(simulation):
         Input(dropdowns["linestyle_pool"], component_property="value"),
     )
     def update_plots_pool(user_input, timesteps, linestyle):
+        if user_input == None:
+            return go.Figure()
+
         t0 = timesteps[0]
         t1 = timesteps[1]
         x = np.arange(t0, t1, 1)
@@ -1371,6 +1394,10 @@ def create_dash(simulation):
         Input("timestep_slider_thermal", "value"),
     )
     def update_plots_thermal(user_input, timesteps):
+        # Abort if there are no thermal systems in the simulation
+        if user_input == None:
+            return go.Figure(), go.Figure(), "", ""
+
         t0 = timesteps[0]
         t1 = timesteps[1]
         x = np.arange(t0, t1, 1)
@@ -1703,12 +1730,151 @@ def create_dash(simulation):
 
             results = f"\n **Total Flow:** {component.flowtype.unit.get_value_expression(round(sum(sum(utilization))), 'flow')}\n \n **power_max:** {component.flowtype.unit.get_value_expression(max(sum(utilization)), 'flowrate')}\n"
         else:
+            fig1 = go.Figure()
             fig2 = go.Figure()
             fig3 = go.Figure()
             config = ""
             results = ""
 
         return fig1, fig2, fig3, config, results
+
+    @app.callback(
+        Output(figures["heatpump_utilization"], component_property="figure"),
+        Output(figures["heatpump_cop"], component_property="figure"),
+        Output(component_info["heatpump_sum"], component_property="children"),
+        Output(component_info["heatpump_avg_cop"], component_property="children"),
+        Output(component_info["heatpump_minmax"], component_property="children"),
+        Output(component_info["heatpump_avg"], component_property="children"),
+        Input(dropdowns["heatpump"], component_property="value"),
+        Input("timestep_slider_heatpump", "value"),
+    )
+    def update_plots_heatpump(user_input, timesteps):
+        # determine timerange to display
+        t0 = timesteps[0]
+        t1 = timesteps[1]
+        x = np.arange(t0, t1, 1)
+
+        # get heatpump component
+        component = simulation.factory.components[
+            simulation.factory.get_key(user_input)
+        ]
+
+        # CREATE UTILIZATION FIGURE
+        input_electricity = (
+                simulation.result[component.key]["input_electricity"][t0:t1]
+                / simulation.scenario.timefactor
+                * simulation.factory.timefactor
+        )
+        input_heat = (
+                simulation.result[component.key]["input_heat"][t0:t1]
+                / simulation.scenario.timefactor
+                * simulation.factory.timefactor
+        )
+        output_heat = (
+                simulation.result[component.key]["output_heat"][t0:t1]
+                / simulation.scenario.timefactor
+                * simulation.factory.timefactor
+        )
+
+        fig = go.Figure()
+
+        # add trace for electricity input
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=input_electricity,
+                hoverinfo="x",
+                mode="lines",
+                stackgroup="one",
+                name=f"Electricity Consumption [kW]",
+                line={"color": "red"},
+            )
+        )
+
+        # add trace for heat source input
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=input_heat,
+                hoverinfo="x",
+                mode="lines",
+                stackgroup="one",
+                name=f"Input from heat source [kW]",
+                line={"color": "orange"},
+            )
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=-output_heat,
+                hoverinfo="x",
+                mode="lines",
+                stackgroup="two",
+                name=f"Total heat output",
+                line={"color": "blue"},
+            )
+        )
+
+        fig.update_layout(
+            figure_config,
+            xaxis_title="Timesteps",
+            yaxis_title=f"Operating Power [kW]",
+            showlegend=True,
+        )
+        fig.update_xaxes(linewidth=2, linecolor=style["axis_color"])
+        fig.update_yaxes(linewidth=2, linecolor=style["axis_color"])
+
+        # CREATE TEMPERATURE AND COP PLOT
+        fig2 = make_subplots(specs=[[{"secondary_y": True}]])
+        fig2.add_trace(
+            go.Scatter(
+                x=x,
+                y=np.ones(t1 - t0) * component.temperature_source[t0:t1],
+                line_color=f"rgb{colors['main']}",
+                name="Source Temperature",
+            ),
+            secondary_y=False,
+        )
+        fig2.add_trace(
+            go.Scatter(
+                x=x,
+                y=np.ones(t1 - t0) * component.cop[t0:t1],
+                line_color="rgb(192,0,0)",
+                name="COP",
+            ),
+            secondary_y=True,
+        )
+        fig2.update_layout(
+            figure_config,
+            xaxis_title="Timesteps",
+        )
+
+        fig2.update_yaxes(
+            title_text=f"Source Temperature [°C]",
+            secondary_y=False,
+            linewidth=2,
+            linecolor=style["axis_color"],
+        )
+
+        fig2.update_yaxes(
+            title_text=f"Realized COP",
+            secondary_y=True,
+            linewidth=2,
+            linecolor=style["axis_color"],
+        )
+
+        heatpump_sum = "## " + component.flowtype.unit.get_value_expression(
+            value=round(sum(simulation.result[component.key]["utilization"][t0:t1])),
+            quantity_type="flow",
+        )
+        heatpump_avg_cop = f"## {round(sum(simulation.result[component.key]['utilization'][t0:t1] * component.cop[t0:t1])/sum(simulation.result[component.key]['utilization'][t0:t1]),2)}"
+        heatpump_minmax = (
+            f"## {component.flowtype.unit.get_value_expression(value=round(min(simulation.result[component.key]['utilization'][t0:t1])), quantity_type='flowrate')} "
+            f"- {component.flowtype.unit.get_value_expression(value=round(max(simulation.result[component.key]['utilization'][t0:t1])), quantity_type='flowrate')}"
+        )
+        heatpump_avg = f"## {component.flowtype.unit.get_value_expression(value=round(simulation.result[component.key]['utilization'][t0:t1].mean()), quantity_type='flowrate')}"
+        return fig, fig2, heatpump_sum, heatpump_avg_cop, heatpump_minmax, heatpump_avg
 
     # Run app
     app.run_server(port=8053)

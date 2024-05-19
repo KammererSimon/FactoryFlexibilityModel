@@ -644,6 +644,134 @@ class Deadtime(Component):
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
 
+class Heatpump(Component):
+    def __init__(self, key: str, factory, name: str = None):
+        # STANDARD COMPONENT ATTRIBUTES
+        super().__init__(key, factory, name=name)
+
+        # STRUCTURAL ATTRIBUTES
+        self.description = (
+            "Unspecified Heatpump"  # Description for better identification in UI
+        )
+        self.input_main = [] # input from energy supply
+        self.input_gains = [] # input from heatsource
+        self.max_inputs = 2  # heatpumps allow for an electricity and a heatsource input
+        self.max_outputs = 1  # heatpumps allow for an useenergy and losses output
+        self.type = "heatpump"  # specify Component as heatpump
+
+        # POWER CONSTRAINTS
+        self.power_max_limited = (
+            False  # determines, whether the maximum Power of the converter is limited
+        )
+        self.power_max = np.ones(factory.timesteps) * 1000000000 # big M, just in case....
+
+        # EFFICIENCY PARAMETERS
+        self.temperature_source = np.ones(factory.timesteps) * 20  # temperature level of the heat source; Standard value of 20°C
+        self.cop_profile = np.ones(500) # profile determining the cop of the heatpump. Array with values for temperatures ranging from 0 to 500 Kelvin
+        self.cop = np.ones(factory.timesteps) # timeseries of operating cop, based on cop profile and source temperature. Is being calculated when one of both attributes is set
+
+        logging.debug(
+            f"        - New heatpump {self.name} created with Component-key{self.key}"
+        )
+
+    def calculate_cop_timeseries(self):
+        """
+        This function calculates the realizable cop for every timestep based on the source temperature profile and the cop profile. The function simply performs a lookup of the cop at the source temperature of every timestep.
+        :return: None; recalculates self.cop
+        """
+        # iterate over all timesteps
+        for t in range(len(self.temperature_source)):
+            # lookup the correct COP value in the cop profile that corresponds to the source temperature in timestep t
+            self.cop[t] = self.cop_profile[int(self.temperature_source[t])-273] # -273 bc the cop profile is based on celvin and the source temperature is in °C
+
+    def set_input(self, connection: co.Connection):
+        """
+        This function sets the given connection as an input for the heatpump-component.
+        :param connection: [fm.Connection-object]
+        """
+
+        self.inputs.append(connection)
+        if connection.flowtype.is_energy():
+            if connection.type == "gains" or connection.flowtype.key == "heat":
+                if self.input_gains != []:
+                    logging.critical(f"Cannot set {connection.name} as input for Heatpump {self.name}, because it already has a heat source input.")
+                    raise Exception
+                else:
+                    self.input_gains = connection
+            else:
+                if self.input_main != []:
+                    logging.critical(f"Cannot set {connection.name} as input for Heatpump {self.name}, because it already has a main energy input.")
+                    raise Exception
+                else:
+                    self.input_main = connection
+        elif connection.flowtype.is_material():
+            logging.critical(f"Heatpump {self.name} is not allowed to have any material inputs!")
+            raise Exception
+        else:
+            logging.critical(
+                f"Invalid flowtype handed over to {self.name}.set_input(): {connection.flowtype.name}"
+            )
+            raise Exception
+
+    def set_output(self, connection: co.Connection):
+        """
+        This function sets the given connection as an output for the component. Output limit of parent component is being ignored
+        :param connection: [fm.Connection-object]
+        """
+        # Make sure, that no already defined output is being overwritten
+        if self.outputs != []:
+            logging.critical(f"Cannot set another output for heatpump {self.name}, because it already has its output defined!")
+            raise Exception
+
+        if not connection.flowtype.key in ["heat", "unknown"]:
+            logging.critical(f"Invalid flowtype {connection.flowtype.name} connected to heatpump {self.name}. The flowtype has to be heat.")
+            raise Exception
+
+        # handle connections to losses if specified:
+        if connection.type == "losses":
+            logging.warning(f"Heatpumps do not support loss outputs. The connection {connection.name} is therefore used as the regular output for {self.name}")
+
+        self.outputs.append(connection)
+
+    def update_flowtype(self, flowtype: str):
+        """
+        The flowtypes at heatpumps are predefined. Therefore this function just interrupts the browadcast.
+        """
+        # break the recursive broadcast # FLOWTYPE DETERMINATION
+
+    def set_configuration(self, timesteps: int, parameters: dict) -> bool:
+        """
+        This function sets the configuration for the component. All parameters to be defined can be handed over as key-value-pairs within a single dictionary.
+        :param timesteps: [int] The number of timesteps that stationary values are scaled to and user given timeseries need to have at minimum
+        :param parameters: [dict] dictionary with key-value-combinations that specify all the parameters to be configured.
+        :return: [boolean] True, if the configuration war successfull
+        """
+        # iterate over all given parameters and figure out how to handle them...
+        for parameter in parameters:
+            # HANDLE HEATPUMP-SPECIFIC PARAMETERS
+            if parameter == "power_max":
+                self.power_max_limited = True
+                self.power_max = iv.validate(
+                    parameters["power_max"], "float", timesteps=timesteps
+                )
+
+            elif parameter == "temperature_source":
+                self.temperature_source = iv.validate(parameters["temperature_source"], "float", timesteps=timesteps)
+                self.calculate_cop_timeseries() # recalculate the timeseries of relevant COP based on the new source temperature profile
+
+            elif parameter == "cop_profile":
+                self.cop_profile = iv.validate(parameters["cop_profile"], "float", timesteps=500)
+                self.calculate_cop_timeseries() # recalculate the timerseries of relevant COP based on the new cop profile
+
+            # HANDLE GENERAL PARAMETERS
+            else:
+                if not super().set_parameter(timesteps, parameter, parameters):
+                    # in case the function failed to set the parameter it returns false
+                    continue
+
+            logging.debug(f"        - {parameter} set for {self.type} {self.name}")
+
+
 class Pool(Component):
     def __init__(self, key, factory, *, flowtype=None, name: str = None):
         super().__init__(key, factory, flowtype=flowtype, name=name)

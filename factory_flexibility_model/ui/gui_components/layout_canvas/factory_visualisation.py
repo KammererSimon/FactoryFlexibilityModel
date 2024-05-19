@@ -605,6 +605,7 @@ def update_canvas_scaling_factor(app):
         "pool": component_height,
         "storage": component_height * 1.5,
         "converter": component_height * 1.5,
+        "heatpump": component_height * 1.5,
         "deadtime": component_height * 1.5,
         "thermalsystem": component_height * 1.5,
         "triggerdemand": component_height * 1.5,

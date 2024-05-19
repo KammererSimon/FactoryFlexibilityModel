@@ -214,6 +214,34 @@ class Simulation:
                     "rampup_cost": rampup_cost,
                 }
 
+            # handle heatpumps
+            if component.type == "heatpump":
+                # get the result values, round them to the specified number of digits
+                utilization = self.MVars[f"P_{component.key}"].X
+                input_heat = self.MVars[f"{component.input_gains.key}"].X
+                output_heat = self.MVars[f"{component.outputs[0].key}"].X
+
+
+                # apply threshold and rounding on all values
+                utilization = self.__apply_threshold_and_rounding(
+                    utilization, threshold, rounding_decimals
+                )
+                input_heat = self.__apply_threshold_and_rounding(
+                    input_heat, threshold, rounding_decimals
+                )
+
+                output_heat = self.__apply_threshold_and_rounding(
+                    output_heat, threshold, rounding_decimals
+                )
+
+                # write results into the result-dictionary
+                self.result[component.key] = {
+                    "utilization": utilization,
+                    "input_electricity": utilization,
+                    "input_heat": input_heat,
+                    "output_heat": output_heat
+                }
+
             # handle sinks
             if component.type == "sink":
 
@@ -734,6 +762,8 @@ class Simulation:
         for component in self.factory.components.values():
             if component.type == "source":
                 oc.add_source(self, component)
+            elif component.type == "heatpump":
+                oc.add_heatpump(self, component)
             elif component.type == "pool":
                 oc.add_pool(self, component)
             elif component.type == "sink":

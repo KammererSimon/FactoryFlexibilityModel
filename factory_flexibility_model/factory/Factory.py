@@ -184,6 +184,12 @@ class Factory:
             # call deadtime constructor
             self.components[key] = factory_components.Deadtime(key, self, name=name)
 
+        elif component_type == "heatpump":
+            # call heatpump constructor
+            self.components[key] = factory_components.Heatpump(
+                key, self, name=name
+            )
+
         elif component_type == "thermalsystem":
             # call thermalsystem constructor
             self.components[key] = factory_components.Thermalsystem(
