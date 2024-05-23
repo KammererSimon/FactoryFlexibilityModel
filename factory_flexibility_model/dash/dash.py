@@ -318,6 +318,13 @@ def create_dash(simulation):
                 "height": "30vh",
             },
         ),
+        "heatpump_cop_profile": dcc.Graph(
+            figure={},
+            config=dict(responsive=True),
+            style={
+                "height": "30vh",
+            },
+        ),
     }
 
     # Textboxes
@@ -352,10 +359,10 @@ def create_dash(simulation):
         "thermal_results": dcc.Markdown(style={"marginLeft": "10px"}),
         "deadtime": dcc.Markdown(style={"marginLeft": "10px"}),
         "heatpump_config": dcc.Markdown(style={"marginLeft": "10px"}),
-        "heatpump_sum": dcc.Markdown(style=style["highlight_value"]),
-        "heatpump_minmax": dcc.Markdown(style=style["highlight_value"]),
-        "heatpump_avg": dcc.Markdown(style=style["highlight_value"]),
+        "heatpump_sum_in": dcc.Markdown(style=style["highlight_value"]),
+        "heatpump_sum_out": dcc.Markdown(style=style["highlight_value"]),
         "heatpump_avg_cop": dcc.Markdown(style=style["highlight_value"]),
+        "heatpump_cop_range": dcc.Markdown(style=style["highlight_value"]),
     }
     # Dropdowns
     dropdowns = {
@@ -1741,10 +1748,11 @@ def create_dash(simulation):
     @app.callback(
         Output(figures["heatpump_utilization"], component_property="figure"),
         Output(figures["heatpump_cop"], component_property="figure"),
-        Output(component_info["heatpump_sum"], component_property="children"),
+        Output(figures["heatpump_cop_profile"], component_property="figure"),
+        Output(component_info["heatpump_sum_in"], component_property="children"),
+        Output(component_info["heatpump_sum_out"], component_property="children"),
         Output(component_info["heatpump_avg_cop"], component_property="children"),
-        Output(component_info["heatpump_minmax"], component_property="children"),
-        Output(component_info["heatpump_avg"], component_property="children"),
+        Output(component_info["heatpump_cop_range"], component_property="children"),
         Input(dropdowns["heatpump"], component_property="value"),
         Input("timestep_slider_heatpump", "value"),
     )
@@ -1786,40 +1794,29 @@ def create_dash(simulation):
                 hoverinfo="x",
                 mode="lines",
                 stackgroup="one",
-                name=f"Electricity Consumption [kW]",
-                line={"color": "red"},
+                name=f"Electricity Consumption",
+                line={"color": component.input_main.flowtype.color.hex},
             )
         )
 
         # add trace for heat source input
         fig.add_trace(
             go.Scatter(
+
                 x=x,
                 y=input_heat,
                 hoverinfo="x",
                 mode="lines",
                 stackgroup="one",
-                name=f"Input from heat source [kW]",
-                line={"color": "orange"},
-            )
-        )
-
-        fig.add_trace(
-            go.Scatter(
-                x=x,
-                y=-output_heat,
-                hoverinfo="x",
-                mode="lines",
-                stackgroup="two",
-                name=f"Total heat output",
-                line={"color": "blue"},
+                name=f"Input from Heat Source",
+                line={"color": component.input_gains.flowtype.color.hex},
             )
         )
 
         fig.update_layout(
             figure_config,
             xaxis_title="Timesteps",
-            yaxis_title=f"Operating Power [kW]",
+            yaxis_title=f"Heat Output [kW]",
             showlegend=True,
         )
         fig.update_xaxes(linewidth=2, linecolor=style["axis_color"])
@@ -1862,19 +1859,45 @@ def create_dash(simulation):
             secondary_y=True,
             linewidth=2,
             linecolor=style["axis_color"],
+            range=[1, 7]
         )
 
-        heatpump_sum = "## " + component.flowtype.unit.get_value_expression(
+        # CREATE COP PROFILE PLOT
+        fig3 = go.Figure()
+        fig3.add_trace(
+            go.Scatter(
+                x=np.arange(-273, 173),
+                y=component.cop_profile,
+                line_color="rgb(192,0,0)",
+                name="COP",
+            )
+        )
+        fig3.update_layout(
+            figure_config,
+            xaxis=dict(title="Source Temperature", range=[-20, 30]),
+            yaxis_title=f"COP",
+            showlegend=False,
+        )
+
+
+
+        # COLLECT PARAMETER INFORMATIONS
+        heatpump_sum_in = "## " + component.input_main.flowtype.unit.get_value_expression(
             value=round(sum(simulation.result[component.key]["utilization"][t0:t1])),
             quantity_type="flow",
         )
-        heatpump_avg_cop = f"## {round(sum(simulation.result[component.key]['utilization'][t0:t1] * component.cop[t0:t1])/sum(simulation.result[component.key]['utilization'][t0:t1]),2)}"
-        heatpump_minmax = (
-            f"## {component.flowtype.unit.get_value_expression(value=round(min(simulation.result[component.key]['utilization'][t0:t1])), quantity_type='flowrate')} "
-            f"- {component.flowtype.unit.get_value_expression(value=round(max(simulation.result[component.key]['utilization'][t0:t1])), quantity_type='flowrate')}"
+
+        heatpump_sum_out = "## " + component.input_main.flowtype.unit.get_value_expression(
+            value=round(sum(simulation.result[component.key]["output_heat"][t0:t1])),
+            quantity_type="flow",
         )
-        heatpump_avg = f"## {component.flowtype.unit.get_value_expression(value=round(simulation.result[component.key]['utilization'][t0:t1].mean()), quantity_type='flowrate')}"
-        return fig, fig2, heatpump_sum, heatpump_avg_cop, heatpump_minmax, heatpump_avg
+
+        heatpump_avg_cop = f"## {round(sum(simulation.result[component.key]['utilization'][t0:t1] * component.cop[t0:t1])/sum(simulation.result[component.key]['utilization'][t0:t1]),2)}"
+
+        heatpump_cop_range = f"## {round(min(component.cop[t0:t1]),2)} - {round(max(component.cop[t0:t1]),2)}"
+
+
+        return fig, fig2, fig3, heatpump_sum_in, heatpump_sum_out, heatpump_avg_cop, heatpump_cop_range
 
     # Run app
     app.run_server(port=8053)

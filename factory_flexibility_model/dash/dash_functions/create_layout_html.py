@@ -918,9 +918,9 @@ def create_layout_html(
                                             ),
                                             dbc.Row(
                                                 [
-                                                    component_info["heatpump_sum"],
+                                                    component_info["heatpump_sum_in"],
                                                     dcc.Markdown(
-                                                        children="#### TOTAL INPUT",
+                                                        children="#### ELECTRICITY INPUT",
                                                         style=style[
                                                             "value_description"
                                                         ],
@@ -931,22 +931,9 @@ def create_layout_html(
                                             ),
                                             dbc.Row(
                                                 [
-                                                    component_info["heatpump_minmax"],
+                                                    component_info["heatpump_sum_out"],
                                                     dcc.Markdown(
-                                                        children="#### RANGE OF INPUT POWER",
-                                                        style=style[
-                                                            "value_description"
-                                                        ],
-                                                    ),
-                                                ],
-                                                align="start",
-                                                style=card_style_contrast,
-                                            ),
-                                            dbc.Row(
-                                                [
-                                                    component_info["heatpump_avg"],
-                                                    dcc.Markdown(
-                                                        children="#### AVERAGE INPUT POWER",
+                                                        children="#### TOTAL HEAT OUTPUT",
                                                         style=style[
                                                             "value_description"
                                                         ],
@@ -959,7 +946,7 @@ def create_layout_html(
                                                 [
                                                     component_info["heatpump_avg_cop"],
                                                     dcc.Markdown(
-                                                        children="#### AVERAGE COP",
+                                                        children="#### SEASONAL PERFORMANCE FACTOR",
                                                         style=style[
                                                             "value_description"
                                                         ],
@@ -967,6 +954,41 @@ def create_layout_html(
                                                 ],
                                                 align="start",
                                                 style=card_style_contrast,
+                                            ),
+                                            dbc.Row(
+                                                [
+                                                    component_info["heatpump_cop_range"],
+                                                    dcc.Markdown(
+                                                        children="#### COP RANGE",
+                                                        style=style[
+                                                            "value_description"
+                                                        ],
+                                                    ),
+                                                ],
+                                                align="start",
+                                                style=card_style_contrast,
+                                            ),
+                                            dbc.Row(
+                                                [
+                                                    dbc.Row(
+                                                        [
+                                                            dcc.Markdown(
+                                                                children="#### COP Profile",
+                                                                style=style[
+                                                                    "card_title"
+                                                                ],
+                                                            )
+                                                        ],
+                                                    ),  # style={"height": "3vh"}),
+                                                    dbc.Row(
+                                                        [
+                                                            figures[
+                                                                "heatpump_cop_profile"
+                                                            ]
+                                                        ]
+                                                    ),
+                                                ],
+                                                style=card_style,
                                             ),
                                         ],
                                         width=2,
