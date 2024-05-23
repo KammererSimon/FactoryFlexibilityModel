@@ -645,7 +645,7 @@ class Deadtime(Component):
 
 
 class Heatpump(Component):
-    def __init__(self, key: str, factory, name: str = None):
+    def __init__(self, key: str, factory,  name: str = None):
         # STANDARD COMPONENT ATTRIBUTES
         super().__init__(key, factory, name=name)
 
@@ -682,7 +682,7 @@ class Heatpump(Component):
         # iterate over all timesteps
         for t in range(len(self.temperature_source)):
             # lookup the correct COP value in the cop profile that corresponds to the source temperature in timestep t
-            self.cop[t] = self.cop_profile[int(self.temperature_source[t])-273] # -273 bc the cop profile is based on celvin and the source temperature is in °C
+            self.cop[t] = self.cop_profile[int(self.temperature_source[t])+273] # 273 bc the cop profile is based on celvin and the source temperature is in °C
 
     def set_input(self, connection: co.Connection):
         """
