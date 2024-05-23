@@ -3,8 +3,8 @@ enable_log_simulation_setup: False
 enable_log_simulation_iteration: True
 enable_log_solver: False
 enable_slacks: False
-filepath_solved: C:\Users\smsikamm\PycharmProjects\FactoryFlexibilityModel\simulations\output_data\simulations_solved
-filepath_problem: C:\Users\smsikamm\PycharmProjects\FactoryFlexibilityModel\simulations\output_data\simulations_failed
+filepath_solved: F:\FactoryFlexibilityModel\DRI Simulations\simulations_solved
+filepath_problem: F:\FactoryFlexibilityModel\DRI Simulations\simulations_failed
 max_solver_time: 1800
 mip_gap: 0.01
 overwrite_existing_simulations: False

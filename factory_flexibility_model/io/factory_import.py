@@ -53,8 +53,12 @@ def import_simulation(data_path: str):
         logging.critical(f"ERROR: The given file does not exist: {data_path}")
         raise Exception
     # open the given file
-    with open(data_path, "rb") as f:
-        imported_simulation = pickle.load(f)
+    try:
+        with open(data_path, "rb") as f:
+            imported_simulation = pickle.load(f)
+    except:
+        logging.critical(f"Importing simulation '{file}' failed")
+        raise Exception
 
     # make sure that the imported data represents a factory-object
     if not isinstance(imported_simulation, fs.Simulation):
