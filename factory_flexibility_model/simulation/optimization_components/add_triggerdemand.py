@@ -9,7 +9,7 @@ from gurobipy import GRB
 
 
 # CODE START
-def add_triggerdemand(simulation, component):
+def add_triggerdemand(simulation, component, interval_length):
     """
     This function adds all necessary MVARS and constraints to the optimization problem that are
     required to integrate the triggerdemand handed over as 'Component'
@@ -72,7 +72,7 @@ def add_triggerdemand(simulation, component):
     # calculate resulting load profile
     if component.input_energy:
         simulation.MVars[f"{component.key}_loadprofile_energy"] = simulation.m.addMVar(
-            simulation.T,
+            interval_length,
             vtype=GRB.CONTINUOUS,
             name=f"{component.key}_loadprofile_energy",
         )
@@ -80,7 +80,7 @@ def add_triggerdemand(simulation, component):
         simulation.MVars[
             f"{component.key}_loadprofile_material"
         ] = simulation.m.addMVar(
-            simulation.T,
+            interval_length,
             vtype=GRB.CONTINUOUS,
             name=f"{component.key}_loadprofile_material",
         )
@@ -121,7 +121,7 @@ def add_triggerdemand(simulation, component):
             @ simulation.MVars[f"{component.key}_executions"]
         )
 
-    if component.Tend < simulation.T:
+    if component.Tend < interval_length:
         if component.input_energy:
             simulation.m.addConstr(
                 simulation.MVars[f"{component.key}_loadprofile_energy"][

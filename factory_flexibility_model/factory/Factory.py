@@ -509,7 +509,7 @@ class Factory:
 
         return True
 
-    def set_configuration(self, component: str, parameters: dict):
+    def set_configuration(self, component: str, parameters: dict, timesteps: int = None):
         """
         This function takes a string-identifier of a Component in a factory and a dict of configuration parameters.
         It hands the configuration parameters over to the set_configuration method of the Component.
@@ -519,8 +519,12 @@ class Factory:
         # make sure that the specified Component exists
         self.check_existence(component)
 
+        # determine number of required timesteps
+        if timesteps is None:
+            timesteps = self.timesteps
+
         # call the set_configuration - method of the component
-        self.components[component].set_configuration(self.timesteps, parameters)
+        self.components[component].set_configuration(timesteps, parameters)
 
         # enable emission accounting if any component gets an emission factor assigned
         if "co2_emissions_per_unit" in parameters.keys():
@@ -712,16 +716,14 @@ class Factory:
 
                 # check, if the combination of input and output weight sums is valid
                 if weightsum_output_energy > weightsum_input_energy:
-                    logging.critical(
+                    logging.warning(
                         f"Error in the factory architecture: The sum of weights at the energy output of converter '{component.name}' ({weightsum_output_energy}) is greater that the sum of input weights {weightsum_input_energy}!"
                     )
-                    raise Exception
 
                 if weightsum_output_material > weightsum_input_material:
-                    logging.critical(
+                    logging.warning(
                         f"Error in the factory architecture: The sum of weights at the material output of converter '{component.name}' ({weightsum_output_material}) is greater that the sum of input weights {weightsum_input_material}!"
                     )
-                    raise Exception
 
             elif component.type == "deadtime":
                 # if Component is a deadtime: make sure that there is at least one input

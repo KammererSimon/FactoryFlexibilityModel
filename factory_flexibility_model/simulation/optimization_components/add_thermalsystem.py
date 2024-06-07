@@ -9,7 +9,7 @@ from gurobipy import GRB
 
 
 # CODE START
-def add_thermalsystem(simulation, component):
+def add_thermalsystem(simulation, component, interval_length):
     """
     This function adds all necessary MVARS and constraints to the optimization problem that are
     required to integrate the thermalsystem handed over as 'Component'
@@ -18,7 +18,7 @@ def add_thermalsystem(simulation, component):
     """
     # create a timeseries of decision variables to represent the total inflow going into the thermal demand:
     simulation.MVars[f"E_{component.key}_in"] = simulation.m.addMVar(
-        simulation.T, vtype=GRB.CONTINUOUS, name=f"E_{component.key}_in"
+        interval_length, vtype=GRB.CONTINUOUS, name=f"E_{component.key}_in"
     )
     simulation.m.addConstrs(
         (
@@ -28,7 +28,7 @@ def add_thermalsystem(simulation, component):
                 for input_id in range(len(component.inputs))
             )
         )
-        for t in range(simulation.T)
+        for t in range(interval_length)
     )
     logging.debug(
         f"        - Variable:     {component.name}_in                                 (timeseries of incoming thermal energy at {component.name})"
@@ -36,7 +36,7 @@ def add_thermalsystem(simulation, component):
 
     # create a timeseries of decision variables to represent the total outflow going out of the thermal demand:
     simulation.MVars[f"E_{component.key}_out"] = simulation.m.addMVar(
-        simulation.T, vtype=GRB.CONTINUOUS, name=f"E_{component.key}_out"
+        interval_length, vtype=GRB.CONTINUOUS, name=f"E_{component.key}_out"
     )
     simulation.m.addConstrs(
         (
@@ -46,7 +46,7 @@ def add_thermalsystem(simulation, component):
                 for output_id in range(len(component.outputs))
             )
         )
-        for t in range(simulation.T)
+        for t in range(interval_length)
     )
     logging.debug(
         f"        - Variable:     {component.name}_out                                  (timeseries of removed thermal energy at {component.name})"
@@ -54,7 +54,7 @@ def add_thermalsystem(simulation, component):
 
     # create a timeseries for the internal temperature:
     simulation.MVars[f"T_{component.key}"] = simulation.m.addMVar(
-        simulation.T, vtype=GRB.CONTINUOUS, name=f"T_{component.key}"
+        interval_length, vtype=GRB.CONTINUOUS, name=f"T_{component.key}"
     )
     logging.debug(
         f"        - Variable:     {component.key}                                  (Internal Temperature of {component.name})"
@@ -84,17 +84,17 @@ def add_thermalsystem(simulation, component):
             * simulation.time_reference_factor
             / component.C
         )
-        for t in range(1, simulation.T)
+        for t in range(1, interval_length)
     )  # heating/cooling impact
 
     # keep the temperature within the allowed boundaries during Simulation interval:
     simulation.m.addConstrs(
         (simulation.MVars[f"T_{component.key}"][t] >= component.temperature_min[t])
-        for t in range(simulation.T)
+        for t in range(interval_length)
     )
     simulation.m.addConstrs(
         (simulation.MVars[f"T_{component.key}"][t] <= component.temperature_max[t])
-        for t in range(simulation.T)
+        for t in range(interval_length)
     )
     logging.debug(
         f"        - Constraint:   Tmin < T_{component.name} < Tmax for {component.name}"
@@ -103,16 +103,16 @@ def add_thermalsystem(simulation, component):
     # set the end temperature:
     if component.sustainable:
         simulation.m.addConstr(
-            simulation.MVars[f"T_{component.key}"][simulation.T - 1]
+            simulation.MVars[f"T_{component.key}"][interval_length - 1]
             + (
-                component.temperature_ambient[simulation.T - 1]
-                - simulation.MVars[f"T_{component.key}"][simulation.T - 1]
+                component.temperature_ambient[interval_length - 1]
+                - simulation.MVars[f"T_{component.key}"][interval_length - 1]
             )
             * simulation.time_reference_factor
             / (component.R * component.C)
             + (
-                simulation.MVars[f"E_{component.key}_in"][simulation.T - 1]
-                - simulation.MVars[f"E_{component.key}_out"][simulation.T - 1]
+                simulation.MVars[f"E_{component.key}_in"][interval_length - 1]
+                - simulation.MVars[f"E_{component.key}_out"][interval_length - 1]
             )
             * simulation.time_reference_factor
             / component.C
@@ -122,37 +122,37 @@ def add_thermalsystem(simulation, component):
     else:
         # keep the temperature within allowed boundaries at timestep T+1
         simulation.m.addConstr(
-            simulation.MVars[f"T_{component.key}"][simulation.T - 1]
+            simulation.MVars[f"T_{component.key}"][interval_length - 1]
             + (
-                component.temperature_ambient[simulation.T - 1]
-                - simulation.MVars[f"T_{component.key}"][simulation.T - 1]
+                component.temperature_ambient[interval_length - 1]
+                - simulation.MVars[f"T_{component.key}"][interval_length - 1]
             )
             * simulation.time_reference_factor
             / (component.R * component.C)
             + (
-                simulation.MVars[f"E_{component.key}_in"][simulation.T - 1]
-                - simulation.MVars[f"E_{component.key}_out"][simulation.T - 1]
+                simulation.MVars[f"E_{component.key}_in"][interval_length - 1]
+                - simulation.MVars[f"E_{component.key}_out"][interval_length - 1]
             )
             * simulation.time_reference_factor
             / component.C
-            >= component.temperature_min[simulation.T - 1]
+            >= component.temperature_min[interval_length - 1]
         )
 
         simulation.m.addConstr(
-            simulation.MVars[f"T_{component.key}"][simulation.T - 1]
+            simulation.MVars[f"T_{component.key}"][interval_length - 1]
             + (
-                component.temperature_ambient[simulation.T - 1]
-                - simulation.MVars[f"T_{component.key}"][simulation.T - 1]
+                component.temperature_ambient[interval_length - 1]
+                - simulation.MVars[f"T_{component.key}"][interval_length - 1]
             )
             * simulation.time_reference_factor
             / (component.R * component.C)
             + (
-                simulation.MVars[f"E_{component.key}_in"][simulation.T - 1]
-                - simulation.MVars[f"E_{component.key}_out"][simulation.T - 1]
+                simulation.MVars[f"E_{component.key}_in"][interval_length - 1]
+                - simulation.MVars[f"E_{component.key}_out"][interval_length - 1]
             )
             * simulation.time_reference_factor
             / component.C
-            <= component.temperature_max[simulation.T - 1]
+            <= component.temperature_max[interval_length - 1]
         )
 
     # calculate the losses:
@@ -164,7 +164,7 @@ def add_thermalsystem(simulation, component):
         )
         * simulation.time_reference_factor
         / component.R
-        for t in range(simulation.T)
+        for t in range(interval_length)
     )
 
     logging.debug(

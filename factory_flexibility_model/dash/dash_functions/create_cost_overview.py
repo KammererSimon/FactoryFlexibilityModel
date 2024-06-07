@@ -43,15 +43,15 @@ def create_cost_overview(simulation):
         for item, value in cost_items.items():
 
             # write line with bulletpoint for current cost item
-            if value >= 0:
+            if value > 0:
                 detailed_costs = (
                     detailed_costs
-                    + f"\n * **Cost of {simulation.factory.get_name(item)}:** {value}{currency}\n"
+                    + f"\n * **Cost of {simulation.factory.get_name(item)}:** {round(value,2)}{currency}\n"
                 )
-            else:
+            elif value < 0:
                 detailed_costs = (
                     detailed_costs
-                    + f"\n * **Revenue from {simulation.factory.get_name(item)}:** {value}{currency}\n"
+                    + f"\n * **Revenue from {simulation.factory.get_name(item)}:** {round(value,2)}{currency}\n"
                 )
 
     return detailed_costs

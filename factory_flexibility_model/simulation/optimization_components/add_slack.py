@@ -8,7 +8,7 @@ from gurobipy import GRB
 
 
 # CODE START
-def add_slack(simulation, component):
+def add_slack(simulation, component, interval_length):
     """
     This function adds all necessary MVARS and constraints to the optimization problem that are
     required to integrate the slack handed over as 'Component'
@@ -26,8 +26,8 @@ def add_slack(simulation, component):
         )
         simulation.m.addConstr(
             simulation.C_objective[-1]
-            == component.cost[0 : simulation.T]
-            @ simulation.MVars[component.inputs[i].key][0 : simulation.T]
+            == component.cost[0 : interval_length]
+            @ simulation.MVars[component.inputs[i].key][0 : interval_length]
         )
         logging.debug(f"        - CostFactor:   C_{component.key}_negative")
 
@@ -38,7 +38,7 @@ def add_slack(simulation, component):
         )
         simulation.m.addConstr(
             simulation.C_objective[-1]
-            == component.cost[0 : simulation.T]
-            @ simulation.MVars[component.outputs[i].key][0 : simulation.T]
+            == component.cost[0 : interval_length]
+            @ simulation.MVars[component.outputs[i].key][0 : interval_length]
         )
         logging.debug(f"        - CostFactor:   C_{component.key}_positive")

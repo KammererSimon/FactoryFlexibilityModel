@@ -9,7 +9,7 @@ from gurobipy import GRB
 
 
 # CODE START
-def add_sink(simulation, component):
+def add_sink(simulation, component, t_start, t_end):
     """
     This function adds all necessary MVARS and constraints to the optimization problem that are
     required to simulate the destination handed over as 'Component'
@@ -20,9 +20,12 @@ def add_sink(simulation, component):
     # In the first case a constraint is created, that forces all connected inputs to meet the desired power in total
     # In the second case a MVar reflecting the resulting inflow is created, together with a constraint to calculate it
 
+
+    interval_length = t_end-t_start+1
+
     # create a timeseries of decision variables to represent the total inflow (energy/material) going into the sink
     simulation.MVars[f"E_{component.key}"] = simulation.m.addMVar(
-        simulation.T, vtype=GRB.CONTINUOUS, name=f"E_{component.name}"
+        interval_length, vtype=GRB.CONTINUOUS, name=f"E_{component.name}"
     )
     logging.debug(
         f"        - Variable:     {component.name}                                  (timeseries of global outflows to {component.name})"
@@ -31,7 +34,7 @@ def add_sink(simulation, component):
     if component.determined:
         # set the incoming flow to meet the power demand
         simulation.m.addConstr(
-            simulation.MVars[component.inputs[0].key] == component.demand
+            simulation.MVars[component.inputs[0].key] == component.demand[t_start:t_end+1]
         )
         logging.debug(
             f"        - Constraint:   Sum of incoming flows == determined total demand              ({component.name} determined by timeseries)"
@@ -58,7 +61,7 @@ def add_sink(simulation, component):
     if component.power_max_limited:
         simulation.m.addConstr(
             simulation.MVars[f"E_{component.key}"]
-            <= component.power_max * component.availability * simulation.interval_length
+            <= component.power_max[t_start:t_end] * component.availability[t_start:t_end] * interval_length
         )
         logging.debug(
             f"        - Constraint:   {component.key} <= {component.name}_max"
@@ -67,9 +70,9 @@ def add_sink(simulation, component):
     # is the minimum output power of the source limited? If yes: Add power_min constraint
     if component.power_min_limited:
         simulation.m.addConstrs(
-            simulation.MVars[f"E_{component.key}"] / simulation.interval_length
+            simulation.MVars[f"E_{component.key}"] / interval_length
             >= component.power_min[t]
-            for t in range(simulation.T)
+            for t in range(interval_length)
         )
         logging.debug(
             f"        - Constraint:   {component.name} >= {component.name}_min"
@@ -82,7 +85,7 @@ def add_sink(simulation, component):
         )
         simulation.m.addConstr(
             simulation.C_objective[-1]
-            == component.cost[0 : simulation.T] @ simulation.MVars[f"E_{component.key}"]
+            == component.cost[t_start:t_end] @ simulation.MVars[f"E_{component.key}"]
         )
         logging.debug(f"        - CostFactor:   Cost for dumping into {component.name}")
 
@@ -93,7 +96,7 @@ def add_sink(simulation, component):
         )
         simulation.m.addConstr(
             simulation.R_objective[-1]
-            == component.revenue[0 : simulation.T]
+            == component.revenue[t_start:t_end+1]
             @ simulation.MVars[f"E_{component.key}"]
         )
         logging.debug(
@@ -107,7 +110,7 @@ def add_sink(simulation, component):
         )
         simulation.m.addConstr(
             simulation.emission_sources[-1]
-            == component.co2_emissions_per_unit[0 : simulation.T]
+            == component.co2_emissions_per_unit[t_start:t_end]
             @ simulation.MVars[f"E_{component.key}"]
         )
         logging.debug(

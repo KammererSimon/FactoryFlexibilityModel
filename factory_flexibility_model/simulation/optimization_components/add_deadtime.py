@@ -6,7 +6,7 @@ import logging
 
 
 # CODE START
-def add_deadtime(simulation, component):
+def add_deadtime(simulation, component, interval_length):
     """
     This function adds all necessary MVARS and constraints to the optimization problem that are
     required to integrate the deadtime handed over as 'Component'
@@ -31,14 +31,14 @@ def add_deadtime(simulation, component):
 
         # set output(t) = validate(t-delay) for middle interval
         simulation.m.addConstr(
-            simulation.MVars[component.outputs[0].key][delay : simulation.T]
-            == simulation.MVars[component.inputs[0].key][0 : simulation.T - delay]
+            simulation.MVars[component.outputs[0].key][delay : interval_length]
+            == simulation.MVars[component.inputs[0].key][0 : interval_length - delay]
         )
 
         # set validate(t) = slack for end interval
         simulation.m.addConstr(
             simulation.MVars[component.inputs[0].key][
-                simulation.T - delay : simulation.T - 1
+                interval_length - delay : interval_length - 1
             ]
             == 0
         )
@@ -55,12 +55,12 @@ def add_deadtime(simulation, component):
         simulation.m.addConstrs(
             simulation.MVars[component.outputs[1].key][t + delay]
             == simulation.MVars[component.inputs[1].key][t]
-            for t in range(simulation.T - delay)
+            for t in range(interval_length - delay)
         )
 
         # set validate(t) = slack for end interval
         simulation.m.addConstrs(
-            simulation.MVars[component.inputs[1].key][simulation.T - t - 1]
+            simulation.MVars[component.inputs[1].key][interval_length - t - 1]
             == simulation.MVars[component.outputs[0].key][t]
             for t in range(delay)
         )
