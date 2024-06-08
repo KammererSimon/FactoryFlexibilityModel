@@ -607,7 +607,7 @@ class Simulation:
             if "ambient_gains" in self.factory.components:
                 self.result["objective"] += self.m.objVal - sum(
                     self.result["ambient_gains"]["utilization"]
-                    * self.factory.components["ambient_gains"].cost[0: self.T]
+                    * self.factory.components["ambient_gains"].cost[t_start:t_start+interval_length+1]
                 )
             else:
                 self.result["objective"] += self.m.objVal
