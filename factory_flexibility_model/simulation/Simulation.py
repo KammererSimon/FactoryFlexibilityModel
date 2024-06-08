@@ -93,14 +93,6 @@ class Simulation:
 
         logging.info("COLLECTING RESULTS")
 
-        # check, if Simulation has been conducted yet
-        if not self.simulated:
-            # if not: raise an Exception
-            logging.critical(
-                f"Cannot collect results for Simulation {self.name} because it has not been calculated yet"
-            )
-            raise Exception
-
        #check if this is the first iteration
         if self.result is None:
             # if yes: initialize detailled result struct
@@ -270,7 +262,7 @@ class Simulation:
                 # is the power of the sink determined?
                 if component.determined:
                     # if yes: use the demand timeseries
-                    utilization = component.demand[0 : self.T]
+                    utilization = component.demand[t_start:t_start+interval_length+1]
 
                 else:
                     # if no: use the simulation result
@@ -317,8 +309,6 @@ class Simulation:
                     cost = round(sum(utilization * component.cost[t_start:t_start+interval_length+1]), 2)
                 else:
                     cost = 0
-
-
 
                 # write the result into the result-dictionary
                 if first_iteration:
@@ -627,14 +617,6 @@ class Simulation:
             self.result["total_emission_cost"] = total_emission_cost
 
 
-        # validate results
-        self.__validate_results()
-
-        # set results_collected to true
-        self.results_collected = True
-
-        logging.info(" -> Results processed")
-
     def create_dash(self) -> object:
         """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted Simulation"""
         logging.info("CREATING DASHBOARD")
@@ -794,7 +776,6 @@ class Simulation:
         # determine number of required simulation intervals using integer division
         num_of_intervals = int(self.T//interval_length)
 
-        print(self.T)
         # add an additional overflow interval for the incomplete final interval if required
         if self.T % interval_length > 0:
             num_of_intervals += 1
@@ -813,6 +794,18 @@ class Simulation:
             print(f"Simulating Interval {interval+1} [{t_start} : {t_end}]")
             self.__simulate_interval(t_start, t_end, solver_config, threshold, rounding_decimals)
 
+        # validate results
+        self.__validate_results()
+
+        # mark Simulation as solved
+        self.simulated = True
+        logging.info(" -> Simulation solved")
+        if self.enable_time_tracking:
+            logging.info(
+                f"Time Required for solving: {time.time() - self.t_start}s"
+            )
+
+
     def __simulate_interval(self, t_start, t_end, solver_config, threshold, rounding_decimals):
         """
         This function builds and solves an optimization problem for a specific interval of the simulation timeframe. It is being called from the simulation.simulate() function.
@@ -822,7 +815,7 @@ class Simulation:
         """
 
         # INITIALIZE GUROBI MODEL
-        logging.info("INITIALIZING GUROBI")
+        logging.info("STARTING SIMULATION")
 
         # create new gurobi model
         self.m = gp.Model("Factory")
@@ -832,6 +825,7 @@ class Simulation:
             if not solver_config["log_solver"]:
                 self.m.Params.LogToConsole = 0
                 self.m.setParam("OutputFlag", 0)
+
         # initialize variables for collecting parts of the optimization problem
         self.MVars = {}  # Initialize a dict to store all the factory variables
         self.C_objective = (
@@ -843,29 +837,6 @@ class Simulation:
 
         # ADAPTING SCENARIO DATA
         logging.info("SETTING SCENARIO_DATA")
-
-        # # iterate components and search for scenario data keys
-        # for key, config in self.scenario.configurations.items():
-        #     # set parameters for components
-        #     if key in self.factory.components.keys():
-        #         if len(config) == 0:
-        #             continue
-        #         parameter = list(config.keys())[0]
-        #         value = config[parameter]
-        #
-        #         if isinstance(value, float) or isinstance(value, int) or isinstance(value, bool):
-        #             self.factory.set_configuration(key, parameters=config)
-        #         else:
-        #             self.factory.set_configuration(key, parameters={parameter: value[t_start:t_end+1]}, timesteps=interval_length)
-        #
-        #     # set weights of connections
-        #     if key in self.factory.connections.keys():
-        #         if "weight" in config.keys():
-        #             self.factory.connections[key].weight = config["weight"]
-        #         if "to_losses" in config.keys():
-        #             if config["to_losses"]:
-        #                 self.factory.connections[key].type = "losses"
-
 
         # ENABLE EMISSION ACCOUNTING IF NECESSARY
         if self.factory.emission_accounting:
@@ -979,26 +950,13 @@ class Simulation:
         # CONFIGURE SOLVER
         oc.solve(self, solver_config)
 
-        if not self.m.Status == GRB.TIME_LIMIT:
-            # mark Simulation as solved
-            self.simulated = True
-            logging.info(" -> Simulation solved")
-            if self.enable_time_tracking:
-                logging.info(
-                    f"Time Required for factory solving: {time.time() - self.t_start}s"
-                )
-                self.t_start = time.time()  # reset timer
+        if self.m.Status == GRB.TIME_LIMIT:
+            logging.error("Solver time exceeded. Calculation aborted")
+            raise Exception
 
-            # COLLECT THE RESULTS
-            self.__collect_results(
-                threshold=threshold, rounding_decimals=rounding_decimals, interval_length=t_end-t_start, t_start=t_start
-            )
-            if self.enable_time_tracking:
-                logging.info(
-                    f"Time Required for collecting results: {time.time() - self.t_start}s"
-                )
-        else:
-            logging.warning("Solver time exceeded. Calculation aborted")
+        # COLLECT THE RESULTS
+        self.__collect_results(threshold=threshold, rounding_decimals=rounding_decimals, interval_length=t_end-t_start, t_start=t_start)
+
 
     def __validate_component(self, component):
         """
@@ -1006,13 +964,6 @@ class Simulation:
         :param component: [factory.components.Component-object]
         :return: [Boolean] True if Component result is valid
         """
-
-        # check, if the Simulation has been simulated already
-        if not self.simulated:
-            logging.critical(
-                f"ERROR: Cannot validate the results of the Simulation, because it has not been simualted yet!"
-            )
-            raise Exception
 
         # skip the routine if the Component is a sink, source or slack
         if (
@@ -1066,12 +1017,6 @@ class Simulation:
         :return: Sets self.simulation_valid as true or false
         """
 
-        if not self.simulated:
-            logging.critical(
-                f"ERROR: Cannot validate the results of the Simulation, "
-                f"because it has not been simualted yet!"
-            )
-            raise Exception
         logging.info("CHECKING RESULT CONSISTENCY")
         self.simulation_valid = True
 

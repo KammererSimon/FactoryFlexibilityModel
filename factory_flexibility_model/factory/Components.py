@@ -866,7 +866,7 @@ class Sink(Component):
                         raise Exception
                 # check, if power_max constraints is compatible with determined power
                 if self.determined:
-                    if sum(self.power <= self.power_max) < timesteps:
+                    if sum(self.demand <= self.power_max) < timesteps:
                         logging.critical(
                             f"ERROR: Already determined Power is incompatible with the power_max you're trying to set for Component {self.name}"
                         )
