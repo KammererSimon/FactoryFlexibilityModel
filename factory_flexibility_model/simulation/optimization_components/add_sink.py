@@ -40,7 +40,7 @@ def add_sink(simulation, component, t_start, t_end):
             f"        - Constraint:   Sum of incoming flows == determined total demand              ({component.name} determined by timeseries)"
         )
 
-    # add constraints to calculate the total outflow from the system as the sum of all weighted energys of incoming connections
+    # set the inflow of the component to match the input flow
     simulation.m.addConstr(
         simulation.MVars[component.inputs[0].key]
         == simulation.MVars[f"E_{component.key}"]
@@ -61,7 +61,7 @@ def add_sink(simulation, component, t_start, t_end):
     if component.power_max_limited:
         simulation.m.addConstr(
             simulation.MVars[f"E_{component.key}"]
-            <= component.power_max[t_start:t_end] * component.availability[t_start:t_end] * interval_length
+            <= component.power_max[t_start:t_end+1] * component.availability[t_start:t_end+1] * interval_length
         )
         logging.debug(
             f"        - Constraint:   {component.key} <= {component.name}_max"
