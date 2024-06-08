@@ -56,7 +56,6 @@ def validate(input, output_type, *, min=None, max=None, positive=False, timestep
         if isinstance(input, str):
             return input
         else:
-            print(input)
             logging.critical(
                 f"Given value is {type(input)}, not a string as requested!"
             )
@@ -410,7 +409,6 @@ def validate(input, output_type, *, min=None, max=None, positive=False, timestep
                     input = float(input)
                     logging.debug("Given value has been converted to float")
                 except:
-                    print(f"input {input}")
                     logging.critical(
                         f"Given value input incompatible with requested type (float)!"
                     )

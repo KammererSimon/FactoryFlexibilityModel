@@ -791,7 +791,6 @@ class Simulation:
 
             # Call simulation routine for current interval
             logging.info(f"Simulating Interval {interval+1} [{t_start+1} : {t_end+1}]")
-            print(f"Simulating Interval {interval+1} [{t_start} : {t_end}]")
             self.__simulate_interval(t_start, t_end, solver_config, threshold, rounding_decimals)
 
         # validate results

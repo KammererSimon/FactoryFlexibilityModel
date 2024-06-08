@@ -43,7 +43,6 @@ def import_cop_profile(app):
             "ERROR",
         )
 
-    print(cop_profile)
     # write imported demands into the scenarios dict
     app.session_data["scenarios"][app.selected_scenario][app.selected_asset["key"]][
         "cop_profile"

@@ -1029,7 +1029,6 @@ class Sink(Component):
         The parent class method is overridden because triggerdemands have to distinct between material and energy inputs.
         :param connection: [fm.Connecntion-object]
         """
-        print(connection.type)
         # check, that there is no more than one energy and material input each
         if connection.type == "losses":
             self.inputs.append(connection)
