@@ -37,5 +37,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 gui = "examples.main:gui"
 dashboard = "examples.main:dash"
-simulate = "examples.main:simulate_session"
+simulate = "examples.simple_simulation_call:simulate"
+simulate_session = "examples.main:simulate_session"
 create_shortcut = "examples.create_desktop_shortcut:create_desktop_shortcut"
