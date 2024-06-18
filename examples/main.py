@@ -1,16 +1,51 @@
 # FACTORY MODEL MAIN
 #     This skript is used to call the main functionalities of the factory flexibility model
-
+import datetime
 import logging
+import multiprocessing
 import os
 import sys
+import threading
+import webbrowser
+from multiprocessing import Process
+from wsgiref.simple_server import make_server
+
+import optuna
+from optuna.storages import JournalStorage, JournalFileStorage
+from optuna_dashboard import wsgi
 
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.simulation.Scenario as sc
+from examples.simple_simulation_call import simulate
 
 # IMPORTS
 from factory_flexibility_model.io import factory_import as imp
 from factory_flexibility_model.simulation import Simulation as fs
+
+
+def run_optimizer():
+    val = input("Enter your postgres password: ")
+    storage = optuna.storages.RDBStorage(f"postgresql://postgres:{val}@localhost:5432/ffm")
+    study = optuna.create_study(
+        storage=storage,
+        directions=["minimize"],
+        study_name=f"{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}_FFM",
+    )
+
+    app = wsgi(storage)
+    httpd = make_server("localhost", 8080, app)
+    thread = threading.Thread(target=httpd.serve_forever)
+    thread.start()
+    webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
+
+    proc = []
+    for i in range(8):
+        p = Process(target=study.optimize,args=(simulate,),kwargs={"n_trials":100})
+        p.start()
+        proc.append(p)
+        print(f"Started Process {i}")
+    for p in proc:
+        p.join()
 
 
 def gui():

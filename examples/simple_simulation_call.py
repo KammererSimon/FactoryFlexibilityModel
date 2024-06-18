@@ -27,10 +27,7 @@ import factory_flexibility_model.simulation.Scenario as sc
 from factory_flexibility_model.simulation import Simulation as fs
 
 # CODE
-def simulate(storage_size: float = 500,
-             grid_capacity: float=500,
-             session_folder: str ="examples/Demo",
-             show_results: bool = False):
+def simulate(trial):
 
     """
     This function performs a single simulation run and returns the total cost value as a result.
@@ -39,6 +36,11 @@ def simulate(storage_size: float = 500,
     param grid_capacity: [float] The maximum power of the electricity grid connection point in [kW]
     returns: [float] The total cost of operation including capital costs and depreciation costs in [€]
     """
+    session_folder: str = "examples/Demo"
+    show_results: bool = False
+
+    grid_capacity: float = trial.suggest_float("grid_capacity", 0.0, 1600.0)
+    storage_size: float = trial.suggest_float("storage_size", 0.0, 3000.0)
 
     # define capex constants
     capex_storage = 1          # Monthly capital and depreciation cost of battery storages in [€/kWh/month]
