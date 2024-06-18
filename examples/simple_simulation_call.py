@@ -6,7 +6,7 @@ from factory_flexibility_model.simulation import Simulation as fs
 
 def simulate(storage_size: float = 0,
              grid_capacity: float=500,
-             session_folder: str ="sessions_HyperSyS\Hyper_SyS",
+             session_folder: str ="examples/Demo",
              show_results: bool = True):
 
     """
@@ -44,7 +44,7 @@ def simulate(storage_size: float = 0,
     simulation = fs.Simulation(factory=factory, scenario=scenario)
 
     # run simulation
-    simulation.simulate(interval_length=730, threshold=0.000001, solver_config={"log_solver": False, "mip_gap": 0.01})
+    simulation.simulate(threshold=0.000001, solver_config={"log_solver": False, "mip_gap": 0.01})
 
     # calculate costs:
     capex = capex_storage * storage_size + capex_grid_capacity * grid_capacity
@@ -53,5 +53,6 @@ def simulate(storage_size: float = 0,
     if show_results:
         simulation.create_dash()
     else:
+        print(capex+opex)
         return capex + opex
 

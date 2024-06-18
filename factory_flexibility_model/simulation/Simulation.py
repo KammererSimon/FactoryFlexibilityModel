@@ -585,14 +585,6 @@ class Simulation:
                 # TODO: write result collection for triggerdemands
 
         if first_iteration:
-            # calculate self sufficiency
-            if self.result["energy_generated_onsite"] > 0:
-                self.result["self_sufficiency"] = sum(
-                    self.result["energy_generated_onsite"]
-                ) / self.result["energy_generated_onsite"]
-            else:
-                self.result["self_sufficiency"] = 0
-
             # collect achieved costs/revenues (objective of target function - ambient_gain_punishment_term)
             if "ambient_gains" in self.factory.components:
                 self.result["objective"] = self.m.objVal - sum(
@@ -873,11 +865,11 @@ class Simulation:
             elif component.type == "storage":
                 oc.add_storage(self, component, t_start, t_end)
             elif component.type == "thermalsystem":
-                oc.add_thermalsystem(self, component, t_start, t_end)
+                oc.add_thermalsystem(self, component, 720)
             elif component.type == "triggerdemand":
                 oc.add_triggerdemand(self, component, t_start, t_end)
             elif component.type == "schedule":
-                oc.add_schedule(self, component, t_start, t_end)
+                oc.add_schedule(self, component, 720)
 
             if self.enable_time_tracking:
                 logging.info(

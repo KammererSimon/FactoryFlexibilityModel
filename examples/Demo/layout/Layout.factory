@@ -294,16 +294,6 @@ components:
     key: component_35
     name: "Abw\xE4rme"
     type: sink
-  component_4:
-    GUI:
-      icon: factory_flexibility_model\\ui\\assets\\sinks\Car Charging.png
-      position_x: 41.0
-      position_y: 26.0
-    description: ''
-    flowtype: flowtype_0
-    key: component_4
-    name: Ext Ladebedarf
-    type: sink
   component_5:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
@@ -514,13 +504,6 @@ connections:
     from: component_23
     key: connection_29
     to: component_24
-    to_losses: false
-    type: connection
-  connection_3:
-    flowtype: flowtype_0
-    from: component_2
-    key: connection_3
-    to: component_4
     to_losses: false
     type: connection
   connection_30:
