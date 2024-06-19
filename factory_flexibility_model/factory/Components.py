@@ -645,7 +645,7 @@ class Deadtime(Component):
 
 
 class Heatpump(Component):
-    def __init__(self, key: str, factory,  name: str = None):
+    def __init__(self, key: str, factory, name: str = None):
         # STANDARD COMPONENT ATTRIBUTES
         super().__init__(key, factory, name=name)
 
@@ -653,8 +653,8 @@ class Heatpump(Component):
         self.description = (
             "Unspecified Heatpump"  # Description for better identification in UI
         )
-        self.input_main = [] # input from energy supply
-        self.input_gains = [] # input from heatsource
+        self.input_main = []  # input from energy supply
+        self.input_gains = []  # input from heatsource
         self.max_inputs = 2  # heatpumps allow for an electricity and a heatsource input
         self.max_outputs = 1  # heatpumps allow for an useenergy and losses output
         self.type = "heatpump"  # specify Component as heatpump
@@ -663,12 +663,20 @@ class Heatpump(Component):
         self.power_max_limited = (
             False  # determines, whether the maximum Power of the converter is limited
         )
-        self.power_max = np.ones(factory.timesteps) * 1000000000 # big M, just in case....
+        self.power_max = (
+            np.ones(factory.timesteps) * 1000000000
+        )  # big M, just in case....
 
         # EFFICIENCY PARAMETERS
-        self.temperature_source = np.ones(factory.timesteps) * 20  # temperature level of the heat source; Standard value of 20°C
-        self.cop_profile = np.ones(500) # profile determining the cop of the heatpump. Array with values for temperatures ranging from 0 to 500 Kelvin
-        self.cop = np.ones(factory.timesteps) # timeseries of operating cop, based on cop profile and source temperature. Is being calculated when one of both attributes is set
+        self.temperature_source = (
+            np.ones(factory.timesteps) * 20
+        )  # temperature level of the heat source; Standard value of 20°C
+        self.cop_profile = np.ones(
+            500
+        )  # profile determining the cop of the heatpump. Array with values for temperatures ranging from 0 to 500 Kelvin
+        self.cop = np.ones(
+            factory.timesteps
+        )  # timeseries of operating cop, based on cop profile and source temperature. Is being calculated when one of both attributes is set
 
         logging.debug(
             f"        - New heatpump {self.name} created with Component-key{self.key}"
@@ -682,7 +690,9 @@ class Heatpump(Component):
         # iterate over all timesteps
         for t in range(len(self.temperature_source)):
             # lookup the correct COP value in the cop profile that corresponds to the source temperature in timestep t
-            self.cop[t] = self.cop_profile[int(self.temperature_source[t])+273] # 273 bc the cop profile is based on celvin and the source temperature is in °C
+            self.cop[t] = self.cop_profile[
+                int(self.temperature_source[t]) + 273
+            ]  # 273 bc the cop profile is based on celvin and the source temperature is in °C
 
     def set_input(self, connection: co.Connection):
         """
@@ -694,18 +704,24 @@ class Heatpump(Component):
         if connection.flowtype.is_energy():
             if connection.type == "gains" or connection.flowtype.key == "heat":
                 if self.input_gains != []:
-                    logging.critical(f"Cannot set {connection.name} as input for Heatpump {self.name}, because it already has a heat source input.")
+                    logging.critical(
+                        f"Cannot set {connection.name} as input for Heatpump {self.name}, because it already has a heat source input."
+                    )
                     raise Exception
                 else:
                     self.input_gains = connection
             else:
                 if self.input_main != []:
-                    logging.critical(f"Cannot set {connection.name} as input for Heatpump {self.name}, because it already has a main energy input.")
+                    logging.critical(
+                        f"Cannot set {connection.name} as input for Heatpump {self.name}, because it already has a main energy input."
+                    )
                     raise Exception
                 else:
                     self.input_main = connection
         elif connection.flowtype.is_material():
-            logging.critical(f"Heatpump {self.name} is not allowed to have any material inputs!")
+            logging.critical(
+                f"Heatpump {self.name} is not allowed to have any material inputs!"
+            )
             raise Exception
         else:
             logging.critical(
@@ -720,16 +736,22 @@ class Heatpump(Component):
         """
         # Make sure, that no already defined output is being overwritten
         if self.outputs != []:
-            logging.critical(f"Cannot set another output for heatpump {self.name}, because it already has its output defined!")
+            logging.critical(
+                f"Cannot set another output for heatpump {self.name}, because it already has its output defined!"
+            )
             raise Exception
 
         if not connection.flowtype.key in ["heat", "unknown"]:
-            logging.critical(f"Invalid flowtype {connection.flowtype.name} connected to heatpump {self.name}. The flowtype has to be heat.")
+            logging.critical(
+                f"Invalid flowtype {connection.flowtype.name} connected to heatpump {self.name}. The flowtype has to be heat."
+            )
             raise Exception
 
         # handle connections to losses if specified:
         if connection.type == "losses":
-            logging.warning(f"Heatpumps do not support loss outputs. The connection {connection.name} is therefore used as the regular output for {self.name}")
+            logging.warning(
+                f"Heatpumps do not support loss outputs. The connection {connection.name} is therefore used as the regular output for {self.name}"
+            )
 
         self.outputs.append(connection)
 
@@ -756,12 +778,16 @@ class Heatpump(Component):
                 )
 
             elif parameter == "temperature_source":
-                self.temperature_source = iv.validate(parameters["temperature_source"], "float", timesteps=timesteps)
-                self.calculate_cop_timeseries() # recalculate the timeseries of relevant COP based on the new source temperature profile
+                self.temperature_source = iv.validate(
+                    parameters["temperature_source"], "float", timesteps=timesteps
+                )
+                self.calculate_cop_timeseries()  # recalculate the timeseries of relevant COP based on the new source temperature profile
 
             elif parameter == "cop_profile":
-                self.cop_profile = iv.validate(parameters["cop_profile"], "float", timesteps=500)
-                self.calculate_cop_timeseries() # recalculate the timerseries of relevant COP based on the new cop profile
+                self.cop_profile = iv.validate(
+                    parameters["cop_profile"], "float", timesteps=500
+                )
+                self.calculate_cop_timeseries()  # recalculate the timerseries of relevant COP based on the new cop profile
 
             # HANDLE GENERAL PARAMETERS
             else:
@@ -1332,9 +1358,7 @@ class Thermalsystem(Component):
         self.temperature_min = np.zeros(
             factory.timesteps
         )  # set minimum temperature to zero degrees as a standard value
-        self.temperature_start = (
-            293.15  # starting temperature of the internal storage (=20°C)
-        )
+        self.temperature_start = None
         self.to_losses = (
             []
         )  # placeholder for a pointer directing to the correct losses destination

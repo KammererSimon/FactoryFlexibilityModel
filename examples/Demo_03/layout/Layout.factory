@@ -1,0 +1,853 @@
+components:
+  component_1:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sources\Solar.png
+      position_x: 2.0
+      position_y: 29.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_1
+    name: PV
+    type: source
+  component_10:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Shredder.png
+      position_x: 41.0
+      position_y: 5.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_10
+    name: Schredder-Strom
+    type: sink
+  component_11:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 19.0
+      position_y: 15.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_11
+    name: Batterie Bagger
+    type: storage
+  component_12:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
+      position_x: 27.0
+      position_y: 11.0
+      primary_flow: null
+    description: ''
+    flowtype: unknown
+    key: component_12
+    name: "Schwerm\xFCllprocessing"
+    type: converter
+  component_13:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
+      position_x: 22.0
+      position_y: 3.0
+      primary_flow: component_17
+    description: ''
+    flowtype: unknown
+    key: component_13
+    name: "Leichtm\xFCllprocessing"
+    type: converter
+  component_14:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\components\forward.png
+      position_x: 35.0
+      position_y: 2.0
+      primary_flow: null
+    description: ''
+    flowtype: unknown
+    key: component_14
+    name: Durchsatzlimit
+    type: converter
+  component_15:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 31.0
+      position_y: 2.0
+    description: ''
+    flowtype: flowtype_3
+    key: component_15
+    name: Summierung Recycling
+    type: pool
+  component_16:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 10.0
+      position_y: 9.0
+    description: ''
+    flowtype: flowtype_2
+    key: component_16
+    name: "Lager Schwerm\xFCll"
+    type: storage
+  component_17:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 10.0
+      position_y: 3.0
+    description: ''
+    flowtype: flowtype_1
+    key: component_17
+    name: "Lager Leichtm\xFCll"
+    type: storage
+  component_18:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 14.0
+      position_y: 12.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_18
+    name: Stapler-Energie
+    type: pool
+  component_19:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 4.0
+      position_y: 18.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_19
+    name: Batterie Stapler 1
+    type: storage
+  component_2:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 21.0
+      position_y: 25.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_2
+    name: Bilanzierungspunkt
+    type: pool
+  component_20:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 14.0
+      position_y: 18.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_20
+    name: Batterie Stapler 2
+    type: storage
+  component_21:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 24.0
+      position_y: 15.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_21
+    name: Bagger-Energie
+    type: pool
+  component_22:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\components\Electricity House.png
+      position_x: 32.0
+      position_y: 18.0
+    description: ''
+    flowtype: heat
+    key: component_22
+    name: Raumtemperatur
+    type: thermalsystem
+  component_23:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 25.0
+      position_y: 22.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_23
+    name: Pool Klimatisierung
+    type: pool
+  component_24:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\components\Heating.png
+      position_x: 27.0
+      position_y: 19.0
+      primary_flow: null
+    description: ''
+    flowtype: unknown
+    key: component_24
+    name: Heizung
+    type: converter
+  component_25:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\components\Cooling.png
+      position_x: 36.0
+      position_y: 20.0
+      primary_flow: null
+    description: ''
+    flowtype: unknown
+    key: component_25
+    name: "K\xFChlung"
+    type: converter
+  component_26:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\schedule.png
+      position_x: 33.0
+      position_y: 30.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_26
+    name: LKW Standzeiten
+    type: schedule
+  component_27:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 9.0
+      position_y: 18.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_27
+    name: Batterie Stapler 3
+    type: storage
+  component_28:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 35.0
+      position_y: 10.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_28
+    name: Verbrauch Bagger
+    type: pool
+  component_29:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Car Charging.png
+      position_x: 41.0
+      position_y: 30.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_29
+    name: LKW Ladebedarf
+    type: sink
+  component_3:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Electricity House.png
+      position_x: 41.0
+      position_y: 23.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_3
+    name: Strombedarf Sonst
+    type: sink
+  component_30:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 35.0
+      position_y: 5.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_30
+    name: Verbrauch Schredder
+    type: pool
+  component_31:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 35.0
+      position_y: 14.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_31
+    name: Verbrauch Stapler
+    type: pool
+  component_32:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Forklift.png
+      position_x: 41.0
+      position_y: 13.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_32
+    name: Staplerbedarf
+    type: sink
+  component_33:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Electricity.png
+      position_x: 41.0
+      position_y: 9.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_33
+    name: Baggerbedarf
+    type: sink
+  component_34:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sources\Default.png
+      position_x: 2.0
+      position_y: 22.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_34
+    name: Slack Netz
+    type: source
+  component_35:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Temperature Factory.png
+      position_x: 41.0
+      position_y: 17.0
+    description: ''
+    flowtype: heat
+    key: component_35
+    name: "Abw\xE4rme"
+    type: sink
+  component_36:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Delivery.png
+      position_x: 43.0
+      position_y: 2.0
+    description: ''
+    flowtype: flowtype_3
+    key: component_36
+    name: Recycling Output
+    type: sink
+  component_4:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sinks\Car Charging.png
+      position_x: 41.0
+      position_y: 26.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_4
+    name: Ext Ladebedarf
+    type: sink
+  component_5:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 21.0
+      position_y: 28.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_5
+    name: Speicher
+    type: storage
+  component_6:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sources\Powerpole.png
+      position_x: 2.0
+      position_y: 25.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_6
+    name: Netzanbindung
+    type: source
+  component_7:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sources\Deliveries.png
+      position_x: 2.0
+      position_y: 9.0
+    description: ''
+    flowtype: flowtype_2
+    key: component_7
+    name: "Schwerm\xFCll Input"
+    type: source
+  component_8:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\sources\Transport.png
+      position_x: 2.0
+      position_y: 3.0
+    description: ''
+    flowtype: flowtype_1
+    key: component_8
+    name: "Leichterm\xFCll Input"
+    type: source
+  component_9:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\deadtime.png
+      position_x: 39.0
+      position_y: 2.0
+    description: ''
+    flowtype: flowtype_3
+    key: component_9
+    name: Recycling Time
+    type: deadtime
+connections:
+  connection_0:
+    flowtype: flowtype_0
+    from: component_1
+    key: connection_0
+    to: component_2
+    to_losses: false
+    type: connection
+  connection_1:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_1
+    to: component_5
+    to_losses: false
+    type: connection
+  connection_10:
+    flowtype: flowtype_2
+    from: component_7
+    key: connection_10
+    to: component_16
+    to_losses: false
+    type: connection
+  connection_11:
+    flowtype: flowtype_2
+    from: component_16
+    key: connection_11
+    to: component_12
+    to_losses: false
+    type: connection
+  connection_12:
+    flowtype: flowtype_1
+    from: component_8
+    key: connection_12
+    to: component_17
+    to_losses: false
+    type: connection
+  connection_13:
+    flowtype: flowtype_1
+    from: component_17
+    key: connection_13
+    to: component_13
+    to_losses: false
+    type: connection
+  connection_14:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_14
+    to: component_13
+    to_losses: false
+    type: connection
+  connection_15:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_15
+    to: component_3
+    to_losses: false
+    type: connection
+  connection_16:
+    flowtype: flowtype_0
+    from: component_30
+    key: connection_16
+    to: component_10
+    to_losses: false
+    type: connection
+  connection_17:
+    flowtype: flowtype_0
+    from: component_26
+    key: connection_17
+    to: component_29
+    to_losses: false
+    type: connection
+  connection_18:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_18
+    to: component_11
+    to_losses: false
+    type: connection
+  connection_19:
+    flowtype: flowtype_0
+    from: component_11
+    key: connection_19
+    to: component_21
+    to_losses: false
+    type: connection
+  connection_2:
+    flowtype: flowtype_0
+    from: component_5
+    key: connection_2
+    to: component_2
+    to_losses: false
+    type: connection
+  connection_20:
+    flowtype: flowtype_0
+    from: component_18
+    key: connection_20
+    to: component_12
+    to_losses: false
+    type: connection
+  connection_21:
+    flowtype: flowtype_0
+    from: component_18
+    key: connection_21
+    to: component_13
+    to_losses: false
+    type: connection
+  connection_22:
+    flowtype: flowtype_0
+    from: component_19
+    key: connection_22
+    to: component_18
+    to_losses: false
+    type: connection
+  connection_23:
+    flowtype: flowtype_0
+    from: component_20
+    key: connection_23
+    to: component_18
+    to_losses: false
+    type: connection
+  connection_24:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_24
+    to: component_20
+    to_losses: false
+    type: connection
+  connection_25:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_25
+    to: component_19
+    to_losses: false
+    type: connection
+  connection_26:
+    flowtype: flowtype_0
+    from: component_21
+    key: connection_26
+    to: component_12
+    to_losses: false
+    type: connection
+  connection_27:
+    flowtype: flowtype_0
+    from: component_21
+    key: connection_27
+    to: component_13
+    to_losses: false
+    type: connection
+  connection_28:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_28
+    to: component_23
+    to_losses: false
+    type: connection
+  connection_29:
+    flowtype: flowtype_0
+    from: component_23
+    key: connection_29
+    to: component_24
+    to_losses: false
+    type: connection
+  connection_3:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_3
+    to: component_4
+    to_losses: false
+    type: connection
+  connection_30:
+    flowtype: flowtype_0
+    from: component_23
+    key: connection_30
+    to: component_25
+    to_losses: false
+    type: connection
+  connection_31:
+    flowtype: heat
+    from: component_24
+    key: connection_31
+    to: component_22
+    to_losses: false
+    type: connection
+  connection_32:
+    flowtype: heat
+    from: component_22
+    key: connection_32
+    to: component_25
+    to_losses: false
+    type: connection
+  connection_33:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_33
+    to: component_27
+    to_losses: false
+    type: connection
+  connection_34:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_34
+    to: component_26
+    to_losses: false
+    type: connection
+  connection_35:
+    flowtype: flowtype_0
+    from: component_27
+    key: connection_35
+    to: component_18
+    to_losses: false
+    type: connection
+  connection_36:
+    flowtype: flowtype_0
+    from: component_12
+    key: connection_36
+    to: component_28
+    to_losses: false
+    type: connection
+  connection_37:
+    flowtype: flowtype_0
+    from: component_13
+    key: connection_37
+    to: component_28
+    to_losses: false
+    type: connection
+  connection_38:
+    flowtype: flowtype_0
+    from: component_12
+    key: connection_38
+    to: component_30
+    to_losses: false
+    type: connection
+  connection_39:
+    flowtype: flowtype_0
+    from: component_13
+    key: connection_39
+    to: component_30
+    to_losses: false
+    type: connection
+  connection_4:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_4
+    to: component_12
+    to_losses: false
+    type: connection
+  connection_40:
+    flowtype: flowtype_0
+    from: component_12
+    key: connection_40
+    to: component_31
+    to_losses: false
+    type: connection
+  connection_41:
+    flowtype: flowtype_0
+    from: component_13
+    key: connection_41
+    to: component_31
+    to_losses: false
+    type: connection
+  connection_42:
+    flowtype: flowtype_0
+    from: component_31
+    key: connection_42
+    to: component_32
+    to_losses: false
+    type: connection
+  connection_43:
+    flowtype: flowtype_0
+    from: component_28
+    key: connection_43
+    to: component_33
+    to_losses: false
+    type: connection
+  connection_44:
+    flowtype: heat
+    from: component_25
+    key: connection_44
+    to: component_35
+    to_losses: false
+    type: connection
+  connection_45:
+    flowtype: flowtype_0
+    from: component_34
+    key: connection_45
+    to: component_2
+    to_losses: false
+    type: connection
+  connection_46:
+    flowtype: flowtype_3
+    from: component_9
+    key: connection_46
+    to: component_36
+    to_losses: false
+    type: connection
+  connection_5:
+    flowtype: flowtype_0
+    from: component_6
+    key: connection_5
+    to: component_2
+    to_losses: false
+    type: connection
+  connection_6:
+    flowtype: flowtype_3
+    from: component_15
+    key: connection_6
+    to: component_14
+    to_losses: false
+    type: connection
+  connection_7:
+    flowtype: flowtype_3
+    from: component_14
+    key: connection_7
+    to: component_9
+    to_losses: false
+    type: connection
+  connection_8:
+    flowtype: flowtype_3
+    from: component_12
+    key: connection_8
+    to: component_15
+    to_losses: false
+    type: connection
+  connection_9:
+    flowtype: flowtype_3
+    from: component_13
+    key: connection_9
+    to: component_15
+    to_losses: false
+    type: connection
+flowtypes:
+  energy_losses:
+    color: '#555555'
+    description: Built in default flowtype used to represent all kinds of energy losses
+    key: energy_losses
+    name: Energy Losses
+    represents_losses: true
+    unit: energy
+  flowtype_0:
+    color: '#fbc02d'
+    description: Flowtype of Unspecified Flowtype 1
+    key: flowtype_0
+    name: Strom
+    represents_losses: false
+    unit: energy
+  flowtype_1:
+    color: '#8d6e63'
+    description: "M\xFCll bestehend aus ausschlie\xDFlich PET-Flaschen"
+    key: flowtype_1
+    name: "Leichter M\xFCll"
+    represents_losses: false
+    unit: mass
+  flowtype_2:
+    color: '#6d4c41'
+    description: Flowtype of Unspecified Flowtype 1
+    key: flowtype_2
+    name: "Schwerm\xFCll"
+    represents_losses: false
+    unit: mass
+  flowtype_3:
+    color: '#558b2f'
+    description: Flowtype of Unspecified Flowtype 1
+    key: flowtype_3
+    name: "Recycelter M\xFCll"
+    represents_losses: false
+    unit: mass
+  heat:
+    color: '#996666'
+    description: Built in default flowtype used to represent all kinds of heat
+    key: heat
+    name: Heat
+    represents_losses: false
+    unit: energy
+  material_losses:
+    color: '#555555'
+    description: Built in default flowtype used to represent all kinds of material
+      losses
+    key: material_losses
+    name: Material Losses
+    represents_losses: true
+    unit: mass
+  unknown:
+    color: '#999999'
+    description: Built in default flowtype used as a fallback option for unspecified
+      situations
+    key: unknown
+    name: Unknown Flow
+    represents_losses: false
+    unit: unit
+info:
+  currency: "\u20AC"
+  description: ''
+  emission_cost: null
+  emission_limit: null
+  enable_slacks: false
+  name: Demo_03
+  timestep_length: 1.0
+  timesteps: 720
+units:
+  energy:
+    conversion_factor: 1
+    key: energy
+    magnitudes:
+    - 1
+    - 1000
+    - 1000000
+    - 1000000000
+    - 1000000000000
+    name: Energy [kW]
+    quantity_type: energy
+    units_flow:
+    - kWh
+    - MWh
+    - GWh
+    - TWh
+    - PWh
+    units_flowrate:
+    - kW
+    - MW
+    - GW
+    - TW
+    - PW
+  joule:
+    conversion_factor: 0.0002777777777777778
+    key: joule
+    magnitudes:
+    - 1
+    - 1000
+    - 1000000
+    - 1000000000
+    name: Energy [Joule]
+    quantity_type: energy
+    units_flow:
+    - kJ
+    - MJ
+    - GJ
+    - PJ
+    units_flowrate:
+    - kJ/h
+    - MJ/h
+    - GJ/h
+    - PJ/h
+  mass:
+    conversion_factor: 1
+    key: mass
+    magnitudes:
+    - 1
+    - 1000
+    - 1000000
+    - 1000000000
+    - 1000000000000
+    name: Mass [kg]
+    quantity_type: mass
+    units_flow:
+    - kg
+    - t
+    - kt
+    - mt
+    - gt
+    units_flowrate:
+    - kg/h
+    - t/h
+    - kt/h
+    - mt/h
+    - gt/h
+  mmBTU:
+    conversion_factor: 293.07107
+    key: mmBTU
+    magnitudes:
+    - 1
+    name: Energy [mmBTU]
+    quantity_type: energy
+    units_flow:
+    - mmBTU
+    units_flowrate:
+    - mmBTU/h
+  unit:
+    conversion_factor: 1
+    key: unit
+    magnitudes:
+    - 1
+    name: Unspecified Unit
+    quantity_type: other
+    units_flow:
+    - units
+    units_flowrate:
+    - units/h
