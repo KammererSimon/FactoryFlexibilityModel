@@ -85,7 +85,7 @@ def add_sink(simulation, component, t_start, t_end):
         )
         simulation.m.addConstr(
             simulation.C_objective[-1]
-            == component.cost[t_start:t_end] @ simulation.MVars[f"E_{component.key}"]
+            == component.cost[t_start:t_end+1] @ simulation.MVars[f"E_{component.key}"]
         )
         logging.debug(f"        - CostFactor:   Cost for dumping into {component.name}")
 
