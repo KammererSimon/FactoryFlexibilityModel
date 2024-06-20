@@ -2,7 +2,6 @@
 #     This skript is used to call the main functionalities of the factory flexibility model
 import datetime
 import logging
-import multiprocessing
 import os
 import sys
 import threading
@@ -11,13 +10,12 @@ from multiprocessing import Process
 from wsgiref.simple_server import make_server
 
 import optuna
-from optuna.storages import JournalStorage, JournalFileStorage
 from optuna_dashboard import wsgi
 
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.simulation.Scenario as sc
+from examples import bayesian_sampler
 from examples.simple_simulation_call import simulate
-
 # IMPORTS
 from factory_flexibility_model.io import factory_import as imp
 from factory_flexibility_model.simulation import Simulation as fs
@@ -26,10 +24,17 @@ from factory_flexibility_model.simulation import Simulation as fs
 def run_optimizer():
     val = input("Enter your postgres password: ")
     storage = optuna.storages.RDBStorage(f"postgresql://postgres:{val}@localhost:5432/ffm")
+    sampler = optuna.integration.BoTorchSampler(
+        candidates_func=bayesian_sampler.singletask_qehvi_candidates_func,
+        n_startup_trials=5,
+        independent_sampler=optuna.samplers.QMCSampler(),
+    )
+    search_space = {"storage_size": range(0, 3000,100), "grid_capacity": range(0, 1600,100)}
     study = optuna.create_study(
         storage=storage,
         directions=["minimize"],
         study_name=f"{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}_FFM",
+        sampler=optuna.samplers.GridSampler(search_space)
     )
 
     app = wsgi(storage)
@@ -39,8 +44,8 @@ def run_optimizer():
     webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
 
     proc = []
-    for i in range(8):
-        p = Process(target=study.optimize,args=(simulate,),kwargs={"n_trials":100})
+    for i in range(24):
+        p = Process(target=study.optimize, args=(simulate,), kwargs={"n_trials": 20})
         p.start()
         proc.append(p)
         print(f"Started Process {i}")

@@ -22,13 +22,14 @@ Netzanschlusskapazität und Batteriespeicher zur Verfügung stellt.
 # IMPORTS
 import logging
 import os
+
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.simulation.Scenario as sc
 from factory_flexibility_model.simulation import Simulation as fs
 
+
 # CODE
 def simulate(trial):
-
     """
     This function performs a single simulation run and returns the total cost value as a result.
 
@@ -39,12 +40,12 @@ def simulate(trial):
     session_folder: str = "examples/Demo"
     show_results: bool = False
 
-    grid_capacity: float = trial.suggest_float("grid_capacity", 0.0, 1600.0)
     storage_size: float = trial.suggest_float("storage_size", 0.0, 3000.0)
+    grid_capacity: float = trial.suggest_float("grid_capacity", 0.0, 1600.0)
 
     # define capex constants
-    capex_storage = 1          # Monthly capital and depreciation cost of battery storages in [€/kWh/month]
-    capex_grid_capacity = 20   # Montly capacity charge for utilization of the powergrid in [€/kW/month]
+    capex_storage = 1  # Monthly capital and depreciation cost of battery storages in [€/kWh/month]
+    capex_grid_capacity = 20  # Montly capacity charge for utilization of the powergrid in [€/kW/month]
 
     # set logging level to avoid any unnecessary console outputs from the simulation scripts
     logging.basicConfig(level=logging.ERROR)
@@ -77,5 +78,5 @@ def simulate(trial):
         # calculate and return costs:
         capex = capex_storage * storage_size + capex_grid_capacity * grid_capacity
         opex = simulation.result["objective"]
-        return capex + opex
-
+        return capex + opex if capex + opex < 50000 else 50000 + 10000 * (capex + opex - 50000) / (
+                    100000 + capex + opex - 50000)

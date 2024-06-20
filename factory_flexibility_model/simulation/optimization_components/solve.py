@@ -39,6 +39,7 @@ def solve(simulation, solver_config):
 
     # CALL SOLVER
     logging.info(f"CALLING THE SOLVER")
+    simulation.m.setParam(gp.GRB.Param.Threads, 1)
     simulation.m.optimize()
     if simulation.enable_time_tracking:
         logging.info(f"Solver Time: {round(time.time() - simulation.t_step, 2)}s")
