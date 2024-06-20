@@ -65,6 +65,7 @@ def add_thermalsystem(simulation, component, interval_length):
         simulation.MVars[f"T_{component.key}"][0] == component.temperature_start
     )
     logging.debug(f"        - Constraint:   {component.name}[0] = Tstart")
+    # TODO VISHAL: set tstart to (tmax+tmin)/2 if tstart = None
 
     # add constraint for the thermal R-C-factory
     simulation.m.addConstrs(
@@ -100,6 +101,7 @@ def add_thermalsystem(simulation, component, interval_length):
         f"        - Constraint:   Tmin < T_{component.name} < Tmax for {component.name}"
     )
 
+    # TODO VISHAL: Replace t_start here as well
     # set the end temperature:
     if component.sustainable:
         simulation.m.addConstr(
