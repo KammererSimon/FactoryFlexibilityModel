@@ -32,6 +32,9 @@ from plotly.subplots import make_subplots
 from factory_flexibility_model.dash.dash_functions.create_cost_overview import (
     create_cost_overview,
 )
+from factory_flexibility_model.dash.dash_functions.create_emission_overview import (
+    create_emission_overview,
+)
 from factory_flexibility_model.dash.dash_functions.create_layout_html import (
     create_layout_html,
 )
@@ -338,6 +341,7 @@ def create_dash(simulation):
         "converter_config": dcc.Markdown(style={"marginLeft": "10px"}),
         "converter_results": dcc.Markdown(style={"marginLeft": "10px"}),
         "detailed_cost": dcc.Markdown(style={"marginLeft": "10px"}),
+        "detailed_emissions": dcc.Markdown(style={"marginLeft": "10px"}),
         "pool_config": dcc.Markdown(style={"marginLeft": "10px"}),
         "sink_config": dcc.Markdown(style={"marginLeft": "10px"}),
         "source_config": dcc.Markdown(style={"marginLeft": "10px"}),
@@ -452,6 +456,7 @@ def create_dash(simulation):
         Output(component_info["input_information"], component_property="children"),
         Output(component_info["total_cost"], component_property="children"),
         Output(component_info["detailed_cost"], component_property="children"),
+        Output(component_info["detailed_emissions"], component_property="children"),
         Input(dropdowns["sankey"], component_property="value"),
     )
     def update_plots_overview(
@@ -763,6 +768,7 @@ def create_dash(simulation):
         )
 
         detailed_costs = create_cost_overview(simulation)
+        detailed_emissions = create_emission_overview(simulation)
 
         return (
             fig_sankey,
@@ -774,6 +780,7 @@ def create_dash(simulation):
             input_info,
             total_cost,
             detailed_costs,
+            detailed_emissions
         )  # returned objects are assigned to the Component property of the Output
 
     # TAB: CONVERTERS

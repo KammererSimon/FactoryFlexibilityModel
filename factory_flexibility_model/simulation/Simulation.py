@@ -281,18 +281,12 @@ class Simulation:
                     emissions = (
                         utilization * component.co2_emissions_per_unit[0 : self.T]
                     )
-                    emission_cost = round(
-                        sum(emissions) * self.factory.emission_cost, 2
-                    )
+                    emission_cost = sum(emissions) * self.factory.emission_cost
 
 
                     # add avoided costs and emissions to the summing variables
                     total_emissions += emissions
                     total_emission_cost += emission_cost
-
-                    logging.info(
-                        f"Sink {component.name} caused total emissions of {round(sum(emissions), 2)} kgCO2, costing {round(emission_cost, 2)}€"
-                    )
 
                 else:
                     # otherwise set zeros:
@@ -361,17 +355,12 @@ class Simulation:
                     emissions = (
                         utilization * component.co2_emissions_per_unit[t_start:t_start+interval_length+1]
                     )
-                    emission_cost = round(
-                        sum(emissions) * self.factory.emission_cost, 2
-                    )
+                    emission_cost = sum(emissions) * self.factory.emission_cost
 
                     # add the emissions and cost to the summing variables:
                     total_emissions += emissions
                     total_emission_cost += emission_cost
 
-                    logging.info(
-                        f"Source {component.name} caused total emissions of {round(sum(emissions),2)} kgCO2, costing additional {round(emission_cost,2)}€"
-                    )
                 else:
                     emissions = 0
                     emission_cost = 0
@@ -602,6 +591,10 @@ class Simulation:
             else:
                 self.result["objective"] = self.m.objVal
 
+            # write the total emission values to the result-dictionary
+            self.result["total_emissions"] = total_emissions
+            self.result["total_emission_cost"] = total_emission_cost
+
         else:
             # collect achieved costs/revenues (objective of target function - ambient_gain_punishment_term)
             if "ambient_gains" in self.factory.components:
@@ -612,9 +605,9 @@ class Simulation:
             else:
                 self.result["objective"] += self.m.objVal
 
-            # write the total emission values to the result-dictionary
-            self.result["total_emissions"] = total_emissions
-            self.result["total_emission_cost"] = total_emission_cost
+            # add the emission values of the interval to the counters in the result-dictionary
+            self.result["total_emissions"] = np.hstack((self.result["total_emissions"], total_emissions))
+            self.result["total_emission_cost"] += total_emission_cost
 
 
     def create_dash(self) -> object:

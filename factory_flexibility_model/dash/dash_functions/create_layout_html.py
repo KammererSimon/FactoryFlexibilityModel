@@ -76,6 +76,7 @@ def create_layout_html(
                                                 ],
                                                 style=card_style,
                                             ),
+
                                             dbc.Row(
                                                 [
                                                     component_info["total_cost"],
@@ -87,6 +88,12 @@ def create_layout_html(
                                                     ),
                                                 ],
                                                 style=card_style_contrast,
+                                            ),
+                                            dbc.Row(
+                                                [
+                                                    component_info["detailed_emissions"],
+                                                ],
+                                                style=card_style,
                                             ),
                                             dbc.Row(
                                                 [
