@@ -66,4 +66,4 @@ def dash():
     simulation = imp.import_simulation(sys.argv[1])
 
     # create and run dashboard
-    simulation.create_dash()
+    simulation.create_dash()  # add  -> authentication={"user": "password"} <- to add a user login

@@ -28,6 +28,7 @@ from dash import Dash, Input, Output, dcc
 from dash_bootstrap_templates import load_figure_template
 from plotly.express.colors import sample_colorscale
 from plotly.subplots import make_subplots
+from dash_auth import BasicAuth
 
 from factory_flexibility_model.dash.dash_functions.create_cost_overview import (
     create_cost_overview,
@@ -41,12 +42,13 @@ from factory_flexibility_model.dash.dash_functions.create_layout_html import (
 
 
 # CODE START
-def create_dash(simulation):
+def create_dash(simulation, authentication: None):
     """
     .. _create_dash():
     This function takes a solved simulation object and creates an interactive browserbased dashboard.
 
     :param simulation: Simulation - Object.
+    :param: authentication: [dict]: a dict of combinations of usernames and passwords that are valid to access the dashboard
     :return: Nothing. The script ends with providing a dashboard on an internal server and goes into a loop to process user inputs within the dashboard until it is being cancelled externally.
     """
 
@@ -60,6 +62,10 @@ def create_dash(simulation):
     # TODO: Separate the next section into a config file!
     # INITIALIZE APP AND SET LAYOUT
     app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
+
+    if authentication is not None:
+        BasicAuth(app, authentication)
+
     load_figure_template("FLATLY")
     colors = {
         "main": (29, 66, 118),

@@ -610,10 +610,11 @@ class Simulation:
             self.result["total_emission_cost"] += total_emission_cost
 
 
-    def create_dash(self) -> object:
-        """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted Simulation"""
+    def create_dash(self, authentication = None) -> object:
+        """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted Simulation
+        :param: authentication: [dict]: a dict of combinations of usernames and passwords that are valid to access the dashboard"""
         logging.info("CREATING DASHBOARD")
-        fd.create_dash(self)
+        fd.create_dash(self, authentication)
 
     def __read_scenario_data(self):
         """This function checks the factory for scenario paramater arguments and configures concerning
