@@ -1,3 +1,36 @@
+# -----------------------------------------------------------------------------
+# This script is used to read in factory layouts and specifications from Excel files and to generate
+# factory-objects out of them that can be used for the simulations
+#
+# Project Name: Factory_Flexibility_Model
+# File Name: dash.py
+#
+# Copyright (c) [2024]
+# [Institute of Energy Systems, Energy Efficiency and Energy Economics
+#  TU Dortmund
+#  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+
 """
 This module contains the result dashboard that can be used to show and analyze the results of a solved simulation.
 It consists of a single function "create_dash", which takes a solved simulation object as input and uses the plotly dash library to create an interactive browserbased dashboard.
@@ -16,10 +49,9 @@ Usage:
 """
 
 
-# IMPORT 3RD PARTY PACKAGES
+# IMPORT
 import copy
 import warnings
-
 import dash_bootstrap_components as dbc
 import numpy as np
 import plotly.express as px
@@ -29,7 +61,6 @@ from dash_bootstrap_templates import load_figure_template
 from plotly.express.colors import sample_colorscale
 from plotly.subplots import make_subplots
 from dash_auth import BasicAuth
-
 from factory_flexibility_model.dash.dash_functions.create_cost_overview import (
     create_cost_overview,
 )
