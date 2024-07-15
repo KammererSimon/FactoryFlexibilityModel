@@ -60,7 +60,6 @@ from dash import Dash, Input, Output, dcc
 from dash_bootstrap_templates import load_figure_template
 from plotly.express.colors import sample_colorscale
 from plotly.subplots import make_subplots
-from dash_auth import BasicAuth
 from factory_flexibility_model.dash.dash_functions.create_cost_overview import (
     create_cost_overview,
 )
@@ -73,7 +72,7 @@ from factory_flexibility_model.dash.dash_functions.create_layout_html import (
 
 
 # CODE START
-def create_dash(simulation, authentication: None):
+def create_dash(simulation):
     """
     .. _create_dash():
     This function takes a solved simulation object and creates an interactive browserbased dashboard.
@@ -93,9 +92,6 @@ def create_dash(simulation, authentication: None):
     # TODO: Separate the next section into a config file!
     # INITIALIZE APP AND SET LAYOUT
     app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
-
-    if authentication is not None:
-        BasicAuth(app, authentication)
 
     load_figure_template("FLATLY")
     colors = {
@@ -1180,7 +1176,7 @@ def create_dash(simulation, authentication: None):
         fig.update_xaxes(linewidth=2, linecolor=style["axis_color"])
         fig.update_yaxes(linewidth=2, linecolor=style["axis_color"], range=[0, Pmax])
 
-        fig2 = go.Figure()
+        fig2 = make_subplots(specs=[[{"secondary_y": True}]])
         fig2.add_trace(
             go.Scatter(
                 x=x,
@@ -1188,13 +1184,39 @@ def create_dash(simulation, authentication: None):
                 line_color=f"rgb{colors['main']}",
                 name="Cost",
                 line_shape=interpolation[linestyle],
-            )
+            ),
+            secondary_y=False,
+        )
+
+        fig2.add_trace(
+            go.Scatter(
+                x=x,
+                y=np.ones(t1 - t0) * component.co2_emissions_per_unit,
+                line_color="rgb(192,0,0)",
+                name="Emissions",
+                line_shape=interpolation[linestyle],
+            ),
+            secondary_y=True,
         )
         fig2.update_layout(
             figure_config,
-            xaxis_title="Timesteps",
-            yaxis_title=f"€ / {component.flowtype.unit.get_unit_flow()}",
+            xaxis_title="Timesteps"
         )
+
+        fig2.update_yaxes(
+            title_text=f"€ / {component.flowtype.unit.get_unit_flow()}",
+            secondary_y=False,
+            linewidth=2,
+            linecolor=style["axis_color"],
+        )
+
+        fig2.update_yaxes(
+            title_text=f"Emissions [tCO²/{component.flowtype.unit.get_unit_flow()}]",
+            secondary_y=True,
+            linewidth=2,
+            linecolor=style["axis_color"],
+        )
+
 
         source_sum = "## " + component.flowtype.unit.get_value_expression(
             value=round(sum(simulation.result[component.key]["utilization"][t0:t1])),
@@ -1409,8 +1431,8 @@ def create_dash(simulation, authentication: None):
                 f"\n **Leakage per timestep:** \n"
                 f"\n * {component.leakage_time} % of total Capacity\n"
                 f"\n * {component.leakage_SOC} % of SOC\n"
-                f"\n **Max charging Power:** {component.flowtype.unit.get_value_expression(component.power_max_charge,'flow')}\n"
-                f"\n **Max discharging Power:** {component.flowtype.unit.get_value_expression(component.power_max_discharge,'flow')}\n"
+                f"\n **Max charging Power:** {component.flowtype.unit.get_value_expression(component.power_max_charge,'flowrate')}\n"
+                f"\n **Max discharging Power:** {component.flowtype.unit.get_value_expression(component.power_max_discharge,'flowrate')}\n"
                 f"\n **Input:** \n"
                 f"\n {inputs} \n"
                 f"\n **Output:** \n"

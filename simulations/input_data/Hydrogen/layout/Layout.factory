@@ -206,14 +206,14 @@ components:
     type: sink
   component_3:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\schedule.png
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
       position_x: 38.0
       position_y: 21.0
     description: ''
     flowtype: flowtype_8
     key: component_3
-    name: Demand Schedule
-    type: schedule
+    name: Outbound Storage
+    type: storage
   component_30:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sinks\Delivery.png
@@ -742,7 +742,7 @@ info:
   enable_slacks: false
   name: Hydrogen
   timestep_length: 1.0
-  timesteps: 720
+  timesteps: 8760
 units:
   energy:
     conversion_factor: 1

@@ -1,9 +1,8 @@
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 
-filepath = "C:\\Users\\smsikamm\\Documents\\Daten\\DRI-Setups\\iteration test\\DRI_Auswertung.xlsx"
+filepath = "C:\\Users\\smsikamm\\PycharmProjects\\DRI_Study\\simulations\\output_data\\DRI_Auswertung.xlsx"
 x_parameter = "cost_natural_gas"
 y_parameter = "avg_cost_electricity"
 z_parameter = "cost_per_ton"

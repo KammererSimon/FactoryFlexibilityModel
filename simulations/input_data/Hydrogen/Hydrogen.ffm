@@ -1433,6 +1433,46 @@ log:
     has been imported
   time: '2024-03-21 15:52:06'
   type: INFO
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen'
+    has been imported
+  time: '2024-07-15 11:11:32'
+  type: INFO
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen'
+    has been imported
+  time: '2024-07-15 11:42:33'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component Demand Schedule has been deleted!
+  time: '2024-07-15 11:42:45'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New storage created with key 'component_3'
+  time: '2024-07-15 11:42:48'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Outbound Storage to Crude Steel Out with key
+    'connection_18'
+  time: '2024-07-15 11:42:59'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Pool Crude Steel to Outbound Storage with key
+    'connection_20'
+  time: '2024-07-15 11:43:02'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: 'New parameter configuration: Parameter capacity of component Outbound
+    Storage is now specified as a static value.'
+  time: '2024-07-15 11:43:10'
+  type: DEBUG
 session_path: C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/Hydrogen
 show_component_config_dialog_on_creation: false
 timeseries: {}

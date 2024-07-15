@@ -54,7 +54,7 @@ components:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\components\DRI.png
       position_x: 14.0
-      position_y: 14.0
+      position_y: 13.0
       primary_flow: null
     description: ''
     flowtype: unknown
@@ -296,16 +296,6 @@ components:
     key: component_36
     name: Pool crude steel
     type: pool
-  component_37:
-    GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\schedule.png
-      position_x: 36.0
-      position_y: 24.0
-    description: ''
-    flowtype: flowtype_8
-    key: component_37
-    name: Demand Schedule
-    type: schedule
   component_38:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\sink.png
@@ -346,6 +336,16 @@ components:
     key: component_6
     name: Source Oxygen
     type: source
+  component_7:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 36.0
+      position_y: 24.0
+    description: ''
+    flowtype: flowtype_8
+    key: component_7
+    name: Outbound Storage
+    type: storage
   component_8:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sources\Transport.png
@@ -544,16 +544,16 @@ connections:
     type: connection
   connection_31:
     flowtype: flowtype_8
-    from: component_36
+    from: component_7
     key: connection_31
-    to: component_37
+    to: component_30
     to_losses: false
     type: connection
   connection_32:
     flowtype: flowtype_8
-    from: component_37
+    from: component_36
     key: connection_32
-    to: component_30
+    to: component_7
     to_losses: false
     type: connection
   connection_33:
@@ -595,7 +595,7 @@ connections:
     flowtype: flowtype_1
     from: component_20
     key: connection_38
-    to: component_14
+    to: component_15
     to_losses: false
     type: connection
   connection_39:
@@ -671,8 +671,8 @@ connections:
   connection_48:
     flowtype: flowtype_1
     from: component_20
-    key: connection_38
-    to: component_15
+    key: connection_48
+    to: component_14
     to_losses: false
     type: connection
   connection_5:
@@ -846,8 +846,8 @@ info:
   emission_limit: null
   enable_slacks: false
   name: Partial
-  timestep_length: 1
-  timesteps: 168
+  timestep_length: 1.0
+  timesteps: 8760
 units:
   energy:
     conversion_factor: 1

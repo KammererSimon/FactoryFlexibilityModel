@@ -25,9 +25,15 @@ component_3: {}
 component_30: {}
 component_34: {}
 component_35: {}
-component_37: {}
 component_38: {}
 component_4: {}
 component_6: {}
+component_7:
+  capacity:
+    type: static
+    value: 100000.0
+  direct_throughput:
+    type: boolean
+    value: true
 component_8: {}
 component_9: {}

@@ -33,7 +33,7 @@ import logging
 
 
 # CODE START
-def add_deadtime(simulation, component, interval_length):
+def add_deadtime(simulation, component, t_start, t_end):
     """
     This function adds all necessary MVARS and constraints to the optimization problem that are
     required to integrate the deadtime handed over as 'Component'
@@ -41,6 +41,7 @@ def add_deadtime(simulation, component, interval_length):
     :param component: components.deadtime-object
     :return: simulation.m is beeing extended
     """
+    interval_length = t_end - t_start + 1
 
     # calculate the number of timesteps required to match the scenario - timescale:
     delay = component.delay / simulation.time_reference_factor
@@ -56,13 +57,13 @@ def add_deadtime(simulation, component, interval_length):
         # set output_flow = slack for start interval
         simulation.m.addConstr(simulation.MVars[component.outputs[0].key][0:delay] == 0)
 
-        # set output(t) = validate(t-delay) for middle interval
+        # set output(t) = input(t-delay) for middle interval
         simulation.m.addConstr(
             simulation.MVars[component.outputs[0].key][delay : interval_length]
             == simulation.MVars[component.inputs[0].key][0 : interval_length - delay]
         )
 
-        # set validate(t) = slack for end interval
+        # set input(t) = slack for end interval
         simulation.m.addConstr(
             simulation.MVars[component.inputs[0].key][
                 interval_length - delay : interval_length - 1
@@ -78,14 +79,14 @@ def add_deadtime(simulation, component, interval_length):
             for t in range(delay)
         )
 
-        # set output(t) = validate(t-delay) for middle interval
+        # set output(t) = input(t-delay) for middle interval
         simulation.m.addConstrs(
             simulation.MVars[component.outputs[1].key][t + delay]
             == simulation.MVars[component.inputs[1].key][t]
             for t in range(interval_length - delay)
         )
 
-        # set validate(t) = slack for end interval
+        # set input(t) = slack for end interval
         simulation.m.addConstrs(
             simulation.MVars[component.inputs[1].key][interval_length - t - 1]
             == simulation.MVars[component.outputs[0].key][t]

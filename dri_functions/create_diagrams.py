@@ -20,11 +20,6 @@ def create_boxplot_dash():
     df = pd.read_excel(filepath)
     df = df.drop(df.index[0])
 
-    #df = df[df["cost_CO2"] != 0].copy()
-    #df = df[df["cost_CO2"] != 50].copy()
-    #df = df[df["cost_natural_gas"] != 200].copy()
-    #df = df[df["cost_natural_gas"] != 300].copy()
-
     app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
     load_figure_template("FLATLY")
     colors = {"main": (29, 66, 118),
@@ -91,44 +86,160 @@ def create_boxplot_dash():
                          "title_x": 0,
                          "margin": dict(l=5, r=5, t=5, b=5)}
     card_style = {"borderRadius": "1vh", "padding": "1vh", "margin": "1vh", "border": f"0px solid {style['main_color']}", 'backgroundColor': style["card_color"]}
-    color_mapping = {
-        "DRI_Type_1": "blue",
-        "DRI_Type_2": "red",
-        "DRI_Type_3": "green",
-    }
 
-    figure = dcc.Graph(figure={}, config=dict(responsive=True), style={'height': '90vh'})
-    dropdown_x = dcc.Dropdown(options=list(df.head()), value="avg_cost_electricity", clearable=False, style={'width': '80vh'})
-    dropdown_y = dcc.Dropdown(options=list(df.head()), value="cost_per_ton", clearable=False, style={'width': '80vh'})
+    figures = {"figure_scenario_corridor": dcc.Graph(figure={}, config=dict(responsive=True), style={'height': '40vh'}),
+               "figure_boxplots": dcc.Graph(figure={}, config=dict(responsive=True), style={'height': '70vh'})}
+
+    labels = {"label_simulation_count": dcc.Markdown(style={"marginLeft": "10px"})}
+
+    sliders = {'slider_electricity_price': dcc.RangeSlider(round(min(df["avg_cost_electricity"])), round(max(df["avg_cost_electricity"])), value=[round(min(df["avg_cost_electricity"])), round(max(df["avg_cost_electricity"]))], id='slider_electricity_price'),
+               'slider_electricity_volatility': dcc.RangeSlider(min(df["volantility_electricity"]), max(df["volantility_electricity"]), value=[min(df["volantility_electricity"]), max(df["volantility_electricity"])], id='slider_electricity_volatility'),
+               'slider_gas_price': dcc.RangeSlider(min(df["cost_natural_gas"]), max(df["cost_natural_gas"]), value=[min(df["cost_natural_gas"]), max(df["cost_natural_gas"])], id='slider_gas_price'),
+               'slider_carbon_price': dcc.RangeSlider(min(df["cost_CO2"]), max(df["cost_CO2"]), value=[min(df["cost_CO2"]), max(df["cost_CO2"])], id='slider_carbon_price'),
+               'slider_pledged_reduction': dcc.RangeSlider(min(df["co2_reduction"]), max(df["co2_reduction"]), value=[min(df["co2_reduction"]), max(df["co2_reduction"])], id='slider_pledged_reduction')}
 
     app.layout = html.Div(style={'backgroundColor': style['background'], 'overflow': 'hidden'}, children=[
-            dcc.Markdown(children='##### X-Axes Parameter:'),
-            dropdown_x,
-            dcc.Markdown(children='##### Y-Axes Parameter:'),
-            dropdown_y,
-            figure])
+            dbc.Row(children=[
+                dbc.Col(children=[
+                    dcc.Markdown(children='## Scenario Selection'),
+                    dcc.Markdown(children='##### Electricity Price Range:'),
+                    sliders["slider_electricity_price"],
+                    dcc.Markdown(children='##### Electricity Volatility Range:'),
+                    sliders["slider_electricity_volatility"],
+                    dcc.Markdown(children='##### Gas Price Range:'),
+                    sliders["slider_gas_price"],
+                    dcc.Markdown(children='##### Carbon Price Range:'),
+                    sliders["slider_carbon_price"],
+                    dcc.Markdown(children='##### Decarbonization Range:'),
+                    sliders["slider_pledged_reduction"],
+                    labels["label_simulation_count"],
+                    figures["figure_scenario_corridor"]],
+                    width=3,
+                    style=card_style,
+                ),
+                dbc.Col(children=[figures["figure_boxplots"]],
+                        style=card_style,),
+                dcc.Graph(id="parallel_coordinates",figure={}, config=dict(responsive=True), style={'height': '70vh'})
+            ]),
+        ])
 
     @app.callback(
-            Output(figure, component_property='figure'),
-            Input(dropdown_x, component_property='value'),
-            Input(dropdown_y, component_property='value'))
-    def update_plot(x_parameter, y_parameter):
-        # CREATE BOXPLOT
-        fig = px.box(df,
-                     x=x_parameter,
-                     y=y_parameter,
-                     #box=True,
-                     color="Layout",
-                     title=title,
-                     labels={x_parameter: x_parameter,
-                             y_parameter: y_parameter,
-                             "Layout": "DRI Type"},
-                     points="outliers",
-                     category_orders={"Layout": sorted(df["Layout"].unique())},
-                     color_discrete_map=color_mapping
-                     )
-        fig.update_layout(figure_config)
-        return fig
+            Output(figures["figure_scenario_corridor"], component_property='figure'),
+            Output(figures["figure_boxplots"], component_property='figure'),
+            Output(labels["label_simulation_count"], component_property='children'),
+            Input(sliders["slider_electricity_price"], component_property='value'),
+            Input(sliders["slider_electricity_volatility"], component_property='value'),
+            Input(sliders["slider_gas_price"], component_property='value'),
+            Input(sliders["slider_carbon_price"], component_property='value'),
+            Input(sliders["slider_pledged_reduction"], component_property='value'))
+    def update_plot(range_electricity_price, range_volatility, range_gas_price, range_carbon_price, range_pledged_reduction):
+        # initiate figure
+        fig = go.Figure()
+
+        # add max-scenario values
+        fig.add_trace(go.Scatterpolar(
+            r=[range_electricity_price[1]/max(df["avg_cost_electricity"]),
+               range_volatility[1]/max(df["volantility_electricity"]),
+               range_gas_price[1]/max(df["cost_natural_gas"]),
+               range_carbon_price[1]/max(df["cost_CO2"]),
+               range_pledged_reduction[1]/max(df["co2_reduction"])],
+            theta=['Electricity Price', 'Electricity Market Volatility', 'Natural Gas Price', 'Carbon Price',
+                   'Pledged Emission Reduction'],
+            fill='toself',
+            name='Selected Scenario Range',
+            marker=dict(color='blue'),
+            line=dict(color='blue')
+        ))
+
+        # add min scenario values
+        fig.add_trace(go.Scatterpolar(
+            r=[range_electricity_price[0] / max(df["avg_cost_electricity"]),
+               range_volatility[0] / max(df["volantility_electricity"]),
+               range_gas_price[0] / max(df["cost_natural_gas"]),
+               range_carbon_price[0] / max(df["cost_CO2"]),
+               range_pledged_reduction[0] / max(df["co2_reduction"])],
+            theta=['Electricity Price', 'Electricity Market Volatility', 'Natural Gas Price', 'Carbon Price',
+                   'Pledged Emission Reduction'],
+            fill='toself',
+            name='',
+            marker=dict(color='white'),
+            fillcolor='rgba(255,255,255,1)',
+            line=dict(color='white')
+        ))
+
+        # Layout anpassen
+        fig.update_layout(
+            polar=dict(
+                radialaxis=dict(
+                    visible=True,
+                    range=[0, 1]
+                ),
+                angularaxis=dict(
+                    tickvals=[0, 1, 2, 3, 4],
+                    ticktext=[f"Electricity Price {round(max(df["avg_cost_electricity"]))}€",
+                              f"Electricity Volatility {max(df["volantility_electricity"])}%",
+                              f"Natural gas Price {round(max(df["cost_natural_gas"]),2)}€",
+                              f"CO2 Price {max(df["cost_CO2"])}€/ton",
+                              f"Pledged CO2 Reduction {max(df["co2_reduction"])}%"]
+                )
+            )
+        )
+
+        # gefilterten dataframe anlegen
+        filtered_df = df[
+            (df["avg_cost_electricity"].between(range_electricity_price[0], range_electricity_price[1])) &
+            (df["volantility_electricity"].between(range_volatility[0], range_volatility[1])) &
+            (df["cost_natural_gas"].between(range_gas_price[0], range_gas_price[1])) &
+            (df["cost_CO2"].between(range_carbon_price[0], range_carbon_price[1])) &
+            (df["co2_reduction"].between(range_pledged_reduction[0], range_pledged_reduction[1]))
+            ].copy()
+
+        # string zur Anzeige der resultierenden Datensatzgröße erstellen
+        simulation_count = f"### Resulting simulation dataset: {len(filtered_df)}"
+
+        # initiate figure for Boxplot
+        fig2 = go.Figure()
+
+        # add boxplots for each layout
+        for layout in filtered_df["Layout"].unique():
+            fig2.add_trace(go.Box(
+                y=filtered_df[filtered_df["Layout"] == layout]["cost_per_ton"],
+                name=layout,
+                boxmean=True
+            ))
+
+        # Layout anpassen
+        fig2.update_layout(
+            title="Cost per Ton by Layout",
+            yaxis_title="Cost per Ton",
+            xaxis_title="Layout"
+        )
+
+        return fig, fig2, simulation_count
+
+    #
+    # fig3 = go.Figure(data=
+    # go.Parcoords(
+    #     line=dict(color=df['cost_per_ton'],
+    #               colorscale='Geyser',
+    #               showscale=True,
+    #               cmin=0,
+    #               cmax=1250),
+    #     dimensions=list([
+    #         dict(range=[0, 200],
+    #              constraintrange=[0, 200],
+    #              label="Electricity Price [$/MWh]", values=df['avg_cost_electricity']),
+    #         dict(range=[0, 1],
+    #              label='Electricity Volatility [%]', values=df['volantility_electricity']),
+    #         dict(range=[0, 2500],
+    #              label='Cost Natural Gas [$/t]', values=df['cost_natural_gas']),
+    #         dict(range=[0, 100],
+    #              label='Carbon Price [$/tCO2]', values=df['cost_CO2']),
+    #         dict(range=[0, 100],
+    #              label='Decarbonization Rate', values=df['co2_reduction']),
+    #     ])
+    # )
+    # )
 
     # Run app
     app.run_server(port=8053)

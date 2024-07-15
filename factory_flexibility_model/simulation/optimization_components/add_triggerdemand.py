@@ -36,7 +36,7 @@ from gurobipy import GRB
 
 
 # CODE START
-def add_triggerdemand(simulation, component, interval_length):
+def add_triggerdemand(simulation, component, t_start, t_end):
     """
     This function adds all necessary MVARS and constraints to the optimization problem that are
     required to integrate the triggerdemand handed over as 'Component'
@@ -44,17 +44,19 @@ def add_triggerdemand(simulation, component, interval_length):
     :return: simulation.m is beeing extended
     """
 
+    interval_length = t_end - t_start + 1
+
     # create Matrix with all executable load-profiles
-    possibilities = component.Tend - component.Tstart - component.profile_length + 2
+    possibilities = interval_length - component.profile_length + 1
     if component.input_energy:
         profiles_energy = np.zeros(
-            [possibilities, component.Tend - component.Tstart + 1]
+            [possibilities, interval_length]
         )
     if component.input_material:
         profiles_material = np.zeros(
-            [possibilities, component.Tend - component.Tstart + 1]
+            [possibilities, interval_length]
         )
-    parallelcheck = np.zeros([possibilities, component.Tend - component.Tstart + 1])
+    parallelcheck = np.zeros([possibilities, interval_length])
 
     for i in range(possibilities):
         if component.input_energy:
@@ -77,20 +79,11 @@ def add_triggerdemand(simulation, component, interval_length):
         f"        - Variable:     {component.name}_executions                                 (List of triggered events at triggerdemand {component.name})"
     )
 
-    # guarantee the required amount of executions
-    if component.executions > 0:
-        simulation.m.addConstr(
-            sum(simulation.MVars[f"{component.key}_executions"]) == component.executions
-        )
-        logging.debug(
-            f"        - Constraint:     Guarantee the required amount of process executions at {component.name}"
-        )
-
     # limit the number of parallel executions
     if component.max_parallel > 0:
         simulation.m.addConstr(
             parallelcheck.transpose() @ simulation.MVars[f"{component.key}_executions"]
-            <= np.ones(component.Tend - component.Tstart + 1) * component.max_parallel
+            <= np.ones(interval_length) * component.max_parallel
         )
         logging.debug(
             f"        - Constraint:   Limit the maximum parallel executions at {component.name}"

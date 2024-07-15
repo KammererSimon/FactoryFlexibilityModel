@@ -309,7 +309,7 @@ class Simulation:
                 # calculate the emissions created by the sink
                 if component.causes_emissions:
                     emissions = (
-                        utilization * component.co2_emissions_per_unit[0 : self.T]
+                        utilization * component.co2_emissions_per_unit[t_start:t_start+interval_length+1]
                     )
                     emission_cost = sum(emissions) * self.factory.emission_cost
 
@@ -644,7 +644,7 @@ class Simulation:
         """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted Simulation
         :param: authentication: [dict]: a dict of combinations of usernames and passwords that are valid to access the dashboard"""
         logging.info("CREATING DASHBOARD")
-        fd.create_dash(self, authentication)
+        fd.create_dash(self)
 
     def __read_scenario_data(self):
         """This function checks the factory for scenario paramater arguments and configures concerning
@@ -970,8 +970,9 @@ class Simulation:
             )
             self.t_start = time.time()  # reset timer
 
-        # CONFIGURE SOLVER
+        # SOLVE MODEL
         oc.solve(self, solver_config)
+
 
         if self.m.Status == GRB.TIME_LIMIT:
             logging.error("Solver time exceeded. Calculation aborted")

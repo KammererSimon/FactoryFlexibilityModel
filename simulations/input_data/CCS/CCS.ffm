@@ -1338,6 +1338,46 @@ log:
     key 'connection_27'
   time: '2024-04-18 21:23:50'
   type: DEBUG
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/CCS'
+    has been imported
+  time: '2024-07-15 11:11:09'
+  type: INFO
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/CCS'
+    has been imported
+  time: '2024-07-15 11:43:27'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component Demand Schedule has been deleted!
+  time: '2024-07-15 11:43:34'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New storage created with key 'component_20'
+  time: '2024-07-15 11:43:39'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Outbound Storage to Crude Steel Out with key
+    'connection_20'
+  time: '2024-07-15 11:43:50'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Pool Crude Steel to Outbound Storage with key
+    'connection_30'
+  time: '2024-07-15 11:43:52'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: 'New parameter configuration: Parameter capacity of component Outbound
+    Storage is now specified as a static value.'
+  time: '2024-07-15 11:44:02'
+  type: DEBUG
 session_path: C:/Users/smsikamm/PycharmProjects/DRI_Study/simulations/input_data/CCS
 show_component_config_dialog_on_creation: false
 timeseries: {}

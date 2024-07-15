@@ -89,7 +89,7 @@ def create_steel_plant(model_parameters, plant_type, config = None):
                                                                       "efficiency": model_parameters["h2_storage_efficiency"]}
 
         hourly_production_t = model_parameters["annual_dri_production_mtons"] * 1000000 / 8760
-        scenario.configurations[plant.get_key("Demand Schedule")] = {"demands": np.array([[1, blueprint.info["timesteps"], hourly_production_t * blueprint.info["timesteps"], 10000000]])}
+        scenario.configurations[plant.get_key("Crude Steel Out")] = {"demand": hourly_production_t}
 
     elif plant_type == "CCS":
         # SET MASS BALANCES
@@ -140,7 +140,7 @@ def create_steel_plant(model_parameters, plant_type, config = None):
                                                                  "soc_start": model_parameters["hbi_storage_soc_start"]}
 
         hourly_production_t = model_parameters["annual_dri_production_mtons"] * 1000000 / 8760
-        scenario.configurations[plant.get_key("Demand Schedule")] = {"demands": np.array([[1, blueprint.info["timesteps"], hourly_production_t * blueprint.info["timesteps"], 10000000]])}
+        scenario.configurations[plant.get_key("Crude Steel Out")] = {"demand": hourly_production_t}
 
     elif plant_type == "Hydrogen":
 
@@ -200,6 +200,6 @@ def create_steel_plant(model_parameters, plant_type, config = None):
                                                                       "efficiency": model_parameters["h2_storage_efficiency"]}
 
         hourly_production_t = model_parameters["annual_dri_production_mtons"] * 1000000 / 8760
-        scenario.configurations[plant.get_key("Demand Schedule")] = {"demands": np.array([[1, blueprint.info["timesteps"], hourly_production_t * blueprint.info["timesteps"], 10000000]])}
+        scenario.configurations[plant.get_key("Crude Steel Out")] = {"demand": hourly_production_t}
 
     return plant, scenario

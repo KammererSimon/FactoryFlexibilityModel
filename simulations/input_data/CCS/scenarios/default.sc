@@ -11,7 +11,13 @@ component_18:
     value: true
 component_19: {}
 component_2: {}
-component_20: {}
+component_20:
+  capacity:
+    type: static
+    value: 100000.0
+  direct_throughput:
+    type: boolean
+    value: true
 component_21: {}
 component_22: {}
 component_27: {}

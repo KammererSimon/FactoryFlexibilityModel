@@ -1581,9 +1581,6 @@ class Triggerdemand(Component):
             elif parameter == "max_parallel":
                 self.max_parallel = iv.validate(parameters["max_parallel"], "int")
 
-            elif parameter == "executions":
-                self.executions = iv.validate(parameters["executions"], "int")
-
             # HANDLE GENERAL PARAMETERS
             else:
                 if not super().set_parameter(timesteps, parameter, parameters):

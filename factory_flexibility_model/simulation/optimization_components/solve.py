@@ -68,6 +68,12 @@ def solve(simulation, solver_config):
             iv.validate(solver_config["barrier_tolerance"], "0..1"),
         )
 
+    # set MIP gap if specified
+    if "mip_gap" in solver_config:
+        simulation.m.setParam(
+            'MIPGap', iv.validate(solver_config["mip_gap"], "0..1"),
+        )
+
     # CALL SOLVER
     logging.info(f"CALLING THE SOLVER")
     simulation.m.optimize()

@@ -125,14 +125,14 @@ components:
     type: source
   component_20:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\defaults\schedule.png
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
       position_x: 41.0
       position_y: 23.0
     description: ''
     flowtype: flowtype_8
     key: component_20
-    name: Demand Schedule
-    type: schedule
+    name: Outbound Storage
+    type: storage
   component_21:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sources\Deliveries.png
@@ -660,7 +660,7 @@ info:
   enable_slacks: false
   name: CCS
   timestep_length: 1.0
-  timesteps: 720
+  timesteps: 8760
 units:
   energy:
     conversion_factor: 1

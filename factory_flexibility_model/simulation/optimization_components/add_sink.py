@@ -136,7 +136,7 @@ def add_sink(simulation, component, t_start, t_end):
         )
         simulation.m.addConstr(
             simulation.emission_sources[-1]
-            == component.co2_emissions_per_unit[t_start:t_end]
+            == component.co2_emissions_per_unit[t_start:t_end+1]
             @ simulation.MVars[f"E_{component.key}"]
         )
         logging.debug(
