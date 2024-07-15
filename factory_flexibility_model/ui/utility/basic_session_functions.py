@@ -502,6 +502,14 @@ def initialize_units_and_flowtypes(app):
         description="Built in default flowtype used to represent all kinds of heat",
     )
 
+    app.blueprint.flowtypes["electricity"] = Flowtype(
+        "electricity",
+        unit=app.blueprint.units["energy"],
+        color="#ffc000",
+        name="Electricity",
+        description="Built in default flowtype used to represent electricity",
+    )
+
     app.blueprint.flowtypes["unknown"] = Flowtype(
         "unknown",
         unit=app.blueprint.units["unit"],

@@ -102,6 +102,3 @@ def update_scenario_list(app):
     app.root.ids.simulation_screens.add_widget(data_table)
 
     simulations = list(create_simulation_list(variable_parameters))
-
-    # #data_tables.bind(on_row_press=self.on_row_press)
-    # #data_tables.bind(on_check_press=self.on_check_press)

@@ -1,4 +1,0 @@
-component_4/power_max	5
-component_5/capacity	200
-component_5/capacity_charge	1
-component_5/direct_throughput	0

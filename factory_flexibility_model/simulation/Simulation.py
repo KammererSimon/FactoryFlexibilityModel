@@ -1,3 +1,33 @@
+# -----------------------------------------------------------------------------
+# Project Name: Factory_Flexibility_Model
+# File Name: Simulation.py
+#
+# Copyright (c) [2024]
+# [Institute of Energy Systems, Energy Efficiency and Energy Economics
+#  TU Dortmund
+#  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+
 """
     .. _Simulation:
 
@@ -80,28 +110,39 @@ class Simulation:
         )  # date/time of the creation of the Simulation object
 
     def __collect_results(
-        self, *, threshold: float = None, rounding_decimals: int = None
+        self, *, threshold: float = None, rounding_decimals: int = None, interval_length: int = 0, t_start: int = 0
     ):
         """
         This function collects all the Simulation results of the Simulation object and writes them in a
         single dictionary under Simulation.results.
         :param threshold: [float] Threshold under which numerical values are considered as zero
         :param rounding_decimals: [int] Number of decimals that values are rounded to
+        :param interval_length: [int] length of the current simulation interval
         :return: self.results is being created
         """
 
         logging.info("COLLECTING RESULTS")
 
-        # check, if Simulation has been conducted yet
-        if not self.simulated:
-            # if not: raise an Exception
-            logging.critical(
-                f"Cannot collect results for Simulation {self.name} because it has not been calculated yet"
-            )
-            raise Exception
-
-        # initialize a dict to store all the results
-        self.result = {}
+       #check if this is the first iteration
+        if self.result is None:
+            # if yes: initialize detailled result struct
+            first_iteration = True
+            self.result = {}
+            self.result["energy_generated_onsite"] = 0
+            self.result["energy_generated_offsite"] = 0
+            self.result["energy_consumed_onsite"] = 0
+            self.result["energy_consumed_offsite"] = 0
+            self.result["costs"] = {
+                "inputs": {},
+                "outputs": {},
+                "converter_ramping": {},
+                "capacity_provision": {},
+                "emission_allowances": {},
+                "slacks": {},
+            }
+        else:
+            # if no: set indicator
+            first_iteration = False
 
         # Initialize threshold under which numeric results are interpreted as 0
         if threshold is None:
@@ -127,21 +168,11 @@ class Simulation:
             )
 
             # write the result into the result-dictionary
-            self.result[connection.key] = result_i
+            if first_iteration:
+                self.result[connection.key] = result_i
+            else:
+                self.result[connection.key] = np.hstack((self.result[connection.key], result_i))
 
-        # prepare summing variables for differentiation of onsite and offsite generation/consumption
-        self.result["energy_generated_onsite"] = np.zeros(self.T)
-        self.result["energy_generated_offsite"] = np.zeros(self.T)
-        self.result["energy_consumed_onsite"] = np.zeros(self.T)
-        self.result["energy_consumed_offsite"] = np.zeros(self.T)
-        self.result["costs"] = {
-            "inputs": {},
-            "outputs": {},
-            "converter_ramping": {},
-            "capacity_provision": {},
-            "emission_allowances": {},
-            "slacks": {},
-        }
 
         # collect all Component specific timeseries: iterate over all components
         for component in self.factory.components.values():
@@ -162,7 +193,11 @@ class Simulation:
                 )
 
                 # write the results into the result dictionary
-                self.result[component.key] = {"utilization": utilization}
+                if first_iteration:
+                    self.result[component.key] = {"utilization": utilization}
+                else:
+                    self.result[component.key]["utilization"] = np.hstack((self.result[component.key]["utilization"], utilization))
+
 
             # handle converters
             if component.type == "converter":
@@ -177,9 +212,7 @@ class Simulation:
                         * component.rampup_cost,
                         2,
                     )
-                    self.result["costs"]["converter_ramping"][
-                        component.key
-                    ] = rampup_cost
+
                 else:
                     rampup_cost = 0
 
@@ -192,9 +225,6 @@ class Simulation:
                         / 8760
                     )
                     capacity_charge = round(capacity_charge[0], 2)
-                    self.result["costs"]["capacity_provision"][
-                        component.key
-                    ] = capacity_charge
                 else:
                     capacity_charge = 0
 
@@ -207,12 +237,54 @@ class Simulation:
                 )
 
                 # write results into the result-dictionary
-                self.result[component.key] = {
-                    "utilization": utilization,
-                    "efficiency": efficiency,
-                    "capacity_charge": capacity_charge,
-                    "rampup_cost": rampup_cost,
-                }
+                if first_iteration:
+                    self.result[component.key] = {
+                        "utilization": utilization,
+                        "efficiency": efficiency,
+                        "capacity_charge": capacity_charge,
+                        "rampup_cost": rampup_cost,
+                    }
+                else:
+                    self.result[component.key]["utilization"] = np.hstack((self.result[component.key]["utilization"], utilization))
+                    self.result[component.key]["efficiency"] = np.hstack((self.result[component.key]["efficiency"], efficiency))
+                    self.result[component.key]["capacity_charge"] += capacity_charge
+                    self.result[component.key]["rampup_cost"] += rampup_cost
+
+
+            # handle heatpumps
+            if component.type == "heatpump":
+                # get the result values, round them to the specified number of digits
+                utilization = self.MVars[f"P_{component.key}"].X
+                input_heat = self.MVars[f"{component.input_gains.key}"].X
+                output_heat = self.MVars[f"{component.outputs[0].key}"].X
+
+
+                # apply threshold and rounding on all values
+                utilization = self.__apply_threshold_and_rounding(
+                    utilization, threshold, rounding_decimals
+                )
+                input_heat = self.__apply_threshold_and_rounding(
+                    input_heat, threshold, rounding_decimals
+                )
+
+                output_heat = self.__apply_threshold_and_rounding(
+                    output_heat, threshold, rounding_decimals
+                )
+
+                # write results into the result-dictionary
+                if first_iteration:
+                    self.result[component.key] = {
+                        "utilization": utilization,
+                        "input_electricity": utilization,
+                        "input_heat": input_heat,
+                        "output_heat": output_heat
+                    }
+                else:
+                    self.result[component.key]["utilization"] = np.hstack((self.result[component.key]["utilization"], utilization))
+                    self.result[component.key]["input_electricity"] = np.hstack((self.result[component.key]["input_electricity"], utilization))
+                    self.result[component.key]["input_heat"] = np.hstack((self.result[component.key]["input_heat"], input_heat))
+                    self.result[component.key]["output_heat"] = np.hstack((self.result[component.key]["output_heat"], output_heat))
+
 
             # handle sinks
             if component.type == "sink":
@@ -220,7 +292,7 @@ class Simulation:
                 # is the power of the sink determined?
                 if component.determined:
                     # if yes: use the demand timeseries
-                    utilization = component.demand[0 : self.T]
+                    utilization = component.demand[t_start:t_start+interval_length+1]
 
                 else:
                     # if no: use the simulation result
@@ -239,20 +311,12 @@ class Simulation:
                     emissions = (
                         utilization * component.co2_emissions_per_unit[0 : self.T]
                     )
-                    emission_cost = round(
-                        sum(emissions) * self.factory.emission_cost, 2
-                    )
-                    self.result["costs"]["emission_allowances"][
-                        component.key
-                    ] = emission_cost
+                    emission_cost = sum(emissions) * self.factory.emission_cost
+
 
                     # add avoided costs and emissions to the summing variables
                     total_emissions += emissions
                     total_emission_cost += emission_cost
-
-                    logging.info(
-                        f"Sink {component.name} caused total emissions of {round(sum(emissions), 2)} kgCO2, costing {round(emission_cost, 2)}€"
-                    )
 
                 else:
                     # otherwise set zeros:
@@ -261,35 +325,41 @@ class Simulation:
 
                 # calculate total costs
                 if component.refundable:
-                    revenue = round(sum(utilization * component.revenue), 2)
+                    revenue = round(sum(utilization * component.revenue[t_start:t_start+interval_length+1]), 2)
                 else:
                     revenue = 0
 
                 if component.chargeable:
-                    cost = round(sum(utilization * component.cost), 2)
+                    cost = round(sum(utilization * component.cost[t_start:t_start+interval_length+1]), 2)
                 else:
                     cost = 0
 
-                if not cost + revenue == 0:
+                # write the result into the result-dictionary
+                if first_iteration:
+                    self.result[component.key] = {
+                        "utilization": utilization,
+                        "emissions": emissions,
+                        "emission_cost": emission_cost,
+                        "utilization_cost": cost - revenue,
+                    }
+                    self.result["costs"]["emission_allowances"][component.key] = emission_cost
                     self.result["costs"]["outputs"][component.key] = cost - revenue
 
-                # write the result into the result-dictionary
-                self.result[component.key] = {
-                    "utilization": utilization,
-                    "emissions": emissions,
-                    "emission_cost": emission_cost,
-                    "utilization_cost": cost - revenue,
-                }
+                else:
+                    self.result[component.key]["utilization"] = np.hstack((self.result[component.key]["utilization"], utilization))
+                    self.result[component.key]["emissions"] = np.hstack((self.result[component.key]["emissions"], emissions))
+                    self.result[component.key]["emission_cost"] += emission_cost
+                    self.result[component.key]["utilization_cost"] += (cost-revenue)
+                    self.result["costs"]["emission_allowances"][component.key] += emission_cost
+                    self.result["costs"]["outputs"][component.key] += (cost - revenue)
+
 
                 # add the sinks contribution to onsite/offsite demand calculation
                 if component.is_onsite:
-                    self.result["energy_consumed_onsite"] += self.result[component.key][
-                        "utilization"
-                    ]
+                    self.result["energy_consumed_onsite"] += sum(utilization)
                 else:
-                    self.result["energy_consumed_offsite"] += self.result[
-                        component.key
-                    ]["utilization"]
+                    self.result["energy_consumed_offsite"] += sum(utilization)
+
 
             # handle sources
             elif component.type == "source":
@@ -297,7 +367,7 @@ class Simulation:
                 # is the power of the source determined by a timeseries?
                 if component.determined:
                     # if yes: use the given timeseries
-                    utilization = component.determined_power[0 : self.T]
+                    utilization = component.determined_power[t_start:t_start+interval_length+1]
                 else:
                     # if no: use Simulation result
                     utilization = self.MVars[f"E_{component.key}"].X
@@ -313,30 +383,20 @@ class Simulation:
                         self.factory.emission_cost = 0
                     # if the source can generate emissions: calculate the emissions and the corresponding costs
                     emissions = (
-                        utilization * component.co2_emissions_per_unit[0 : self.T]
+                        utilization * component.co2_emissions_per_unit[t_start:t_start+interval_length+1]
                     )
-                    emission_cost = round(
-                        sum(emissions) * self.factory.emission_cost, 2
-                    )
+                    emission_cost = sum(emissions) * self.factory.emission_cost
 
                     # add the emissions and cost to the summing variables:
                     total_emissions += emissions
                     total_emission_cost += emission_cost
 
-                    self.result["costs"]["emission_allowances"][
-                        component.key
-                    ] = emission_cost
-
-                    logging.info(
-                        f"Source {component.name} caused total emissions of {round(sum(emissions),2)} kgCO2, costing additional {round(emission_cost,2)}€"
-                    )
                 else:
                     emissions = 0
                     emission_cost = 0
 
                 if component.chargeable and not component.key == "ambient_gains":
-                    cost = round(sum(component.cost * utilization), 2)
-                    self.result["costs"]["inputs"][component.key] = cost
+                    cost = round(sum(component.cost[t_start:t_start+interval_length+1] * utilization), 2)
                 else:
                     cost = 0
 
@@ -350,30 +410,39 @@ class Simulation:
                         / 8760,
                         2,
                     )
-                    self.result["costs"]["capacity_provision"][
-                        component.key
-                    ] = capacity_charge
+
                 else:
                     capacity_charge = 0
 
                 # write the result into the result-dictionary
-                self.result[component.key] = {
-                    "utilization": utilization,
-                    "emissions": emissions,
-                    "emission_cost": emission_cost,
-                    "utilization_cost": cost,
-                    "capacity_charge": capacity_charge,
-                }
+                if first_iteration:
+                    self.result[component.key] = {
+                        "utilization": utilization,
+                        "emissions": emissions,
+                        "emission_cost": emission_cost,
+                        "utilization_cost": cost,
+                        "capacity_charge": capacity_charge,
+                    }
+                    self.result["costs"]["emission_allowances"][component.key] = emission_cost
+                    self.result["costs"]["inputs"][component.key] = cost
+                    self.result["costs"]["capacity_provision"][component.key] = capacity_charge
+                else:
+                    self.result[component.key]["utilization"] = np.hstack((self.result[component.key]["utilization"],utilization))
+                    self.result[component.key]["emissions"] = np.hstack((self.result[component.key]["emissions"], emissions))
+                    self.result[component.key]["emission_cost"] += emission_cost
+                    self.result[component.key]["utilization_cost"] += cost
+                    self.result[component.key]["capacity_charge"] += capacity_charge
+                    self.result["costs"]["emission_allowances"][component.key] += emission_cost
+                    self.result["costs"]["inputs"][component.key] += cost
+                    self.result["costs"]["capacity_provision"][component.key] += capacity_charge
 
                 # add the sources contribution to onsite/offsite generation calculation
                 if component.is_onsite:
-                    self.result["energy_generated_onsite"] += self.result[
-                        component.key
-                    ]["utilization"]
+                    self.result["energy_generated_onsite"] += sum(utilization)
                 else:
-                    self.result["energy_generated_offsite"] += self.result[
-                        component.key
-                    ]["utilization"]
+                    self.result["energy_generated_offsite"] += sum(utilization)
+
+
 
             # handle slacks
             elif component.type == "slack":
@@ -406,16 +475,19 @@ class Simulation:
                 )
 
                 # write the results to the result dictionary
-                self.result[component.key] = {
-                    "EPos": sum_energy_pos,
-                    "ENeg": sum_energy_neg,
-                    "utilization": utilization,
-                }
+                if first_iteration:
+                    self.result[component.key] = {
+                        "EPos": sum_energy_pos,
+                        "ENeg": sum_energy_neg,
+                        "utilization": utilization,
+                    }
+                    self.result["costs"]["slacks"][component.key] = (sum(utilization) * 1000000000)
+                else:
+                    self.result[component.key]["EPos"] += sum_energy_pos
+                    self.result[component.key]["ENeg"] += sum_energy_neg
+                    self.result[component.key]["utilization"]+= utilization
+                    self.result["costs"]["slacks"][component.key] += (sum(utilization) * 1000000000)
 
-                print(utilization)
-
-                # add costs to the overview
-                self.result["costs"]["slacks"][component.key] =sum(utilization) * 1000000000
 
             # handle storages
             elif component.type == "storage":
@@ -455,22 +527,31 @@ class Simulation:
                         / 8760,
                         2,
                     )
-                    self.result["costs"]["capacity_provision"][
-                        component.key
-                    ] = capacity_charge
+
                 else:
                     capacity_charge = 0
 
                 # write the results to the result dictionary
-                self.result[component.key] = {
-                    "Pcharge": power_charge,
-                    "Pdischarge": power_discharge,
-                    "SOC": soc,
-                    "utilization": power_discharge - power_charge,
-                    "SOC_start": soc_start,
-                    "soc_max": soc_max,
-                    "capacity_charge": capacity_charge,
-                }
+                if first_iteration:
+                    self.result[component.key] = {
+                        "Pcharge": power_charge,
+                        "Pdischarge": power_discharge,
+                        "SOC": soc,
+                        "utilization": power_discharge - power_charge,
+                        "SOC_start": soc_start,
+                        "soc_max": soc_max,
+                        "capacity_charge": capacity_charge,
+                    }
+                    self.result["costs"]["capacity_provision"][component.key] = capacity_charge
+                else:
+                    self.result[component.key]["Pcharge"] = np.hstack((self.result[component.key]["Pcharge"], power_charge))
+                    self.result[component.key]["Pdischarge"] = np.hstack((self.result[component.key]["Pdischarge"], power_discharge))
+                    self.result[component.key]["SOC"] = np.hstack((self.result[component.key]["SOC"], soc))
+                    self.result[component.key]["utilization"] = np.hstack((self.result[component.key]["utilization"], power_discharge - power_charge))
+                    self.result[component.key]["soc_max"] = max(soc_max,self.result[component.key]["soc_max"])
+                    self.result[component.key]["capacity_charge"] += capacity_charge
+                    self.result["costs"]["capacity_provision"][component.key] += capacity_charge
+
 
             # handle schedulers
             elif component.type == "schedule":
@@ -491,6 +572,7 @@ class Simulation:
                     "utilization": utilization,
                     "availability": availability,
                 }
+
 
             # handle thermalsystems
             elif component.type == "thermalsystem":
@@ -515,41 +597,54 @@ class Simulation:
                     "temperature": temperature,
                 }
 
+
             # handle triggerdemand
             elif component.type == "triggerdemand":
                 pass
                 # TODO: write result collection for triggerdemands
 
-        # calculate self sufficiency
-        if sum(self.result["energy_generated_onsite"]) > 0:
-            self.result["self_sufficiency"] = sum(
-                self.result["energy_generated_onsite"]
-            ) / sum(self.result["energy_generated_onsite"])
+        if first_iteration:
+            # calculate self sufficiency
+            if self.result["energy_generated_onsite"] > 0:
+                self.result["self_sufficiency"] = sum(
+                    self.result["energy_generated_onsite"]
+                ) / self.result["energy_generated_onsite"]
+            else:
+                self.result["self_sufficiency"] = 0
+
+            # collect achieved costs/revenues (objective of target function - ambient_gain_punishment_term)
+            if "ambient_gains" in self.factory.components:
+                self.result["objective"] = self.m.objVal - sum(
+                    self.result["ambient_gains"]["utilization"]
+                    * self.factory.components["ambient_gains"].cost[0 : self.T]
+                )
+            else:
+                self.result["objective"] = self.m.objVal
+
+            # write the total emission values to the result-dictionary
+            self.result["total_emissions"] = total_emissions
+            self.result["total_emission_cost"] = total_emission_cost
+
         else:
-            self.result["self_sufficiency"] = 0
+            # collect achieved costs/revenues (objective of target function - ambient_gain_punishment_term)
+            if "ambient_gains" in self.factory.components:
+                self.result["objective"] += self.m.objVal - sum(
+                    self.result["ambient_gains"]["utilization"]
+                    * self.factory.components["ambient_gains"].cost[t_start:t_start+interval_length+1]
+                )
+            else:
+                self.result["objective"] += self.m.objVal
 
-        # write the total emission values to the result-dictionary
-        self.result["total_emissions"] = total_emissions
-        self.result["total_emission_cost"] = total_emission_cost
+            # add the emission values of the interval to the counters in the result-dictionary
+            self.result["total_emissions"] = np.hstack((self.result["total_emissions"], total_emissions))
+            self.result["total_emission_cost"] += total_emission_cost
 
-        # collect achieved costs/revenues (objective of target function - ambient_gain_punishment_term)
-        self.result["objective"] = self.m.objVal - sum(
-            self.result["ambient_gains"]["utilization"]
-            * self.factory.components["ambient_gains"].cost[0 : self.T]
-        )
 
-        # validate results
-        self.__validate_results()
-
-        # set results_collected to true
-        self.results_collected = True
-
-        logging.info(" -> Results processed")
-
-    def create_dash(self) -> object:
-        """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted Simulation"""
+    def create_dash(self, authentication = None) -> object:
+        """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted Simulation
+        :param: authentication: [dict]: a dict of combinations of usernames and passwords that are valid to access the dashboard"""
         logging.info("CREATING DASHBOARD")
-        fd.create_dash(self)
+        fd.create_dash(self, authentication)
 
     def __read_scenario_data(self):
         """This function checks the factory for scenario paramater arguments and configures concerning
@@ -559,9 +654,6 @@ class Simulation:
             # set parameters for components
             if key in self.factory.components.keys():
                 self.factory.set_configuration(key, parameters=config)
-            else:
-                if key is not None:
-                    raise Exception(f"ERROR: Key '{key}' not found in factory")
 
             # set weights of connections
             if key in self.factory.connections.keys():
@@ -641,15 +733,17 @@ class Simulation:
     def simulate(
         self,
         *,
-        threshold: float = None,
+        interval_length: int = None,
         rounding_decimals: int = None,
         solver_config: dict = {},
+        threshold: float = None,
     ):
         """
-        This function builds an optimization problem out of the factory and scenario and calls gurobi to solve it.
+        This function manages the simulation. It prepares the necessary data, splits the simulation into rolling intervals and collects the results.
 
-        :param solver_config: [dict] Optional dict with configuration parameters for the solver (max_solver_time, barrier_tolerance, solver_method, logger_level)
+        :param interval_length: [int] Length of individually solved intervals during rolling optimization. A value of None means, that the whole simulation is solved at once.
         :param rounding_decimals: [int] Number of decimals that the results are rounded to
+        :param solver_config: [dict] Optional dict with configuration parameters for the solver (max_solver_time, barrier_tolerance, solver_method, logger_level)
         :param threshold: [float] Threshold under whoch results are interpreted as zero
         :return: [True] -> Adds an attribute .result to the Simulation object
         """
@@ -657,7 +751,6 @@ class Simulation:
         # ENABLE LOGGING/TIMETRACKING?
         if self.enable_time_tracking:
             self.t_start = time.time()
-
 
         if "logger_level" in solver_config:
             set_logging_level(solver_config["logger_level"])
@@ -688,8 +781,64 @@ class Simulation:
             f"   Timefactor of the Simulation set to: 1 timestep == {self.scenario.timefactor} hours ({self.scenario.timefactor*60} minutes)"
         )
 
+        # READ SCENARIO DATA CONFIGURATIONS INTO FACTORY
+        self.__read_scenario_data()
+
+        # INITIALIZE RESULT DICT
+        self.result = None
+
+
+        # ITERATE OVER SIMULATION INTERVALS
+        if interval_length is None:
+            logging.info(f"No interval size specified. The simulation will be solved in one run.")
+            interval_length = self.T
+
+        if interval_length > self.T:
+            logging.warning(f"The given simulation interval length ({interval_length}) is greater than the total number of simulation timesteps ({self.T}). The simulation will be solved in one run.")
+            interval_length = self.T
+
+        # determine number of required simulation intervals using integer division
+        num_of_intervals = int(self.T//interval_length)
+
+        # add an additional overflow interval for the incomplete final interval if required
+        if self.T % interval_length > 0:
+            num_of_intervals += 1
+
+        # start iteration
+        for interval in range(num_of_intervals):
+            # determine first and last timestep of the current interval
+            t_start = int(interval * interval_length)
+            t_end = int(t_start + interval_length - 1)
+            # make sure, that t_end is no later than the last valid timestep of the simulation task
+            if t_end > self.T-1:
+                t_end = self.T-1
+
+            # Call simulation routine for current interval
+            logging.info(f"Simulating Interval {interval+1} [{t_start+1} : {t_end+1}]")
+            self.__simulate_interval(t_start, t_end, solver_config, threshold, rounding_decimals)
+
+        # validate results
+        self.__validate_results()
+
+        # mark Simulation as solved
+        self.simulated = True
+        logging.info(" -> Simulation solved")
+        if self.enable_time_tracking:
+            logging.info(
+                f"Time Required for solving: {time.time() - self.t_start}s"
+            )
+
+
+    def __simulate_interval(self, t_start, t_end, solver_config, threshold, rounding_decimals):
+        """
+        This function builds and solves an optimization problem for a specific interval of the simulation timeframe. It is being called from the simulation.simulate() function.
+
+        :param t_start: [int] first timestep of the simulation interval to solve
+        :param t_end: [int] last timestep of the simulation interval to solve
+        """
+
         # INITIALIZE GUROBI MODEL
-        logging.info("INITIALIZING GUROBI")
+        logging.info("STARTING SIMULATION")
 
         # create new gurobi model
         self.m = gp.Model("Factory")
@@ -699,6 +848,7 @@ class Simulation:
             if not solver_config["log_solver"]:
                 self.m.Params.LogToConsole = 0
                 self.m.setParam("OutputFlag", 0)
+
         # initialize variables for collecting parts of the optimization problem
         self.MVars = {}  # Initialize a dict to store all the factory variables
         self.C_objective = (
@@ -710,8 +860,6 @@ class Simulation:
 
         # ADAPTING SCENARIO DATA
         logging.info("SETTING SCENARIO_DATA")
-        self.__read_scenario_data()
-        logging.debug(" -> Scenario data collection successful")
 
         # ENABLE EMISSION ACCOUNTING IF NECESSARY
         if self.factory.emission_accounting:
@@ -728,30 +876,32 @@ class Simulation:
             self.t_step = time.time()
 
         # CREATE MVARS FOR ALL FLOWS IN THE FACTORY
-        oc.add_flows(self)
+        oc.add_flows(self, t_end-t_start+1)
 
         # CREATE MVARS AND CONSTRAINTS FOR ALL COMPONENTS IN THE FACTORY
         for component in self.factory.components.values():
             if component.type == "source":
-                oc.add_source(self, component)
+                oc.add_source(self, component, t_start, t_end)
+            elif component.type == "heatpump":
+                oc.add_heatpump(self, component, t_start, t_end)
             elif component.type == "pool":
                 oc.add_pool(self, component)
             elif component.type == "sink":
-                oc.add_sink(self, component)
+                oc.add_sink(self, component, t_start, t_end)
             elif component.type == "slack":
-                oc.add_slack(self, component)
+                oc.add_slack(self, component, t_start, t_end)
             elif component.type == "converter":
-                oc.add_converter(self, component)
+                oc.add_converter(self, component, t_start, t_end)
             elif component.type == "deadtime":
-                oc.add_deadtime(self, component)
+                oc.add_deadtime(self, component, t_start, t_end)
             elif component.type == "storage":
-                oc.add_storage(self, component)
+                oc.add_storage(self, component, t_start, t_end)
             elif component.type == "thermalsystem":
-                oc.add_thermalsystem(self, component)
+                oc.add_thermalsystem(self, component, t_start, t_end)
             elif component.type == "triggerdemand":
-                oc.add_triggerdemand(self, component)
+                oc.add_triggerdemand(self, component, t_start, t_end)
             elif component.type == "schedule":
-                oc.add_schedule(self, component)
+                oc.add_schedule(self, component, t_start, t_end)
 
             if self.enable_time_tracking:
                 logging.info(
@@ -821,29 +971,15 @@ class Simulation:
             self.t_start = time.time()  # reset timer
 
         # CONFIGURE SOLVER
-        self.m.setParam("MIPGap", solver_config["mip_gap"])
         oc.solve(self, solver_config)
 
-        if not self.m.Status == GRB.TIME_LIMIT:
-            # mark Simulation as solved
-            self.simulated = True
-            logging.info(" -> Simulation solved")
-            if self.enable_time_tracking:
-                logging.info(
-                    f"Time Required for factory solving: {time.time() - self.t_start}s"
-                )
-                self.t_start = time.time()  # reset timer
+        if self.m.Status == GRB.TIME_LIMIT:
+            logging.error("Solver time exceeded. Calculation aborted")
+            raise Exception
 
-            # COLLECT THE RESULTS
-            self.__collect_results(
-                threshold=threshold, rounding_decimals=rounding_decimals
-            )
-            if self.enable_time_tracking:
-                logging.info(
-                    f"Time Required for collecting results: {time.time() - self.t_start}s"
-                )
-        else:
-            logging.warning("Solver time exceeded. Calculation aborted")
+        # COLLECT THE RESULTS
+        self.__collect_results(threshold=threshold, rounding_decimals=rounding_decimals, interval_length=t_end-t_start, t_start=t_start)
+
 
     def __validate_component(self, component):
         """
@@ -851,13 +987,6 @@ class Simulation:
         :param component: [factory.components.Component-object]
         :return: [Boolean] True if Component result is valid
         """
-
-        # check, if the Simulation has been simulated already
-        if not self.simulated:
-            logging.critical(
-                f"ERROR: Cannot validate the results of the Simulation, because it has not been simualted yet!"
-            )
-            raise Exception
 
         # skip the routine if the Component is a sink, source or slack
         if (
@@ -911,12 +1040,6 @@ class Simulation:
         :return: Sets self.simulation_valid as true or false
         """
 
-        if not self.simulated:
-            logging.critical(
-                f"ERROR: Cannot validate the results of the Simulation, "
-                f"because it has not been simualted yet!"
-            )
-            raise Exception
         logging.info("CHECKING RESULT CONSISTENCY")
         self.simulation_valid = True
 
@@ -957,6 +1080,7 @@ class Simulation:
                     names_material_in.append(component.key)
 
             if component.type == "sink":
+
                 if component.flowtype.is_energy():
                     values_energy_out = np.append(
                         values_energy_out,
@@ -972,6 +1096,7 @@ class Simulation:
                     names_material_out.append(component.key)
 
             if component.type == "slack":
+                continue  # todo: remove this after fixing the slack problem
                 slack_utilization = round(
                     sum(self.result[component.key]["utilization"]), 3
                 )
@@ -1017,14 +1142,16 @@ class Simulation:
             )
 
         # Check, if the punishment term for ambient gains was chosen high enough
-        if max(self.result["ambient_gains"]["utilization"]) > 10000000:
-            logging.warning(
-                f"Warning: There is a high utilization of ambient gains! "
-                f"This could be due to a numerical issue with the punishment-"
-                f"term within factory_model.create_essentials(). "
-                f"You should check the results for numerical issues!"
-            )
-            self.simulation_valid = False
+
+        if "ambient_gains" in self.result:
+            if sum(self.result["ambient_gains"]["utilization"]) > 10000000:
+                logging.warning(
+                    f"Warning: There is a high utilization of ambient gains! "
+                    f"This could be due to a numerical issue with the punishment-"
+                    f"term within factory_model.create_essentials(). "
+                    f"You should check the results for numerical issues!"
+                )
+                self.simulation_valid = False
 
         if self.simulation_valid:
             logging.info(" -> Simulation is valid!")

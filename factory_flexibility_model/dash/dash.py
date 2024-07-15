@@ -1,3 +1,36 @@
+# -----------------------------------------------------------------------------
+# This script is used to read in factory layouts and specifications from Excel files and to generate
+# factory-objects out of them that can be used for the simulations
+#
+# Project Name: Factory_Flexibility_Model
+# File Name: dash.py
+#
+# Copyright (c) [2024]
+# [Institute of Energy Systems, Energy Efficiency and Energy Economics
+#  TU Dortmund
+#  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+
 """
 This module contains the result dashboard that can be used to show and analyze the results of a solved simulation.
 It consists of a single function "create_dash", which takes a solved simulation object as input and uses the plotly dash library to create an interactive browserbased dashboard.
@@ -16,10 +49,9 @@ Usage:
 """
 
 
-# IMPORT 3RD PARTY PACKAGES
+# IMPORT
 import copy
 import warnings
-
 import dash_bootstrap_components as dbc
 import numpy as np
 import plotly.express as px
@@ -28,9 +60,12 @@ from dash import Dash, Input, Output, dcc
 from dash_bootstrap_templates import load_figure_template
 from plotly.express.colors import sample_colorscale
 from plotly.subplots import make_subplots
-
+from dash_auth import BasicAuth
 from factory_flexibility_model.dash.dash_functions.create_cost_overview import (
     create_cost_overview,
+)
+from factory_flexibility_model.dash.dash_functions.create_emission_overview import (
+    create_emission_overview,
 )
 from factory_flexibility_model.dash.dash_functions.create_layout_html import (
     create_layout_html,
@@ -38,12 +73,13 @@ from factory_flexibility_model.dash.dash_functions.create_layout_html import (
 
 
 # CODE START
-def create_dash(simulation):
+def create_dash(simulation, authentication: None):
     """
     .. _create_dash():
     This function takes a solved simulation object and creates an interactive browserbased dashboard.
 
     :param simulation: Simulation - Object.
+    :param: authentication: [dict]: a dict of combinations of usernames and passwords that are valid to access the dashboard
     :return: Nothing. The script ends with providing a dashboard on an internal server and goes into a loop to process user inputs within the dashboard until it is being cancelled externally.
     """
 
@@ -57,6 +93,10 @@ def create_dash(simulation):
     # TODO: Separate the next section into a config file!
     # INITIALIZE APP AND SET LAYOUT
     app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
+
+    if authentication is not None:
+        BasicAuth(app, authentication)
+
     load_figure_template("FLATLY")
     colors = {
         "main": (29, 66, 118),
@@ -304,6 +344,27 @@ def create_dash(simulation):
                 "height": "30vh",
             },
         ),
+        "heatpump_utilization": dcc.Graph(
+            figure={},
+            config=dict(responsive=True),
+            style={
+                "height": "30vh",
+            },
+        ),
+        "heatpump_cop": dcc.Graph(
+            figure={},
+            config=dict(responsive=True),
+            style={
+                "height": "30vh",
+            },
+        ),
+        "heatpump_cop_profile": dcc.Graph(
+            figure={},
+            config=dict(responsive=True),
+            style={
+                "height": "30vh",
+            },
+        ),
     }
 
     # Textboxes
@@ -317,6 +378,7 @@ def create_dash(simulation):
         "converter_config": dcc.Markdown(style={"marginLeft": "10px"}),
         "converter_results": dcc.Markdown(style={"marginLeft": "10px"}),
         "detailed_cost": dcc.Markdown(style={"marginLeft": "10px"}),
+        "detailed_emissions": dcc.Markdown(style={"marginLeft": "10px"}),
         "pool_config": dcc.Markdown(style={"marginLeft": "10px"}),
         "sink_config": dcc.Markdown(style={"marginLeft": "10px"}),
         "source_config": dcc.Markdown(style={"marginLeft": "10px"}),
@@ -337,6 +399,11 @@ def create_dash(simulation):
         "thermal_config": dcc.Markdown(style={"marginLeft": "10px"}),
         "thermal_results": dcc.Markdown(style={"marginLeft": "10px"}),
         "deadtime": dcc.Markdown(style={"marginLeft": "10px"}),
+        "heatpump_config": dcc.Markdown(style={"marginLeft": "10px"}),
+        "heatpump_sum_in": dcc.Markdown(style=style["highlight_value"]),
+        "heatpump_sum_out": dcc.Markdown(style=style["highlight_value"]),
+        "heatpump_avg_cop": dcc.Markdown(style=style["highlight_value"]),
+        "heatpump_cop_range": dcc.Markdown(style=style["highlight_value"]),
     }
     # Dropdowns
     dropdowns = {
@@ -373,16 +440,17 @@ def create_dash(simulation):
         ),
     }
     options = {
+        "converter": [],
+        "deadtime": [],
+        "heatpump": [],
         "pool": [],
         "sink": [],
         "source": [],
         "storage": [],
         "slack": [],
-        "converter": [],
         "schedule": [],
         "thermalsystem": [],
         "triggerdemand": [],
-        "deadtime": [],
     }
     for c in simulation.factory.components:
         options[simulation.factory.components[c].type].append(
@@ -425,6 +493,7 @@ def create_dash(simulation):
         Output(component_info["input_information"], component_property="children"),
         Output(component_info["total_cost"], component_property="children"),
         Output(component_info["detailed_cost"], component_property="children"),
+        Output(component_info["detailed_emissions"], component_property="children"),
         Input(dropdowns["sankey"], component_property="value"),
     )
     def update_plots_overview(
@@ -736,6 +805,7 @@ def create_dash(simulation):
         )
 
         detailed_costs = create_cost_overview(simulation)
+        detailed_emissions = create_emission_overview(simulation)
 
         return (
             fig_sankey,
@@ -747,6 +817,7 @@ def create_dash(simulation):
             input_info,
             total_cost,
             detailed_costs,
+            detailed_emissions
         )  # returned objects are assigned to the Component property of the Output
 
     # TAB: CONVERTERS
@@ -976,6 +1047,9 @@ def create_dash(simulation):
         Input(dropdowns["linestyle_pool"], component_property="value"),
     )
     def update_plots_pool(user_input, timesteps, linestyle):
+        if user_input == None:
+            return go.Figure()
+
         t0 = timesteps[0]
         t1 = timesteps[1]
         x = np.arange(t0, t1, 1)
@@ -1371,6 +1445,10 @@ def create_dash(simulation):
         Input("timestep_slider_thermal", "value"),
     )
     def update_plots_thermal(user_input, timesteps):
+        # Abort if there are no thermal systems in the simulation
+        if user_input == None:
+            return go.Figure(), go.Figure(), "", ""
+
         t0 = timesteps[0]
         t1 = timesteps[1]
         x = np.arange(t0, t1, 1)
@@ -1703,12 +1781,167 @@ def create_dash(simulation):
 
             results = f"\n **Total Flow:** {component.flowtype.unit.get_value_expression(round(sum(sum(utilization))), 'flow')}\n \n **power_max:** {component.flowtype.unit.get_value_expression(max(sum(utilization)), 'flowrate')}\n"
         else:
+            fig1 = go.Figure()
             fig2 = go.Figure()
             fig3 = go.Figure()
             config = ""
             results = ""
 
         return fig1, fig2, fig3, config, results
+
+    @app.callback(
+        Output(figures["heatpump_utilization"], component_property="figure"),
+        Output(figures["heatpump_cop"], component_property="figure"),
+        Output(figures["heatpump_cop_profile"], component_property="figure"),
+        Output(component_info["heatpump_sum_in"], component_property="children"),
+        Output(component_info["heatpump_sum_out"], component_property="children"),
+        Output(component_info["heatpump_avg_cop"], component_property="children"),
+        Output(component_info["heatpump_cop_range"], component_property="children"),
+        Input(dropdowns["heatpump"], component_property="value"),
+        Input("timestep_slider_heatpump", "value"),
+    )
+    def update_plots_heatpump(user_input, timesteps):
+        # determine timerange to display
+        t0 = timesteps[0]
+        t1 = timesteps[1]
+        x = np.arange(t0, t1, 1)
+
+        # get heatpump component
+        component = simulation.factory.components[
+            simulation.factory.get_key(user_input)
+        ]
+
+        # CREATE UTILIZATION FIGURE
+        input_electricity = (
+                simulation.result[component.key]["input_electricity"][t0:t1]
+                / simulation.scenario.timefactor
+                * simulation.factory.timefactor
+        )
+        input_heat = (
+                simulation.result[component.key]["input_heat"][t0:t1]
+                / simulation.scenario.timefactor
+                * simulation.factory.timefactor
+        )
+        output_heat = (
+                simulation.result[component.key]["output_heat"][t0:t1]
+                / simulation.scenario.timefactor
+                * simulation.factory.timefactor
+        )
+
+        fig = go.Figure()
+
+        # add trace for electricity input
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=input_electricity,
+                hoverinfo="x",
+                mode="lines",
+                stackgroup="one",
+                name=f"Electricity Consumption",
+                line={"color": component.input_main.flowtype.color.hex},
+            )
+        )
+
+        # add trace for heat source input
+        fig.add_trace(
+            go.Scatter(
+
+                x=x,
+                y=input_heat,
+                hoverinfo="x",
+                mode="lines",
+                stackgroup="one",
+                name=f"Input from Heat Source",
+                line={"color": component.input_gains.flowtype.color.hex},
+            )
+        )
+
+        fig.update_layout(
+            figure_config,
+            xaxis_title="Timesteps",
+            yaxis_title=f"Heat Output [kW]",
+            showlegend=True,
+        )
+        fig.update_xaxes(linewidth=2, linecolor=style["axis_color"])
+        fig.update_yaxes(linewidth=2, linecolor=style["axis_color"])
+
+        # CREATE TEMPERATURE AND COP PLOT
+        fig2 = make_subplots(specs=[[{"secondary_y": True}]])
+        fig2.add_trace(
+            go.Scatter(
+                x=x,
+                y=np.ones(t1 - t0) * component.temperature_source[t0:t1],
+                line_color=f"rgb{colors['main']}",
+                name="Source Temperature",
+            ),
+            secondary_y=False,
+        )
+        fig2.add_trace(
+            go.Scatter(
+                x=x,
+                y=np.ones(t1 - t0) * component.cop[t0:t1],
+                line_color="rgb(192,0,0)",
+                name="COP",
+            ),
+            secondary_y=True,
+        )
+        fig2.update_layout(
+            figure_config,
+            xaxis_title="Timesteps",
+        )
+
+        fig2.update_yaxes(
+            title_text=f"Source Temperature [°C]",
+            secondary_y=False,
+            linewidth=2,
+            linecolor=style["axis_color"],
+        )
+
+        fig2.update_yaxes(
+            title_text=f"Realized COP",
+            secondary_y=True,
+            linewidth=2,
+            linecolor=style["axis_color"],
+            range=[1, 7]
+        )
+
+        # CREATE COP PROFILE PLOT
+        fig3 = go.Figure()
+        fig3.add_trace(
+            go.Scatter(
+                x=np.arange(-273, 173),
+                y=component.cop_profile,
+                line_color="rgb(192,0,0)",
+                name="COP",
+            )
+        )
+        fig3.update_layout(
+            figure_config,
+            xaxis=dict(title="Source Temperature", range=[-20, 30]),
+            yaxis_title=f"COP",
+            showlegend=False,
+        )
+
+
+
+        # COLLECT PARAMETER INFORMATIONS
+        heatpump_sum_in = "## " + component.input_main.flowtype.unit.get_value_expression(
+            value=round(sum(simulation.result[component.key]["utilization"][t0:t1])),
+            quantity_type="flow",
+        )
+
+        heatpump_sum_out = "## " + component.input_main.flowtype.unit.get_value_expression(
+            value=round(sum(simulation.result[component.key]["output_heat"][t0:t1])),
+            quantity_type="flow",
+        )
+
+        heatpump_avg_cop = f"## {round(sum(simulation.result[component.key]['utilization'][t0:t1] * component.cop[t0:t1])/sum(simulation.result[component.key]['utilization'][t0:t1]),2)}"
+
+        heatpump_cop_range = f"## {round(min(component.cop[t0:t1]),2)} - {round(max(component.cop[t0:t1]),2)}"
+
+
+        return fig, fig2, fig3, heatpump_sum_in, heatpump_sum_out, heatpump_avg_cop, heatpump_cop_range
 
     # Run app
     app.run_server(port=8053)

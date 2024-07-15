@@ -17,6 +17,7 @@ from factory_flexibility_model.ui.gui_components.layout_flowtype_configuration.d
 )
 from factory_flexibility_model.ui.utility.color import color
 from factory_flexibility_model.ui.utility.GUI_logging import log_event
+from factory_flexibility_model.ui.utility.window_handling import close_dialog
 
 
 # CLASSES
@@ -115,6 +116,8 @@ def save_changes_on_flowtype(app):
     # refresh visualisation to adapt new color
     initialize_visualization(app)
 
+    close_dialog(app)
+
     # inform the user
     log_event(app, f"Flowtype {flowtype.name} has been updated!", "INFO")
 
@@ -154,6 +157,9 @@ def select_flowtype_list_item(app, list_item):
 
     if list_item.text == "Add Flowtype":
         app.add_flowtype()
+    elif list_item.text in ["Material Losses", "Energy Losses",  "Heat", "Unknown Flow"]:
+        # TODO: change this list of keys to a dynamic list from the config file once the standard flowtypes are imported instead of hardcoded
+        log_event(app, "Cannot change the predefined Flowtypes", "ERROR", f"User tried to alter Flowtype {list_item.text} and got the following message: ")
     else:
         show_flowtype_config_dialog(app)
         select_flowtype(app, app.blueprint.flowtypes[app.get_key(list_item.text)])

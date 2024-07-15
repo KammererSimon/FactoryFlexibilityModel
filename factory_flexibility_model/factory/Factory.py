@@ -1,3 +1,36 @@
+# -----------------------------------------------------------------------------
+# This script is used to read in factory layouts and specifications from Excel files and to generate
+# factory-objects out of them that can be used for the simulations
+#
+# Project Name: Factory_Flexibility_Model
+# File Name: Factory.py
+#
+# Copyright (c) [2024]
+# [Institute of Energy Systems, Energy Efficiency and Energy Economics
+#  TU Dortmund
+#  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+
 """
 .. _Factory:
 This Package contains everything that is needed to specify the structure of a factory for the Simulation:
@@ -184,6 +217,12 @@ class Factory:
             # call deadtime constructor
             self.components[key] = factory_components.Deadtime(key, self, name=name)
 
+        elif component_type == "heatpump":
+            # call heatpump constructor
+            self.components[key] = factory_components.Heatpump(
+                key, self, name=name
+            )
+
         elif component_type == "thermalsystem":
             # call thermalsystem constructor
             self.components[key] = factory_components.Thermalsystem(
@@ -246,7 +285,9 @@ class Factory:
         This function ads a new connection between two components to the factory
         :param origin: name-string of the source Component
         :param destination: name-string of the destination
+        :param to_losses: Set to true if the new connection is meant to deduct losses from its source
         :param flowtype: Name of a flowtype object that determines the flowtype transported n the connection
+        :param name: String that is used as a name for the connection
         :param weight: [float] Specifies the weighting factors of the connection both at the destination and source
         """
 
@@ -501,7 +542,7 @@ class Factory:
 
         return True
 
-    def set_configuration(self, component: str, parameters: dict):
+    def set_configuration(self, component: str, parameters: dict, timesteps: int = None):
         """
         This function takes a string-identifier of a Component in a factory and a dict of configuration parameters.
         It hands the configuration parameters over to the set_configuration method of the Component.
@@ -511,8 +552,12 @@ class Factory:
         # make sure that the specified Component exists
         self.check_existence(component)
 
+        # determine number of required timesteps
+        if timesteps is None:
+            timesteps = self.timesteps
+
         # call the set_configuration - method of the component
-        self.components[component].set_configuration(self.timesteps, parameters)
+        self.components[component].set_configuration(timesteps, parameters)
 
         # enable emission accounting if any component gets an emission factor assigned
         if "co2_emissions_per_unit" in parameters.keys():
@@ -629,8 +674,11 @@ class Factory:
         """
 
         logging.info(f"Validating factory architecture...")
+
+        delete_list = []
+
         # iterate over all components
-        for component in self.components.values():
+        for key, component in self.components.items():
 
             # conducted validations depend on the Component type...
             if component.type == "converter":
@@ -667,7 +715,6 @@ class Factory:
                 weightsum_output_energy = 0
                 weightsum_output_material = 0
 
-
                 # iterate over all output connections
                 for output_i in component.outputs:
 
@@ -692,8 +739,7 @@ class Factory:
                     logging.critical(
                         f"ERROR: converter {component.name} does not have any inputs connected!"
                     )
-                    return False
-
+                    raise Exception
 
                 # if there is energy involved: calculate the base energy efficiency (used for visualisations later)
                 if weightsum_input_energy > 0:
@@ -703,18 +749,14 @@ class Factory:
 
                 # check, if the combination of input and output weight sums is valid
                 if weightsum_output_energy > weightsum_input_energy:
-                    logging.critical(
+                    logging.warning(
                         f"Error in the factory architecture: The sum of weights at the energy output of converter '{component.name}' ({weightsum_output_energy}) is greater that the sum of input weights {weightsum_input_energy}!"
                     )
-                    raise Exception
 
                 if weightsum_output_material > weightsum_input_material:
-                    logging.critical(
-                        f"Error in the factory architecture: The sum of weights at the material output of converter '{component.name}' ({weightsum_output_material}) is greater that the sum of input weights ({weightsum_input_material})!"
+                    logging.warning(
+                        f"Error in the factory architecture: The sum of weights at the material output of converter '{component.name}' ({weightsum_output_material}) is greater that the sum of input weights {weightsum_input_material}!"
                     )
-                    raise Exception
-
-
 
             elif component.type == "deadtime":
                 # if Component is a deadtime: make sure that there is at least one input
@@ -765,6 +807,23 @@ class Factory:
                         f"Triggerdemand {component.name} has a material output but no material input!"
                     )
                     raise Exception
+
+            elif component.type == "sink":
+                if len(component.inputs) == 0:
+                    delete_list.append(key)
+                    logging.warning(
+                        f"Sink {component.name} did not have any inputs and has been removed!"
+                    )
+
+            elif component.type == "source":
+                if len(component.outputs) == 0:
+                    delete_list.append(key)
+                    logging.warning(
+                        f"Source {component.name} did not have any outputs and has been removed!"
+                    )
+
+        for component in delete_list:
+            del self.components[component]
 
         logging.info(f"Factory architecture validation successful")
         return True
@@ -843,7 +902,7 @@ class Factory:
 
         # sinks get slacked on the input side if they are not the losses destination
         elif component_type == "sink" and not (
-            key == "losses_energy" or key == "losses_material"
+            key in ["losses_energy", "losses_material"]
         ):
 
             # create new slack Component
@@ -861,6 +920,9 @@ class Factory:
 
         # sources get slacked on the output side:
         elif component_type == "source":
+            # ambient gains do not have to be slacked
+            if key == "ambient_gains":
+                return
             # create new slack Component
             self.add_component(f"{key}_slack", "slack", name=name)
 

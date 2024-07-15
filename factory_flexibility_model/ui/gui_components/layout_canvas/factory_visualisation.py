@@ -1,4 +1,5 @@
 # IMPORTS
+import time
 from collections import defaultdict
 
 from kivy.core.window import Window
@@ -14,6 +15,7 @@ from factory_flexibility_model.ui.gui_components.layout_canvas.drag_label.dragla
 )
 from factory_flexibility_model.ui.utility.window_handling import get_dpi
 
+start_time = time.time()
 
 # CLASSES
 class CanvasWidget(Widget):
@@ -90,33 +92,18 @@ def initialize_visualization(app, *args):
     :return: None
     """
 
-    # calculate the final scaling factor based on the user defined component size, window size and number of components
-    scaling_factor = (
-        app.session_data["display_scaling_factor"]
-        * app.root.ids.canvas_layout.size[0]
-        / 1000
-        / (len(app.blueprint.components) + 1) ** app.config["display_scaling_exponent"]
-    )
-
-    # specify height of components in px. Standard is 100px, the blueprint provides an additional scaling factor
-    component_height = 100 * scaling_factor
-
-    # specify display widths of components in px depending on their type
-    component_width = {
-        "source": component_height,
-        "sink": component_height,
-        "pool": component_height,
-        "storage": component_height * 1.5,
-        "converter": component_height * 1.5,
-        "deadtime": component_height * 1.5,
-        "thermalsystem": component_height * 1.5,
-        "triggerdemand": component_height * 1.5,
-        "schedule": component_height * 1.5,
-    }
+    # inititalize scaling parameters for factory layout
+    update_canvas_scaling_factor(app)
 
     # specify canvas dimensions
     app.root.ids.canvas_layout.pos = app.root.ids.layout_area.pos
     app.root.ids.canvas_layout.size = app.root.ids.layout_area.size
+
+    # get gui scaling parameters for better readability of the following code
+    line_width = app.factory_canvas["line_width"]
+    component_height = app.factory_canvas["component_height"]
+    component_width = app.factory_canvas["component_width"]
+    scaling_factor = app.factory_canvas["canvas_scaling_factor"]
 
     # store pointer to canvas to make following code better readable
     canvas = app.root.ids.canvas_layout.canvas
@@ -125,8 +112,6 @@ def initialize_visualization(app, *args):
     canvas.clear()
 
     # predefine lines for connections
-    # TODO: This step is needed to have them at the background under the component labels
-    #  ...change this if there is a better way to get this behaviour
     for connection in app.blueprint.connections.values():
         # get connection color from blueprint
         connection_color = connection["flowtype"].color.rgba
@@ -278,13 +263,217 @@ def initialize_visualization(app, *args):
     # assign callback to all icons to automatically refresh the visualisation once something was moved
     for component in app.blueprint.components.values():
         app.root.ids[f"frame_{component['key']}"].bind(
-            on_touch_move=lambda x, y: update_visualization(app)
+            on_touch_move=lambda x, y: update_visualization(app, x, y)
         )
         app.root.ids[f"frame_{component['key']}"].bind(
             on_touch_up=lambda touch, instance: app.click_on_component(touch, instance)
         )
 
-    update_visualization(app)
+    # create dataset with the incoming and outgoing connections per component, sorted by the direction
+    # initialize a dict to store the information per direction
+    connection_data = defaultdict(lambda: None)
+    for component in app.blueprint.components:
+        connection_data[component] = {
+            "top": [],
+            "bottom": [],
+            "left": [],
+            "right": [],
+        }
+
+    # iterate over all connections to determine the involved components and the directions
+    connection_list = {}
+    for connection in app.blueprint.connections.values():
+
+        # initialize connection list for later (just to safe a loop)
+        connection_list[connection["key"]] = {}
+
+        # calculate distance between roots of source and destination on the canvas
+        diff_x = (
+            app.root.ids[f'frame_{connection["from"]}'].pos[0]
+            - app.root.ids[f'frame_{connection["to"]}'].pos[0]
+        )
+        diff_y = (
+            app.root.ids[f'frame_{connection["from"]}'].pos[1]
+            - app.root.ids[f'frame_{connection["to"]}'].pos[1]
+        )
+
+        if abs(diff_x) > abs(diff_y) and diff_x < 0:
+            # the origin is left of the destination -> Connection is mostly horizontal
+            # connection must go from right of the source to left of the destination
+            # -> Store key of connection in the direction-lists of the components + coordinate difference
+            connection_data[connection["from"]]["right"].append(
+                [diff_y / diff_x, connection["key"], "out"]
+            )
+            connection_data[connection["to"]]["left"].append(
+                [-diff_y / diff_x, connection["key"], "in"]
+            )
+
+        elif diff_y > 0:
+            # the origin is over the destination -> connection is mostly vertical and going downwards
+            # connection must go from bottom of the origin to the top of the destination
+            # -> Store key of connection in the direction-lists of the components + coordinate difference
+            connection_data[connection["from"]]["bottom"].append(
+                [-diff_x, connection["key"], "out"]
+            )
+            connection_data[connection["to"]]["top"].append(
+                [diff_x, connection["key"], "in"]
+            )
+
+        elif diff_y <= 0:
+            # the origins under the destination -> connection is mostly vertical and going upwards
+            # connection must go from top of the origin to the bottom of the destination
+            # -> Store key of connection in the direction-lists of the components + coordinate difference
+            connection_data[connection["from"]]["top"].append(
+                [-diff_x, connection["key"], "out"]
+            )
+            connection_data[connection["to"]]["bottom"].append(
+                [diff_x, connection["key"], "in"]
+            )
+
+    # calculate how many connections are going in and out at every side of the components and sort them by the
+    # relative coordinate difference to their origins/destinations to avoid crossings
+
+    for component in connection_data.values():
+        for direction in component:
+            component[direction].sort(key=lambda x: x[0])
+
+            i = 0
+            number_of_connections = len(component[direction])
+            for connection_end in component[direction]:
+                # set the id of the current connection at the component
+                i += 1
+
+                # set the offset of the connections breaking points
+                connection_list[connection_end[1]].update(
+                    {"offset": (number_of_connections - 1) / 2 + 1 - i}
+                )
+
+                # define the connection as horizontal or vertical
+                if direction == "left":
+                    connection_list[connection_end[1]].update(
+                        {"direction": "horizontal", "key": connection_end[1]}
+                    )
+                elif direction == "bottom":
+                    connection_list[connection_end[1]].update(
+                        {"direction": "vertical", "key": connection_end[1]}
+                    )
+
+                # get the component that the connection has to start/end from
+                if connection_end[2] == "in":
+                    act_component = app.blueprint.components[
+                        app.blueprint.connections[connection_end[1]]["to"]
+                    ]
+                else:
+                    act_component = app.blueprint.components[
+                        app.blueprint.connections[connection_end[1]]["from"]
+                    ]
+
+                # determine the point where the current end of the connection has to be located
+                if direction == "bottom":
+                    point_x = (
+                        app.root.ids[f'frame_{act_component["key"]}'].pos[0]
+                        + app.factory_canvas["component_width"][act_component["type"]]
+                        / (number_of_connections + 1)
+                        * i
+                    )
+                    point_y = (
+                        app.root.ids[f'frame_{act_component["key"]}'].pos[1]
+                        + component_height / 2
+                    )
+                elif direction == "top":
+                    point_x = (
+                        app.root.ids[f'frame_{act_component["key"]}'].pos[0]
+                        + component_width[act_component["type"]]
+                        / (number_of_connections + 1)
+                        * i
+                    )
+                    point_y = (
+                        app.root.ids[f'frame_{act_component["key"]}'].pos[1]
+                        + component_height / 2
+                    )
+                elif direction == "left":
+                    point_x = (
+                        app.root.ids[f'frame_{act_component["key"]}'].pos[0]
+                        + component_width[act_component["type"]] / 2
+                    )
+                    point_y = (
+                        app.root.ids[f'frame_{act_component["key"]}'].pos[1]
+                        + component_height / (number_of_connections + 1) * i
+                    )
+                elif direction == "right":
+                    point_x = (
+                        app.root.ids[f'frame_{act_component["key"]}'].pos[0]
+                        + component_width[act_component["type"]] / 2
+                    )
+                    point_y = (
+                        app.root.ids[f'frame_{act_component["key"]}'].pos[1]
+                        + component_height / (number_of_connections + 1) * i
+                    )
+
+                if connection_end[2] == "out":
+                    connection_list[connection_end[1]].update(
+                        {"start_x": point_x, "start_y": point_y}
+                    )
+                else:
+                    connection_list[connection_end[1]].update(
+                        {"end_x": point_x, "end_y": point_y}
+                    )
+
+    # finally: go over the list of connections again and plot the lines!
+    for connection in connection_list.values():
+        update_connection_position(app, connection)
+
+    # iterate over all components
+    for component in app.blueprint.components.values():
+        # set the positions for the labels and icons
+        app.root.ids[f"text_{component['key']}"].pos = (
+            app.root.ids[f"frame_{component['key']}"].pos[0]
+            - component_width[component["type"]] * 0.5,
+            app.root.ids[f"frame_{component['key']}"].pos[1]
+            - component_height * 0.45
+            - 30,
+        )
+
+        # set the font size of labels
+        app.root.ids[f"text_{component['key']}"].font_size = 18 * scaling_factor
+
+        # set the size of the components
+        app.root.ids[f"frame_{component['key']}"].size = (
+            component_width[component["type"]],
+            component_height,
+        )
+        app.root.ids[f"text_{component['key']}"].size = (
+            component_width[component["type"]] * 2,
+            100,
+        )
+
+        # pools need their circles adjusted
+        if component["type"] == "pool":
+            # adjust position of circles
+            app.root.ids[f"outer_circle_{component['key']}"].pos = app.root.ids[
+                f"frame_{component['key']}"
+            ].pos
+            app.root.ids[f"inner_circle_{component['key']}"].pos = (
+                app.root.ids[f"frame_{component['key']}"].pos[0] + 2 * line_width,
+                app.root.ids[f"frame_{component['key']}"].pos[1] + 2 * line_width,
+            )
+            # adjust size of circles
+            app.root.ids[f"outer_circle_{component['key']}"].size = (
+                component_height,
+                component_height,
+            )
+            app.root.ids[f"inner_circle_{component['key']}"].size = (
+                component_height - 4 * line_width,
+                component_height - 4 * line_width,
+            )
+
+    # move the highlight for the selected asset and the new connection button
+    highlight_selected_asset(app)
+    place_new_connection_button(app)
+
+    # store connection_data within the app
+    app.factory_canvas["connection_data"] = connection_data
+    app.factory_canvas["connection_list"] = connection_list
 
 
 def save_component_positions(app):
@@ -292,37 +481,18 @@ def save_component_positions(app):
     This function is called everytime when a component has been moven by the user within the layout visualisation.
     It checks the current positions of all components for deviations from their last known location.
     If a position deviates more than the expected rounding error the new position is stored in the blueprint
+
+    :param app: Pointer to the main factory_GUIApp-Object
+    :return: None
     """
 
     from factory_flexibility_model.ui.gui_components.dialog_delete_component.dialog_delete_component import (
         show_component_deletion_dialog,
     )
 
-    # create a factor that determines the size of displayed components depending on the canvas size and the number
-    # of elements to be displayed. The concrete function is try and error and my be changed during development
-    scaling_factor = (
-        app.session_data["display_scaling_factor"]
-        * app.root.ids.canvas_layout.size[0]
-        / 1000
-        / (len(app.blueprint.components) + 1)
-        ** (app.config["display_scaling_exponent"])
-    )
-
-    # specify size of the components depending on the determined scaling factor
-    component_height = 100 * scaling_factor  # height in px
-
-    # specify display widths of components in px depending on their type and the scaling factor
-    component_width = {
-        "source": component_height,
-        "sink": component_height,
-        "pool": component_height,
-        "storage": component_height * 1.5,
-        "converter": component_height * 1.5,
-        "deadtime": component_height * 1.5,
-        "thermalsystem": component_height * 1.5,
-        "triggerdemand": component_height * 1.5,
-        "schedule": component_height * 1.5,
-    }
+    # get gui scaling parameters for better readability of the following code
+    component_height = app.factory_canvas["component_height"]
+    component_width = app.factory_canvas["component_width"]
 
     # keep track if there had been any changes
     changes_done = False
@@ -385,7 +555,7 @@ def save_component_positions(app):
                 # call deletion method
                 show_component_deletion_dialog(app)
 
-                update_visualization(app)
+                initialize_visualization(app)
 
             else:
                 # if x coordinate of the component has changed more than expected rounding error:
@@ -404,18 +574,17 @@ def save_component_positions(app):
         initialize_visualization(app)
 
 
-def update_visualization(app, *args, **kwargs):
+def update_canvas_scaling_factor(app):
     """
-    This function updates the position of connections and labels of the factory layout visualization.
-    It is being called on startup once and everytime a component gets moved by the user.
+    This function updates the basic drawing size of components based on the current dimensions of the available canvas, user zoom preferences and the number of components to be drawn.
+    It sets the parameters "canvas_scaling_factor", "line_width", "component_height" and "components_width" within the dict app.factory_canvas.
 
     :param app: Pointer to the main factory_GUIApp-Object
     :return: None
     """
 
-    # Specify a scaling factor depending on the size of the canvas and the number of components to be displayed
-    # scaling factor = width_of_canvas / sqrt(number_of_components+1) / adjustment_factor
-    scaling_factor = (
+    # calculate the correct scaling factory for the current size of the canvas and the number of objects to print
+    app.factory_canvas["canvas_scaling_factor"] = (
         app.session_data["display_scaling_factor"]
         * app.root.ids.canvas_layout.size[0]
         / 1000
@@ -423,326 +592,345 @@ def update_visualization(app, *args, **kwargs):
     )
 
     # specify size of the components depending on the size of the canvas
-    line_width = 7 * scaling_factor  # line width in px
-    component_height = 100 * scaling_factor  # height in px
+    app.factory_canvas["line_width"] = (
+        7 * app.factory_canvas["canvas_scaling_factor"]
+    )  # line width in px
+    component_height = 100 * app.factory_canvas["canvas_scaling_factor"]  # height in px
+    app.factory_canvas["component_height"] = component_height
 
     # specify display widths of components in px depending on their type
-    component_width = {
+    app.factory_canvas["component_width"] = {
         "source": component_height,
         "sink": component_height,
         "pool": component_height,
         "storage": component_height * 1.5,
         "converter": component_height * 1.5,
+        "heatpump": component_height * 1.5,
         "deadtime": component_height * 1.5,
         "thermalsystem": component_height * 1.5,
         "triggerdemand": component_height * 1.5,
         "schedule": component_height * 1.5,
     }
 
-    # specify canvas dimensions
-    app.root.ids.canvas_layout.pos = app.root.ids.layout_area.pos
-    app.root.ids.canvas_layout.size = app.root.ids.layout_area.size
 
-    # store pointer to canvas to make following code better readable
+def draw_connection_preview(app, mouse_pos=None):
+    """
+    This function just draws a line on the canvas coming from the selected asset and ending at the mouse position
 
-    # create dataset with the incoming and outgoing connections per component, sorted by the direction
-    # initialize a dict to store the information per direction
-    connection_data = defaultdict(lambda: None)
-    for component in app.blueprint.components:
-        connection_data[component] = {
-            "top": [],
-            "bottom": [],
-            "left": [],
-            "right": [],
-        }
+    :param app: Pointer to the main factory_GUIApp-Object
+    :param mouse_pos: Current mouse position within the GUI
+    :return: None
+    """
 
-    # iterate over all connections to determine the involved components and the directions
+    component_height = app.factory_canvas["component_height"]
+    component_width = app.factory_canvas["component_width"]
+
+    # draw the correct preview line if the connection_edit_mode is active
+    if app.connection_edit_mode:
+        if "mouse_pos" != None:
+            window_height, window_width = Window.size
+            canvas_height, canvas_width = app.root.ids.canvas_layout.size
+            canvas_y, canvas_x = app.root.ids.canvas_layout.pos
+            end_x = (mouse_pos[0]) * get_dpi() / 96
+            end_y = (mouse_pos[1] - 65) * get_dpi() / 96
+            app.root.ids[f"line_preview"].points = (
+                app.root.ids[f"frame_{app.selected_asset['key']}"].pos[0]
+                + component_width[app.selected_asset["type"]] / 2,
+                app.root.ids[f"frame_{app.selected_asset['key']}"].pos[1]
+                + component_height / 2,
+                end_x,
+                end_y,
+            )
+    else:
+        # make sure that the line moves out of sight if the connection mode is off:
+        app.root.ids[f"line_preview"].points = (-50, -50, -50, -50)
+
+
+def update_visualization(app, calling_component=None, mouse_pos=None):
+    """
+    This function updates the position of connections and labels related to the calling component.
+    It is called by on_touch_move-events of the draglabel-components that create the visual factory layout on the canvas.
+
+    :param app: Pointer to the main factory_GUIApp-Object
+    :param calling_component: object of the draglabel on the canvas that triggered the update event
+    :param mouse_pos: mouse-event that triggered the execution of this function
+    :return: None
+    """
+
+    # check if there is a calling component
+    if calling_component is None:
+        return
+
+    # check, if the function call actually came from the object that the mouse is pointing on
+    if not calling_component.collide_point(*mouse_pos.pos):
+        return
+
+    # this function may be called very often, so there is a timer to limit the number of executions
+    global start_time
+    if time.time() - start_time <= 0.01:
+        return
+    start_time = time.time()
+
+    # get gui scaling parameters for better readability of the following code
+    line_width = app.factory_canvas["line_width"]
+    component_height = app.factory_canvas["component_height"]
+    component_width = app.factory_canvas["component_width"]
+    component_key = calling_component.id
+
+    component = app.factory_canvas["connection_data"][component_key]
+    existing_connection_list = app.factory_canvas["connection_list"]
     connection_list = {}
-    for connection in app.blueprint.connections.values():
 
-        # initialize connection list for later (just to safe a loop)
-        connection_list[connection["key"]] = {}
+    for direction in component:
+        component[direction].sort(key=lambda x: x[0])
 
-        # calculate distance between roots of source and destination on the canvas
-        diff_x = (
-            app.root.ids[f'frame_{connection["from"]}'].pos[0]
-            - app.root.ids[f'frame_{connection["to"]}'].pos[0]
-        )
-        diff_y = (
-            app.root.ids[f'frame_{connection["from"]}'].pos[1]
-            - app.root.ids[f'frame_{connection["to"]}'].pos[1]
-        )
+        i = 0
+        number_of_connections = len(component[direction])
+        for connection_end in component[direction]:
+            # set the id of the current connection at the component
+            i += 1
 
-        if abs(diff_x) > abs(diff_y) and diff_x < 0:
-            # the origin is left of the destination -> Connection is mostly horizontal
-            # connection must go from right of the source to left of the destination
-            # -> Store key of connection in the direction-lists of the components + coordinate difference
-            connection_data[connection["from"]]["right"].append(
-                [diff_y / diff_x, connection["key"], "out"]
-            )
-            connection_data[connection["to"]]["left"].append(
-                [-diff_y / diff_x, connection["key"], "in"]
+            # reset the connection dict within the connection list
+            connection_list[connection_end[1]] = existing_connection_list[
+                connection_end[1]
+            ]
+
+            # set the offset of the connections breaking points
+            connection_list[connection_end[1]].update(
+                {"offset": (number_of_connections - 1) / 2 + 1 - i}
             )
 
-        elif diff_y > 0:
-            # the origin is over the destination -> connection is mostly vertical and going downwards
-            # connection must go from bottom of the origin to the top of the destination
-            # -> Store key of connection in the direction-lists of the components + coordinate difference
-            connection_data[connection["from"]]["bottom"].append(
-                [-diff_x, connection["key"], "out"]
-            )
-            connection_data[connection["to"]]["top"].append(
-                [diff_x, connection["key"], "in"]
-            )
-
-        elif diff_y <= 0:
-            # the originis under the destination -> connection is mostly vertical and going upwards
-            # connection must go from top of the origin to the bottom of the destination
-            # -> Store key of connection in the direction-lists of the components + coordinate difference
-            connection_data[connection["from"]]["top"].append(
-                [-diff_x, connection["key"], "out"]
-            )
-            connection_data[connection["to"]]["bottom"].append(
-                [diff_x, connection["key"], "in"]
-            )
-
-    # calculate how many connections are going in and out at every side of the components and sort them by the
-    # relative coordinate difference to their origins/destinations to avoid crossings
-
-    for component in connection_data.values():
-        for direction in component:
-            component[direction].sort(key=lambda x: x[0])
-
-            i = 0
-            number_of_connections = len(component[direction])
-            for connection_end in component[direction]:
-                # set the id of the current connection at the component
-                i += 1
-
-                # set the offset of the connections breaking points
+            # define the connection as horizontal or vertical
+            if direction in ["left", "right"]:
                 connection_list[connection_end[1]].update(
-                    {"offset": (number_of_connections - 1) / 2 + 1 - i}
-                )
-
-                # define the connection as horizontal or vertical
-                if direction == "left":
-                    connection_list[connection_end[1]].update(
-                        {"direction": "horizontal", "key": connection_end[1]}
-                    )
-                elif direction == "bottom":
-                    connection_list[connection_end[1]].update(
-                        {"direction": "vertical", "key": connection_end[1]}
-                    )
-
-                # get the component that the connection has to start/end from
-                if connection_end[2] == "in":
-                    act_component = app.blueprint.components[
-                        app.blueprint.connections[connection_end[1]]["to"]
-                    ]
-                else:
-                    act_component = app.blueprint.components[
-                        app.blueprint.connections[connection_end[1]]["from"]
-                    ]
-
-                # determine the point where the current end of the connection has to be located
-                if direction == "bottom":
-                    point_x = (
-                        app.root.ids[f'frame_{act_component["key"]}'].pos[0]
-                        + component_width[act_component["type"]]
-                        / (number_of_connections + 1)
-                        * i
-                    )
-                    point_y = (
-                        app.root.ids[f'frame_{act_component["key"]}'].pos[1]
-                        + component_height / 2
-                    )
-                elif direction == "top":
-                    point_x = (
-                        app.root.ids[f'frame_{act_component["key"]}'].pos[0]
-                        + component_width[act_component["type"]]
-                        / (number_of_connections + 1)
-                        * i
-                    )
-                    point_y = (
-                        app.root.ids[f'frame_{act_component["key"]}'].pos[1]
-                        + component_height / 2
-                    )
-                elif direction == "left":
-                    point_x = (
-                        app.root.ids[f'frame_{act_component["key"]}'].pos[0]
-                        + component_width[act_component["type"]] / 2
-                    )
-                    point_y = (
-                        app.root.ids[f'frame_{act_component["key"]}'].pos[1]
-                        + component_height / (number_of_connections + 1) * i
-                    )
-                elif direction == "right":
-                    point_x = (
-                        app.root.ids[f'frame_{act_component["key"]}'].pos[0]
-                        + component_width[act_component["type"]] / 2
-                    )
-                    point_y = (
-                        app.root.ids[f'frame_{act_component["key"]}'].pos[1]
-                        + component_height / (number_of_connections + 1) * i
-                    )
-
-                if connection_end[2] == "out":
-                    connection_list[connection_end[1]].update(
-                        {"start_x": point_x, "start_y": point_y}
-                    )
-                else:
-                    connection_list[connection_end[1]].update(
-                        {"end_x": point_x, "end_y": point_y}
-                    )
-
-    # finally: go over the list of connections again and plot the lines!
-    for connection in connection_list.values():
-        # adjust the line width
-        app.root.ids[f"line_{connection['key']}"].width = line_width
-
-        # check, which type of connection has to be created:
-        if connection["direction"] == "horizontal":
-            app.root.ids[f"line_{connection['key']}"].points = (
-                connection["start_x"],
-                connection["start_y"],
-                connection["start_x"]
-                + (connection["end_x"] - connection["start_x"]) / 2
-                + connection["offset"] * line_width * 3,
-                connection["start_y"],
-                connection["start_x"]
-                + (connection["end_x"] - connection["start_x"]) / 2
-                + connection["offset"] * line_width * 3,
-                connection["end_y"],
-                connection["end_x"],
-                connection["end_y"],
-            )
-
-            # get the widths of destination and origin component
-            source_width = component_width[
-                app.blueprint.components[
-                    app.blueprint.connections[connection["key"]]["from"]
-                ]["type"]
-            ]
-            sink_width = component_width[
-                app.blueprint.components[
-                    app.blueprint.connections[connection["key"]]["to"]
-                ]["type"]
-            ]
-
-            # adjust the points of the two triangles to form nice arrows at the beginning and end of the connection
-            app.root.ids[f"pointer_start_{connection['key']}"].points = (
-                connection["start_x"] + source_width / 2 + line_width,
-                connection["start_y"] - line_width * 0.8,
-                connection["start_x"] + source_width / 2 + line_width,
-                connection["start_y"] + line_width * 0.8,
-                connection["start_x"] + source_width / 2 + line_width * 2,
-                connection["start_y"],
-            )
-            app.root.ids[f"pointer_end_{connection['key']}"].points = (
-                connection["end_x"] - sink_width / 2 - line_width * 2,
-                connection["end_y"] + line_width * 0.8,
-                connection["end_x"] - sink_width / 2 - line_width * 2,
-                connection["end_y"] - line_width * 0.8,
-                connection["end_x"] - sink_width / 2 - line_width,
-                connection["end_y"],
-            )
-        else:
-            app.root.ids[f"line_{connection['key']}"].points = (
-                connection["start_x"],
-                connection["start_y"],
-                connection["start_x"],
-                connection["start_y"]
-                + (connection["end_y"] - connection["start_y"]) / 2
-                + connection["offset"] * line_width * 3,
-                connection["end_x"],
-                connection["start_y"]
-                + (connection["end_y"] - connection["start_y"]) / 2
-                + connection["offset"] * line_width * 3,
-                connection["end_x"],
-                connection["end_y"],
-            )
-
-            if connection["start_y"] > connection["end_y"]:
-                # adjust the points of the two triangles to form nice arrows at the beginning and end of the connection
-                app.root.ids[f"pointer_start_{connection['key']}"].points = (
-                    connection["start_x"] - line_width * 0.8,
-                    connection["start_y"] - component_height / 2 - line_width,
-                    connection["start_x"] + line_width * 0.8,
-                    connection["start_y"] - component_height / 2 - line_width,
-                    connection["start_x"],
-                    connection["start_y"] - component_height / 2 - line_width * 2,
-                )
-                app.root.ids[f"pointer_end_{connection['key']}"].points = (
-                    connection["end_x"] - line_width * 0.8,
-                    connection["end_y"] + component_height / 2 + line_width * 2,
-                    connection["end_x"] + line_width * 0.8,
-                    connection["end_y"] + component_height / 2 + line_width * 2,
-                    connection["end_x"],
-                    connection["end_y"] + component_height / 2 + line_width,
+                    {"direction": "horizontal", "key": connection_end[1]}
                 )
             else:
-                # adjust the points of the two triangles to form nice arrows at the beginning and end of the connection
-                app.root.ids[f"pointer_start_{connection['key']}"].points = (
-                    connection["start_x"] - line_width * 0.8,
-                    connection["start_y"] + component_height / 2 + line_width,
-                    connection["start_x"] + line_width * 0.8,
-                    connection["start_y"] + component_height / 2 + line_width,
-                    connection["start_x"],
-                    connection["start_y"] + component_height / 2 + line_width * 2,
-                )
-                app.root.ids[f"pointer_end_{connection['key']}"].points = (
-                    connection["end_x"] - line_width * 0.8,
-                    connection["end_y"] - component_height / 2 - line_width * 2,
-                    connection["end_x"] + line_width * 0.8,
-                    connection["end_y"] - component_height / 2 - line_width * 2,
-                    connection["end_x"],
-                    connection["end_y"] - component_height / 2 - line_width,
+                connection_list[connection_end[1]].update(
+                    {"direction": "vertical", "key": connection_end[1]}
                 )
 
-    # iterate over all components
-    for component in app.blueprint.components.values():
-        # set the positions for the labels and icons
-        app.root.ids[f"text_{component['key']}"].pos = (
-            app.root.ids[f"frame_{component['key']}"].pos[0]
-            - component_width[component["type"]] * 0.5,
-            app.root.ids[f"frame_{component['key']}"].pos[1]
-            - component_height * 0.45
-            - 30,
+            # get the component that the connection has to start/end from
+            if connection_end[2] == "in":
+                act_component = app.blueprint.components[
+                    app.blueprint.connections[connection_end[1]]["to"]
+                ]
+            else:
+                act_component = app.blueprint.components[
+                    app.blueprint.connections[connection_end[1]]["from"]
+                ]
+
+            # determine the point where the current end of the connection has to be located
+            if direction == "bottom":
+                point_x = (
+                    app.root.ids[f'frame_{act_component["key"]}'].pos[0]
+                    + app.factory_canvas["component_width"][act_component["type"]]
+                    / (number_of_connections + 1)
+                    * i
+                )
+                point_y = (
+                    app.root.ids[f'frame_{act_component["key"]}'].pos[1]
+                    + component_height / 2
+                )
+            elif direction == "top":
+                point_x = (
+                    app.root.ids[f'frame_{act_component["key"]}'].pos[0]
+                    + component_width[act_component["type"]]
+                    / (number_of_connections + 1)
+                    * i
+                )
+                point_y = (
+                    app.root.ids[f'frame_{act_component["key"]}'].pos[1]
+                    + component_height / 2
+                )
+            elif direction == "left":
+                point_x = (
+                    app.root.ids[f'frame_{act_component["key"]}'].pos[0]
+                    + component_width[act_component["type"]] / 2
+                )
+                point_y = (
+                    app.root.ids[f'frame_{act_component["key"]}'].pos[1]
+                    + component_height / (number_of_connections + 1) * i
+                )
+            elif direction == "right":
+                point_x = (
+                    app.root.ids[f'frame_{act_component["key"]}'].pos[0]
+                    + component_width[act_component["type"]] / 2
+                )
+                point_y = (
+                    app.root.ids[f'frame_{act_component["key"]}'].pos[1]
+                    + component_height / (number_of_connections + 1) * i
+                )
+
+            if connection_end[2] == "out":
+                connection_list[connection_end[1]].update(
+                    {"start_x": point_x, "start_y": point_y}
+                )
+            else:
+                connection_list[connection_end[1]].update(
+                    {"end_x": point_x, "end_y": point_y}
+                )
+
+    # Redraw the involved connections of the moved object
+    for connection in connection_list.values():
+        update_connection_position(app, connection)
+
+    # set the positions of the component label
+    app.root.ids[f"text_{component_key}"].pos = (
+        app.root.ids[f"frame_{component_key}"].pos[0]
+        - component_width[app.blueprint.components[component_key]["type"]] * 0.5,
+        app.root.ids[f"frame_{component_key}"].pos[1] - component_height * 0.45 - 30,
+    )
+
+    # pools need their circles adjusted
+    if app.blueprint.components[component_key]["type"] == "pool":
+        # adjust position of circles
+        app.root.ids[f"outer_circle_{component_key}"].pos = app.root.ids[
+            f"frame_{component_key}"
+        ].pos
+        app.root.ids[f"inner_circle_{component_key}"].pos = (
+            app.root.ids[f"frame_{component_key}"].pos[0] + 2 * line_width,
+            app.root.ids[f"frame_{component_key}"].pos[1] + 2 * line_width,
         )
-
-        # set the font size of labels
-        app.root.ids[f"text_{component['key']}"].font_size = 18 * scaling_factor
-
-        # set the size of the components
-        app.root.ids[f"frame_{component['key']}"].size = (
-            component_width[component["type"]],
+        # adjust size of circles
+        app.root.ids[f"outer_circle_{component_key}"].size = (
+            component_height,
             component_height,
         )
-        app.root.ids[f"text_{component['key']}"].size = (
-            component_width[component["type"]] * 2,
-            100,
+        app.root.ids[f"inner_circle_{component_key}"].size = (
+            component_height - 4 * line_width,
+            component_height - 4 * line_width,
         )
 
-        # pools need their circles adjusted
-        if component["type"] == "pool":
-            # adjust position of circles
-            app.root.ids[f"outer_circle_{component['key']}"].pos = app.root.ids[
-                f"frame_{component['key']}"
-            ].pos
-            app.root.ids[f"inner_circle_{component['key']}"].pos = (
-                app.root.ids[f"frame_{component['key']}"].pos[0] + 2 * line_width,
-                app.root.ids[f"frame_{component['key']}"].pos[1] + 2 * line_width,
+    # move the highlight for the selected asset and the new connection button
+    highlight_selected_asset(app)
+    place_new_connection_button(app)
+
+
+def update_connection_position(app, connection):
+    """
+    This function takes an entry from the connection_list - dict as created during initialize_visualization. This dict entry contains all the information necessary to draw the line of the connection oin the canvas correctly.
+    The line object has already be initialized on the canvas. This function takes all the given information and updates the coordinates of the line points on the canvas.
+
+    :param app: Pointer to the main factory_GUIApp-Object
+    :param connection: connection_list-entry as spoecified in initialize_visualization
+    :return: None
+    """
+
+    # get gui scaling parameters for better readability of the following code
+    line_width = app.factory_canvas["line_width"]
+    component_height = app.factory_canvas["component_height"]
+    component_width = app.factory_canvas["component_width"]
+
+    # adjust the line width
+    app.root.ids[f"line_{connection['key']}"].width = line_width
+
+    # check, which type of connection has to be created:
+    if connection["direction"] == "horizontal":
+        app.root.ids[f"line_{connection['key']}"].points = (
+            connection["start_x"],
+            connection["start_y"],
+            connection["start_x"]
+            + (connection["end_x"] - connection["start_x"]) / 2
+            + connection["offset"] * line_width * 3,
+            connection["start_y"],
+            connection["start_x"]
+            + (connection["end_x"] - connection["start_x"]) / 2
+            + connection["offset"] * line_width * 3,
+            connection["end_y"],
+            connection["end_x"],
+            connection["end_y"],
+        )
+
+        # get the widths of destination and origin component
+        source_width = component_width[
+            app.blueprint.components[
+                app.blueprint.connections[connection["key"]]["from"]
+            ]["type"]
+        ]
+        sink_width = component_width[
+            app.blueprint.components[
+                app.blueprint.connections[connection["key"]]["to"]
+            ]["type"]
+        ]
+
+        # adjust the points of the two triangles to form nice arrows at the beginning and end of the connection
+        app.root.ids[f"pointer_start_{connection['key']}"].points = (
+            connection["start_x"] + source_width / 2 + line_width,
+            connection["start_y"] - line_width * 0.8,
+            connection["start_x"] + source_width / 2 + line_width,
+            connection["start_y"] + line_width * 0.8,
+            connection["start_x"] + source_width / 2 + line_width * 2,
+            connection["start_y"],
+        )
+        app.root.ids[f"pointer_end_{connection['key']}"].points = (
+            connection["end_x"] - sink_width / 2 - line_width * 2,
+            connection["end_y"] + line_width * 0.8,
+            connection["end_x"] - sink_width / 2 - line_width * 2,
+            connection["end_y"] - line_width * 0.8,
+            connection["end_x"] - sink_width / 2 - line_width,
+            connection["end_y"],
+        )
+    else:
+        app.root.ids[f"line_{connection['key']}"].points = (
+            connection["start_x"],
+            connection["start_y"],
+            connection["start_x"],
+            connection["start_y"]
+            + (connection["end_y"] - connection["start_y"]) / 2
+            + connection["offset"] * line_width * 3,
+            connection["end_x"],
+            connection["start_y"]
+            + (connection["end_y"] - connection["start_y"]) / 2
+            + connection["offset"] * line_width * 3,
+            connection["end_x"],
+            connection["end_y"],
+        )
+
+        if connection["start_y"] > connection["end_y"]:
+            # adjust the points of the two triangles to form nice arrows at the beginning and end of the connection
+            app.root.ids[f"pointer_start_{connection['key']}"].points = (
+                connection["start_x"] - line_width * 0.8,
+                connection["start_y"] - component_height / 2 - line_width,
+                connection["start_x"] + line_width * 0.8,
+                connection["start_y"] - component_height / 2 - line_width,
+                connection["start_x"],
+                connection["start_y"] - component_height / 2 - line_width * 2,
             )
-            # adjust size of circles
-            app.root.ids[f"outer_circle_{component['key']}"].size = (
-                component_height,
-                component_height,
+            app.root.ids[f"pointer_end_{connection['key']}"].points = (
+                connection["end_x"] - line_width * 0.8,
+                connection["end_y"] + component_height / 2 + line_width * 2,
+                connection["end_x"] + line_width * 0.8,
+                connection["end_y"] + component_height / 2 + line_width * 2,
+                connection["end_x"],
+                connection["end_y"] + component_height / 2 + line_width,
             )
-            app.root.ids[f"inner_circle_{component['key']}"].size = (
-                component_height - 4 * line_width,
-                component_height - 4 * line_width,
+        else:
+            # adjust the points of the two triangles to form nice arrows at the beginning and end of the connection
+            app.root.ids[f"pointer_start_{connection['key']}"].points = (
+                connection["start_x"] - line_width * 0.8,
+                connection["start_y"] + component_height / 2 + line_width,
+                connection["start_x"] + line_width * 0.8,
+                connection["start_y"] + component_height / 2 + line_width,
+                connection["start_x"],
+                connection["start_y"] + component_height / 2 + line_width * 2,
+            )
+            app.root.ids[f"pointer_end_{connection['key']}"].points = (
+                connection["end_x"] - line_width * 0.8,
+                connection["end_y"] - component_height / 2 - line_width * 2,
+                connection["end_x"] + line_width * 0.8,
+                connection["end_y"] - component_height / 2 - line_width * 2,
+                connection["end_x"],
+                connection["end_y"] - component_height / 2 - line_width,
             )
 
+
+def highlight_selected_asset(app):
+    """
+    This function adjusts the blue highlight-shadow on the canvas to either lay below the currently selected component or to be out of sight.
+    :param app: Pointer to the main factory_GUIApp-Object
+    :return: None
+    """
     # highlight the selected component
     if (
         app.selected_asset == None
@@ -761,17 +949,25 @@ def update_visualization(app, *args, **kwargs):
         ]
         # adjust it in size
         app.root.ids["highlight"].size = [
-            component_width[app.selected_asset["type"]] * 2,
-            component_height * 2,
+            app.factory_canvas["component_width"][app.selected_asset["type"]] * 2,
+            app.factory_canvas["component_height"] * 2,
         ]
         # place it behind the selected component
         app.root.ids["highlight"].pos = [
             app.root.ids[f"frame_{app.selected_asset['key']}"].pos[0]
-            - component_width[app.selected_asset["type"]] / 2,
+            - app.factory_canvas["component_width"][app.selected_asset["type"]] / 2,
             app.root.ids[f"frame_{app.selected_asset['key']}"].pos[1]
-            - component_height / 2,
+            - app.factory_canvas["component_height"] / 2,
         ]
 
+
+def place_new_connection_button(app):
+    """
+    This function adjusts the new connection button on the canvas to either stick to the currently selected component or to be out of sight.
+
+    :param app: Pointer to the main factory_GUIApp-Object
+    :return: None
+    """
     # place "new connection" button
     if (
         app.selected_asset == None
@@ -786,23 +982,7 @@ def update_visualization(app, *args, **kwargs):
     else:
         app.root.ids["new_connection"].pos = [
             app.root.ids[f"frame_{app.selected_asset['key']}"].pos[0]
-            + component_width[app.selected_asset["type"]],
+            + app.factory_canvas["component_width"][app.selected_asset["type"]],
             app.root.ids[f"frame_{app.selected_asset['key']}"].pos[1]
-            + component_height,
+            + app.factory_canvas["component_height"],
         ]
-
-    if app.connection_edit_mode:
-        if "mouse_pos" in kwargs:
-            window_height, window_width = Window.size
-            canvas_height, canvas_width = app.root.ids.canvas_layout.size
-            canvas_y, canvas_x = app.root.ids.canvas_layout.pos
-            end_x = (kwargs["mouse_pos"][0]) * get_dpi() / 96
-            end_y = (kwargs["mouse_pos"][1] - 65) * get_dpi() / 96
-            app.root.ids[f"line_preview"].points = (
-                app.root.ids[f"frame_{app.selected_asset['key']}"].pos[0]
-                + component_width[app.selected_asset["type"]] / 2,
-                app.root.ids[f"frame_{app.selected_asset['key']}"].pos[1]
-                + component_height / 2,
-                end_x,
-                end_y,
-            )

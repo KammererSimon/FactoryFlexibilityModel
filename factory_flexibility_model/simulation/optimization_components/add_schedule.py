@@ -1,5 +1,32 @@
-#  CALLING PATH:
-#  -> Simulation.simulate() -> Simulation.create_optimization_problem()
+# -----------------------------------------------------------------------------
+# Project Name: Factory_Flexibility_Model
+# File Name: add_schedule.py
+#
+# Copyright (c) [2024]
+# [Institute of Energy Systems, Energy Efficiency and Energy Economics
+#  TU Dortmund
+#  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
 
 # IMPORTS
 import logging
@@ -10,7 +37,7 @@ from gurobipy import GRB
 
 
 # CODE START
-def add_schedule(simulation, component):
+def add_schedule(simulation, component, interval_length):
     """
     This function adds all necessary MVARS and constraints to the optimization problem that are
     required to integrate the schedule handed over as 'Component'
@@ -22,7 +49,7 @@ def add_schedule(simulation, component):
     rows = len(component.demands)
 
     # create availability matrix for the demands
-    availability = np.ones((simulation.T, rows))
+    availability = np.ones((interval_length, rows))
     for row in range(rows):
         for column in range(
             int(component.demands[row, 0]), int(component.demands[row, 1]) + 1
@@ -32,7 +59,7 @@ def add_schedule(simulation, component):
 
     # create decision variables for the demands
     simulation.MVars[f"E_{component.key}_in"] = simulation.m.addMVar(
-        (simulation.T, rows), vtype=GRB.CONTINUOUS, name=f"{component.name}_Pin"
+        (interval_length, rows), vtype=GRB.CONTINUOUS, name=f"{component.name}_Pin"
     )
     logging.debug(
         f"        - Variable(s):  Energy_in for {rows} part demands of {component.name}"
@@ -42,7 +69,7 @@ def add_schedule(simulation, component):
     simulation.m.addConstrs(
         simulation.MVars[component.outputs[0].key][t]
         == simulation.MVars[component.inputs[0].key][t]
-        for t in range(simulation.T)
+        for t in range(interval_length)
     )
     logging.debug(f"        - Constraint:   Energy_in == Energy_out for {component.name}")
 
@@ -50,7 +77,7 @@ def add_schedule(simulation, component):
     simulation.m.addConstrs(
         gp.quicksum(simulation.MVars[f"E_{component.key}_in"][t][:])
         == simulation.MVars[component.inputs[0].key][t]
-        for t in range(simulation.T)
+        for t in range(interval_length)
     )
     logging.debug(
         f"        - Constraint:   Energy demands must be fed by inputs within {component.name}"
@@ -58,7 +85,7 @@ def add_schedule(simulation, component):
 
     # define constraint: each part demand must have its individual demand fulfilled
     simulation.m.addConstrs(
-        gp.quicksum(simulation.MVars[f"E_{component.key}_in"][0 : simulation.T, i])
+        gp.quicksum(simulation.MVars[f"E_{component.key}_in"][0 : interval_length, i])
         == component.demands[i, 2]
         for i in range(rows)
     )
@@ -68,8 +95,8 @@ def add_schedule(simulation, component):
 
     # define constraint: part demands are only allowed to be fed while available
     simulation.m.addConstrs(
-        simulation.MVars[f"E_{component.key}_in"][0 : simulation.T, i]
-        @ availability[0 : simulation.T, i]
+        simulation.MVars[f"E_{component.key}_in"][0 : interval_length, i]
+        @ availability[0 : interval_length, i]
         == 0
         for i in range(rows)
     )
@@ -81,7 +108,7 @@ def add_schedule(simulation, component):
     simulation.m.addConstrs(
         simulation.MVars[f"E_{component.key}_in"][t, i] / simulation.interval_length
         <= component.demands[i, 3]
-        for t in range(simulation.T)
+        for t in range(interval_length)
         for i in range(rows)
     )
     logging.debug(
@@ -94,7 +121,7 @@ def add_schedule(simulation, component):
             gp.quicksum(simulation.MVars[f"E_{component.key}_in"][t][:])
             / simulation.interval_length
             <= component.power_max[t]
-            for t in range(simulation.T)
+            for t in range(interval_length)
         )
         logging.debug(
             f"        - Constraint:   power_total(t) <= power_max for {component.name}"
