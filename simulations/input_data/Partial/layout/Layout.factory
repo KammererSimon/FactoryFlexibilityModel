@@ -106,8 +106,8 @@ components:
     type: pool
   component_19:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\components\Gauge.png
-      position_x: 11.0
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 12.0
       position_y: 10.0
     description: ''
     flowtype: flowtype_2
@@ -256,6 +256,17 @@ components:
     key: component_31
     name: Pool Natural Gas
     type: pool
+  component_32:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
+      position_x: 8.0
+      position_y: 10.0
+      primary_flow: null
+    description: ''
+    flowtype: unknown
+    key: component_32
+    name: Hydrogen Compressor
+    type: converter
   component_33:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
@@ -383,16 +394,16 @@ connections:
     type: connection
   connection_10:
     flowtype: flowtype_2
-    from: component_18
+    from: component_19
     key: connection_10
-    to: component_19
+    to: component_18
     to_losses: false
     type: connection
   connection_11:
     flowtype: flowtype_2
-    from: component_19
+    from: component_32
     key: connection_11
-    to: component_18
+    to: component_19
     to_losses: false
     type: connection
   connection_12:
@@ -675,11 +686,25 @@ connections:
     to: component_14
     to_losses: false
     type: connection
+  connection_49:
+    flowtype: flowtype_2
+    from: component_18
+    key: connection_49
+    to: component_32
+    to_losses: false
+    type: connection
   connection_5:
     flowtype: flowtype_0
     from: component_12
     key: connection_5
     to: component_16
+    to_losses: false
+    type: connection
+  connection_50:
+    flowtype: flowtype_0
+    from: component_12
+    key: connection_50
+    to: component_32
     to_losses: false
     type: connection
   connection_6:

@@ -105,8 +105,8 @@ components:
     type: pool
   component_19:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\components\Gauge.png
-      position_x: 7.0
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 11.0
       position_y: 10.0
     description: ''
     flowtype: flowtype_2
@@ -183,6 +183,17 @@ components:
     key: component_25
     name: HBI Storage Deadtime
     type: deadtime
+  component_26:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
+      position_x: 7.0
+      position_y: 10.0
+      primary_flow: null
+    description: ''
+    flowtype: unknown
+    key: component_26
+    name: Hydrogen Compressor
+    type: converter
   component_27:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\converter.png
@@ -341,16 +352,16 @@ connections:
     type: connection
   connection_10:
     flowtype: flowtype_2
-    from: component_18
+    from: component_19
     key: connection_10
-    to: component_19
+    to: component_18
     to_losses: false
     type: connection
   connection_11:
     flowtype: flowtype_2
-    from: component_19
+    from: component_26
     key: connection_11
-    to: component_18
+    to: component_19
     to_losses: false
     type: connection
   connection_12:
@@ -456,6 +467,20 @@ connections:
     from: component_23
     key: connection_25
     to: component_27
+    to_losses: false
+    type: connection
+  connection_26:
+    flowtype: flowtype_2
+    from: component_18
+    key: connection_26
+    to: component_26
+    to_losses: false
+    type: connection
+  connection_27:
+    flowtype: flowtype_0
+    from: component_12
+    key: connection_27
+    to: component_26
     to_losses: false
     type: connection
   connection_28:

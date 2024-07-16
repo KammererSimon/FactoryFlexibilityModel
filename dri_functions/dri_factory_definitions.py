@@ -59,6 +59,9 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         plant.connections[plant.get_key("Source Lime -> EAF")].weight = model_parameters["lime_t_per_tls"]
         plant.connections[plant.get_key("Source Scrap -> EAF")].weight = model_parameters["dri_t_per_tls"] * model_parameters["scrap_share_per_tls"]
 
+        # H2 compressor
+        plant.connections[plant.get_key("Pool Electricity -> Hydrogen Compressor")].weight = model_parameters["h2_compressor_electricity_mwh_per_th2"]
+
         #HBI Storage
         plant.connections[plant.get_key("Pool Electricity -> DRI Compactor")].weight = model_parameters["hbi_compact_electricity_mwh_per_tDRI"] + model_parameters["hbi_reheat_electricity_mwh_per_tDRI"]
 
@@ -84,9 +87,12 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         scenario.configurations[plant.get_key("HBI Storage Deadtime")] = {"delay": model_parameters["hbi_min_storage_time"]}
         scenario.configurations[plant.get_key("HBI Storage")] = {"capacity": model_parameters["hbi_storage_size"],
                                                                  "soc_start": model_parameters["hbi_storage_soc_start"]}
+
+
         scenario.configurations[plant.get_key("Hydrogen Storage")] = {"capacity": model_parameters["h2_storage_size"],
                                                                       "soc_start": model_parameters["h2_storage_soc_start"],
                                                                       "efficiency": model_parameters["h2_storage_efficiency"]}
+
 
         hourly_production_t = model_parameters["annual_dri_production_mtons"] * 1000000 / 8760
         scenario.configurations[plant.get_key("Crude Steel Out")] = {"demand": hourly_production_t}
@@ -171,6 +177,9 @@ def create_steel_plant(model_parameters, plant_type, config = None):
 
         #HBI Storage
         plant.connections[plant.get_key("Pool Electricity -> DRI Compactor")].weight = model_parameters["hbi_compact_electricity_mwh_per_tDRI"] + model_parameters["hbi_reheat_electricity_mwh_per_tDRI"]
+
+        # H2 compressor
+        plant.connections[plant.get_key("Pool Electricity -> Hydrogen Compressor")].weight = model_parameters["h2_compressor_electricity_mwh_per_th2"]
 
 
         # SET MARKET SCENARIO

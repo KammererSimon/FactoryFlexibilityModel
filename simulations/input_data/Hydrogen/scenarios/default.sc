@@ -17,6 +17,7 @@ component_23:
     type: boolean
     value: true
 component_25: {}
+component_26: {}
 component_27: {}
 component_28: {}
 component_3:
