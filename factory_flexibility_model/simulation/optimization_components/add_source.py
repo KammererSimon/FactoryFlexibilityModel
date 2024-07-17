@@ -108,7 +108,7 @@ def add_source(simulation, component, t_start, t_end):
                 for o in range(len(component.outputs))
             )
             / simulation.interval_length
-            >= component.power_min[t_start:t_end]
+            >= component.power_min[t_start:t_end+1]
         )
 
         logging.debug(
@@ -117,7 +117,7 @@ def add_source(simulation, component, t_start, t_end):
 
     # does the utilization of the source cost something? If yes: Add the corresponding cost factors
     if component.chargeable:
-        if min(component.cost[t_start:t_end]) < 0:
+        if min(component.cost[t_start:t_end+1]) < 0:
             # if negative prices are possible the lower bound of the decision variable has to allow negative values
             simulation.C_objective.append(
                 simulation.m.addMVar(

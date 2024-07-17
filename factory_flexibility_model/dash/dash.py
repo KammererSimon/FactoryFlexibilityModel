@@ -73,7 +73,7 @@ from factory_flexibility_model.dash.dash_functions.create_layout_html import (
 
 
 # CODE START
-def create_dash(simulation, authentication: None):
+def create_dash(simulation):
     """
     .. _create_dash():
     This function takes a solved simulation object and creates an interactive browserbased dashboard.
@@ -93,9 +93,6 @@ def create_dash(simulation, authentication: None):
     # TODO: Separate the next section into a config file!
     # INITIALIZE APP AND SET LAYOUT
     app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
-
-    if authentication is not None:
-        BasicAuth(app, authentication)
 
     load_figure_template("FLATLY")
     colors = {

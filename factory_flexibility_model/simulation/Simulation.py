@@ -644,7 +644,7 @@ class Simulation:
         """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted Simulation
         :param: authentication: [dict]: a dict of combinations of usernames and passwords that are valid to access the dashboard"""
         logging.info("CREATING DASHBOARD")
-        fd.create_dash(self, authentication)
+        fd.create_dash(self)
 
     def __read_scenario_data(self):
         """This function checks the factory for scenario paramater arguments and configures concerning

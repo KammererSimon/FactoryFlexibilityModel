@@ -75,7 +75,7 @@ def add_converter(simulation, component, t_start, t_end):
     if component.power_min_limited:
         simulation.m.addConstr(
             simulation.MVars[f"P_{component.key}"]
-            >= component.power_min[t_start:t_end] * component.availability[t_start:t_end]
+            >= component.power_min[t_start:t_end+1] * component.availability[t_start:t_end+1]
         )
         logging.debug(f"        - Constraint:   {component.key} >= {component.key}_min")
 
