@@ -52,6 +52,7 @@ Usage:
 # IMPORT
 import copy
 import warnings
+
 import dash_bootstrap_components as dbc
 import numpy as np
 import plotly.express as px
@@ -60,7 +61,7 @@ from dash import Dash, Input, Output, dcc
 from dash_bootstrap_templates import load_figure_template
 from plotly.express.colors import sample_colorscale
 from plotly.subplots import make_subplots
-from dash_auth import BasicAuth
+
 from factory_flexibility_model.dash.dash_functions.create_cost_overview import (
     create_cost_overview,
 )
@@ -814,7 +815,7 @@ def create_dash(simulation):
             input_info,
             total_cost,
             detailed_costs,
-            detailed_emissions
+            detailed_emissions,
         )  # returned objects are assigned to the Component property of the Output
 
     # TAB: CONVERTERS
@@ -1177,7 +1178,7 @@ def create_dash(simulation):
         fig.update_xaxes(linewidth=2, linecolor=style["axis_color"])
         fig.update_yaxes(linewidth=2, linecolor=style["axis_color"], range=[0, Pmax])
 
-        fig2 = go.Figure()
+        fig2 = make_subplots(specs=[[{"secondary_y": True}]])
         fig2.add_trace(
             go.Scatter(
                 x=x,
@@ -1185,12 +1186,34 @@ def create_dash(simulation):
                 line_color=f"rgb{colors['main']}",
                 name="Cost",
                 line_shape=interpolation[linestyle],
-            )
+            ),
+            secondary_y=False,
         )
-        fig2.update_layout(
-            figure_config,
-            xaxis_title="Timesteps",
-            yaxis_title=f"€ / {component.flowtype.unit.get_unit_flow()}",
+
+        fig2.add_trace(
+            go.Scatter(
+                x=x,
+                y=np.ones(t1 - t0) * component.co2_emissions_per_unit,
+                line_color="rgb(192,0,0)",
+                name="Emissions",
+                line_shape=interpolation[linestyle],
+            ),
+            secondary_y=True,
+        )
+        fig2.update_layout(figure_config, xaxis_title="Timesteps")
+
+        fig2.update_yaxes(
+            title_text=f"€ / {component.flowtype.unit.get_unit_flow()}",
+            secondary_y=False,
+            linewidth=2,
+            linecolor=style["axis_color"],
+        )
+
+        fig2.update_yaxes(
+            title_text=f"Emissions [tCO²/{component.flowtype.unit.get_unit_flow()}]",
+            secondary_y=True,
+            linewidth=2,
+            linecolor=style["axis_color"],
         )
 
         source_sum = "## " + component.flowtype.unit.get_value_expression(
@@ -1406,8 +1429,8 @@ def create_dash(simulation):
                 f"\n **Leakage per timestep:** \n"
                 f"\n * {component.leakage_time} % of total Capacity\n"
                 f"\n * {component.leakage_SOC} % of SOC\n"
-                f"\n **Max charging Power:** {component.flowtype.unit.get_value_expression(component.power_max_charge,'flow')}\n"
-                f"\n **Max discharging Power:** {component.flowtype.unit.get_value_expression(component.power_max_discharge,'flow')}\n"
+                f"\n **Max charging Power:** {component.flowtype.unit.get_value_expression(component.power_max_charge,'flowrate')}\n"
+                f"\n **Max discharging Power:** {component.flowtype.unit.get_value_expression(component.power_max_discharge,'flowrate')}\n"
                 f"\n **Input:** \n"
                 f"\n {inputs} \n"
                 f"\n **Output:** \n"
@@ -1810,19 +1833,19 @@ def create_dash(simulation):
 
         # CREATE UTILIZATION FIGURE
         input_electricity = (
-                simulation.result[component.key]["input_electricity"][t0:t1]
-                / simulation.scenario.timefactor
-                * simulation.factory.timefactor
+            simulation.result[component.key]["input_electricity"][t0:t1]
+            / simulation.scenario.timefactor
+            * simulation.factory.timefactor
         )
         input_heat = (
-                simulation.result[component.key]["input_heat"][t0:t1]
-                / simulation.scenario.timefactor
-                * simulation.factory.timefactor
+            simulation.result[component.key]["input_heat"][t0:t1]
+            / simulation.scenario.timefactor
+            * simulation.factory.timefactor
         )
         output_heat = (
-                simulation.result[component.key]["output_heat"][t0:t1]
-                / simulation.scenario.timefactor
-                * simulation.factory.timefactor
+            simulation.result[component.key]["output_heat"][t0:t1]
+            / simulation.scenario.timefactor
+            * simulation.factory.timefactor
         )
 
         fig = go.Figure()
@@ -1843,7 +1866,6 @@ def create_dash(simulation):
         # add trace for heat source input
         fig.add_trace(
             go.Scatter(
-
                 x=x,
                 y=input_heat,
                 hoverinfo="x",
@@ -1900,7 +1922,7 @@ def create_dash(simulation):
             secondary_y=True,
             linewidth=2,
             linecolor=style["axis_color"],
-            range=[1, 7]
+            range=[1, 7],
         )
 
         # CREATE COP PROFILE PLOT
@@ -1920,25 +1942,40 @@ def create_dash(simulation):
             showlegend=False,
         )
 
-
-
         # COLLECT PARAMETER INFORMATIONS
-        heatpump_sum_in = "## " + component.input_main.flowtype.unit.get_value_expression(
-            value=round(sum(simulation.result[component.key]["utilization"][t0:t1])),
-            quantity_type="flow",
+        heatpump_sum_in = (
+            "## "
+            + component.input_main.flowtype.unit.get_value_expression(
+                value=round(
+                    sum(simulation.result[component.key]["utilization"][t0:t1])
+                ),
+                quantity_type="flow",
+            )
         )
 
-        heatpump_sum_out = "## " + component.input_main.flowtype.unit.get_value_expression(
-            value=round(sum(simulation.result[component.key]["output_heat"][t0:t1])),
-            quantity_type="flow",
+        heatpump_sum_out = (
+            "## "
+            + component.input_main.flowtype.unit.get_value_expression(
+                value=round(
+                    sum(simulation.result[component.key]["output_heat"][t0:t1])
+                ),
+                quantity_type="flow",
+            )
         )
 
         heatpump_avg_cop = f"## {round(sum(simulation.result[component.key]['utilization'][t0:t1] * component.cop[t0:t1])/sum(simulation.result[component.key]['utilization'][t0:t1]),2)}"
 
         heatpump_cop_range = f"## {round(min(component.cop[t0:t1]),2)} - {round(max(component.cop[t0:t1]),2)}"
 
-
-        return fig, fig2, fig3, heatpump_sum_in, heatpump_sum_out, heatpump_avg_cop, heatpump_cop_range
+        return (
+            fig,
+            fig2,
+            fig3,
+            heatpump_sum_in,
+            heatpump_sum_out,
+            heatpump_avg_cop,
+            heatpump_cop_range,
+        )
 
     # Run app
     app.run_server(port=8053)

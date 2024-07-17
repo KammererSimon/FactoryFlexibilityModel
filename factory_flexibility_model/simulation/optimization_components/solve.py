@@ -31,8 +31,10 @@
 # IMPORTS
 import logging
 import time
+
 import gurobipy as gp
 from gurobipy import GRB
+
 import factory_flexibility_model.io.input_validations as iv
 
 
@@ -66,6 +68,13 @@ def solve(simulation, solver_config):
         simulation.m.setParam(
             gp.GRB.Param.BarConvTol,
             iv.validate(solver_config["barrier_tolerance"], "0..1"),
+        )
+
+    # set MIP gap if specified
+    if "mip_gap" in solver_config:
+        simulation.m.setParam(
+            "MIPGap",
+            iv.validate(solver_config["mip_gap"], "0..1"),
         )
 
     # CALL SOLVER

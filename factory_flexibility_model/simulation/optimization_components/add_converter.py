@@ -44,7 +44,7 @@ def add_converter(simulation, component, t_start, t_end):
     :param component: components.converter-object
     :return: simulation.m is being extended
     """
-    interval_length = t_end-t_start+1
+    interval_length = t_end - t_start + 1
 
     # create a timeseries of decision variables to represent the utilization U(t)
     simulation.MVars[f"P_{component.key}"] = simulation.m.addMVar(
@@ -66,7 +66,8 @@ def add_converter(simulation, component, t_start, t_end):
     if component.power_max_limited:
         simulation.m.addConstr(
             simulation.MVars[f"P_{component.key}"]
-            <= component.power_max[t_start:t_end+1] * component.availability[t_start:t_end+1]
+            <= component.power_max[t_start : t_end + 1]
+            * component.availability[t_start : t_end + 1]
         )
         logging.debug(
             f"        - Constraint:   {component.key} <= {component.name}_max"
@@ -75,7 +76,8 @@ def add_converter(simulation, component, t_start, t_end):
     if component.power_min_limited:
         simulation.m.addConstr(
             simulation.MVars[f"P_{component.key}"]
-            >= component.power_min[t_start:t_end+1] * component.availability[t_start:t_end+1]
+            >= component.power_min[t_start : t_end + 1]
+            * component.availability[t_start : t_end + 1]
         )
         logging.debug(f"        - Constraint:   {component.key} >= {component.key}_min")
 
@@ -139,12 +141,12 @@ def add_converter(simulation, component, t_start, t_end):
     # set ramping constraints if needed:
     if component.ramp_power_limited:
         simulation.m.addConstr(
-            simulation.MVars[f"P_{component.key}"][1 : interval_length]
+            simulation.MVars[f"P_{component.key}"][1:interval_length]
             <= simulation.MVars[f"P_{component.key}"][0 : interval_length - 1]
             + component.power_ramp_max_pos
         )  # restrict ramping up
         simulation.m.addConstr(
-            simulation.MVars[f"P_{component.key}"][1 : interval_length]
+            simulation.MVars[f"P_{component.key}"][1:interval_length]
             >= simulation.MVars[f"P_{component.key}"][0 : interval_length - 1]
             - component.power_ramp_max_neg
         )  # restrict ramping down
