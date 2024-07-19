@@ -44,7 +44,7 @@ components:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\triggerdemand.png
       position_x: 33.0
-      position_y: 23.0
+      position_y: 24.0
     description: ''
     flowtype: flowtype_8
     key: component_13

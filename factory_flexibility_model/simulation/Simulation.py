@@ -320,7 +320,7 @@ class Simulation:
 
                 else:
                     # otherwise set zeros:
-                    emissions = 0
+                    emissions = np.zeros(interval_length)
                     emission_cost = 0
 
                 # calculate total costs
@@ -392,7 +392,7 @@ class Simulation:
                     total_emission_cost += emission_cost
 
                 else:
-                    emissions = 0
+                    emissions = np.zeros(interval_length)
                     emission_cost = 0
 
                 if component.chargeable and not component.key == "ambient_gains":
@@ -481,12 +481,12 @@ class Simulation:
                         "ENeg": sum_energy_neg,
                         "utilization": utilization,
                     }
-                    self.result["costs"]["slacks"][component.key] = (sum(utilization) * 1000000000)
+                    self.result["costs"]["slacks"][component.key] = (utilization * 1000000000)
                 else:
                     self.result[component.key]["EPos"] += sum_energy_pos
                     self.result[component.key]["ENeg"] += sum_energy_neg
                     self.result[component.key]["utilization"]+= utilization
-                    self.result["costs"]["slacks"][component.key] += (sum(utilization) * 1000000000)
+                    self.result["costs"]["slacks"][component.key] += (utilization * 1000000000)
 
 
             # handle storages

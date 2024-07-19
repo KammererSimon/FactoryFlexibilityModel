@@ -94,7 +94,7 @@ def create_steel_plant(model_parameters, plant_type, config = None):
                                                                       "efficiency": model_parameters["h2_storage_efficiency"]}
 
 
-        hourly_production_t = model_parameters["annual_dri_production_mtons"] * 1000000 / 8760
+        hourly_production_t = model_parameters["annual_dri_production_mtons"] * 1000000 / 8760 / model_parameters["dri_t_per_tls"]
         scenario.configurations[plant.get_key("Crude Steel Out")] = {"demand": hourly_production_t}
 
     elif plant_type == "CCS":
@@ -145,7 +145,7 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         scenario.configurations[plant.get_key("HBI Storage")] = {"capacity": model_parameters["hbi_storage_size"],
                                                                  "soc_start": model_parameters["hbi_storage_soc_start"]}
 
-        hourly_production_t = model_parameters["annual_dri_production_mtons"] * 1000000 / 8760
+        hourly_production_t = model_parameters["annual_dri_production_mtons"] * 1000000 / 8760 / model_parameters["dri_t_per_tls"]
         scenario.configurations[plant.get_key("Crude Steel Out")] = {"demand": hourly_production_t}
 
     elif plant_type == "Hydrogen":
@@ -208,7 +208,7 @@ def create_steel_plant(model_parameters, plant_type, config = None):
                                                                       "soc_start": model_parameters["h2_storage_soc_start"],
                                                                       "efficiency": model_parameters["h2_storage_efficiency"]}
 
-        hourly_production_t = model_parameters["annual_dri_production_mtons"] * 1000000 / 8760
+        hourly_production_t = model_parameters["annual_dri_production_mtons"] * 1000000 / 8760 / model_parameters["dri_t_per_tls"]
         scenario.configurations[plant.get_key("Crude Steel Out")] = {"demand": hourly_production_t}
 
     return plant, scenario

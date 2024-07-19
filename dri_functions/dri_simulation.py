@@ -189,7 +189,7 @@ def import_input_data():
     # 2) import model parameters
     config_path = f"{os.getcwd()}\\simulations\\input_data\\DRI Parameters.xlsx"
     wb = openpyxl.load_workbook(config_path, data_only=True)
-    ws = wb["1 Model Parameters"]
+    ws = wb["1. Model Parameters"]
     model_parameters = {}
 
     for row in ws.iter_rows(min_row=3, values_only=True):
@@ -199,10 +199,10 @@ def import_input_data():
             model_parameters[key] = value
 
     # 3) import timeseries
-    timeseries_data = pd.read_excel(config_path, sheet_name="2 Market Timeseries")
+    timeseries_data = pd.read_excel(config_path, sheet_name="3. Market Timeseries")
 
     # 4) import scenario_variations
-    ws = wb["3 Scenario Variations"]
+    ws = wb["4. Scenario Variations"]
     scenario_variations = {}
     for column in ws.iter_cols(values_only=True):
         key = column[0]
