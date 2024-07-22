@@ -188,7 +188,7 @@ components:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sources\Gas Grid.png
       position_x: 6.0
-      position_y: 7.0
+      position_y: 10.0
     description: ''
     flowtype: flowtype_5
     key: component_3
@@ -256,14 +256,14 @@ components:
     type: source
   component_7:
     GUI:
-      icon: factory_flexibility_model\\ui\\assets\\sources\Transport.png
-      position_x: 20.0
-      position_y: 26.0
+      icon: factory_flexibility_model\\ui\\assets\\defaults\pool.png
+      position_x: 12.0
+      position_y: 10.0
     description: ''
-    flowtype: flowtype_9
+    flowtype: flowtype_5
     key: component_7
-    name: Source Carbon
-    type: source
+    name: Pool Natural Gas
+    type: pool
   component_8:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sources\Transport.png
@@ -357,7 +357,7 @@ connections:
     type: connection
   connection_18:
     flowtype: flowtype_5
-    from: component_3
+    from: component_7
     key: connection_18
     to: component_15
     to_losses: false
@@ -467,6 +467,13 @@ connections:
     to: component_22
     to_losses: false
     type: connection
+  connection_32:
+    flowtype: flowtype_5
+    from: component_7
+    key: connection_32
+    to: component_16
+    to_losses: false
+    type: connection
   connection_36:
     flowtype: flowtype_10
     from: component_9
@@ -482,10 +489,10 @@ connections:
     to_losses: false
     type: connection
   connection_4:
-    flowtype: flowtype_9
-    from: component_7
+    flowtype: flowtype_5
+    from: component_3
     key: connection_4
-    to: component_16
+    to: component_7
     to_losses: false
     type: connection
   connection_5:

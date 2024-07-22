@@ -1439,6 +1439,49 @@ log:
     has been imported
   time: '2024-07-19 16:59:31'
   type: INFO
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/Simon/PycharmProjects/WattsInsight/simulations/input_data/CCS'
+    has been imported
+  time: '2024-07-22 15:49:28'
+  type: INFO
+- event_info: ''
+  icon: information-outline
+  message: Component Source Carbon has been deleted!
+  time: '2024-07-22 15:49:47'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New pool created with key 'component_7'
+  time: '2024-07-22 15:49:50'
+  type: DEBUG
+- event_info: ''
+  icon: information-outline
+  message: Component Source Natural Gas has been deleted!
+  time: '2024-07-22 15:49:54'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New source created with key 'component_3'
+  time: '2024-07-22 15:49:56'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Source Natural Gas to Unspecified pool 1 with
+    key 'connection_4'
+  time: '2024-07-22 15:50:07'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Pool Natural Gas to Natural Gas DRI with key
+    'connection_18'
+  time: '2024-07-22 15:50:28'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Pool Natural Gas to EAF with key 'connection_32'
+  time: '2024-07-22 15:50:32'
+  type: DEBUG
 session_path: C:/Users/Simon/PycharmProjects/WattsInsight/simulations/input_data/CCS
 show_component_config_dialog_on_creation: false
 timeseries: {}
