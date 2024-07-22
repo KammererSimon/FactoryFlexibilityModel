@@ -109,7 +109,7 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         plant.connections[plant.get_key("Natural Gas DRI -> Pool CO2")].weight = model_parameters["co2_out_t_per_tdri"]
 
         # EAF
-        plant.connections[plant.get_key("EAF -> Pool CO2")].weight = model_parameters["co2_out_t_per_tls"] * (1 - model_parameters["scrap_share_per_tls"])
+        plant.connections[plant.get_key("EAF -> Pool CO2 Emissions")].weight = model_parameters["co2_out_t_per_tls"] * (1 - model_parameters["scrap_share_per_tls"])
         plant.connections[plant.get_key("Pool DRI -> EAF")].weight = model_parameters["dri_t_per_tls"] * (1 - model_parameters["scrap_share_per_tls"])
         plant.connections[plant.get_key("Pool Oxygen -> EAF")].weight = model_parameters["oxygen_t_per_tls"]
         plant.connections[plant.get_key("Pool Electricity -> EAF")].weight = model_parameters["electricity_mwh_per_tls"]
