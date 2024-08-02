@@ -71,13 +71,6 @@ def create_layout_html(
     layout = html.Div(
         style={"backgroundColor": style["background"], "overflow": "hidden"},
         children=[
-            dbc.Row(
-                [
-                    dbc.Col(
-                        dcc.Markdown(children="# FACTORY SIMULATION"), style=style["H1"]
-                    )
-                ],
-            ),
             dcc.Tabs(
                 [
                     dcc.Tab(
@@ -481,7 +474,7 @@ def create_layout_html(
                                             dbc.Row(
                                                 [
                                                     dcc.Markdown(
-                                                        children="#### COST",
+                                                        children="#### COST / EMISSIONS",
                                                         style=style["card_title"],
                                                     ),
                                                     dbc.Row([figures["source_cost"]]),
