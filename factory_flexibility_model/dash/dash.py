@@ -1227,6 +1227,12 @@ def create_dash(simulation):
             value=round(sum(simulation.result[component.key]["utilization"][t0:t1])),
             quantity_type="flow",
         )
+
+        # add utilization degree in percent if the source has a limited output
+        if component.power_max_limited:
+            utilization = round(sum(simulation.result[component.key]["utilization"][t0:t1]) / sum(component.power_max[t0:t1] * component.availability[t0:t1])*100, 2)
+            source_sum = source_sum + f" \n {utilization}%"
+
         source_cost = f"## {round(sum(simulation.result[component.key]['utilization'][t0:t1] * component.cost[t0:t1]))} €"
         source_minmax = (
             f"## {component.flowtype.unit.get_value_expression(value=round(min(simulation.result[component.key]['utilization'][t0:t1])), quantity_type='flowrate')} "
@@ -1301,10 +1307,17 @@ def create_dash(simulation):
             linewidth=2, linecolor=style["axis_color"], range=[0, max(data) * 1.05]
         )
 
-        sink_sum = "## " + component.flowtype.unit.get_value_expression(
+        sink_sum = "### " + component.flowtype.unit.get_value_expression(
             value=round(sum(simulation.result[component.key]["utilization"][t0:t1])),
             quantity_type="flow",
         )
+
+        # add utilization degree in percent if the sink has a limited input
+        if component.power_max_limited:
+            utilization = round(sum(simulation.result[component.key]["utilization"][t0:t1]) / sum(
+                component.power_max[t0:t1] * component.availability[t0:t1]) * 100, 2)
+            sink_sum = sink_sum + f" \n {utilization}%"
+
         sink_minmax = f"## {component.flowtype.unit.get_value_expression(round(min(simulation.result[component.key]['utilization'][t0:t1])), 'flowrate')} - {component.flowtype.unit.get_value_expression(round(max(simulation.result[component.key]['utilization'][t0:t1])), 'flowrate')}"
 
         cost = 0
