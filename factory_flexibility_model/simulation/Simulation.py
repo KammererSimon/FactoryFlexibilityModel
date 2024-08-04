@@ -153,7 +153,7 @@ class Simulation:
             rounding_decimals = 10
 
         # initialize counter- and summing variables:
-        total_emissions = 0
+        total_emissions = np.zeros(self.T)
         total_emission_cost = 0
 
         # collect timeseries of all flows in the factory: iterate over all connections
@@ -320,7 +320,7 @@ class Simulation:
 
                 else:
                     # otherwise set zeros:
-                    emissions = 0
+                    emissions = np.zeros(self.T)
                     emission_cost = 0
 
                 # calculate total costs
@@ -392,7 +392,7 @@ class Simulation:
                     total_emission_cost += emission_cost
 
                 else:
-                    emissions = 0
+                    emissions = np.zeros(self.T)
                     emission_cost = 0
 
                 if component.chargeable and not component.key == "ambient_gains":

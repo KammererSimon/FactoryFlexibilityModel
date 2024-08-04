@@ -62,7 +62,7 @@ def add_triggerdemand(simulation, component, t_start, t_end):
         if component.input_material:
             profiles_material[
                 i, i : i + component.profile_length
-            ] = component.load_profile_material
+            ] = component.load_profile_mass
         parallelcheck[i, i : i + component.profile_length] = np.ones(
             component.profile_length
         )

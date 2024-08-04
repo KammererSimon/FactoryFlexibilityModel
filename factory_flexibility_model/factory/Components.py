@@ -1521,7 +1521,7 @@ class Triggerdemand(Component):
         self.load_profile_energy = (
             []
         )  # profiles of the energy load that has to be fulfilled on execution
-        self.load_profile_material = (
+        self.load_profile_mass = (
             []
         )  # profiles of the energy load that has to be fulfilled on execution
         self.max_parallel = 0  # maximum number of parallel executions. Initialized as 0 = no restrictions
@@ -1552,23 +1552,23 @@ class Triggerdemand(Component):
             if parameter == "load_profile_energy":
                 self.load_profile_energy = parameters["load_profile_energy"]
                 # set profile length for the Component + check compatibility with material profile
-                if self.load_profile_material == []:
+                if self.load_profile_mass == []:
                     self.profile_length = len(self.load_profile_energy)
                 elif not len(self.load_profile_energy) == self.profile_length:
                     logging.critical(
-                        f"ERROR: Length of energy and material load profiles for triggerdemand {self.name} do not match! (Energy profile: {len(self.load_profile_energy)}; Material profile: {len(self.load_profile_material)} "
+                        f"ERROR: Length of energy and material load profiles for triggerdemand {self.name} do not match! (Energy profile: {len(self.load_profile_energy)}; Material profile: {len(self.load_profile_mass)} "
                     )
                     raise Exception
 
-            elif parameter == "load_profile_material":
-                self.load_profile_material = parameters["load_profile_material"]
+            elif parameter == "load_profile_mass":
+                self.load_profile_mass = parameters["load_profile_mass"]
                 # set profile length for the Component + check compatibility with energyprofile
                 if self.load_profile_energy == []:
 
-                    self.profile_length = len(self.load_profile_material)
+                    self.profile_length = len(self.load_profile_mass)
                 elif not len(self.load_profile_energy) == self.profile_length:
                     logging.critical(
-                        f"ERROR: Length of energy and material load profiles for triggerdemand {self.name} do not match! (Energy profile: {len(self.load_profile_energy)}; Material profile: {len(self.load_profile_material)}) "
+                        f"ERROR: Length of energy and material load profiles for triggerdemand {self.name} do not match! (Energy profile: {len(self.load_profile_energy)}; Material profile: {len(self.load_profile_mass)}) "
                     )
                     raise Exception
 

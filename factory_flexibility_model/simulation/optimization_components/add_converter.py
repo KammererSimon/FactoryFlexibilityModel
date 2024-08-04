@@ -62,24 +62,7 @@ def add_converter(simulation, component, t_start, t_end):
         interval_length, vtype=GRB.CONTINUOUS, name=f"P_{component.name}_devneg"
     )
 
-    # is the operating power of the converter limited? If yes: add power_max and power_min constraints
-    if component.power_max_limited:
-        simulation.m.addConstr(
-            simulation.MVars[f"P_{component.key}"]
-            <= component.power_max[t_start : t_end + 1]
-            * component.availability[t_start : t_end + 1]
-        )
-        logging.debug(
-            f"        - Constraint:   {component.key} <= {component.name}_max"
-        )
 
-    if component.power_min_limited:
-        simulation.m.addConstr(
-            simulation.MVars[f"P_{component.key}"]
-            >= component.power_min[t_start : t_end + 1]
-            * component.availability[t_start : t_end + 1]
-        )
-        logging.debug(f"        - Constraint:   {component.key} >= {component.key}_min")
 
     # Calculate the efficiency of operation for each timestep based on the deviations
     simulation.MVars[f"Eta_{component.key}"] = simulation.m.addMVar(
@@ -107,7 +90,7 @@ def add_converter(simulation, component, t_start, t_end):
             simulation.MVars[f"Eta_{component.key}"][t] == 1
             for t in range(interval_length)
         )
-        logging.debug(f"        - Constraint:   {component.name} fixed to 100%")
+        logging.debug(f"        - Constraint:   Efficiency of {component.name} fixed to 100%")
 
     # calculate the absolute operating point out of the nominal operating point, the deviations and the switching state
     # Can the Converter be turned on/off regardless of the power constraints?
@@ -129,6 +112,27 @@ def add_converter(simulation, component, t_start, t_end):
             * simulation.MVars[f"Bool_{component.key}_state"][t]
             for t in range(interval_length)
         )
+
+        # is the operating power of the converter limited? If yes: add power_max and power_min constraints
+        if component.power_max_limited:
+            simulation.m.addConstr(
+                simulation.MVars[f"P_{component.key}"]
+                <= component.power_max[t_start: t_end + 1]
+                * component.availability[t_start: t_end + 1]
+                * simulation.MVars[f"Bool_{component.key}_state"]
+            )
+            logging.debug(
+                f"        - Constraint:   P_{component.name} <= {component.name}_max"
+            )
+
+        if component.power_min_limited:
+            simulation.m.addConstr(
+                simulation.MVars[f"P_{component.key}"]
+                >= component.power_min[t_start: t_end + 1]
+                * component.availability[t_start: t_end + 1]
+                * simulation.MVars[f"Bool_{component.key}_state"]
+            )
+            logging.debug(f"        - Constraint:   P_{component.name} >= {component.name}_min")
     else:
         # calculate the operating point without a switching state
         simulation.m.addConstr(
@@ -137,6 +141,25 @@ def add_converter(simulation, component, t_start, t_end):
             - simulation.MVars[f"P_{component.key}_devneg"]
             + simulation.MVars[f"P_{component.key}_devpos"]
         )
+
+        # is the operating power of the converter limited? If yes: add power_max and power_min constraints
+        if component.power_max_limited:
+            simulation.m.addConstr(
+                simulation.MVars[f"P_{component.key}"]
+                <= component.power_max[t_start: t_end + 1]
+                * component.availability[t_start: t_end + 1]
+            )
+            logging.debug(
+                f"        - Constraint:   P_{component.name} <= {component.name}_max"
+            )
+
+        if component.power_min_limited:
+            simulation.m.addConstr(
+                simulation.MVars[f"P_{component.key}"]
+                >= component.power_min[t_start: t_end + 1]
+                * component.availability[t_start: t_end + 1]
+            )
+            logging.debug(f"        - Constraint:   P_{component.name} >= {component.name}_min")
 
     # set ramping constraints if needed:
     if component.ramp_power_limited:
