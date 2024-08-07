@@ -36,13 +36,15 @@ from gurobipy import GRB
 
 
 # CODE START
-def add_thermalsystem(simulation, component, interval_length):
+def add_thermalsystem(simulation, component, t_start, t_end):
     """
     This function adds all necessary MVARS and constraints to the optimization problem that are
     required to integrate the thermalsystem handed over as 'Component'
     :param component: components.thermalsystem-object
     :return: simulation.m is beeing extended
     """
+    interval_length = t_end - t_start + 1
+
     # create a timeseries of decision variables to represent the total inflow going into the thermal demand:
     simulation.MVars[f"E_{component.key}_in"] = simulation.m.addMVar(
         interval_length, vtype=GRB.CONTINUOUS, name=f"E_{component.key}_in"
@@ -88,11 +90,15 @@ def add_thermalsystem(simulation, component, interval_length):
     )
 
     # set the starting temperature:
+    if component.temperature_start is None:
+        temperature_start = (min(component.temperature_min)+max(component.temperature_max))/2
+    else:
+        temperature_start = component.temperature_start
+
     simulation.m.addConstr(
-        simulation.MVars[f"T_{component.key}"][0] == component.temperature_start
-    )
-    logging.debug(f"        - Constraint:   {component.name}[0] = Tstart")
-    # TODO VISHAL: set tstart to (tmax+tmin)/2 if tstart = None
+        simulation.MVars[f"T_{component.key}"][0] == temperature_start)
+    logging.debug(f"        - Constraint:   {component.name}[0] = {temperature_start}")
+
 
     # add constraint for the thermal R-C-factory
     simulation.m.addConstrs(
@@ -128,7 +134,6 @@ def add_thermalsystem(simulation, component, interval_length):
         f"        - Constraint:   Tmin < T_{component.name} < Tmax for {component.name}"
     )
 
-    # TODO VISHAL: Replace t_start here as well
     # set the end temperature:
     if component.sustainable:
         simulation.m.addConstr(
@@ -145,7 +150,7 @@ def add_thermalsystem(simulation, component, interval_length):
             )
             * simulation.time_reference_factor
             / component.C
-            == component.temperature_start
+            == temperature_start
         )
         logging.debug(f"        - Constraint:   T_{component.name}[T] = Tstart")
     else:

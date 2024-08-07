@@ -889,11 +889,11 @@ class Simulation:
             elif component.type == "storage":
                 oc.add_storage(self, component, t_start, t_end)
             elif component.type == "thermalsystem":
-                oc.add_thermalsystem(self, component, 720)
+                oc.add_thermalsystem(self, component, t_start, t_end)
             elif component.type == "triggerdemand":
                 oc.add_triggerdemand(self, component, t_start, t_end)
             elif component.type == "schedule":
-                oc.add_schedule(self, component, 720)
+                oc.add_schedule(self, component, t_start, t_end)
 
             if self.enable_time_tracking:
                 logging.info(

@@ -37,7 +37,7 @@ from gurobipy import GRB
 
 
 # CODE START
-def add_schedule(simulation, component, interval_length):
+def add_schedule(simulation, component, t_start, t_end):
     """
     This function adds all necessary MVARS and constraints to the optimization problem that are
     required to integrate the schedule handed over as 'Component'
@@ -45,6 +45,7 @@ def add_schedule(simulation, component, interval_length):
     :return: simulation.m is beeing extended
     """
 
+    interval_length = t_end - t_start + 1
     # get number of individual flexible demands:
     rows = len(component.demands)
 
