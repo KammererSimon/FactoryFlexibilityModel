@@ -52,6 +52,10 @@ converter:
       description: Cost for ramping up
       text: Ramping cost
       unit_type: ramping_cost
+    switchable:
+      description: Can the converter be turned on and off
+      text: Switchable
+      unit_type: 'boolean'
 deadtime:
   default_icon: deadtime_default
   max_inputs: 1

@@ -249,7 +249,7 @@ def update_component_configuration_tab(app):
                 list_icon.icon = "ray-start-arrow"
 
             # handle special cases of boolean attributes
-            elif parameter_key in ["direct_throughput"]:
+            elif parameter_key in ["switchable", "direct_throughput"]:
                 pass
             # handle attributes with static values or timeseries:
             else:
@@ -281,7 +281,7 @@ def update_component_configuration_tab(app):
             list_item.text_color = app.config["main_color"].rgba
             list_item.secondary_text_color = app.config["main_color"].rgba
             list_item.font_style = "H6"
-        elif parameter_key in ["direct_throughput"]:
+        elif parameter_key in ["switchable", "direct_throughput"]:
             # exception for the direct throughput parameter of storages.
             # give the list the active colors
             list_icon.icon = "fast-forward"
@@ -298,10 +298,10 @@ def update_component_configuration_tab(app):
                 if app.session_data["scenarios"][app.selected_scenario][
                     app.selected_asset["key"]
                 ][parameter_key]["value"]:
-                    list_item.secondary_text = "Allowed"
+                    list_item.secondary_text = "True"
                     checkbox.active = True
                 else:
-                    list_item.secondary_text = "Blocked"
+                    list_item.secondary_text = "False"
                     checkbox.active = False
             except:
                 # if the component has not been edited before: initialize the boolean value as false
@@ -309,7 +309,7 @@ def update_component_configuration_tab(app):
                     parameter_key
                 ] = {"type": "boolean", "value": False}
 
-                list_item.secondary_text = "Blocked"
+                list_item.secondary_text = "False"
                 checkbox.active = False
 
             checkbox.bind(

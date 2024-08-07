@@ -1,5 +1,32 @@
-#  CALLING PATH:
-#  -> Simulation.simulate() -> Simulation.create_optimization_problem()
+# -----------------------------------------------------------------------------
+# Project Name: Factory_Flexibility_Model
+# File Name: add_thermalsystem.py
+#
+# Copyright (c) [2024]
+# [Institute of Energy Systems, Energy Efficiency and Energy Economics
+#  TU Dortmund
+#  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
 
 # IMPORTS
 import logging
@@ -65,6 +92,7 @@ def add_thermalsystem(simulation, component, interval_length):
         simulation.MVars[f"T_{component.key}"][0] == component.temperature_start
     )
     logging.debug(f"        - Constraint:   {component.name}[0] = Tstart")
+    # TODO VISHAL: set tstart to (tmax+tmin)/2 if tstart = None
 
     # add constraint for the thermal R-C-factory
     simulation.m.addConstrs(
@@ -100,6 +128,7 @@ def add_thermalsystem(simulation, component, interval_length):
         f"        - Constraint:   Tmin < T_{component.name} < Tmax for {component.name}"
     )
 
+    # TODO VISHAL: Replace t_start here as well
     # set the end temperature:
     if component.sustainable:
         simulation.m.addConstr(

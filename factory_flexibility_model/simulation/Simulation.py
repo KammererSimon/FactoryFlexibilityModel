@@ -1,3 +1,33 @@
+# -----------------------------------------------------------------------------
+# Project Name: Factory_Flexibility_Model
+# File Name: Simulation.py
+#
+# Copyright (c) [2024]
+# [Institute of Energy Systems, Energy Efficiency and Energy Economics
+#  TU Dortmund
+#  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+
 """
     .. _Simulation:
 
@@ -123,7 +153,7 @@ class Simulation:
             rounding_decimals = 10
 
         # initialize counter- and summing variables:
-        total_emissions = 0
+        total_emissions = np.zeros(self.T)
         total_emission_cost = 0
 
         # collect timeseries of all flows in the factory: iterate over all connections
@@ -281,22 +311,16 @@ class Simulation:
                     emissions = (
                         utilization * component.co2_emissions_per_unit[0 : self.T]
                     )
-                    emission_cost = round(
-                        sum(emissions) * self.factory.emission_cost, 2
-                    )
+                    emission_cost = sum(emissions) * self.factory.emission_cost
 
 
                     # add avoided costs and emissions to the summing variables
                     total_emissions += emissions
                     total_emission_cost += emission_cost
 
-                    logging.info(
-                        f"Sink {component.name} caused total emissions of {round(sum(emissions), 2)} kgCO2, costing {round(emission_cost, 2)}€"
-                    )
-
                 else:
                     # otherwise set zeros:
-                    emissions = 0
+                    emissions = np.zeros(self.T)
                     emission_cost = 0
 
                 # calculate total costs
@@ -361,19 +385,14 @@ class Simulation:
                     emissions = (
                         utilization * component.co2_emissions_per_unit[t_start:t_start+interval_length+1]
                     )
-                    emission_cost = round(
-                        sum(emissions) * self.factory.emission_cost, 2
-                    )
+                    emission_cost = sum(emissions) * self.factory.emission_cost
 
                     # add the emissions and cost to the summing variables:
                     total_emissions += emissions
                     total_emission_cost += emission_cost
 
-                    logging.info(
-                        f"Source {component.name} caused total emissions of {round(sum(emissions),2)} kgCO2, costing additional {round(emission_cost,2)}€"
-                    )
                 else:
-                    emissions = 0
+                    emissions = np.zeros(self.T)
                     emission_cost = 0
 
                 if component.chargeable and not component.key == "ambient_gains":
@@ -594,6 +613,10 @@ class Simulation:
             else:
                 self.result["objective"] = self.m.objVal
 
+            # write the total emission values to the result-dictionary
+            self.result["total_emissions"] = total_emissions
+            self.result["total_emission_cost"] = total_emission_cost
+
         else:
             # collect achieved costs/revenues (objective of target function - ambient_gain_punishment_term)
             if "ambient_gains" in self.factory.components:
@@ -604,13 +627,14 @@ class Simulation:
             else:
                 self.result["objective"] += self.m.objVal
 
-            # write the total emission values to the result-dictionary
-            self.result["total_emissions"] = total_emissions
-            self.result["total_emission_cost"] = total_emission_cost
+            # add the emission values of the interval to the counters in the result-dictionary
+            self.result["total_emissions"] = np.hstack((self.result["total_emissions"], total_emissions))
+            self.result["total_emission_cost"] += total_emission_cost
 
 
-    def create_dash(self) -> object:
-        """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted Simulation"""
+    def create_dash(self, authentication = None) -> object:
+        """This function calls the factory_dash.create_dash()-routine to bring the dashboard online for the just conducted Simulation
+        :param: authentication: [dict]: a dict of combinations of usernames and passwords that are valid to access the dashboard"""
         logging.info("CREATING DASHBOARD")
         fd.create_dash(self)
 

@@ -1,3 +1,36 @@
+# -----------------------------------------------------------------------------
+# This script is used to read in factory layouts and specifications from Excel files and to generate
+# factory-objects out of them that can be used for the simulations
+#
+# Project Name: Factory_Flexibility_Model
+# File Name: dash.py
+#
+# Copyright (c) [2024]
+# [Institute of Energy Systems, Energy Efficiency and Energy Economics
+#  TU Dortmund
+#  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+
 """
 This module contains the result dashboard that can be used to show and analyze the results of a solved simulation.
 It consists of a single function "create_dash", which takes a solved simulation object as input and uses the plotly dash library to create an interactive browserbased dashboard.
@@ -16,7 +49,7 @@ Usage:
 """
 
 
-# IMPORT 3RD PARTY PACKAGES
+# IMPORT
 import copy
 import warnings
 
@@ -32,9 +65,13 @@ from plotly.subplots import make_subplots
 from factory_flexibility_model.dash.dash_functions.create_cost_overview import (
     create_cost_overview,
 )
+from factory_flexibility_model.dash.dash_functions.create_emission_overview import (
+    create_emission_overview,
+)
 from factory_flexibility_model.dash.dash_functions.create_layout_html import (
     create_layout_html,
 )
+from factory_flexibility_model.dash.dash_functions.get_converter_primary_flow import get_converter_primary_flow
 
 
 # CODE START
@@ -44,6 +81,7 @@ def create_dash(simulation):
     This function takes a solved simulation object and creates an interactive browserbased dashboard.
 
     :param simulation: Simulation - Object.
+    :param: authentication: [dict]: a dict of combinations of usernames and passwords that are valid to access the dashboard
     :return: Nothing. The script ends with providing a dashboard on an internal server and goes into a loop to process user inputs within the dashboard until it is being cancelled externally.
     """
 
@@ -57,6 +95,7 @@ def create_dash(simulation):
     # TODO: Separate the next section into a config file!
     # INITIALIZE APP AND SET LAYOUT
     app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
+
     load_figure_template("FLATLY")
     colors = {
         "main": (29, 66, 118),
@@ -338,6 +377,7 @@ def create_dash(simulation):
         "converter_config": dcc.Markdown(style={"marginLeft": "10px"}),
         "converter_results": dcc.Markdown(style={"marginLeft": "10px"}),
         "detailed_cost": dcc.Markdown(style={"marginLeft": "10px"}),
+        "detailed_emissions": dcc.Markdown(style={"marginLeft": "10px"}),
         "pool_config": dcc.Markdown(style={"marginLeft": "10px"}),
         "sink_config": dcc.Markdown(style={"marginLeft": "10px"}),
         "source_config": dcc.Markdown(style={"marginLeft": "10px"}),
@@ -388,13 +428,13 @@ def create_dash(simulation):
         ),
         "sankey": dcc.Dropdown(
             options=[
-                "Factory Architecture",
                 "Energy Flows",
                 "Material Flows",
                 "Energy Losses",
                 "Material Losses",
+                "Factory Architecture",
             ],
-            value="Factory Architecture",
+            value="Energy Flows",
             clearable=False,
         ),
     }
@@ -452,6 +492,7 @@ def create_dash(simulation):
         Output(component_info["input_information"], component_property="children"),
         Output(component_info["total_cost"], component_property="children"),
         Output(component_info["detailed_cost"], component_property="children"),
+        Output(component_info["detailed_emissions"], component_property="children"),
         Input(dropdowns["sankey"], component_property="value"),
     )
     def update_plots_overview(
@@ -763,6 +804,7 @@ def create_dash(simulation):
         )
 
         detailed_costs = create_cost_overview(simulation)
+        detailed_emissions = create_emission_overview(simulation)
 
         return (
             fig_sankey,
@@ -774,6 +816,7 @@ def create_dash(simulation):
             input_info,
             total_cost,
             detailed_costs,
+            detailed_emissions,
         )  # returned objects are assigned to the Component property of the Output
 
     # TAB: CONVERTERS
@@ -786,213 +829,219 @@ def create_dash(simulation):
         Input("timestep_slider_converter", "value"),
     )
     def update_plots_converter(user_input, timesteps):
-        if not user_input == None:
-            t0 = timesteps[0]
-            t1 = timesteps[1]
-            x = np.arange(t0, t1, 1)
-            component = simulation.factory.components[
-                simulation.factory.get_key(user_input)
-            ]
-            Pmin = min(component.power_min)
-            if component.power_max_limited:
-                Pmax = int(max(component.power_max))
-            else:
-                Pmax = round(max(simulation.result[component.key]["utilization"])) + 10
 
-            # plot utilization
-            data = (
-                simulation.result[component.key]["utilization"][t0:t1]
-                / simulation.scenario.timefactor
-                * simulation.factory.timefactor
-            )
-            fig = go.Figure()
-
-            # Print Utilization
-            if component.power_min_limited:
-                fig.add_trace(
-                    go.Scatter(
-                        x=x,
-                        y=component.power_min[t0:t1] * component.availability[t0:t1],
-                        line_color="rgb(192,0,0)",
-                        name="Pmin",
-                        line_dash="dot",
-                    )
-                )
-            if component.power_max_limited:
-                fig.add_trace(
-                    go.Scatter(
-                        x=x,
-                        y=component.power_max[t0:t1] * component.availability[t0:t1],
-                        line_color="rgb(192,0,0)",
-                        name="power_max",
-                        line_dash="dash",
-                    )
-                )
-            fig.add_trace(
-                go.Scatter(
-                    x=x,
-                    y=data,
-                    line_shape="hv",
-                    line_color=style["main_color_rgb"],
-                    name="Utilization",
-                )
-            )
-            fig.update_layout(figure_config)
-            fig.update_xaxes(
-                title_text=f"Simulation Interval",
-                linewidth=2,
-                linecolor=style["axis_color"],
-            )
-            fig.update_yaxes(
-                title_text=f"Utilization {component.flowtype.unit_flowrate()}",
-                range=[0, Pmax * 1.05],
-                linewidth=2,
-                linecolor=style["axis_color"],
-            )
-            # plot efficiency
-            efficiency = np.zeros(Pmax + 10)
-            for p in range(Pmax + 10):
-                if component.eta_variable:
-                    if p >= Pmin and p <= component.power_nominal:
-                        efficiency[p] = (
-                            component.eta_max
-                            - component.delta_eta_low * (component.power_nominal - p)
-                            - 1
-                            + component.eta_base
-                        ) * 100
-                    if p >= component.power_nominal and p <= Pmax:
-                        efficiency[p] = (
-                            component.eta_max
-                            - component.delta_eta_high * (p - component.power_nominal)
-                            - 1
-                            + component.eta_base
-                        ) * 100
-                else:
-                    if p >= Pmin and p <= max(component.power_max):
-                        efficiency[p] = component.eta_max * component.eta_base * 100
-                    else:
-                        efficiency[p] = 0
-
-            fig2 = go.Figure()
-            fig2.add_trace(
-                go.Scatter(
-                    x=np.arange(0, Pmax + 10),
-                    y=efficiency,
-                    line_shape="linear",
-                    line_color=style["main_color_rgb"],
-                    name="Efficiency",
-                )
-            )
-            if component.power_min_limited:
-                fig2.add_vline(
-                    x=Pmin,
-                    line_width=2,
-                    line_dash="dash",
-                    line_color="rgb(192,0,0)",
-                    annotation_text="Pmin",
-                )
-            if component.power_max_limited:
-                fig2.add_vline(
-                    x=Pmax,
-                    line_width=2,
-                    line_dash="dash",
-                    line_color="rgb(192,0,0)",
-                    annotation_text="power_max",
-                )
-            if component.eta_variable:
-                if Pmax - component.power_nominal > component.power_nominal - min(
-                    component.power_min
-                ):
-                    fig2.add_vline(
-                        x=component.power_nominal,
-                        line_width=2,
-                        line_dash="dash",
-                        line_color=style["second_color_rgb"],
-                        annotation_text="Pnominal",
-                        annotation_position="top right",
-                    )
-                else:
-                    fig2.add_vline(
-                        x=component.power_nominal,
-                        line_width=2,
-                        line_dash="dash",
-                        line_color=style["second_color_rgb"],
-                        annotation_text="Pnominal",
-                        annotation_position="top left",
-                    )
-
-            fig2.update_layout(figure_config)
-            fig2.update_xaxes(
-                title_text=f"Utilization [SU/Δt]",
-                linewidth=2,
-                linecolor=style["axis_color"],
-            )
-            fig2.update_yaxes(
-                title_text=f"Efficiency [%]",
-                range=[0, 100],
-                linewidth=2,
-                linecolor=style["axis_color"],
-            )
-
-            # collect configuration information
-            config = f"\n **Pnominal**: {component.power_nominal} {component.flowtype.unit_flowrate()}\n "
-            if component.power_max_limited:
-                config = (
-                    config
-                    + f"\n**power_max:** {component.flowtype.get_value_expression(round(max(component.power_max)), 'flowrate')}\n "
-                )
-            else:
-                config = config + f"\n**power_max**: Unlimited \n"
-            if component.power_min_limited:
-                config = (
-                    config
-                    + f"\n**Pmin**: {component.flowtype.get_value_expression(round(min(component.power_min)), 'flowrate')}\n"
-                )
-            else:
-                config = config + f"\n**Pmin**: 0 SU/Δt \n"
-            if component.power_ramp_max_pos < 10000000:
-                config = (
-                    config
-                    + f"\n**Fastest Rampup:** {component.flowtype.get_value_expression(round(component.power_ramp_max_pos), 'flowrate')} \n "
-                )
-            else:
-                config = config + f"\n**Fastest Rampup:** Unlimited \n "
-            if component.power_ramp_max_neg < 10000000:
-                config = (
-                    config
-                    + f"\n**Fastest Rampdown:** {component.flowtype.get_value_expression(round(component.power_ramp_max_neg), 'flowrate')} \n "
-                )
-            else:
-                config = config + f"\n**Fastest Rampdown:** Unlimited \n "
-            if component.eta_variable:
-                config = (
-                    config
-                    + f"\n **Optimal efficiency:** {round(component.eta_max*component.eta_base * 100)}% \n"
-                )
-            else:
-                config = (
-                    config
-                    + f"\n **Efficiency:** {round(component.eta_max * component.eta_base * 100)}% \n"
-                )
-
-            config = config + f"\n **Is switchable?**: {component.switchable} \n "
-
-            # collect result information
-            results = ""
-            results = (
-                results
-                + f"\n **Total Conversion**: {component.flowtype.get_value_expression(round(sum(simulation.result[component.key]['utilization'])), 'flow')}  \n"
-                f"\n **Highest Utilization**: {component.flowtype.get_value_expression(round(max(simulation.result[component.key]['utilization'])), 'flowrate')} \n"
-                f"\n **Lowest Utilization**: {component.flowtype.get_value_expression(round(min(simulation.result[component.key]['utilization'])), 'flowrate')} \n "
-                f"\n **Average Utilization**: {component.flowtype.get_value_expression(round(simulation.result[component.key]['utilization'].mean()), 'flowrate')} \n"
-                f"\n **Activation Time**: {sum(simulation.result[component.key]['utilization'] > 0.001)} Intervals ({round(sum(simulation.result[component.key]['utilization'] > 0.001) / T *100)}% of time)\n"
-            )
-
-        else:
+        # return neutral dummy values if no converter is selected
+        if user_input is None:
             fig = go.Figure()
             fig2 = go.Figure()
             config = f"\n**Pmin**: unlimited \n"
             results = ""
+            return fig, fig2, config, results
+
+        # otherwise determine specific information
+        t0 = timesteps[0]
+        t1 = timesteps[1]
+        x = np.arange(t0, t1, 1)
+        component = simulation.factory.components[
+            simulation.factory.get_key(user_input)
+        ]
+        Pmin = min(component.power_min)
+        if component.power_max_limited:
+            Pmax = int(max(component.power_max))
+        else:
+            Pmax = round(max(simulation.result[component.key]["utilization"])) + 10
+
+        primary_flow = get_converter_primary_flow(component)
+
+        # plot utilization
+        data = (
+            simulation.result[component.key]["utilization"][t0:t1]
+            / simulation.scenario.timefactor
+            * simulation.factory.timefactor
+        )
+        fig = go.Figure()
+
+        # Print Utilization
+        if component.power_min_limited:
+            fig.add_trace(
+                go.Scatter(
+                    x=x,
+                    y=component.power_min[t0:t1] * component.availability[t0:t1],
+                    line_color="rgb(192,0,0)",
+                    name="Pmin",
+                    line_dash="dot",
+                )
+            )
+        if component.power_max_limited:
+            fig.add_trace(
+                go.Scatter(
+                    x=x,
+                    y=component.power_max[t0:t1] * component.availability[t0:t1],
+                    line_color="rgb(192,0,0)",
+                    name="power_max",
+                    line_dash="dash",
+                )
+            )
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=data,
+                line_shape="hv",
+                line_color=style["main_color_rgb"],
+                name="Utilization",
+            )
+        )
+        fig.update_layout(figure_config)
+        fig.update_xaxes(
+            title_text=f"Simulation Interval",
+            linewidth=2,
+            linecolor=style["axis_color"],
+        )
+        fig.update_yaxes(
+            title_text=f"{primary_flow.name} {primary_flow.unit_flowrate()}",
+            range=[0, Pmax * 1.05],
+            linewidth=2,
+            linecolor=style["axis_color"],
+        )
+        # plot efficiency
+        efficiency = np.zeros(Pmax + 10)
+        for p in range(Pmax + 10):
+            if component.eta_variable:
+                if p >= Pmin and p <= component.power_nominal:
+                    efficiency[p] = (
+                        component.eta_max
+                        - component.delta_eta_low * (component.power_nominal - p)
+                        - 1
+                        + component.eta_base
+                    ) * 100
+                if p >= component.power_nominal and p <= Pmax:
+                    efficiency[p] = (
+                        component.eta_max
+                        - component.delta_eta_high * (p - component.power_nominal)
+                        - 1
+                        + component.eta_base
+                    ) * 100
+            else:
+                if p >= Pmin and p <= max(component.power_max):
+                    efficiency[p] = component.eta_max * component.eta_base * 100
+                else:
+                    efficiency[p] = 0
+
+        fig2 = go.Figure()
+        fig2.add_trace(
+            go.Scatter(
+                x=np.arange(0, Pmax + 10),
+                y=efficiency,
+                line_shape="linear",
+                line_color=style["main_color_rgb"],
+                name="Efficiency",
+            )
+        )
+        if component.power_min_limited:
+            fig2.add_vline(
+                x=Pmin,
+                line_width=2,
+                line_dash="dash",
+                line_color="rgb(192,0,0)",
+                annotation_text="Pmin",
+            )
+        if component.power_max_limited:
+            fig2.add_vline(
+                x=Pmax,
+                line_width=2,
+                line_dash="dash",
+                line_color="rgb(192,0,0)",
+                annotation_text="power_max",
+            )
+        if component.eta_variable:
+            if Pmax - component.power_nominal > component.power_nominal - min(
+                component.power_min
+            ):
+                fig2.add_vline(
+                    x=component.power_nominal,
+                    line_width=2,
+                    line_dash="dash",
+                    line_color=style["second_color_rgb"],
+                    annotation_text="Pnominal",
+                    annotation_position="top right",
+                )
+            else:
+                fig2.add_vline(
+                    x=component.power_nominal,
+                    line_width=2,
+                    line_dash="dash",
+                    line_color=style["second_color_rgb"],
+                    annotation_text="Pnominal",
+                    annotation_position="top left",
+                )
+
+        fig2.update_layout(figure_config)
+        fig2.update_xaxes(
+            title_text=f"{primary_flow.name} {primary_flow.unit_flowrate()}",
+            linewidth=2,
+            linecolor=style["axis_color"],
+        )
+        fig2.update_yaxes(
+            title_text=f"Efficiency [%]",
+            range=[0, 100],
+            linewidth=2,
+            linecolor=style["axis_color"],
+        )
+
+        # collect configuration information
+        config = f"\n **Pnominal**: {component.power_nominal} {component.flowtype.unit_flowrate()}\n "
+        if component.power_max_limited:
+            config = (
+                config
+                + f"\n**power_max:** {component.flowtype.get_value_expression(round(max(component.power_max)), 'flowrate')}\n "
+            )
+        else:
+            config = config + f"\n**power_max**: Unlimited \n"
+        if component.power_min_limited:
+            config = (
+                config
+                + f"\n**Pmin**: {component.flowtype.get_value_expression(round(min(component.power_min)), 'flowrate')}\n"
+            )
+        else:
+            config = config + f"\n**Pmin**: 0 SU/Δt \n"
+        if component.power_ramp_max_pos < 10000000:
+            config = (
+                config
+                + f"\n**Fastest Rampup:** {component.flowtype.get_value_expression(round(component.power_ramp_max_pos), 'flowrate')} \n "
+            )
+        else:
+            config = config + f"\n**Fastest Rampup:** Unlimited \n "
+        if component.power_ramp_max_neg < 10000000:
+            config = (
+                config
+                + f"\n**Fastest Rampdown:** {component.flowtype.get_value_expression(round(component.power_ramp_max_neg), 'flowrate')} \n "
+            )
+        else:
+            config = config + f"\n**Fastest Rampdown:** Unlimited \n "
+        if component.eta_variable:
+            config = (
+                config
+                + f"\n **Optimal efficiency:** {round(component.eta_max*component.eta_base * 100)}% \n"
+            )
+        else:
+            config = (
+                config
+                + f"\n **Efficiency:** {round(component.eta_max * component.eta_base * 100)}% \n"
+            )
+
+        config = config + f"\n **Is switchable?**: {component.switchable} \n "
+
+        # collect result information
+        results = ""
+        results = (
+            results
+            + f"\n **Total Conversion**: {component.flowtype.get_value_expression(round(sum(simulation.result[component.key]['utilization'])), 'flow')}  \n"
+            f"\n **Highest Utilization**: {component.flowtype.get_value_expression(round(max(simulation.result[component.key]['utilization'])), 'flowrate')} \n"
+            f"\n **Lowest Utilization**: {component.flowtype.get_value_expression(round(min(simulation.result[component.key]['utilization'])), 'flowrate')} \n "
+            f"\n **Average Utilization**: {component.flowtype.get_value_expression(round(simulation.result[component.key]['utilization'].mean()), 'flowrate')} \n"
+            f"\n **Activation Time**: {sum(simulation.result[component.key]['utilization'] > 0.001)} Intervals ({round(sum(simulation.result[component.key]['utilization'] > 0.001) / T *100)}% of time)\n"
+        )
+
         return fig, fig2, config, results
 
     # TAB: POOLS
@@ -1092,7 +1141,7 @@ def create_dash(simulation):
         fig = go.Figure()
 
         if component.power_min_limited:
-            figures["sink"].add_trace(
+            fig.add_trace(
                 go.Scatter(
                     x=x,
                     y=np.ones(t1 - t0) * component.power_min[t0:t1],
@@ -1136,7 +1185,7 @@ def create_dash(simulation):
         fig.update_xaxes(linewidth=2, linecolor=style["axis_color"])
         fig.update_yaxes(linewidth=2, linecolor=style["axis_color"], range=[0, Pmax])
 
-        fig2 = go.Figure()
+        fig2 = make_subplots(specs=[[{"secondary_y": True}]])
         fig2.add_trace(
             go.Scatter(
                 x=x,
@@ -1144,18 +1193,46 @@ def create_dash(simulation):
                 line_color=f"rgb{colors['main']}",
                 name="Cost",
                 line_shape=interpolation[linestyle],
-            )
+            ),
+            secondary_y=False,
         )
-        fig2.update_layout(
-            figure_config,
-            xaxis_title="Timesteps",
-            yaxis_title=f"€ / {component.flowtype.unit.get_unit_flow()}",
+
+        fig2.add_trace(
+            go.Scatter(
+                x=x,
+                y=np.ones(t1 - t0) * component.co2_emissions_per_unit,
+                line_color="rgb(192,0,0)",
+                name="Emissions",
+                line_shape=interpolation[linestyle],
+            ),
+            secondary_y=True,
+        )
+        fig2.update_layout(figure_config, xaxis_title="Timesteps")
+
+        fig2.update_yaxes(
+            title_text=f"{simulation.factory.currency} / {component.flowtype.unit.get_unit_flow()}",
+            secondary_y=False,
+            linewidth=2,
+            linecolor=style["axis_color"],
+        )
+
+        fig2.update_yaxes(
+            title_text=f"tCO²/{component.flowtype.unit.get_unit_flow()}",
+            secondary_y=True,
+            linewidth=2,
+            linecolor=style["axis_color"],
         )
 
         source_sum = "## " + component.flowtype.unit.get_value_expression(
             value=round(sum(simulation.result[component.key]["utilization"][t0:t1])),
             quantity_type="flow",
         )
+
+        # add utilization degree in percent if the source has a limited output
+        if component.power_max_limited:
+            utilization = round(sum(simulation.result[component.key]["utilization"][t0:t1]) / sum(component.power_max[t0:t1] * component.availability[t0:t1])*100, 2)
+            source_sum = source_sum + f" \n {utilization}%"
+
         source_cost = f"## {round(sum(simulation.result[component.key]['utilization'][t0:t1] * component.cost[t0:t1]))} €"
         source_minmax = (
             f"## {component.flowtype.unit.get_value_expression(value=round(min(simulation.result[component.key]['utilization'][t0:t1])), quantity_type='flowrate')} "
@@ -1230,10 +1307,17 @@ def create_dash(simulation):
             linewidth=2, linecolor=style["axis_color"], range=[0, max(data) * 1.05]
         )
 
-        sink_sum = "## " + component.flowtype.unit.get_value_expression(
+        sink_sum = "### " + component.flowtype.unit.get_value_expression(
             value=round(sum(simulation.result[component.key]["utilization"][t0:t1])),
             quantity_type="flow",
         )
+
+        # add utilization degree in percent if the sink has a limited input
+        if component.power_max_limited:
+            utilization = round(sum(simulation.result[component.key]["utilization"][t0:t1]) / sum(
+                component.power_max[t0:t1] * component.availability[t0:t1]) * 100, 2)
+            sink_sum = sink_sum + f" \n {utilization}%"
+
         sink_minmax = f"## {component.flowtype.unit.get_value_expression(round(min(simulation.result[component.key]['utilization'][t0:t1])), 'flowrate')} - {component.flowtype.unit.get_value_expression(round(max(simulation.result[component.key]['utilization'][t0:t1])), 'flowrate')}"
 
         cost = 0
@@ -1365,8 +1449,8 @@ def create_dash(simulation):
                 f"\n **Leakage per timestep:** \n"
                 f"\n * {component.leakage_time} % of total Capacity\n"
                 f"\n * {component.leakage_SOC} % of SOC\n"
-                f"\n **Max charging Power:** {component.flowtype.unit.get_value_expression(component.power_max_charge,'flow')}\n"
-                f"\n **Max discharging Power:** {component.flowtype.unit.get_value_expression(component.power_max_discharge,'flow')}\n"
+                f"\n **Max charging Power:** {component.flowtype.unit.get_value_expression(component.power_max_charge,'flowrate')}\n"
+                f"\n **Max discharging Power:** {component.flowtype.unit.get_value_expression(component.power_max_discharge,'flowrate')}\n"
                 f"\n **Input:** \n"
                 f"\n {inputs} \n"
                 f"\n **Output:** \n"
@@ -1769,19 +1853,19 @@ def create_dash(simulation):
 
         # CREATE UTILIZATION FIGURE
         input_electricity = (
-                simulation.result[component.key]["input_electricity"][t0:t1]
-                / simulation.scenario.timefactor
-                * simulation.factory.timefactor
+            simulation.result[component.key]["input_electricity"][t0:t1]
+            / simulation.scenario.timefactor
+            * simulation.factory.timefactor
         )
         input_heat = (
-                simulation.result[component.key]["input_heat"][t0:t1]
-                / simulation.scenario.timefactor
-                * simulation.factory.timefactor
+            simulation.result[component.key]["input_heat"][t0:t1]
+            / simulation.scenario.timefactor
+            * simulation.factory.timefactor
         )
         output_heat = (
-                simulation.result[component.key]["output_heat"][t0:t1]
-                / simulation.scenario.timefactor
-                * simulation.factory.timefactor
+            simulation.result[component.key]["output_heat"][t0:t1]
+            / simulation.scenario.timefactor
+            * simulation.factory.timefactor
         )
 
         fig = go.Figure()
@@ -1802,7 +1886,6 @@ def create_dash(simulation):
         # add trace for heat source input
         fig.add_trace(
             go.Scatter(
-
                 x=x,
                 y=input_heat,
                 hoverinfo="x",
@@ -1859,7 +1942,7 @@ def create_dash(simulation):
             secondary_y=True,
             linewidth=2,
             linecolor=style["axis_color"],
-            range=[1, 7]
+            range=[1, 7],
         )
 
         # CREATE COP PROFILE PLOT
@@ -1879,25 +1962,40 @@ def create_dash(simulation):
             showlegend=False,
         )
 
-
-
         # COLLECT PARAMETER INFORMATIONS
-        heatpump_sum_in = "## " + component.input_main.flowtype.unit.get_value_expression(
-            value=round(sum(simulation.result[component.key]["utilization"][t0:t1])),
-            quantity_type="flow",
+        heatpump_sum_in = (
+            "## "
+            + component.input_main.flowtype.unit.get_value_expression(
+                value=round(
+                    sum(simulation.result[component.key]["utilization"][t0:t1])
+                ),
+                quantity_type="flow",
+            )
         )
 
-        heatpump_sum_out = "## " + component.input_main.flowtype.unit.get_value_expression(
-            value=round(sum(simulation.result[component.key]["output_heat"][t0:t1])),
-            quantity_type="flow",
+        heatpump_sum_out = (
+            "## "
+            + component.input_main.flowtype.unit.get_value_expression(
+                value=round(
+                    sum(simulation.result[component.key]["output_heat"][t0:t1])
+                ),
+                quantity_type="flow",
+            )
         )
 
         heatpump_avg_cop = f"## {round(sum(simulation.result[component.key]['utilization'][t0:t1] * component.cop[t0:t1])/sum(simulation.result[component.key]['utilization'][t0:t1]),2)}"
 
         heatpump_cop_range = f"## {round(min(component.cop[t0:t1]),2)} - {round(max(component.cop[t0:t1]),2)}"
 
-
-        return fig, fig2, fig3, heatpump_sum_in, heatpump_sum_out, heatpump_avg_cop, heatpump_cop_range
+        return (
+            fig,
+            fig2,
+            fig3,
+            heatpump_sum_in,
+            heatpump_sum_out,
+            heatpump_avg_cop,
+            heatpump_cop_range,
+        )
 
     # Run app
     app.run_server(port=8053)

@@ -1,3 +1,36 @@
+# -----------------------------------------------------------------------------
+# This script is used to read in factory layouts and specifications from Excel files and to generate
+# factory-objects out of them that can be used for the simulations
+#
+# Project Name: Factory_Flexibility_Model
+# File Name: create_layout_html.py
+#
+# Copyright (c) [2024]
+# [Institute of Energy Systems, Energy Efficiency and Energy Economics
+#  TU Dortmund
+#  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+
 # This script is called on the following paths:
 # -> fm.dash.create_dash()
 
@@ -38,13 +71,6 @@ def create_layout_html(
     layout = html.Div(
         style={"backgroundColor": style["background"], "overflow": "hidden"},
         children=[
-            dbc.Row(
-                [
-                    dbc.Col(
-                        dcc.Markdown(children="# FACTORY SIMULATION"), style=style["H1"]
-                    )
-                ],
-            ),
             dcc.Tabs(
                 [
                     dcc.Tab(
@@ -76,6 +102,7 @@ def create_layout_html(
                                                 ],
                                                 style=card_style,
                                             ),
+
                                             dbc.Row(
                                                 [
                                                     component_info["total_cost"],
@@ -87,6 +114,12 @@ def create_layout_html(
                                                     ),
                                                 ],
                                                 style=card_style_contrast,
+                                            ),
+                                            dbc.Row(
+                                                [
+                                                    component_info["detailed_emissions"],
+                                                ],
+                                                style=card_style,
                                             ),
                                             dbc.Row(
                                                 [
@@ -441,7 +474,7 @@ def create_layout_html(
                                             dbc.Row(
                                                 [
                                                     dcc.Markdown(
-                                                        children="#### COST",
+                                                        children="#### COST / EMISSIONS",
                                                         style=style["card_title"],
                                                     ),
                                                     dbc.Row([figures["source_cost"]]),

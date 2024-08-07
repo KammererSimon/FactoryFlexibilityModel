@@ -1,14 +1,15 @@
 [tool.poetry]
-name = "factory-flexibility-model"
-version = "0.1.0"
+name = "watts-insight"
+version = "1.2"
 description = ""
-authors = ["Simon Kammerer <simon.kammerer@tu-dortmund.de>"]
+authors = ["Simon Kammerer <simon.kammerer@volterica.com>"]
 readme = "README.md"
 packages = [{include = "factory_flexibility_model"}]
 
 [tool.poetry.dependencies]
 python = ">=3.11, <4"
 dash = "^2.11.1"
+dash-auth = "^1.4.1"
 dash-bootstrap-components = "^1.4.2"
 dash-bootstrap-templates = "^1.0.8"
 datetime = "^5.2"
