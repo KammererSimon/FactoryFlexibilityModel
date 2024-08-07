@@ -78,5 +78,6 @@ def simulate(trial):
         # calculate and return costs:
         capex = capex_storage * storage_size + capex_grid_capacity * grid_capacity
         opex = simulation.result["objective"]
+        emissions = simulation.result["total_emissions"]
         return capex + opex if capex + opex < 50000 else 50000 + 10000 * (capex + opex - 50000) / (
-                    100000 + capex + opex - 50000)
+                    100000 + capex + opex - 50000), emissions

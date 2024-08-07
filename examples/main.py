@@ -3,6 +3,7 @@
 import datetime
 import logging
 import os
+import signal
 import sys
 import threading
 import webbrowser
@@ -20,8 +21,28 @@ from examples.simple_simulation_call import simulate
 from factory_flexibility_model.io import factory_import as imp
 from factory_flexibility_model.simulation import Simulation as fs
 
+import atexit
+proc: list[Process] = []
+
+
+def cleanup():
+    global proc
+    print("Cleaning up...")
+    for p in proc:
+        p.kill()
+        p.terminate()
+
+
+def sigHandler(signo, frame):
+    sys.exit(0)
+
 
 def run_optimizer():
+    global proc, thread
+    atexit.register(cleanup)
+    signal.signal(signal.SIGTERM, sigHandler)
+    signal.signal(signal.SIGINT, sigHandler)
+
     val = input("Enter your postgres password: ")
     storage = optuna.storages.RDBStorage(f"postgresql://postgres:{val}@localhost:5432/ffm")
     sampler = optuna.integration.BoTorchSampler(
@@ -32,7 +53,7 @@ def run_optimizer():
     search_space = {"storage_size": range(0, 3000,100), "grid_capacity": range(0, 1600,100)}
     study = optuna.create_study(
         storage=storage,
-        directions=["minimize"],
+        directions=["minimize", "minimize"],
         study_name=f"{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}_FFM",
         sampler=optuna.samplers.GridSampler(search_space)
     )
@@ -40,10 +61,10 @@ def run_optimizer():
     app = wsgi(storage)
     httpd = make_server("localhost", 8080, app)
     thread = threading.Thread(target=httpd.serve_forever)
+    thread.daemon = True
     thread.start()
     webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
 
-    proc = []
     for i in range(24):
         p = Process(target=study.optimize, args=(simulate,), kwargs={"n_trials": 20})
         p.start()
