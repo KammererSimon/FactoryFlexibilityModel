@@ -606,9 +606,7 @@ class Simulation:
         if first_iteration:
             # calculate self sufficiency
             if self.result["energy_generated_onsite"] > 0:
-                self.result["self_sufficiency"] = sum(
-                    self.result["energy_generated_onsite"]
-                ) / self.result["energy_generated_onsite"]
+                self.result["self_sufficiency"] = self.result["energy_generated_onsite"] / (self.result["energy_generated_onsite"] + self.result["energy_generated_offsite"])
             else:
                 self.result["self_sufficiency"] = 0
 
