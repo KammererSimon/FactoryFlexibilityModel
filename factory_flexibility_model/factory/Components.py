@@ -1497,17 +1497,18 @@ class Thermalsystem(Component):
             )
             raise Exception
 
-        if self.temperature_min[0] > self.temperature_start:
-            logging.critical(
-                f"ERROR during configuration of {self.name}: Tmin for t=0 is greater than Tstart. Tmin(t=0)={self.temperature_min[0]}, Tstart={self.temperature_start}"
-            )
-            raise Exception
+        if self.temperature_start is not None:
+            if self.temperature_min[0] > self.temperature_start:
+                logging.critical(
+                    f"ERROR during configuration of {self.name}: Tmin for t=0 is greater than Tstart. Tmin(t=0)={self.temperature_min[0]}, Tstart={self.temperature_start}"
+                )
+                raise Exception
 
-        if self.temperature_max[0] < self.temperature_start:
-            logging.critical(
-                f"ERROR during configuration of {self.name}: Tmax for t=0 is smaller than Tstart. Tmax(t=0)={self.temperature_max[0]}, Tstart={self.temperature_start}"
-            )
-            raise Exception
+            if self.temperature_max[0] < self.temperature_start:
+                logging.critical(
+                    f"ERROR during configuration of {self.name}: Tmax for t=0 is smaller than Tstart. Tmax(t=0)={self.temperature_max[0]}, Tstart={self.temperature_start}"
+                )
+                raise Exception
 
 
 class Triggerdemand(Component):
