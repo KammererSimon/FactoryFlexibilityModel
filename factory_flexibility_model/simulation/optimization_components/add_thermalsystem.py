@@ -89,15 +89,13 @@ def add_thermalsystem(simulation, component, t_start, t_end):
         f"        - Variable:     {component.key}                                  (Internal Temperature of {component.name})"
     )
 
-    # set the starting temperature:
-    if component.temperature_start is None:
-        temperature_start = (min(component.temperature_min)+max(component.temperature_max))/2
-    else:
-        temperature_start = component.temperature_start
 
-    simulation.m.addConstr(
-        simulation.MVars[f"T_{component.key}"][0] == temperature_start)
-    logging.debug(f"        - Constraint:   {component.name}[0] = {temperature_start}")
+    # set the starting temperature if specified:
+    if component.temperature_start is not None:
+        # add constraint to set the starting temperature to the given value
+        simulation.m.addConstr(simulation.MVars[f"T_{component.key}"][0] == component.temperature_start)
+        # write log
+        logging.debug(f"        - Constraint:   {component.name}[0] = {component.temperature_start}")
 
 
     # add constraint for the thermal R-C-factory
@@ -150,7 +148,7 @@ def add_thermalsystem(simulation, component, t_start, t_end):
             )
             * simulation.time_reference_factor
             / component.C
-            == temperature_start
+            == simulation.MVars[f"T_{component.key}"][0]
         )
         logging.debug(f"        - Constraint:   T_{component.name}[T] = Tstart")
     else:
