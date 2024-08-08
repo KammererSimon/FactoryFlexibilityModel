@@ -37,15 +37,24 @@ def simulate(trial):
     param grid_capacity: [float] The maximum power of the electricity grid connection point in [kW]
     returns: [float] The total cost of operation including capital costs and depreciation costs in [€]
     """
-    session_folder: str = "examples/Demo"
+    session_folder: str = "examples/usecase_blackbox_optimizer"
     show_results: bool = False
 
     storage_size: float = trial.suggest_float("storage_size", 0.0, 3000.0)
     grid_capacity: float = trial.suggest_float("grid_capacity", 0.0, 1600.0)
 
-    # define capex constants
-    capex_storage = 1  # Monthly capital and depreciation cost of battery storages in [€/kWh/month]
-    capex_grid_capacity = 20  # Montly capacity charge for utilization of the powergrid in [€/kW/month]
+    # TODO: korrekt einbinden
+    storage_power: float = trial.suggest_float("storage_power", 0.0, 6000.0)
+    qnt_forklifts: int = trial.suggest_int("qnt_forklifts", 1, 4)       # sollte m.E. besser sein als 4 booleans
+    qnt_excavators: int = trial.suggest_int("qnt_excavators", 1, 3)     # sollte m.E. besser sein als 3 booleans
+
+    # define capex constants (Capital costs ignored)
+    depreciation_period = 10                            # [Years]
+    capex_storage = 400/12/depreciation_period          # Monthly depreciation cost of battery storages in [€/kWh/month]
+    capex_grid_capacity = 100/12/depreciation_period    # Monthly capacity charge for utilization of the power grid in [€/kW/month]
+    capex_excavators = 500000/12/depreciation_period    # Monthly depreciation costs for an electric excavator [€]
+    capex_forklifts = 62900/12/depreciation_period      # Monthly depreciation costs for an electric forklift [€]
+    capex_storage_power = 75/12/depreciation_period     # Monthly depreciation costs for rectifiers and inverters in [€/kW/month]
 
     # set logging level to avoid any unnecessary console outputs from the simulation scripts
     logging.basicConfig(level=logging.ERROR)
@@ -63,8 +72,23 @@ def simulate(trial):
     factory = blueprint.to_factory()
 
     # set hyperparameters
-    factory.set_configuration(factory.get_key("Speicher"), {"capacity": storage_size})
-    factory.set_configuration(factory.get_key("Netzanbindung"), {"power_max": grid_capacity})
+    factory.set_configuration(factory.get_key("Battery_storage"), {"capacity": storage_size, "power_max_charge": storage_power, "power_max_discharge": storage_power})
+    factory.set_configuration(factory.get_key("Grid"), {"power_max": grid_capacity})
+
+    # Disable unutilized forklifts in the simulation layout
+    if qnt_forklifts < 2:
+        factory.set_configuration(factory.get_key("Forklift_2"), {"capacity": 0})
+    if qnt_forklifts < 3:
+        factory.set_configuration(factory.get_key("Forklift_3"), {"capacity": 0})
+    if qnt_forklifts < 4:
+        factory.set_configuration(factory.get_key("Forklift_4"), {"capacity": 0})
+
+    # Disable unutilized excavators in the layout
+    if qnt_excavators < 2:
+        factory.set_configuration(factory.get_key("Excavator_2"), {"capacity": 0})
+    if qnt_excavators < 3:
+        factory.set_configuration(factory.get_key("Excavator_3"), {"capacity": 0})
+
 
     # create simulation object
     simulation = fs.Simulation(factory=factory, scenario=scenario)
@@ -76,8 +100,12 @@ def simulate(trial):
         simulation.create_dash()
     else:
         # calculate and return costs:
-        capex = capex_storage * storage_size + capex_grid_capacity * grid_capacity
+        capex = (capex_storage * storage_size
+                 + capex_storage_power * storage_power
+                 + capex_grid_capacity * grid_capacity
+                 + capex_forklifts * qnt_forklifts
+                 + capex_excavators * qnt_excavators)
         opex = simulation.result["objective"]
-        emissions = simulation.result["total_emissions"]
+        emissions = sum(simulation.result["total_emissions"])
         return capex + opex if capex + opex < 50000 else 50000 + 10000 * (capex + opex - 50000) / (
                     100000 + capex + opex - 50000), emissions

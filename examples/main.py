@@ -83,7 +83,14 @@ def run_optimizer():
         n_startup_trials=5,
         independent_sampler=optuna.samplers.QMCSampler(),
     )
-    search_space = {"storage_size": range(0, 3000,100), "grid_capacity": range(0, 1600,100)}
+    search_space = {"storage_size": range(0, 3000,100),
+                    "grid_capacity": range(0, 1600,100),
+                    #"storage_power": range(0, 6000, 200),  #TODO: prüfen und uncomment
+                    #"qnt_forklifts": [1, 2, 3, 4],
+                    #"qnt_excavators": [1, 2, 3]
+                    }
+
+
     study = optuna.create_study(
         storage=storage,
         directions=["minimize", "minimize"],
