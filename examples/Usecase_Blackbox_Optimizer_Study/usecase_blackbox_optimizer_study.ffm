@@ -1377,7 +1377,79 @@ log:
   message: Session successfully saved at C:/Users/smsikamm/PycharmProjects/FactoryFlexibilityModel/sessions/Demo
   time: '2024-06-19 11:30:04'
   type: INFO
-session_path: C:\Users\smsikamm\PycharmProjects\FactoryFlexibilityModel\examples\Demo_03
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/smsikamm/PycharmProjects/WattsInsight/examples/Demo_03'
+    has been imported
+  time: '2024-08-08 16:39:49'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: New storage created with key 'component_37'
+  time: '2024-08-08 16:41:08'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Forklift_4 to Stapler-Energie with key 'connection_47'
+  time: '2024-08-08 16:41:19'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Bilanzierungspunkt to Forklift_4 with key 'connection_48'
+  time: '2024-08-08 16:41:23'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New storage created with key 'component_38'
+  time: '2024-08-08 16:41:54'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified storage 1 to Bagger-Energie with
+    key 'connection_49'
+  time: '2024-08-08 16:41:58'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Bilanzierungspunkt to Unspecified storage 1
+    with key 'connection_50'
+  time: '2024-08-08 16:42:01'
+  type: DEBUG
+- event_info: 'Adding a new connection failed:'
+  icon: alert
+  message: Excavator_2 already has the maximum number of outputs connected
+  time: '2024-08-08 16:42:13'
+  type: ERROR
+- event_info: ''
+  icon: chevron-right
+  message: 'New parameter configuration: Parameter capacity of component Excavator_2
+    is now specified as a static value.'
+  time: '2024-08-08 16:42:26'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New storage created with key 'component_39'
+  time: '2024-08-08 16:42:33'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Unspecified storage 1 to Bagger-Energie with
+    key 'connection_51'
+  time: '2024-08-08 16:42:36'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: New connection created from Bilanzierungspunkt to Unspecified storage 1
+    with key 'connection_52'
+  time: '2024-08-08 16:42:38'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: 'New parameter configuration: Parameter capacity of component Unspecified
+    storage 1 is now specified as a static value.'
+  time: '2024-08-08 16:42:45'
+  type: DEBUG
+session_path: C:/Users/smsikamm/PycharmProjects/WattsInsight/examples/Demo_03
 show_component_config_dialog_on_creation: false
 timeseries:
   Last_Laden_worst:

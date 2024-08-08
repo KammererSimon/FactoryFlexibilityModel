@@ -27,7 +27,7 @@ components:
     description: ''
     flowtype: flowtype_0
     key: component_11
-    name: Batterie Bagger
+    name: Excavator_1
     type: storage
   component_12:
     GUI:
@@ -110,7 +110,7 @@ components:
     description: ''
     flowtype: flowtype_0
     key: component_19
-    name: Batterie Stapler 1
+    name: Forklift_1
     type: storage
   component_2:
     GUI:
@@ -125,12 +125,12 @@ components:
   component_20:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
-      position_x: 14.0
+      position_x: 12.0
       position_y: 18.0
     description: ''
     flowtype: flowtype_0
     key: component_20
-    name: Batterie Stapler 2
+    name: Forklift_3
     type: storage
   component_21:
     GUI:
@@ -202,7 +202,7 @@ components:
     description: ''
     flowtype: flowtype_0
     key: component_27
-    name: Batterie Stapler 3
+    name: Forklift_2
     type: storage
   component_28:
     GUI:
@@ -304,6 +304,36 @@ components:
     key: component_36
     name: Recycling Output
     type: sink
+  component_37:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 16.0
+      position_y: 18.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_37
+    name: Forklift_4
+    type: storage
+  component_38:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 20.0
+      position_y: 18.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_38
+    name: Excavator_2
+    type: storage
+  component_39:
+    GUI:
+      icon: factory_flexibility_model\\ui\\assets\\defaults\storage.png
+      position_x: 22.0
+      position_y: 21.0
+    description: ''
+    flowtype: flowtype_0
+    key: component_39
+    name: Excavator_3
+    type: storage
   component_4:
     GUI:
       icon: factory_flexibility_model\\ui\\assets\\sinks\Car Charging.png
@@ -322,7 +352,7 @@ components:
     description: ''
     flowtype: flowtype_0
     key: component_5
-    name: Speicher
+    name: Battery_storage
     type: storage
   component_6:
     GUI:
@@ -332,7 +362,7 @@ components:
     description: ''
     flowtype: flowtype_0
     key: component_6
-    name: Netzanbindung
+    name: Grid
     type: source
   component_7:
     GUI:
@@ -659,11 +689,53 @@ connections:
     to: component_36
     to_losses: false
     type: connection
+  connection_47:
+    flowtype: flowtype_0
+    from: component_37
+    key: connection_47
+    to: component_18
+    to_losses: false
+    type: connection
+  connection_48:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_48
+    to: component_37
+    to_losses: false
+    type: connection
+  connection_49:
+    flowtype: flowtype_0
+    from: component_38
+    key: connection_49
+    to: component_21
+    to_losses: false
+    type: connection
   connection_5:
     flowtype: flowtype_0
     from: component_6
     key: connection_5
     to: component_2
+    to_losses: false
+    type: connection
+  connection_50:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_50
+    to: component_38
+    to_losses: false
+    type: connection
+  connection_51:
+    flowtype: flowtype_0
+    from: component_39
+    key: connection_51
+    to: component_21
+    to_losses: false
+    type: connection
+  connection_52:
+    flowtype: flowtype_0
+    from: component_2
+    key: connection_52
+    to: component_39
     to_losses: false
     type: connection
   connection_6:
@@ -759,7 +831,7 @@ info:
   emission_cost: null
   emission_limit: null
   enable_slacks: false
-  name: Demo_03
+  name: usecase_blackbox_optimizer
   timestep_length: 1.0
   timesteps: 720
 units:
