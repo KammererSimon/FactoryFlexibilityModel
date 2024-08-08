@@ -85,6 +85,7 @@ def run_optimizer():
     )
     search_space = {"storage_size": range(0, 3000,100),
                     "grid_capacity": range(0, 1600,100),
+                    #"pv_capacity": range(0, 3600, 200),
                     #"storage_power": range(0, 6000, 200),  #TODO: prüfen und uncomment
                     #"qnt_forklifts": [1, 2, 3, 4],
                     #"qnt_excavators": [1, 2, 3]

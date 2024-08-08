@@ -3803,6 +3803,9 @@ component_34:
 component_35: {}
 component_36: {}
 component_37:
+  capacity:
+    type: static
+    value: 42.88
   direct_throughput:
     type: boolean
     value: false

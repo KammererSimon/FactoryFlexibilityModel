@@ -37,7 +37,7 @@ def simulate(trial):
     param grid_capacity: [float] The maximum power of the electricity grid connection point in [kW]
     returns: [float] The total cost of operation including capital costs and depreciation costs in [€]
     """
-    session_folder: str = "examples/usecase_blackbox_optimizer"
+    session_folder: str = "examples/Usecase_Blackbox_Optimizer_Study"
     show_results: bool = False
 
     storage_size: float = trial.suggest_float("storage_size", 0.0, 3000.0)
@@ -47,6 +47,7 @@ def simulate(trial):
     storage_power: float = trial.suggest_float("storage_power", 0.0, 6000.0)
     qnt_forklifts: int = trial.suggest_int("qnt_forklifts", 1, 4)       # sollte m.E. besser sein als 4 booleans
     qnt_excavators: int = trial.suggest_int("qnt_excavators", 1, 3)     # sollte m.E. besser sein als 3 booleans
+    pv_capacity: float = trial.suggest_float("pv_capacity", 0.0, 3600.0)
 
     # define capex constants (Capital costs ignored)
     depreciation_period = 10                            # [Years]
@@ -55,6 +56,7 @@ def simulate(trial):
     capex_excavators = 500000/12/depreciation_period    # Monthly depreciation costs for an electric excavator [€]
     capex_forklifts = 62900/12/depreciation_period      # Monthly depreciation costs for an electric forklift [€]
     capex_storage_power = 75/12/depreciation_period     # Monthly depreciation costs for rectifiers and inverters in [€/kW/month]
+    capex_pv = 1000/12/depreciation_period              # Monthly depreciation costs for Solar modules including inverters in [€/kWp/month]
 
     # set logging level to avoid any unnecessary console outputs from the simulation scripts
     logging.basicConfig(level=logging.ERROR)
@@ -74,6 +76,7 @@ def simulate(trial):
     # set hyperparameters
     factory.set_configuration(factory.get_key("Battery_storage"), {"capacity": storage_size, "power_max_charge": storage_power, "power_max_discharge": storage_power})
     factory.set_configuration(factory.get_key("Grid"), {"power_max": grid_capacity})
+    factory.set_configuration(factory.get_key("PV"), {"power_max": pv_capacity})
 
     # Disable unutilized forklifts in the simulation layout
     if qnt_forklifts < 2:
@@ -103,6 +106,7 @@ def simulate(trial):
         capex = (capex_storage * storage_size
                  + capex_storage_power * storage_power
                  + capex_grid_capacity * grid_capacity
+                 + capex_pv * pv_capacity
                  + capex_forklifts * qnt_forklifts
                  + capex_excavators * qnt_excavators)
         opex = simulation.result["objective"]
