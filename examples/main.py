@@ -161,3 +161,12 @@ def dash():
 
     # create and run dashboard
     simulation.create_dash()  # add  -> authentication={"user": "password"} <- to add a user login
+
+
+def optuna_dashboard():
+    val = input("Enter your postgres password: ")
+    storage = optuna.storages.RDBStorage(f"postgresql://postgres:{val}@localhost:5432/ffm")
+    app = wsgi(storage)
+    httpd = make_server("localhost", 8080, app)
+    webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
+    httpd.serve_forever()
