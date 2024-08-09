@@ -47,8 +47,10 @@ import webbrowser
 from multiprocessing import Process
 from wsgiref.simple_server import make_server
 
+import optuna
 import psutil
 from ax import Models
+from ax.modelbridge.dispatch_utils import choose_generation_strategy
 from ax.modelbridge.generation_node import GenerationStep
 from ax.modelbridge.generation_strategy import GenerationStrategy
 from ax.models.torch.botorch_modular.surrogate import Surrogate
@@ -57,10 +59,14 @@ from botorch.acquisition.multi_objective.logei import (
     qLogNoisyExpectedHypervolumeImprovement,
 )
 from botorch.models import SaasFullyBayesianSingleTaskGP
+from botorch.models.transforms import Standardize, Normalize, Round
+from optuna.samplers import TPESampler
+from optuna_dashboard import wsgi
 
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.simulation.Scenario as sc
-from examples.simple_simulation_call import evaluate
+from examples import bayesian_sampler
+from examples.simple_simulation_call import simulate_ax, simulate
 
 # IMPORTS
 from factory_flexibility_model.io import factory_import as imp
@@ -86,24 +92,35 @@ def sigHandler(signo, frame):
     sys.exit(0)
 
 
-def run_optimizer():
+def run_ax_optimizer():
     ax_client = AxClient(
         generation_strategy=GenerationStrategy(
             steps=[
                 GenerationStep(
                     model=Models.SOBOL,
-                    num_trials=5,  # How many trials should be produced from this generation step
-                    min_trials_observed=3,  # How many trials need to be completed to move to next model
-                    max_parallelism=psutil.cpu_count(
-                        logical=False
-                    ),  # Max parallelism for this step
-                    model_kwargs={},  # Any kwargs you want passed into the model
-                    model_gen_kwargs={},  # Any kwargs you want passed to `modelbridge.gen`
+                    num_trials=5,
+                    min_trials_observed=3,
+                    max_parallelism=psutil.cpu_count(logical=False),
                 ),
                 GenerationStep(
                     model=Models.BOTORCH_MODULAR,
                     model_kwargs={
-                        "surrogate": Surrogate(SaasFullyBayesianSingleTaskGP),
+                        "surrogate": Surrogate(
+                            SaasFullyBayesianSingleTaskGP,
+                            outcome_transform_classes=[Standardize],
+                            outcome_transform_options={"Standardize": {"m": 1}},
+                            input_transform_classes=[Normalize, Round],
+                            input_transform_options={
+                                "Normalize": {"d": 6},
+                                "Round": {
+                                    "integer_indices": [4, 5],
+                                },
+                            },
+                            mll_options={
+                                "num_samples": 128,
+                                "warmup_steps": 256,
+                            },
+                        ),
                         "botorch_acqf_class": qLogNoisyExpectedHypervolumeImprovement,
                     },
                     num_trials=-1,
@@ -158,6 +175,7 @@ def run_optimizer():
         },
         parameter_constraints=None,
         outcome_constraints=None,
+        overwrite_existing_experiment=True,
     )
 
     queue = multiprocessing.Queue()
@@ -169,7 +187,7 @@ def run_optimizer():
 
         for trial_index, params in parameters_trial_index.items():
             process = Process(
-                target=evaluate,
+                target=simulate_ax,
                 args=(
                     params,
                     trial_index,
@@ -186,6 +204,40 @@ def run_optimizer():
 
     ax_client.save_to_json_file()
     ax_client.get_pareto_optimal_parameters()
+
+
+def run_optimizer():
+    global proc, thread
+    atexit.register(cleanup)
+    signal.signal(signal.SIGTERM, sigHandler)
+    signal.signal(signal.SIGINT, sigHandler)
+
+    val = input("Enter your postgres password: ")
+    storage = optuna.storages.RDBStorage(
+        f"postgresql://postgres:{val}@localhost:5432/ffm"
+    )
+
+    study = optuna.create_study(
+        storage=storage,
+        directions=["minimize", "minimize"],
+        study_name=f"{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}_FFM",
+        sampler=TPESampler(),
+    )
+
+    app = wsgi(storage)
+    httpd = make_server("localhost", 8080, app)
+    thread = threading.Thread(target=httpd.serve_forever)
+    thread.daemon = True
+    thread.start()
+    webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
+
+    for i in range(24):
+        p = Process(target=study.optimize, args=(simulate,), kwargs={"n_trials": 8})
+        p.start()
+        proc.append(p)
+        print(f"Started Process {i}")
+    for p in proc:
+        p.join()
 
 
 def gui():
@@ -244,3 +296,14 @@ def dash():
 
     # create and run dashboard
     simulation.create_dash()  # add  -> authentication={"user": "password"} <- to add a user login
+
+
+def optuna_dashboard():
+    val = input("Enter your postgres password: ")
+    storage = optuna.storages.RDBStorage(
+        f"postgresql://postgres:{val}@localhost:5432/ffm"
+    )
+    app = wsgi(storage)
+    httpd = make_server("localhost", 8080, app)
+    webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
+    httpd.serve_forever()
