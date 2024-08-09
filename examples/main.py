@@ -2,13 +2,16 @@
 # This script is used to read in factory layouts and specifications from Excel files and to generate
 # factory-objects out of them that can be used for the simulations
 #
-# Project Name: Factory_Flexibility_Model
+# Project Name: WattsInsight
 # File Name: main.py
 #
 # Copyright (c) [2024]
 # [Institute of Energy Systems, Energy Efficiency and Energy Economics
 #  TU Dortmund
 #  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+# [Software Engineering by Algorithms and Logic
+#  TU Dortmund
+#  Constantin Chaumet (constantin.chaumet@tu-dortmund.de)]
 #
 # MIT License
 #
@@ -35,6 +38,7 @@
 #     This skript is used to call the main functionalities of the factory flexibility model
 import datetime
 import logging
+import multiprocessing
 import os
 import signal
 import sys
@@ -43,19 +47,31 @@ import webbrowser
 from multiprocessing import Process
 from wsgiref.simple_server import make_server
 
-import optuna
-from optuna_dashboard import wsgi
+import psutil
+from ax import Models
+from ax.modelbridge.generation_node import GenerationStep
+from ax.modelbridge.generation_strategy import GenerationStrategy
+from ax.models.torch.botorch_modular.surrogate import Surrogate
+from botorch.acquisition.multi_objective import qNoisyExpectedHypervolumeImprovement
+from botorch.acquisition.multi_objective.logei import (
+    qLogNoisyExpectedHypervolumeImprovement,
+)
+from botorch.models import SaasFullyBayesianSingleTaskGP
 
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.simulation.Scenario as sc
-from examples import bayesian_sampler
-from examples.simple_simulation_call import simulate
+from examples.simple_simulation_call import evaluate
+
 # IMPORTS
 from factory_flexibility_model.io import factory_import as imp
 from factory_flexibility_model.simulation import Simulation as fs
 
 import atexit
+
 proc: list[Process] = []
+
+from ax.service.ax_client import AxClient, ObjectiveProperties
+from ax.utils.measurement.synthetic_functions import hartmann6
 
 
 def cleanup():
@@ -71,48 +87,105 @@ def sigHandler(signo, frame):
 
 
 def run_optimizer():
-    global proc, thread
-    atexit.register(cleanup)
-    signal.signal(signal.SIGTERM, sigHandler)
-    signal.signal(signal.SIGINT, sigHandler)
-
-    val = input("Enter your postgres password: ")
-    storage = optuna.storages.RDBStorage(f"postgresql://postgres:{val}@localhost:5432/ffm")
-    sampler = optuna.integration.BoTorchSampler(
-        candidates_func=bayesian_sampler.singletask_qehvi_candidates_func,
-        n_startup_trials=5,
-        independent_sampler=optuna.samplers.QMCSampler(),
+    ax_client = AxClient(
+        generation_strategy=GenerationStrategy(
+            steps=[
+                GenerationStep(
+                    model=Models.SOBOL,
+                    num_trials=5,  # How many trials should be produced from this generation step
+                    min_trials_observed=3,  # How many trials need to be completed to move to next model
+                    max_parallelism=psutil.cpu_count(
+                        logical=False
+                    ),  # Max parallelism for this step
+                    model_kwargs={},  # Any kwargs you want passed into the model
+                    model_gen_kwargs={},  # Any kwargs you want passed to `modelbridge.gen`
+                ),
+                GenerationStep(
+                    model=Models.BOTORCH_MODULAR,
+                    model_kwargs={
+                        "surrogate": Surrogate(SaasFullyBayesianSingleTaskGP),
+                        "botorch_acqf_class": qLogNoisyExpectedHypervolumeImprovement,
+                    },
+                    num_trials=-1,
+                    max_parallelism=8,
+                ),
+            ]
+        )
     )
-    search_space = {"storage_size": range(0, 3000,100),
-                    "grid_capacity": range(0, 1600,100),
-                    #"pv_capacity": range(0, 3600, 200),
-                    #"storage_power": range(0, 6000, 200),  #TODO: prüfen und uncomment
-                    #"qnt_forklifts": [1, 2, 3, 4],
-                    #"qnt_excavators": [1, 2, 3]
-                    }
-
-
-    study = optuna.create_study(
-        storage=storage,
-        directions=["minimize", "minimize"],
-        study_name=f"{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}_FFM",
-        sampler=optuna.samplers.GridSampler(search_space)
+    ax_client.create_experiment(
+        name="SPIES_USE_CASE",
+        parameters=[
+            {
+                "name": "storage_size",
+                "type": "range",
+                "bounds": [0.0, 3000.0],
+                "value_type": "float",
+            },
+            {
+                "name": "grid_capacity",
+                "type": "range",
+                "bounds": [0.0, 1600.0],
+                "value_type": "float",
+            },
+            {
+                "name": "storage_power",
+                "type": "range",
+                "bounds": [0.0, 6000.0],
+                "value_type": "float",
+            },
+            {
+                "name": "pv_capacity",
+                "type": "range",
+                "bounds": [0.0, 3600.0],
+                "value_type": "float",
+            },
+            {
+                "name": "forklift_count",
+                "type": "range",
+                "bounds": [1, 4],
+                "value_type": "int",
+            },
+            {
+                "name": "excavator_count",
+                "type": "range",
+                "bounds": [1, 3],
+                "value_type": "int",
+            },
+        ],
+        objectives={
+            "capex": ObjectiveProperties(minimize=True),
+            "emissions": ObjectiveProperties(minimize=True),
+        },
+        parameter_constraints=None,
+        outcome_constraints=None,
     )
 
-    app = wsgi(storage)
-    httpd = make_server("localhost", 8080, app)
-    thread = threading.Thread(target=httpd.serve_forever)
-    thread.daemon = True
-    thread.start()
-    webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
+    queue = multiprocessing.Queue()
+    for i in range(100):
 
-    for i in range(24):
-        p = Process(target=study.optimize, args=(simulate,), kwargs={"n_trials": 20})
-        p.start()
-        proc.append(p)
-        print(f"Started Process {i}")
-    for p in proc:
-        p.join()
+        ret = ax_client.get_next_trials(12)
+        parameters_trial_index = ret[0]
+        print(f"Got {len(parameters_trial_index)} new trials\n\n")
+
+        for trial_index, params in parameters_trial_index.items():
+            process = Process(
+                target=evaluate,
+                args=(
+                    params,
+                    trial_index,
+                    queue,
+                ),
+            )
+            process.start()
+
+        n_result = 0
+        while n_result < len(parameters_trial_index):
+            res = queue.get(block=True)
+            n_result += 1
+            ax_client.complete_trial(trial_index=res["idx"], raw_data=res["res"])
+
+    ax_client.save_to_json_file()
+    ax_client.get_pareto_optimal_parameters()
 
 
 def gui():
@@ -151,7 +224,9 @@ def simulate_session():
 
     # setup, run and save simulation
     simulation = fs.Simulation(factory=factory, scenario=scenario)
-    simulation.simulate(interval_length=730, threshold=0.000001, solver_config={"log_solver": False})
+    simulation.simulate(
+        interval_length=730, threshold=0.000001, solver_config={"log_solver": False}
+    )
     simulation.save(rf"{session_folder}\simulations")
 
     # run dashboard
@@ -169,12 +244,3 @@ def dash():
 
     # create and run dashboard
     simulation.create_dash()  # add  -> authentication={"user": "password"} <- to add a user login
-
-
-def optuna_dashboard():
-    val = input("Enter your postgres password: ")
-    storage = optuna.storages.RDBStorage(f"postgresql://postgres:{val}@localhost:5432/ffm")
-    app = wsgi(storage)
-    httpd = make_server("localhost", 8080, app)
-    webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
-    httpd.serve_forever()

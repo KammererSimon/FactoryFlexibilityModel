@@ -29,12 +29,16 @@ pyyaml = "^6.0.1"
 python-decouple = "^3.8"
 sphinx = "^7.2.6"
 sphinx-rtd-theme = "^1.3.0"
-optuna = "^3.6.1"
-optuna-dashboard = "^0.15.1"
 psycopg2 = "^2.9.9"
-botorch = "^0.11.1"
-optuna-integration = "^3.6.0"
+ax-platform = {version = "^0.4.1", extras=["mysql"]}
+psutil = "^6.0.0"
+torch = {version = "^2.4.0+cu124", source = "cuda-torch"}
 
+
+[[tool.poetry.source]]
+name = "cuda-torch"
+url = "https://download.pytorch.org/whl/cu124"
+priority = "supplemental"
 
 [build-system]
 requires = ["poetry-core"]
