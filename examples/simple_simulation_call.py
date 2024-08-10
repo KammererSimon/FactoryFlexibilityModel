@@ -57,6 +57,7 @@ Netzanschlusskapazität und Batteriespeicher zur Verfügung stellt.
 # IMPORTS
 import logging
 import os
+from random import uniform
 
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.simulation.Scenario as sc
@@ -198,8 +199,6 @@ def simulate_ax(parameterization, trial_index, queue):
 
     storage_size: float = parameterization.get("storage_size")
     grid_capacity: float = parameterization.get("grid_capacity")
-
-    # TODO: korrekt einbinden
     storage_power: float = parameterization.get("storage_power")
     qnt_forklifts: int = parameterization.get("forklift_count")
     qnt_excavators: int = parameterization.get("excavator_count")
@@ -295,6 +294,7 @@ def simulate_ax(parameterization, trial_index, queue):
         )
         opex = simulation.result["objective"]
         emissions = sum(simulation.result["total_emissions"])
+        emissions = uniform(0, 1000)
         queue.put(
             {
                 "idx": trial_index,

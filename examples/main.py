@@ -53,6 +53,8 @@ from ax import Models
 from ax.modelbridge.dispatch_utils import choose_generation_strategy
 from ax.modelbridge.generation_node import GenerationStep
 from ax.modelbridge.generation_strategy import GenerationStrategy
+from ax.modelbridge.transforms.int_to_float import IntToFloat
+from ax.modelbridge.transforms.winsorize import Winsorize
 from ax.models.torch.botorch_modular.surrogate import Surrogate
 from botorch.acquisition.multi_objective import qNoisyExpectedHypervolumeImprovement
 from botorch.acquisition.multi_objective.logei import (
@@ -93,42 +95,7 @@ def sigHandler(signo, frame):
 
 
 def run_ax_optimizer():
-    ax_client = AxClient(
-        generation_strategy=GenerationStrategy(
-            steps=[
-                GenerationStep(
-                    model=Models.SOBOL,
-                    num_trials=5,
-                    min_trials_observed=3,
-                    max_parallelism=psutil.cpu_count(logical=False),
-                ),
-                GenerationStep(
-                    model=Models.BOTORCH_MODULAR,
-                    model_kwargs={
-                        "surrogate": Surrogate(
-                            SaasFullyBayesianSingleTaskGP,
-                            outcome_transform_classes=[Standardize],
-                            outcome_transform_options={"Standardize": {"m": 1}},
-                            input_transform_classes=[Normalize, Round],
-                            input_transform_options={
-                                "Normalize": {"d": 6},
-                                "Round": {
-                                    "integer_indices": [4, 5],
-                                },
-                            },
-                            mll_options={
-                                "num_samples": 128,
-                                "warmup_steps": 256,
-                            },
-                        ),
-                        "botorch_acqf_class": qLogNoisyExpectedHypervolumeImprovement,
-                    },
-                    num_trials=-1,
-                    max_parallelism=8,
-                ),
-            ]
-        )
-    )
+    ax_client = AxClient()
     ax_client.create_experiment(
         name="SPIES_USE_CASE",
         parameters=[
@@ -176,6 +143,22 @@ def run_ax_optimizer():
         parameter_constraints=None,
         outcome_constraints=None,
         overwrite_existing_experiment=True,
+    )
+    # Note that the transformation stack of the factory modelbridge already calls IntToFloat, UnitX, StandardizeY
+    # This makes calling Standardize as output transform and Normalize and Round as Input Transform pointless.
+    # Reverse UnitX should bring it to the optimized original space,
+    # and reverse IntToFloat should do what round would have done
+    ax_client.generation_strategy._steps[1].model_kwargs.update(
+        {
+            "surrogate": Surrogate(
+                SaasFullyBayesianSingleTaskGP,
+                mll_options={
+                    "num_samples": 256,
+                    "warmup_steps": 512,
+                },
+            ),
+            "botorch_acqf_class": qLogNoisyExpectedHypervolumeImprovement,
+        }
     )
 
     queue = multiprocessing.Queue()
