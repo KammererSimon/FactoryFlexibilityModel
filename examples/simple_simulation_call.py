@@ -175,12 +175,7 @@ def simulate(trial):
         opex = simulation.result["objective"]
         emissions = sum(simulation.result["total_emissions"])
         return (
-            abs(
-                capex + opex
-                if capex + opex < 50000
-                else 50000
-                + 10000 * (capex + opex - 50000) / (100000 + capex + opex - 50000)
-            ),
+            capex + opex,
             emissions,
         )
 

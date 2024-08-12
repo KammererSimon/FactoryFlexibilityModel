@@ -186,7 +186,6 @@ def run_ax_optimizer():
             ax_client.complete_trial(trial_index=res["idx"], raw_data=res["res"])
 
     ax_client.save_to_json_file()
-    ax_client.get_pareto_optimal_parameters()
 
 
 def run_optimizer():
