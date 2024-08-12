@@ -29,8 +29,11 @@ def simulate_dri(simulation_task, model_parameters, simulation_config, total_sim
 
     # scale timeseries to scenario parameters -> a explanation of this method can be found in the papers appendix
     cost_electricity = simulation_task["cost_electricity"]
-    timeseries_scaling_factor = simulation_task["avg_electricity_price"] * simulation_task["volatility"] / np.std(cost_electricity)
-    cost_electricity = (cost_electricity - cost_electricity.mean()) * timeseries_scaling_factor + simulation_task["avg_electricity_price"]
+    cost_electricity = (cost_electricity - cost_electricity.mean()) * simulation_task["volatility"] / np.std(cost_electricity) + simulation_task["avg_electricity_price"]
+
+    emissions_electricity = simulation_task["timeseriess_emissions_electricity"]
+    emissions_electricity = emissions_electricity / emissions_electricity.mean() * simulation_task["electricity_emission_factor"]
+
     scenario.configurations[simulation_task["factory"].get_key("Electricity Grid")] = {"cost": cost_electricity,
                                                                                        "co2_emissions_per_unit": simulation_task["timeseries_emissions_electricity"]*simulation_task["electricity_emission_factor"]}
 
@@ -39,18 +42,16 @@ def simulate_dri(simulation_task, model_parameters, simulation_config, total_sim
                                                                                         "co2_emissions_per_unit": 0}
     scenario.configurations[simulation_task["factory"].get_key("CO2 Slack")] = {"cost": 1000000,
                                                                                 "co2_emissions_per_unit": 0}
-    scenario.configurations[simulation_task["factory"].get_key("CO2 Emissions")] = {"co2_emissions_per_unit": 1}
+    scenario.configurations[simulation_task["factory"].get_key("CO2 Emissions")] = {"co2_emissions_per_unit": 1,
+                                                                                    "cost": simulation_task["co2_price"]}
 
     # set emission limit
-    # emission_limit = model_parameters["annual_dri_production_mtons"] \
-    #                  * 1000000 * model_parameters["emission_baseline"] \
-    #                  * (1 - simulation_task["co2_reduction"] / 100) \
-    #                  * simulation_task["factory"].timesteps / 8760
-    #simulation_task["factory"].emission_limit = emission_limit
-
-    # set co2 price
+    emission_limit = model_parameters["annual_dri_production_mtons"] \
+                     * 1000000 * model_parameters["emission_baseline"] \
+                     * (1 - simulation_task["co2_reduction"] / 100) / 12
+    simulation_task["factory"].emission_limit = emission_limit
     simulation_task["factory"].emission_accounting = True
-    simulation_task["factory"].emission_cost = simulation_task["co2_price"]
+
 
     # perform simulation
     if simulation_config["enable_log_simulation_setup"]:
