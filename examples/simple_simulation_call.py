@@ -52,7 +52,7 @@ def simulate(trial):
     param grid_capacity: [float] The maximum power of the electricity grid connection point in [kW]
     returns: [float] The total cost of operation including capital costs and depreciation costs in [€]
     """
-    session_folder: str = "examples/Usecase_Blackbox_Optimizer_Study"
+    session_folder: str = "examples/usecase_blackbox_optimizer"
     show_results: bool = False
 
     storage_size: float = trial.suggest_float("storage_size", 0.0, 3000.0)
