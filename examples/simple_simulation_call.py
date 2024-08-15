@@ -33,26 +33,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-# INFO
-"""
-- Die funktion unten hat die zwei hyperparameter "storage_size" und "grid_capacity" als hyperparameter.
-    Als Rückgabewert bekommst du die Gesamtkosten des Systems in €
-
-- Im Sachkontext gucken wir damit, wie effizient ein Abfallverwerter laufen kann wenn man ihm unterschiedlich viel
-Netzanschlusskapazität und Batteriespeicher zur Verfügung stellt.
-
-- Die funktion hat noch zwei hardegecodete variablen für die investkosten in den Speicher + Leistungspreise die für den Netzanschluss zu zahlen sind mit drin.
-    -> Die brauchen wir für den gesamtkostenterm damit wir in der optimierung nicht einfach for free beliebig viel speichern nutzen dürfen...
-
-- Das betrachtete Simulationslayout liegt unter examples/Demo.
-    Wenn du dir das im Detail angucken willst: poetry run gui -> Demo.ffm in der gui öffnen
-
-- Wenn du dir ein simulationsergebnis im Detail angucken willst setzt den parameter "show_result" auf true, dann wird kein ergebnis zurückgegeben sondern stattdessen lokal das dashboard mit den ergebnissen des runs gehostet
-    -> Kannste dir mal angucken um mal n gefühl zu bekommen was die simulation im detail so macht.
-
-- Standardmäßig läuft das skript jetzt einfach still und leise durch. wenn du Wissen willst was passiert kannste das logginglevel verändern und in dem simulationsaufruf das solverlog aktivieren
-
-"""
 
 # IMPORTS
 import logging
@@ -78,7 +58,6 @@ def simulate(trial):
     storage_size: float = trial.suggest_float("storage_size", 0.0, 3000.0)
     grid_capacity: float = trial.suggest_float("grid_capacity", 0.0, 1600.0)
 
-    # TODO: korrekt einbinden
     storage_power: float = trial.suggest_float("storage_power", 0.0, 6000.0)
     qnt_forklifts: int = trial.suggest_int(
         "qnt_forklifts", 1, 4
@@ -189,7 +168,7 @@ def simulate_ax(parameterization, trial_index, queue):
     param grid_capacity: [float] The maximum power of the electricity grid connection point in [kW]
     returns: [float] The total cost of operation including capital costs and depreciation costs in [€]
     """
-    session_folder: str = "examples/Usecase_Blackbox_Optimizer_Study"
+    session_folder: str = "examples/usecase_blackbox_optimizer"
     show_results: bool = False
 
     storage_size: float = parameterization.get("storage_size")
