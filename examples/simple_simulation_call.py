@@ -289,13 +289,12 @@ def simulate_ax(parameterization, trial_index, queue):
         )
         opex = simulation.result["objective"]
         emissions = sum(simulation.result["total_emissions"])
-        emissions = uniform(0, 1000)
         queue.put(
             {
                 "idx": trial_index,
                 "res": {
-                    "capex": (
-                        abs(capex + opex),
+                    "costs": (
+                        capex + opex,
                         0.0,
                     ),
                     "emissions": (emissions, 0.0),
