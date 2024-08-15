@@ -2,13 +2,16 @@
 # This script is used to read in factory layouts and specifications from Excel files and to generate
 # factory-objects out of them that can be used for the simulations
 #
-# Project Name: Factory_Flexibility_Model
+# Project Name: WattsInsight
 # File Name: main.py
 #
 # Copyright (c) [2024]
 # [Institute of Energy Systems, Energy Efficiency and Energy Economics
 #  TU Dortmund
 #  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+# [Software Engineering by Algorithms and Logic
+#  TU Dortmund
+#  Constantin Chaumet (constantin.chaumet@tu-dortmund.de)]
 #
 # MIT License
 #
@@ -35,6 +38,7 @@
 #     This skript is used to call the main functionalities of the factory flexibility model
 import datetime
 import logging
+import multiprocessing
 import os
 import signal
 import sys
@@ -44,18 +48,38 @@ from multiprocessing import Process
 from wsgiref.simple_server import make_server
 
 import optuna
+import psutil
+from ax import Models
+from ax.modelbridge.dispatch_utils import choose_generation_strategy
+from ax.modelbridge.generation_node import GenerationStep
+from ax.modelbridge.generation_strategy import GenerationStrategy
+from ax.modelbridge.transforms.int_to_float import IntToFloat
+from ax.modelbridge.transforms.winsorize import Winsorize
+from ax.models.torch.botorch_modular.surrogate import Surrogate
+from botorch.acquisition.multi_objective import qNoisyExpectedHypervolumeImprovement
+from botorch.acquisition.multi_objective.logei import (
+    qLogNoisyExpectedHypervolumeImprovement,
+)
+from botorch.models import SaasFullyBayesianSingleTaskGP
+from botorch.models.transforms import Standardize, Normalize, Round
+from optuna.samplers import TPESampler
 from optuna_dashboard import wsgi
 
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.simulation.Scenario as sc
 from examples import bayesian_sampler
-from examples.simple_simulation_call import simulate
+from examples.simple_simulation_call import simulate_ax, simulate
+
 # IMPORTS
 from factory_flexibility_model.io import factory_import as imp
 from factory_flexibility_model.simulation import Simulation as fs
 
 import atexit
+
 proc: list[Process] = []
+
+from ax.service.ax_client import AxClient, ObjectiveProperties
+from ax.utils.measurement.synthetic_functions import hartmann6
 
 
 def cleanup():
@@ -70,6 +94,100 @@ def sigHandler(signo, frame):
     sys.exit(0)
 
 
+def run_ax_optimizer():
+    ax_client = AxClient()
+    ax_client.create_experiment(
+        name="SPIES_USE_CASE",
+        parameters=[
+            {
+                "name": "storage_size",
+                "type": "range",
+                "bounds": [0.0, 3000.0],
+                "value_type": "float",
+            },
+            {
+                "name": "grid_capacity",
+                "type": "range",
+                "bounds": [0.0, 1600.0],
+                "value_type": "float",
+            },
+            {
+                "name": "storage_power",
+                "type": "range",
+                "bounds": [0.0, 6000.0],
+                "value_type": "float",
+            },
+            {
+                "name": "pv_capacity",
+                "type": "range",
+                "bounds": [0.0, 3600.0],
+                "value_type": "float",
+            },
+            {
+                "name": "forklift_count",
+                "type": "range",
+                "bounds": [1, 4],
+                "value_type": "int",
+            },
+            {
+                "name": "excavator_count",
+                "type": "range",
+                "bounds": [1, 3],
+                "value_type": "int",
+            },
+        ],
+        objectives={
+            "capex": ObjectiveProperties(minimize=True),
+            "emissions": ObjectiveProperties(minimize=True),
+        },
+        parameter_constraints=None,
+        outcome_constraints=None,
+        overwrite_existing_experiment=True,
+    )
+    # Note that the transformation stack of the factory modelbridge already calls IntToFloat, UnitX, StandardizeY
+    # This makes calling Standardize as output transform and Normalize and Round as Input Transform pointless.
+    # Reverse UnitX should bring it to the optimized original space,
+    # and reverse IntToFloat should do what round would have done
+    ax_client.generation_strategy._steps[1].model_kwargs.update(
+        {
+            "surrogate": Surrogate(
+                SaasFullyBayesianSingleTaskGP,
+                mll_options={
+                    "num_samples": 256,
+                    "warmup_steps": 512,
+                },
+            ),
+            "botorch_acqf_class": qLogNoisyExpectedHypervolumeImprovement,
+        }
+    )
+
+    queue = multiprocessing.Queue()
+    for i in range(100):
+
+        ret = ax_client.get_next_trials(12)
+        parameters_trial_index = ret[0]
+        print(f"Got {len(parameters_trial_index)} new trials\n\n")
+
+        for trial_index, params in parameters_trial_index.items():
+            process = Process(
+                target=simulate_ax,
+                args=(
+                    params,
+                    trial_index,
+                    queue,
+                ),
+            )
+            process.start()
+
+        n_result = 0
+        while n_result < len(parameters_trial_index):
+            res = queue.get(block=True)
+            n_result += 1
+            ax_client.complete_trial(trial_index=res["idx"], raw_data=res["res"])
+
+    ax_client.save_to_json_file()
+
+
 def run_optimizer():
     global proc, thread
     atexit.register(cleanup)
@@ -77,18 +195,15 @@ def run_optimizer():
     signal.signal(signal.SIGINT, sigHandler)
 
     val = input("Enter your postgres password: ")
-    storage = optuna.storages.RDBStorage(f"postgresql://postgres:{val}@localhost:5432/ffm")
-    sampler = optuna.integration.BoTorchSampler(
-        candidates_func=bayesian_sampler.singletask_qehvi_candidates_func,
-        n_startup_trials=5,
-        independent_sampler=optuna.samplers.QMCSampler(),
+    storage = optuna.storages.RDBStorage(
+        f"postgresql://postgres:{val}@localhost:5432/ffm"
     )
-    search_space = {"storage_size": range(0, 3000,100), "grid_capacity": range(0, 1600,100)}
+
     study = optuna.create_study(
         storage=storage,
         directions=["minimize", "minimize"],
         study_name=f"{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}_FFM",
-        sampler=optuna.samplers.GridSampler(search_space)
+        sampler=TPESampler(),
     )
 
     app = wsgi(storage)
@@ -99,7 +214,7 @@ def run_optimizer():
     webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
 
     for i in range(24):
-        p = Process(target=study.optimize, args=(simulate,), kwargs={"n_trials": 20})
+        p = Process(target=study.optimize, args=(simulate,), kwargs={"n_trials": 8})
         p.start()
         proc.append(p)
         print(f"Started Process {i}")
@@ -143,7 +258,9 @@ def simulate_session():
 
     # setup, run and save simulation
     simulation = fs.Simulation(factory=factory, scenario=scenario)
-    simulation.simulate(interval_length=730, threshold=0.000001, solver_config={"log_solver": False})
+    simulation.simulate(
+        interval_length=730, threshold=0.000001, solver_config={"log_solver": False}
+    )
     simulation.save(rf"{session_folder}\simulations")
 
     # run dashboard
@@ -161,3 +278,14 @@ def dash():
 
     # create and run dashboard
     simulation.create_dash()  # add  -> authentication={"user": "password"} <- to add a user login
+
+
+def optuna_dashboard():
+    val = input("Enter your postgres password: ")
+    storage = optuna.storages.RDBStorage(
+        f"postgresql://postgres:{val}@localhost:5432/ffm"
+    )
+    app = wsgi(storage)
+    httpd = make_server("localhost", 8080, app)
+    webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
+    httpd.serve_forever()

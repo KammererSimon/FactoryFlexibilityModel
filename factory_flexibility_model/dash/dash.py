@@ -1651,7 +1651,7 @@ def create_dash(simulation):
         config = (
             f"\n **Thermal Resistance:** {component.R} K/kW\n"
             f"\n **Thermal Capacity:** {component.C} kWh/K\n"
-            f"\n **Tstart:** {component.temperature_start - 273.15} °C \n"
+            f"\n **Tstart:** {round(simulation.result[component.key]['temperature'][0] - 273.15, 2)} °C \n"
             f"\n **Tstart=Tend?:** {component.sustainable}\n"
             f"\n **Inputs:** \n"
             f"\n {inputs} \n"
