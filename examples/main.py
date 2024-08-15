@@ -137,7 +137,7 @@ def run_ax_optimizer():
             },
         ],
         objectives={
-            "capex": ObjectiveProperties(minimize=True),
+            "costs": ObjectiveProperties(minimize=True),
             "emissions": ObjectiveProperties(minimize=True),
         },
         parameter_constraints=None,
@@ -184,6 +184,7 @@ def run_ax_optimizer():
             res = queue.get(block=True)
             n_result += 1
             ax_client.complete_trial(trial_index=res["idx"], raw_data=res["res"])
+        ax_client.save_to_json_file()
 
     ax_client.save_to_json_file()
 
