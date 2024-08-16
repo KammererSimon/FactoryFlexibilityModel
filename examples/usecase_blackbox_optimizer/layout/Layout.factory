@@ -831,7 +831,7 @@ info:
   emission_cost: null
   emission_limit: null
   enable_slacks: false
-  name: usecase_blackbox_optimizer
+  name: Usecase_Blackbox_Optimizer
   timestep_length: 1.0
   timesteps: 720
 units:

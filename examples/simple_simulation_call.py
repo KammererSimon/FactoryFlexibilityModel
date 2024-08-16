@@ -168,7 +168,7 @@ def simulate_ax(parameterization, trial_index, queue):
     param grid_capacity: [float] The maximum power of the electricity grid connection point in [kW]
     returns: [float] The total cost of operation including capital costs and depreciation costs in [€]
     """
-    session_folder: str = "examples/usecase_blackbox_optimizer"
+    session_folder: str = "examples\\usecase_blackbox_optimizer"
     show_results: bool = False
 
     storage_size: float = parameterization.get("storage_size")

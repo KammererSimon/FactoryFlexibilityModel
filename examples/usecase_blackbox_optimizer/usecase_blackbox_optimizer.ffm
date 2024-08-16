@@ -1451,46 +1451,121 @@ log:
   type: DEBUG
 - event_info: ''
   icon: folder-open-outline
-  message: Session 'C:/Users/smsikamm/PycharmProjects/WattsInsight/examples/Usecase_Blackbox_Optimizer_Study'
+  message: Session 'C:/Users/Simon/PycharmProjects/FactoryFlexibilityModel/examples/Usecase_Blackbox_Optimizer_Study'
     has been imported
-  time: '2024-08-12 16:05:17'
+  time: '2024-08-17 00:14:22'
   type: INFO
-- event_info: 'During saving session the following error occured:'
-  icon: alert
-  message: The timeseries with key 'electricity_emissions_best' could not be found.
-    Saving session aborted!
-  time: '2024-08-12 16:06:00'
-  type: ERROR
+- event_info: ''
+  icon: chevron-right
+  message: 'New parameter configuration: Parameter demand of component Ext Ladebedarf
+    is now specified as a timeseries.'
+  time: '2024-08-17 00:14:37'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: Parameter configuration of parameter co2_emissions_per_unit at component
+    Grid has been deleted
+  time: '2024-08-17 00:14:44'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: 'New parameter configuration: Parameter co2_emissions_per_unit of component
+    Grid is now specified as a static value.'
+  time: '2024-08-17 00:14:51'
+  type: DEBUG
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/Simon/PycharmProjects/FactoryFlexibilityModel/examples/Usecase_Blackbox_Optimizer_Study
+  time: '2024-08-17 00:14:55'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: Parameter configuration of parameter power_max at component Grid has been
+    deleted
+  time: '2024-08-17 00:16:21'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: 'New parameter configuration: Parameter power_max of component Grid is
+    now specified as a static value.'
+  time: '2024-08-17 00:16:26'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: Parameter configuration of parameter capacity at component Battery_storage
+    has been deleted
+  time: '2024-08-17 00:16:33'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: 'New parameter configuration: Parameter capacity of component Battery_storage
+    is now specified as a static value.'
+  time: '2024-08-17 00:16:37'
+  type: DEBUG
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/Simon/PycharmProjects/FactoryFlexibilityModel/examples/Usecase_Blackbox_Optimizer_Study
+  time: '2024-08-17 00:16:43'
+  type: INFO
+- event_info: ''
+  icon: chevron-right
+  message: Parameter configuration of parameter power_max at component Grid has been
+    deleted
+  time: '2024-08-17 00:22:07'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: 'New parameter configuration: Parameter power_max of component Grid is
+    now specified as a static value.'
+  time: '2024-08-17 00:22:13'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: Parameter configuration of parameter capacity at component Battery_storage
+    has been deleted
+  time: '2024-08-17 00:22:20'
+  type: DEBUG
+- event_info: ''
+  icon: chevron-right
+  message: 'New parameter configuration: Parameter capacity of component Battery_storage
+    is now specified as a static value.'
+  time: '2024-08-17 00:22:26'
+  type: DEBUG
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/Simon/PycharmProjects/FactoryFlexibilityModel/examples/Usecase_Blackbox_Optimizer'
+    has been imported
+  time: '2024-08-17 00:38:40'
+  type: INFO
+- event_info: ''
+  icon: folder-open-outline
+  message: Session 'C:/Users/Simon/PycharmProjects/FactoryFlexibilityModel/examples/Usecase_Blackbox_Optimizer'
+    has been imported
+  time: '2024-08-17 00:42:57'
+  type: INFO
+- event_info: ''
+  icon: content-save-check
+  message: Session successfully saved at C:/Users/Simon/PycharmProjects/FactoryFlexibilityModel/examples/Usecase_Blackbox_Optimizer
+  time: '2024-08-17 00:43:18'
+  type: INFO
 - event_info: ''
   icon: information-outline
-  message: 0 timeseries have been updated and 10 timeseries imported from 'C:/Users/smsikamm/PycharmProjects/FactoryFlexibilityModel/examples/Demo_02/HyperSyS.xlsx'
-  time: '2024-08-12 16:08:47'
+  message: 0 timeseries have been updated and 10 timeseries imported from 'C:/Users/Simon/PycharmProjects/FactoryFlexibilityModel/examples/Usecase_Blackbox_Optimizer/HyperSyS.xlsx'
+  time: '2024-08-17 00:43:24'
   type: INFO
 - event_info: ''
   icon: chevron-right
   message: Parameter configuration of parameter co2_emissions_per_unit at component
     Grid has been deleted
-  time: '2024-08-12 16:08:53'
+  time: '2024-08-17 00:43:30'
   type: DEBUG
 - event_info: ''
   icon: chevron-right
   message: 'New parameter configuration: Parameter co2_emissions_per_unit of component
     Grid is now specified as a timeseries.'
-  time: '2024-08-12 16:09:01'
+  time: '2024-08-17 00:43:42'
   type: DEBUG
-- event_info: ''
-  icon: chevron-right
-  message: 'New parameter configuration: Parameter power_max of component Ext Ladebedarf
-    is now specified as a timeseries.'
-  time: '2024-08-12 16:09:21'
-  type: DEBUG
-- event_info: ''
-  icon: folder-open-outline
-  message: Session 'C:/Users/smsikamm/PycharmProjects/WattsInsight/examples/usecase_blackbox_optimizer'
-    has been imported
-  time: '2024-08-15 18:14:14'
-  type: INFO
-session_path: C:/Users/smsikamm/PycharmProjects/WattsInsight/examples/usecase_blackbox_optimizer
+session_path: C:/Users/Simon/PycharmProjects/FactoryFlexibilityModel/examples/Usecase_Blackbox_Optimizer
 show_component_config_dialog_on_creation: false
 timeseries:
   Cost Electricity kWh:
@@ -99577,7 +99652,7 @@ timeseries:
     - 0
     - 0
     - 0
-  emissions_best:
+  emissions_electricity_best:
     description: kgco2/kwh
     type: full
     values:

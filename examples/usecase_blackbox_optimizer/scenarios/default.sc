@@ -740,9 +740,6 @@ component_14:
   power_max:
     type: static
     value: 7500.0
-  switchable:
-    type: boolean
-    value: false
 component_16:
   capacity:
     type: static
@@ -3827,7 +3824,7 @@ component_39:
     type: boolean
     value: false
 component_4:
-  power_max:
+  demand:
     key: demand_laden_extern_best
     type: timeseries
     value:
@@ -4557,7 +4554,7 @@ component_4:
 component_5:
   capacity:
     type: static
-    value: 1000.0
+    value: 3000.0
   direct_throughput:
     type: boolean
     value: false
@@ -4566,7 +4563,7 @@ component_5:
     value: 0.5
 component_6:
   co2_emissions_per_unit:
-    key: emissions_best
+    key: emissions_electricity_best
     type: timeseries
     value:
     - 0.1675906388556888

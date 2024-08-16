@@ -36,6 +36,16 @@
 
 # FACTORY MODEL MAIN
 #     This skript is used to call the main functionalities of the factory flexibility model
+
+import torch
+
+device = (
+    torch.device(f"cuda:{torch.cuda.current_device()}")
+    if torch.cuda.is_available()
+    else "cpu"
+)
+torch.set_default_device(device)
+
 import datetime
 import logging
 import multiprocessing
@@ -50,15 +60,22 @@ from wsgiref.simple_server import make_server
 import optuna
 import psutil
 from ax import Models
+from ax.modelbridge.cross_validation import cross_validate
 from ax.modelbridge.dispatch_utils import choose_generation_strategy
 from ax.modelbridge.generation_node import GenerationStep
 from ax.modelbridge.generation_strategy import GenerationStrategy
 from ax.modelbridge.transforms.int_to_float import IntToFloat
 from ax.modelbridge.transforms.winsorize import Winsorize
 from ax.models.torch.botorch_modular.surrogate import Surrogate
+from ax.plot.contour import interact_contour
+from ax.plot.diagnostic import interact_cross_validation
+from ax.plot.pareto_frontier import plot_pareto_frontier
+from ax.plot.pareto_utils import compute_posterior_pareto_frontier
+from ax.utils.notebook.plotting import render
 from botorch.acquisition.multi_objective import qNoisyExpectedHypervolumeImprovement
 from botorch.acquisition.multi_objective.logei import (
     qLogNoisyExpectedHypervolumeImprovement,
+    qLogExpectedHypervolumeImprovement,
 )
 from botorch.models import SaasFullyBayesianSingleTaskGP
 from botorch.models.transforms import Standardize, Normalize, Round
@@ -95,7 +112,7 @@ def sigHandler(signo, frame):
 
 
 def run_ax_optimizer():
-    ax_client = AxClient()
+    ax_client = AxClient(torch_device=torch.device("cuda"))
     ax_client.create_experiment(
         name="SPIES_USE_CASE",
         parameters=[
@@ -137,33 +154,36 @@ def run_ax_optimizer():
             },
         ],
         objectives={
-            "costs": ObjectiveProperties(minimize=True),
+            "costs": ObjectiveProperties(minimize=True, threshold=12000),
             "emissions": ObjectiveProperties(minimize=True),
         },
         parameter_constraints=None,
         outcome_constraints=None,
         overwrite_existing_experiment=True,
     )
+
     # Note that the transformation stack of the factory modelbridge already calls IntToFloat, UnitX, StandardizeY
     # This makes calling Standardize as output transform and Normalize and Round as Input Transform pointless.
     # Reverse UnitX should bring it to the optimized original space,
     # and reverse IntToFloat should do what round would have done
     ax_client.generation_strategy._steps[1].model_kwargs.update(
         {
+            "torch_dtype": torch.float64,
+            "torch_device": torch.device("cuda"),
             "surrogate": Surrogate(
                 SaasFullyBayesianSingleTaskGP,
-                mll_options={
-                    "num_samples": 256,
-                    "warmup_steps": 512,
-                },
+                # mll_options={
+                #     "num_samples": 256,
+                #     "warmup_steps": 512,
+                # },
             ),
-            "botorch_acqf_class": qLogNoisyExpectedHypervolumeImprovement,
+            "botorch_acqf_class": qLogNoisyExpectedHypervolumeImprovement,  # Or Noisy Variant
         }
     )
 
     queue = multiprocessing.Queue()
-    for i in range(100):
-
+    total_trials = 100
+    while total_trials > 0:
         ret = ax_client.get_next_trials(12)
         parameters_trial_index = ret[0]
         print(f"Got {len(parameters_trial_index)} new trials\n\n")
@@ -184,9 +204,34 @@ def run_ax_optimizer():
             res = queue.get(block=True)
             n_result += 1
             ax_client.complete_trial(trial_index=res["idx"], raw_data=res["res"])
+            total_trials -= 1
+
         ax_client.save_to_json_file()
 
     ax_client.save_to_json_file()
+
+
+def ax_plot_results():
+    ax_client = AxClient.load_from_json_file("ax_client_snapshot.json")
+    ax_client.fit_model()
+    objectives = ax_client.experiment.optimization_config.objective.objectives
+    frontier = compute_posterior_pareto_frontier(
+        experiment=ax_client.experiment,
+        data=ax_client.experiment.fetch_data(),
+        primary_objective=objectives[1].metric,
+        secondary_objective=objectives[0].metric,
+        absolute_metrics=["costs", "emissions"],
+        num_points=20,
+    )
+    render(plot_pareto_frontier(frontier, CI_level=0.90))
+
+    model = ax_client.generation_strategy.model
+
+    cv_results = cross_validate(model)
+    render(interact_cross_validation(cv_results))
+
+    render(interact_contour(model=model, metric_name="costs"))
+    render(interact_contour(model=model, metric_name="emissions"))
 
 
 def run_optimizer():
