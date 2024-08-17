@@ -106,26 +106,25 @@ def simulate(trial):
     factory = blueprint.to_factory()
 
     # set hyperparameters
-    scenario.configurations[factory.get_key("Battery_Storage")] = {"capacity": storage_size,
-                                                                    "power_max_charge": storage_power,
-                                                                    "power_max_discharge": storage_power}
-
-    scenario.configurations[factory.get_key("Grid")] = {"power_max": grid_capacity}
-    scenario.configurations[factory.get_key("PV")] = {"power_max": pv_capacity}
+    scenario.configurations[factory.get_key("Battery_Storage")]["capacity"] = storage_size
+    scenario.configurations[factory.get_key("Battery_Storage")]["power_max_charge"] = storage_power
+    scenario.configurations[factory.get_key("Battery_Storage")]["power_max_discharge"] = storage_power
+    scenario.configurations[factory.get_key("Grid")]["power_max"] = grid_capacity
+    scenario.configurations[factory.get_key("PV")]["power_max"] =  pv_capacity
 
     # Disable unutilized forklifts in the simulation layout
     if qnt_forklifts < 2:
-        scenario.configurations[factory.get_key("Forklift_2")] = {"capacity": 0}
+        scenario.configurations[factory.get_key("Forklift_2")]["capacity"] = 0
     if qnt_forklifts < 3:
-        scenario.configurations[factory.get_key("Forklift_3")] = {"capacity": 0}
+        scenario.configurations[factory.get_key("Forklift_3")]["capacity"] = 0
     if qnt_forklifts < 4:
-        scenario.configurations[factory.get_key("Forklift_4")] = {"capacity": 0}
+        scenario.configurations[factory.get_key("Forklift_4")]["capacity"] = 0
 
     # Disable unutilized excavators in the layout
     if qnt_excavators < 2:
-        scenario.configurations[factory.get_key("Excavator_2")] = {"capacity": 0}
+        scenario.configurations[factory.get_key("Excavator_2")]["capacity"] = 0
     if qnt_excavators < 3:
-        scenario.configurations[factory.get_key("Excavator_3")] = {"capacity": 0}
+        scenario.configurations[factory.get_key("Excavator_3")]["capacity"] = 0
 
     # create simulation object
     simulation = fs.Simulation(factory=factory, scenario=scenario)
