@@ -106,11 +106,17 @@ def simulate(trial):
     factory = blueprint.to_factory()
 
     # set hyperparameters
-    scenario.configurations[factory.get_key("Battery_Storage")]["capacity"] = storage_size
-    scenario.configurations[factory.get_key("Battery_Storage")]["power_max_charge"] = storage_power
-    scenario.configurations[factory.get_key("Battery_Storage")]["power_max_discharge"] = storage_power
+    scenario.configurations[factory.get_key("Battery_Storage")][
+        "capacity"
+    ] = storage_size
+    scenario.configurations[factory.get_key("Battery_Storage")][
+        "power_max_charge"
+    ] = storage_power
+    scenario.configurations[factory.get_key("Battery_Storage")][
+        "power_max_discharge"
+    ] = storage_power
     scenario.configurations[factory.get_key("Grid")]["power_max"] = grid_capacity
-    scenario.configurations[factory.get_key("PV")]["power_max"] =  pv_capacity
+    scenario.configurations[factory.get_key("PV")]["power_max"] = pv_capacity
 
     # Disable unutilized forklifts in the simulation layout
     if qnt_forklifts < 2:
@@ -168,9 +174,10 @@ def simulate_ax(parameterization, trial_index, queue):
 
     storage_size: float = parameterization.get("storage_size")
     grid_capacity: float = parameterization.get("grid_capacity")
+
     storage_power: float = parameterization.get("storage_power")
-    qnt_forklifts: int = parameterization.get("forklift_count")
-    qnt_excavators: int = parameterization.get("excavator_count")
+    forklift_count: int = parameterization.get("forklift_count")
+    excavator_count: int = parameterization.get("excavator_count")
     pv_capacity: float = parameterization.get("pv_capacity")
 
     # define capex constants (Capital costs ignored)
@@ -212,66 +219,57 @@ def simulate_ax(parameterization, trial_index, queue):
     factory = blueprint.to_factory()
 
     # set hyperparameters
-    factory.set_configuration(
-        factory.get_key("Battery_storage"),
-        {
-            "capacity": storage_size,
-            "power_max_charge": storage_power,
-            "power_max_discharge": storage_power,
-        },
-    )
-    factory.set_configuration(factory.get_key("Grid"), {"power_max": grid_capacity})
-    factory.set_configuration(factory.get_key("PV"), {"power_max": pv_capacity})
+    scenario.configurations[factory.get_key("Battery_storage")][
+        "capacity"
+    ] = storage_size
+    scenario.configurations[factory.get_key("Battery_storage")][
+        "power_max_charge"
+    ] = storage_power
+    scenario.configurations[factory.get_key("Battery_storage")][
+        "power_max_discharge"
+    ] = storage_power
+    scenario.configurations[factory.get_key("Grid")]["power_max"] = grid_capacity
+    scenario.configurations[factory.get_key("PV")]["power_max"] = pv_capacity
 
     # Disable unutilized forklifts in the simulation layout
-    if qnt_forklifts < 2:
-        factory.set_configuration(factory.get_key("Forklift_2"), {"capacity": 0})
-    if qnt_forklifts < 3:
-        factory.set_configuration(factory.get_key("Forklift_3"), {"capacity": 0})
-    if qnt_forklifts < 4:
-        factory.set_configuration(factory.get_key("Forklift_4"), {"capacity": 0})
+    if forklift_count < 2:
+        scenario.configurations[factory.get_key("Forklift_2")]["capacity"] = 0
+    if forklift_count < 3:
+        scenario.configurations[factory.get_key("Forklift_3")]["capacity"] = 0
+    if forklift_count < 4:
+        scenario.configurations[factory.get_key("Forklift_4")]["capacity"] = 0
 
     # Disable unutilized excavators in the layout
-    if qnt_excavators < 2:
-        factory.set_configuration(factory.get_key("Excavator_2"), {"capacity": 0})
-    if qnt_excavators < 3:
-        factory.set_configuration(factory.get_key("Excavator_3"), {"capacity": 0})
+    if excavator_count < 2:
+        scenario.configurations[factory.get_key("Excavator_2")]["capacity"] = 0
+    if excavator_count < 3:
+        scenario.configurations[factory.get_key("Excavator_3")]["capacity"] = 0
 
     # create simulation object
     simulation = fs.Simulation(factory=factory, scenario=scenario)
 
     # run simulation
     simulation.simulate(
-        threshold=0.000001,
-        solver_config={
-            "log_solver": False,
-            "mip_gap": 0.01,
-        },
+        threshold=0.000001, solver_config={"log_solver": False, "mip_gap": 0.01}
     )
 
-    if show_results:
-        simulation.create_dash()
-    else:
-        # calculate and return costs:
-        capex = (
-            capex_storage * storage_size
-            + capex_storage_power * storage_power
-            + capex_grid_capacity * grid_capacity
-            + capex_pv * pv_capacity
-            + capex_forklifts * qnt_forklifts
-            + capex_excavators * qnt_excavators
-        )
-        opex = simulation.result["objective"]
-        emissions = sum(simulation.result["total_emissions"])
-        queue.put(
-            {
-                "idx": trial_index,
-                "res": {
-                    "costs": (
-                        capex + opex,
-                        0.0,
-                    ),
-                    "emissions": (emissions, 0.0),
-                },
-            }
-        )
+    # calculate and return costs:
+    capex = (
+        capex_storage * storage_size
+        + capex_storage_power * storage_power
+        + capex_grid_capacity * grid_capacity
+        + capex_pv * pv_capacity
+        + capex_forklifts * forklift_count
+        + capex_excavators * excavator_count
+    )
+    opex = simulation.result["objective"]
+    emissions = sum(simulation.result["total_emissions"])
+    queue.put(
+        {
+            "idx": trial_index,
+            "res": {
+                "costs": (capex + opex, 0.0),
+                "emissions": (emissions, 0.0),
+            },
+        }
+    )

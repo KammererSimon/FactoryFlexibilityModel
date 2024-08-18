@@ -3165,6 +3165,39 @@ url = "https://download.pytorch.org/whl/cu124"
 reference = "cuda-torch"
 
 [[package]]
+name = "torchvision"
+version = "0.19.0+cu124"
+description = "image and video datasets and models for torch deep learning"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "torchvision-0.19.0+cu124-cp310-cp310-linux_x86_64.whl", hash = "sha256:82cf10450537aeb9584ceaf53633f177bb809d563c5d64526f4b9be7668b2769"},
+    {file = "torchvision-0.19.0+cu124-cp310-cp310-win_amd64.whl", hash = "sha256:c6b30aa8ee86ac5c9f666b4119bcc95ea69179d90e28ec6a7b095053ea440ccc"},
+    {file = "torchvision-0.19.0+cu124-cp311-cp311-linux_x86_64.whl", hash = "sha256:3a877d3eb44f0e89e3442d5242e7e49a9755e709eee327b4629af0078a479023"},
+    {file = "torchvision-0.19.0+cu124-cp311-cp311-win_amd64.whl", hash = "sha256:42ac55c0fd1cdea14c20168f0b24eba7fc2d2eb4ef75196ded7b76f81dee619f"},
+    {file = "torchvision-0.19.0+cu124-cp312-cp312-linux_x86_64.whl", hash = "sha256:2aa511f7073928cc3cab03d1e5524d840a7a17da7f9bde7e771116c233d011e8"},
+    {file = "torchvision-0.19.0+cu124-cp312-cp312-win_amd64.whl", hash = "sha256:0b7ea429f93336fc23fe97d1d163e771d81ad5dfe87a3034036a9168edacf92d"},
+    {file = "torchvision-0.19.0+cu124-cp38-cp38-linux_x86_64.whl", hash = "sha256:50ecbf4a68552f9072d2f1b337b17df17179beacb9f9f81596eec44660089fac"},
+    {file = "torchvision-0.19.0+cu124-cp38-cp38-win_amd64.whl", hash = "sha256:3a62130b08587fb024331f4f9f600be29272e51c656d209928b54d98524cac2b"},
+    {file = "torchvision-0.19.0+cu124-cp39-cp39-linux_x86_64.whl", hash = "sha256:70bea66c15fd3111f0b4426a2af820b6dd5b4e95412683b8ec422c8fd92e0994"},
+    {file = "torchvision-0.19.0+cu124-cp39-cp39-win_amd64.whl", hash = "sha256:166d23c40e794a8c0c08005e08cfd4cf68cf398f9640ec843dc1b0bf761d0218"},
+]
+
+[package.dependencies]
+numpy = "*"
+pillow = ">=5.3.0,<8.3.dev0 || >=8.4.dev0"
+torch = "2.4.0"
+
+[package.extras]
+gdown = ["gdown (>=4.7.3)"]
+scipy = ["scipy"]
+
+[package.source]
+type = "legacy"
+url = "https://download.pytorch.org/whl/cu124"
+reference = "cuda-torch"
+
+[[package]]
 name = "tqdm"
 version = "4.66.5"
 description = "Fast, Extensible Progress Meter"
@@ -3537,4 +3570,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11, <4"
-content-hash = "ca77f91bf4e375bd41bf529af490c2b584af7626cd613822d489fbb11fdf9601"
+content-hash = "15625a45a02b0bbb21536cea45d3d0eacb5e52d312a8be5b96769d66ecd5b581"

@@ -37,15 +37,7 @@
 # FACTORY MODEL MAIN
 #     This skript is used to call the main functionalities of the factory flexibility model
 
-import torch
-
-device = (
-    torch.device(f"cuda:{torch.cuda.current_device()}")
-    if torch.cuda.is_available()
-    else "cpu"
-)
-torch.set_default_device(device)
-
+import atexit
 import datetime
 import logging
 import multiprocessing
@@ -53,50 +45,40 @@ import os
 import signal
 import sys
 import threading
+import time
 import webbrowser
 from multiprocessing import Process
 from wsgiref.simple_server import make_server
 
-import optuna
-import psutil
-from ax import Models
+import torch
 from ax.modelbridge.cross_validation import cross_validate
-from ax.modelbridge.dispatch_utils import choose_generation_strategy
-from ax.modelbridge.generation_node import GenerationStep
-from ax.modelbridge.generation_strategy import GenerationStrategy
-from ax.modelbridge.transforms.int_to_float import IntToFloat
 from ax.modelbridge.transforms.winsorize import Winsorize
+from ax.models.torch.botorch_modular.model import BoTorchModel
 from ax.models.torch.botorch_modular.surrogate import Surrogate
 from ax.plot.contour import interact_contour
 from ax.plot.diagnostic import interact_cross_validation
 from ax.plot.pareto_frontier import plot_pareto_frontier
-from ax.plot.pareto_utils import compute_posterior_pareto_frontier
+from ax.plot.pareto_utils import (
+    compute_posterior_pareto_frontier,
+    get_observed_pareto_frontiers,
+)
 from ax.utils.notebook.plotting import render
-from botorch.acquisition.multi_objective import qNoisyExpectedHypervolumeImprovement
 from botorch.acquisition.multi_objective.logei import (
     qLogNoisyExpectedHypervolumeImprovement,
-    qLogExpectedHypervolumeImprovement,
 )
 from botorch.models import SaasFullyBayesianSingleTaskGP
-from botorch.models.transforms import Standardize, Normalize, Round
-from optuna.samplers import TPESampler
-from optuna_dashboard import wsgi
 
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.simulation.Scenario as sc
-from examples import bayesian_sampler
 from examples.simple_simulation_call import simulate_ax, simulate
 
 # IMPORTS
 from factory_flexibility_model.io import factory_import as imp
 from factory_flexibility_model.simulation import Simulation as fs
 
-import atexit
-
 proc: list[Process] = []
 
 from ax.service.ax_client import AxClient, ObjectiveProperties
-from ax.utils.measurement.synthetic_functions import hartmann6
 
 
 def cleanup():
@@ -112,6 +94,7 @@ def sigHandler(signo, frame):
 
 
 def run_ax_optimizer():
+    storage_name = f"{time.strftime("%Y%m%d-%H%M%S")}_snapshot.json"
     ax_client = AxClient(torch_device=torch.device("cuda"))
     ax_client.create_experiment(
         name="SPIES_USE_CASE",
@@ -154,8 +137,8 @@ def run_ax_optimizer():
             },
         ],
         objectives={
-            "costs": ObjectiveProperties(minimize=True, threshold=12000),
-            "emissions": ObjectiveProperties(minimize=True),
+            "costs": ObjectiveProperties(minimize=True, threshold=25000),
+            "emissions": ObjectiveProperties(minimize=True, threshold=3000),
         },
         parameter_constraints=None,
         outcome_constraints=None,
@@ -168,8 +151,6 @@ def run_ax_optimizer():
     # and reverse IntToFloat should do what round would have done
     ax_client.generation_strategy._steps[1].model_kwargs.update(
         {
-            "torch_dtype": torch.float64,
-            "torch_device": torch.device("cuda"),
             "surrogate": Surrogate(
                 SaasFullyBayesianSingleTaskGP,
                 # mll_options={
@@ -178,13 +159,14 @@ def run_ax_optimizer():
                 # },
             ),
             "botorch_acqf_class": qLogNoisyExpectedHypervolumeImprovement,  # Or Noisy Variant
+            "acquisition_options": {"prune_baseline": True},
         }
     )
 
     queue = multiprocessing.Queue()
     total_trials = 100
     while total_trials > 0:
-        ret = ax_client.get_next_trials(12)
+        ret = ax_client.get_next_trials(24)
         parameters_trial_index = ret[0]
         print(f"Got {len(parameters_trial_index)} new trials\n\n")
 
@@ -206,13 +188,14 @@ def run_ax_optimizer():
             ax_client.complete_trial(trial_index=res["idx"], raw_data=res["res"])
             total_trials -= 1
 
-        ax_client.save_to_json_file()
+        ax_client.save_to_json_file(filepath=storage_name)
 
-    ax_client.save_to_json_file()
+    ax_client.save_to_json_file(filepath=storage_name)
 
 
 def ax_plot_results():
-    ax_client = AxClient.load_from_json_file("ax_client_snapshot.json")
+    val = input("Enter filename to load: ")
+    ax_client = AxClient.load_from_json_file(val)
     ax_client.fit_model()
     objectives = ax_client.experiment.optimization_config.objective.objectives
     frontier = compute_posterior_pareto_frontier(
@@ -223,7 +206,13 @@ def ax_plot_results():
         absolute_metrics=["costs", "emissions"],
         num_points=20,
     )
+    observed_pareto_frontier = get_observed_pareto_frontiers(
+        experiment=ax_client.experiment,
+        data=ax_client.experiment.fetch_data(),
+    )[0]
+
     render(plot_pareto_frontier(frontier, CI_level=0.90))
+    render(plot_pareto_frontier(observed_pareto_frontier, CI_level=0.90))
 
     model = ax_client.generation_strategy.model
 
@@ -234,38 +223,38 @@ def ax_plot_results():
     render(interact_contour(model=model, metric_name="emissions"))
 
 
-def run_optimizer():
-    global proc, thread
-    atexit.register(cleanup)
-    signal.signal(signal.SIGTERM, sigHandler)
-    signal.signal(signal.SIGINT, sigHandler)
-
-    val = input("Enter your postgres password: ")
-    storage = optuna.storages.RDBStorage(
-        f"postgresql://postgres:{val}@localhost:5432/ffm"
-    )
-
-    study = optuna.create_study(
-        storage=storage,
-        directions=["minimize", "minimize"],
-        study_name=f"{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}_FFM",
-        sampler=TPESampler(),
-    )
-
-    app = wsgi(storage)
-    httpd = make_server("localhost", 8080, app)
-    thread = threading.Thread(target=httpd.serve_forever)
-    thread.daemon = True
-    thread.start()
-    webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
-
-    for i in range(24):
-        p = Process(target=study.optimize, args=(simulate,), kwargs={"n_trials": 8})
-        p.start()
-        proc.append(p)
-        print(f"Started Process {i}")
-    for p in proc:
-        p.join()
+# def run_optimizer():
+#     global proc, thread
+#     atexit.register(cleanup)
+#     signal.signal(signal.SIGTERM, sigHandler)
+#     signal.signal(signal.SIGINT, sigHandler)
+#
+#     val = input("Enter your postgres password: ")
+#     storage = optuna.storages.RDBStorage(
+#         f"postgresql://postgres:{val}@localhost:5432/ffm"
+#     )
+#
+#     study = optuna.create_study(
+#         storage=storage,
+#         directions=["minimize", "minimize"],
+#         study_name=f"{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}_FFM",
+#         sampler=TPESampler(),
+#     )
+#
+#     app = wsgi(storage)
+#     httpd = make_server("localhost", 8080, app)
+#     thread = threading.Thread(target=httpd.serve_forever)
+#     thread.daemon = True
+#     thread.start()
+#     webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
+#
+#     for i in range(24):
+#         p = Process(target=study.optimize, args=(simulate,), kwargs={"n_trials": 8})
+#         p.start()
+#         proc.append(p)
+#         print(f"Started Process {i}")
+#     for p in proc:
+#         p.join()
 
 
 def gui():
@@ -326,12 +315,12 @@ def dash():
     simulation.create_dash()  # add  -> authentication={"user": "password"} <- to add a user login
 
 
-def optuna_dashboard():
-    val = input("Enter your postgres password: ")
-    storage = optuna.storages.RDBStorage(
-        f"postgresql://postgres:{val}@localhost:5432/ffm"
-    )
-    app = wsgi(storage)
-    httpd = make_server("localhost", 8080, app)
-    webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
-    httpd.serve_forever()
+# def optuna_dashboard():
+#     val = input("Enter your postgres password: ")
+#     storage = optuna.storages.RDBStorage(
+#         f"postgresql://postgres:{val}@localhost:5432/ffm"
+#     )
+#     app = wsgi(storage)
+#     httpd = make_server("localhost", 8080, app)
+#     webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
+#     httpd.serve_forever()
