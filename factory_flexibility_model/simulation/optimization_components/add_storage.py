@@ -108,7 +108,7 @@ def add_storage(simulation, component, t_start, t_end):
     logging.debug(f"        - Constraint:   Cumsum(E) >= 0 for {component.name} ")
 
     # create Pcharge_max-constraint
-    if component.power_max_charge > 0:
+    if component.power_max_charge is not None:
         simulation.m.addConstr(
             simulation.MVars[component.inputs[0].key]
             <= component.power_max_charge * simulation.interval_length
@@ -118,7 +118,7 @@ def add_storage(simulation, component, t_start, t_end):
         )
 
     # create Pdischarge_max-constraint
-    if component.power_max_discharge > 0:
+    if component.power_max_discharge is not None:
         simulation.m.addConstr(
             simulation.MVars[component.outputs[0].key]
             <= component.power_max_discharge * simulation.interval_length

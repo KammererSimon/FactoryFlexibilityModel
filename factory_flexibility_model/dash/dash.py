@@ -1376,27 +1376,31 @@ def create_dash(simulation):
                 ),
                 secondary_y=False,
             )
+
             # Print Pcharge_min and Pcharge_max
-            fig.add_trace(
-                go.Scatter(
-                    x=x,
-                    y=np.ones(t1 - t0) * component.power_max_charge,
-                    line_color="rgb(192,0,0)",
-                    name="Max Inflow / Capacity",
-                    line_dash="dot",
-                ),
-                secondary_y=True,
-            )
-            fig.add_trace(
-                go.Scatter(
-                    x=x,
-                    y=-np.ones(t1 - t0) * component.power_max_discharge,
-                    line_color="rgb(192,0,0)",
-                    name="Max Outflow",
-                    line_dash="dash",
-                ),
-                secondary_y=True,
-            )
+            if component.power_max_charge is not None:
+                fig.add_trace(
+                    go.Scatter(
+                        x=x,
+                        y=np.ones(t1 - t0) * component.power_max_charge,
+                        line_color="rgb(192,0,0)",
+                        name="Max Inflow / Capacity",
+                        line_dash="dot",
+                    ),
+                    secondary_y=True,
+                )
+
+            if component.power_max_discharge is not None:
+                fig.add_trace(
+                    go.Scatter(
+                        x=x,
+                        y=-np.ones(t1 - t0) * component.power_max_discharge,
+                        line_color="rgb(192,0,0)",
+                        name="Max Outflow",
+                        line_dash="dash",
+                    ),
+                    secondary_y=True,
+                )
 
             # Print Pcharge
             fig.add_hline(y=0, line_color="lightgrey", secondary_y=True)
@@ -1442,6 +1446,17 @@ def create_dash(simulation):
                 outputs += f"\n * {i_output.destination.name}\n"
                 output_sum += sum(simulation.result[i_output.key])
 
+            if component.power_max_charge is None:
+                power_max_charge = "Unlimited"
+            else:
+                power_max_charge = component.flowtype.unit.get_value_expression(component.power_max_charge,'flowrate')
+
+            if component.power_max_discharge is None:
+                power_max_discharge = "Unlimited"
+            else:
+                power_max_discharge = component.flowtype.unit.get_value_expression(component.power_max_discharge,'flowrate')
+
+
             config = (
                 f"\n **Max usable capacity:** {component.flowtype.unit.get_value_expression(component.capacity,'flow')}\n"
                 f"\n **Base efficiency:** {component.efficiency * 100} %\n"
@@ -1449,8 +1464,8 @@ def create_dash(simulation):
                 f"\n **Leakage per timestep:** \n"
                 f"\n * {component.leakage_time} % of total Capacity\n"
                 f"\n * {component.leakage_SOC} % of SOC\n"
-                f"\n **Max charging Power:** {component.flowtype.unit.get_value_expression(component.power_max_charge,'flowrate')}\n"
-                f"\n **Max discharging Power:** {component.flowtype.unit.get_value_expression(component.power_max_discharge,'flowrate')}\n"
+                f"\n **Max charging Power:** {power_max_charge}\n"
+                f"\n **Max discharging Power:** {power_max_discharge}\n"
                 f"\n **Input:** \n"
                 f"\n {inputs} \n"
                 f"\n **Output:** \n"

@@ -1292,12 +1292,8 @@ class Storage(Component):
         self.flowtype_description = ""  # Optional string shown as explanation in GUI
         self.leakage_time = 0  # fixed % of capacity that leaks per timestep
         self.leakage_SOC = 0  # % of the stored ressource that leaks per timestep
-        self.power_max_charge = (
-            0  # maximum charging / unloading speed, initialized as almost unlimited
-        )
-        self.power_max_discharge = (
-            0  # maximum discharging / unloading speed, initialized as almost unlimited
-        )
+        self.power_max_charge = None  # maximum charging / unloading speed, None = Unlimited
+        self.power_max_discharge = None # maximum discharging / unloading speed, None = Unlimited
         self.soc_start = 0.5  # State of charge at the beginning of the Simulation, initialized as 50%; NO EFFECT IF soc_start_determined=False
         self.soc_start_determined = True  # Determines, wether the SOC at the start/end of the Simulation has to be the given value or wether it it up to the solver
         self.sustainable = True  # Determines, wether the SOC has to be the same at the start and end of the Simulation or not.
