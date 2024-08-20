@@ -983,8 +983,13 @@ class Simulation:
         # CONFIGURE SOLVER
         oc.solve(self, solver_config)
 
-        if self.m.Status == GRB.TIME_LIMIT:
-            logging.error("Solver time exceeded. Calculation aborted")
+        # Check solver status
+        if self.m.Status == GRB.OPTIMAL:
+            logging.info("Problem solved successfully")
+        elif self.m.Status == GRB.TIME_LIMIT:
+            logging.warning("Solver reached timelimit. Found solution might not be accurate")
+        else:
+            logging.error("Solver failed to find a valid solution in time")
             raise Exception
 
         # COLLECT THE RESULTS
