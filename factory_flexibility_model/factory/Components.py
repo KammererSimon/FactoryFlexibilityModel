@@ -1707,10 +1707,33 @@ class Schedule(Component):
                     )
                     raise Exception
                 if max(self.demands[:, 1]) > timesteps:
-                    logging.critical(
-                        f"ERROR in demand input data for {self.name}: Endpoint of at least one demand interval is after maximum Simulation length."
+                    # fit demand matrix to length of the simulation
+                    adjusted_demands = []
+                    for row in self.demands:
+                        start_time = row[0]
+                        end_time = row[1]
+                        total_energy = row[2]
+                        max_power = row[3]
+
+                        # only consider demands that start within the simulation timeframe
+                        if start_time <= timesteps:
+                            if end_time > timesteps:
+                                # cut demand and only require a share of the energy if the demand outlasts the simulation
+                                new_duration = timesteps - start_time
+                                # calculate the relative amount of energy assigned to the current interval
+                                energy_within_interval = total_energy / (end_time - start_time + 1) * new_duration
+                                adjusted_demands.append([start_time, timesteps, energy_within_interval, max_power])
+                            else:
+                                # use row if the demand is fully within the simulation timeframe
+                                adjusted_demands.append(row)
+                    self.demands = np.array(adjusted_demands)
+
+                    logging.warning(
+                        f"Data inconsistency in demand input data for {self.name}: Endpoint of at least one demand interval is after maximum Simulation length. Demands with tstart later than simulation length will be ignored"
                     )
-                    raise Exception
+
+
+
                 if min(self.demands[:, 0]) <= 0:
                     logging.critical(
                         f"ERROR in demand input data for {self.name}: The earliest starting Point for demands is interval 1. Earlier starts are invalid."

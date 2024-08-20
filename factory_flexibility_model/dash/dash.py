@@ -1711,7 +1711,7 @@ def create_dash(simulation):
             fig1 = go.Figure()
 
             data = (
-                sum(utilization[:, t0:t1])
+                np.sum(utilization[:, t0:t1], axis=0)
                 / simulation.scenario.timefactor
                 * simulation.factory.timefactor
             )
@@ -1789,6 +1789,7 @@ def create_dash(simulation):
             data3 = np.zeros(
                 [int(max(component.demands[:, 1] - component.demands[:, 0])) + 1, T]
             )
+
             for i in range(len(component.demands)):
                 data3[
                     int(component.demands[i, 1] - component.demands[i, 0]),
@@ -1831,10 +1832,13 @@ def create_dash(simulation):
 
             config = (
                 config
-                + f"\n **Flow**: {component.flowtype.name} \n \n**Unit:** {component.flowtype.unit.get_unit_flow()}\n \n **Number of Demands:** {len(component.demands)} \n"
+                + f"\n **Flow**: {component.flowtype.name} \n "
+                  f"\n**Unit:** {component.flowtype.unit.get_unit_flow()}\n "
+                  f"\n **Number of Demands:** {component.demands.shape[0]} \n"
             )
 
-            results = f"\n **Total Flow:** {component.flowtype.unit.get_value_expression(round(sum(sum(utilization))), 'flow')}\n \n **power_max:** {component.flowtype.unit.get_value_expression(max(sum(utilization)), 'flowrate')}\n"
+            results = (f"\n **Total Flow:** {component.flowtype.unit.get_value_expression(np.nansum(utilization, axis=0), 'flow')}\n "
+                       f"\n **power_max:** {component.flowtype.unit.get_value_expression(np.max(np.nansum(utilization)), 'flowrate')}\n")
         else:
             fig1 = go.Figure()
             fig2 = go.Figure()

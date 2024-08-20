@@ -75,6 +75,7 @@ from examples.simple_simulation_call import simulate_ax, simulate
 # IMPORTS
 from factory_flexibility_model.io import factory_import as imp
 from factory_flexibility_model.simulation import Simulation as fs
+from examples.simple_simulation_call import simulate_ax
 
 proc: list[Process] = []
 
@@ -275,7 +276,11 @@ def simulate_session():
     This function takes the path to a session folder and conducts the simulation.
     """
 
+    simulate_ax()
+    return
+
     logging.basicConfig(level=logging.WARNING)
+
 
     session_folder = sys.argv[1]
 

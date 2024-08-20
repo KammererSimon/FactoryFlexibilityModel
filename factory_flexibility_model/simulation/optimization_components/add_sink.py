@@ -74,7 +74,7 @@ def add_sink(simulation, component, t_start, t_end):
     )
     logging.debug(f"        - Constraint:   {component.name} == sum of incoming flows")
 
-    # is the total cumulative input of the destination limited? If yes: add sum constraint
+    # is the total cumulative input of the sink limited? If yes: add sum constraint
     if component.max_total_input_limited:
         simulation.m.addConstr(
             gp.quicksum(simulation.MVars[f"E_{component.key}"])
@@ -90,7 +90,6 @@ def add_sink(simulation, component, t_start, t_end):
             simulation.MVars[f"E_{component.key}"]
             <= component.power_max[t_start : t_end + 1]
             * component.availability[t_start : t_end + 1]
-            * interval_length
         )
         logging.debug(
             f"        - Constraint:   {component.key} <= {component.name}_max"
