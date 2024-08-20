@@ -45,15 +45,44 @@ def add_schedule(simulation, component, t_start, t_end):
     :return: simulation.m is beeing extended
     """
 
+    # calculate interval length
     interval_length = t_end - t_start + 1
-    # get number of individual flexible demands:
-    rows = len(component.demands)
+
+    # calculate the list of relevant demands for the current simulation interval and split demands if necessary
+    relevant_demands = []
+    for row in component.demands:
+        start_time = row[0]
+        end_time = row[1]
+        total_energy = row[2]
+        max_power = row[3]
+
+        # Check, if the demand overlaps with the current simulation interval
+        if start_time < t_end and end_time > t_start:
+            # calculate overlap between demand and interval
+            overlap_start = max(start_time, t_start)
+            overlap_end = min(end_time, t_end)
+
+            # calculate the total duration of the demand within the interval
+            new_duration = overlap_end - overlap_start + 1
+
+            # calculate the relative amount of energy assigned to the current interval
+            energy_within_interval = total_energy / (end_time-start_time+1) * new_duration
+
+            # create adapted row in the demands matrix
+            adjusted_row = [overlap_start - t_start, overlap_end - t_start, energy_within_interval, max_power]
+            relevant_demands.append(adjusted_row)
+
+    # turn list of demands into np array
+    relevant_demands = np.array(relevant_demands)
+
+    # get number of resulting relevant demands
+    rows = len(relevant_demands)
 
     # create availability matrix for the demands
     availability = np.ones((interval_length, rows))
     for row in range(rows):
         for column in range(
-            int(component.demands[row, 0]), int(component.demands[row, 1]) + 1
+            int(relevant_demands[row, 0]), int(relevant_demands[row, 1]) + 1
         ):
             availability[column - 1, row] = 0
     simulation.MVars[f"X_{component.key}_availability"] = availability
@@ -87,7 +116,7 @@ def add_schedule(simulation, component, t_start, t_end):
     # define constraint: each part demand must have its individual demand fulfilled
     simulation.m.addConstrs(
         gp.quicksum(simulation.MVars[f"E_{component.key}_in"][0 : interval_length, i])
-        == component.demands[i, 2]
+        == relevant_demands[i, 2]
         for i in range(rows)
     )
     logging.debug(
@@ -108,7 +137,7 @@ def add_schedule(simulation, component, t_start, t_end):
     # define constraint: adhere power_max constraints per part demand
     simulation.m.addConstrs(
         simulation.MVars[f"E_{component.key}_in"][t, i] / simulation.interval_length
-        <= component.demands[i, 3]
+        <= relevant_demands[i, 3]
         for t in range(interval_length)
         for i in range(rows)
     )

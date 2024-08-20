@@ -125,7 +125,7 @@ class Simulation:
 
        #check if this is the first iteration
         if self.result is None:
-            # if yes: initialize detailled result struct
+            # if yes: initialize detailed result struct
             first_iteration = True
             self.result = {}
             self.result["energy_generated_onsite"] = 0
@@ -153,7 +153,7 @@ class Simulation:
             rounding_decimals = 10
 
         # initialize counter- and summing variables:
-        total_emissions = np.zeros(self.T)
+        total_emissions = 0
         total_emission_cost = 0
 
         # collect timeseries of all flows in the factory: iterate over all connections
@@ -176,7 +176,6 @@ class Simulation:
 
         # collect all Component specific timeseries: iterate over all components
         for component in self.factory.components.values():
-
             # handle pools
             if component.type == "pool":
 
@@ -443,7 +442,6 @@ class Simulation:
                     self.result["energy_generated_offsite"] += sum(utilization)
 
 
-
             # handle slacks
             elif component.type == "slack":
                 # read the result timeseries of the Simulation
@@ -568,11 +566,27 @@ class Simulation:
                 )
 
                 # write the results to the result dictionary
-                self.result[component.key] = {
-                    "utilization": utilization,
-                    "availability": availability,
-                }
+                if first_iteration:
+                    self.result[component.key] = {
+                        "utilization": utilization,
+                        "availability": availability,
+                    }
+                else:
+                    # combine the utilization matrices
+                    rows_old, cols_old = self.result[component.key]["utilization"].shape
+                    rows_new, cols_new = utilization.shape
+                    utilization_new = np.full((rows_old+rows_new, cols_old+cols_new), np.nan)
+                    utilization_new[:rows_old, :cols_old] = self.result[component.key]["utilization"]
+                    utilization_new[rows_old:, cols_old:] = utilization
+                    self.result[component.key]["utilization"] = utilization_new
 
+                    # combine the availability matrices
+                    rows_old, cols_old = self.result[component.key]["availability"].shape
+                    rows_new, cols_new = availability.shape
+                    availability_new = np.full((rows_old+rows_new, cols_old+cols_new), 0.)
+                    availability_new[:rows_old, :cols_old] = self.result[component.key]["availability"]
+                    availability_new[rows_old:, cols_old:] = availability
+                    self.result[component.key]["availability"] = availability_new
 
             # handle thermalsystems
             elif component.type == "thermalsystem":
@@ -592,10 +606,14 @@ class Simulation:
                 )
 
                 # write the results to the result dictionary
-                self.result[component.key] = {
-                    "utilization": utilization,
-                    "temperature": temperature,
-                }
+                if first_iteration:
+                    self.result[component.key] = {
+                        "utilization": utilization,
+                        "temperature": temperature,
+                    }
+                else:
+                    self.result[component.key]["utilization"] = np.hstack((self.result[component.key]["utilization"], utilization))
+                    self.result[component.key]["temperature"] = np.hstack((self.result[component.key]["temperature"], temperature))
 
 
             # handle triggerdemand
@@ -614,7 +632,7 @@ class Simulation:
             if "ambient_gains" in self.factory.components:
                 self.result["objective"] = self.m.objVal - sum(
                     self.result["ambient_gains"]["utilization"]
-                    * self.factory.components["ambient_gains"].cost[0 : self.T]
+                    * self.factory.components["ambient_gains"].cost[t_start:t_start+interval_length+1]
                 )
             else:
                 self.result["objective"] = self.m.objVal
@@ -627,7 +645,7 @@ class Simulation:
             # collect achieved costs/revenues (objective of target function - ambient_gain_punishment_term)
             if "ambient_gains" in self.factory.components:
                 self.result["objective"] += self.m.objVal - sum(
-                    self.result["ambient_gains"]["utilization"]
+                    self.result["ambient_gains"]["utilization"][t_start:t_start+interval_length+1]
                     * self.factory.components["ambient_gains"].cost[t_start:t_start+interval_length+1]
                 )
             else:
