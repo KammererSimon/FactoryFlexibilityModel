@@ -833,7 +833,7 @@ info:
   enable_slacks: false
   name: Usecase_Blackbox_Optimizer
   timestep_length: 1.0
-  timesteps: 720
+  timesteps: 8760
 units:
   energy:
     conversion_factor: 1

@@ -137,8 +137,8 @@ def run_ax_optimizer():
             },
         ],
         objectives={
-            "costs": ObjectiveProperties(minimize=True, threshold=25000),
-            "emissions": ObjectiveProperties(minimize=True, threshold=1500),
+            "costs": ObjectiveProperties(minimize=True, threshold=450000),
+            "emissions": ObjectiveProperties(minimize=True, threshold=90000),
         },
         parameter_constraints=None,
         outcome_constraints=None,

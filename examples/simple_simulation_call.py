@@ -183,22 +183,22 @@ def simulate_ax(parameterization, trial_index, queue):
     # define capex constants (Capital costs ignored)
     depreciation_period = 10  # [Years]
     capex_storage = (
-        400 / 12 / depreciation_period
+        400 / depreciation_period
     )  # Monthly depreciation cost of battery storages in [€/kWh/month]
     capex_grid_capacity = (
-        100 / 12 / depreciation_period
+        100 / depreciation_period
     )  # Monthly capacity charge for utilization of the power grid in [€/kW/month]
     capex_excavators = (
-        500000 / 12 / depreciation_period
+        500000 / depreciation_period
     )  # Monthly depreciation costs for an electric excavator [€]
     capex_forklifts = (
-        62900 / 12 / depreciation_period
+        62900 / depreciation_period
     )  # Monthly depreciation costs for an electric forklift [€]
     capex_storage_power = (
-        75 / 12 / depreciation_period
+        75 / depreciation_period
     )  # Monthly depreciation costs for rectifiers and inverters in [€/kW/month]
     capex_pv = (
-        1000 / 12 / depreciation_period
+        1000 / depreciation_period
     )  # Monthly depreciation costs for Solar modules including inverters in [€/kWp/month]
 
     # set logging level to avoid any unnecessary console outputs from the simulation scripts
@@ -250,7 +250,10 @@ def simulate_ax(parameterization, trial_index, queue):
 
     # run simulation
     simulation.simulate(
-        threshold=0.000001, solver_config={"log_solver": False, "mip_gap": 0.01}
+        threshold=0.000001,
+        solver_config={"log_solver": False,
+                       "mip_gap": 0.01,
+                       "max_solver_time": 30}
     )
 
     # calculate and return costs:
