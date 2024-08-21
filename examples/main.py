@@ -138,8 +138,8 @@ def run_ax_optimizer():
             },
         ],
         objectives={
-            "costs": ObjectiveProperties(minimize=True, threshold=450000),
-            "emissions": ObjectiveProperties(minimize=True, threshold=90000),
+            "costs": ObjectiveProperties(minimize=True, threshold=435000),
+            "emissions": ObjectiveProperties(minimize=True, threshold=82000),
         },
         parameter_constraints=None,
         outcome_constraints=None,
@@ -280,7 +280,6 @@ def simulate_session():
     return
 
     logging.basicConfig(level=logging.WARNING)
-
 
     session_folder = sys.argv[1]
 

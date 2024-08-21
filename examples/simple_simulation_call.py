@@ -251,9 +251,8 @@ def simulate_ax(parameterization, trial_index, queue):
     # run simulation
     simulation.simulate(
         threshold=0.000001,
-        solver_config={"log_solver": False,
-                       "mip_gap": 0.01,
-                       "max_solver_time": 30}
+        interval_length=730,
+        solver_config={"log_solver": False, "mip_gap": 0.01, "max_solver_time": 60},
     )
 
     # calculate and return costs:
