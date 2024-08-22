@@ -184,22 +184,22 @@ def simulate_ax(parameterization, trial_index, queue):
     depreciation_period = 10  # [Years]
     capex_storage = (
         400 / depreciation_period
-    )  # Monthly depreciation cost of battery storages in [€/kWh/month]
+    )  # Annual depreciation cost of battery storages in [€/kWh/a]
     capex_grid_capacity = (
-        100 / depreciation_period
-    )  # Monthly capacity charge for utilization of the power grid in [€/kW/month]
+        100
+    )  # Annual capacity charge for utilization of the power grid in [€/kW/a]
     capex_excavators = (
         500000 / depreciation_period
-    )  # Monthly depreciation costs for an electric excavator [€]
+    )  # Annual depreciation costs for an electric excavator [€]
     capex_forklifts = (
         62900 / depreciation_period
-    )  # Monthly depreciation costs for an electric forklift [€]
+    )  # Annual depreciation costs for an electric forklift [€]
     capex_storage_power = (
         75 / depreciation_period
-    )  # Monthly depreciation costs for rectifiers and inverters in [€/kW/month]
+    )  # Annual depreciation costs for rectifiers and inverters in [€/kW/a]
     capex_pv = (
         1000 / depreciation_period
-    )  # Monthly depreciation costs for Solar modules including inverters in [€/kWp/month]
+    )  # Annual depreciation costs for Solar modules including inverters in [€/kWp/a]
 
     # set logging level to avoid any unnecessary console outputs from the simulation scripts
     logging.basicConfig(level=logging.ERROR)
