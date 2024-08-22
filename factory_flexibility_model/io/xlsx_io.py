@@ -63,13 +63,6 @@ def write_results_to_xlsx(
         )
         simulation.simulate()
 
-    # check, that results have been collected
-    if not simulation.results_collected:
-        logging.warning(
-            "The Simulation results have not been processed yet. Calling the result processing method now..."
-        )
-        simulation.__collect_results()
-
     # create a result dict with reduced depth:
     result_dict = {}
     for key, value in simulation.result.items():
@@ -81,15 +74,20 @@ def write_results_to_xlsx(
 
     # create a new excel workbook
     if filename is None:
-        workbook = xlsxwriter.Workbook(f"{path}\\{simulation.name}_results.xlsx")
+        workbook_path = f"{path}\\{simulation.name}_results.xlsx"
     else:
-        workbook = xlsxwriter.Workbook(f"{path}\\{filename}.xlsx")
-
+        workbook_path = f"{path}\\{filename}.xlsx"
+    workbook = xlsxwriter.Workbook(workbook_path)
     worksheet = workbook.add_worksheet()
 
     # iterate over all parameters and write each of them in an individual column in the excel file
     col = 0
     for key in result_dict.keys():
+
+        # skip unnecessary keys
+        if key in ["costs_inputs", "costs_outputs", "costs_converter_ramping", "costs_capacity_provision", "costs_emission_allowances"]:
+            continue
+
         # insert key names
         worksheet.write(0, col, key)
 
@@ -101,13 +99,17 @@ def write_results_to_xlsx(
         ):
             worksheet.write(1, col, result_dict[key])
         else:
-            for row in range(len(result_dict[key])):
-                worksheet.write(row + 1, col, result_dict[key][row])
+            try:
+                for row in range(len(result_dict[key])):
+                    worksheet.write(row + 1, col, result_dict[key][row])
+            except:
+                logging.warning(f"WARNING: The results for key {key} could not be processed for excel output")
 
         # continue with next column in excel sheet
         col += 1
 
     workbook.close()
+    logging.warning(f"The Simulation results have successfully been written to {workbook_path}")
 
 
 def import_xlsx_to_blueprint(data_path: str):
