@@ -118,6 +118,7 @@ def simulate(trial):
     scenario.configurations[factory.get_key("Grid")]["power_max"] = grid_capacity
     scenario.configurations[factory.get_key("PV")]["power_max"] = pv_capacity
 
+
     # Disable unutilized forklifts in the simulation layout
     if qnt_forklifts < 2:
         scenario.configurations[factory.get_key("Forklift_2")]["capacity"] = 0
@@ -131,6 +132,9 @@ def simulate(trial):
         scenario.configurations[factory.get_key("Excavator_2")]["capacity"] = 0
     if qnt_excavators < 3:
         scenario.configurations[factory.get_key("Excavator_3")]["capacity"] = 0
+
+    # set emissions as big M for electricity Slack
+    scenario.configurations[factory.get_key("Slack Grid")]["co2_emissions_per_unit"] = 1000
 
     # create simulation object
     simulation = fs.Simulation(factory=factory, scenario=scenario)
