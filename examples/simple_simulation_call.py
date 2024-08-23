@@ -137,7 +137,8 @@ def simulate(trial):
 
     # run simulation
     simulation.simulate(
-        threshold=0.000001, solver_config={"log_solver": False, "mip_gap": 0.01}
+        threshold=0.000001,
+        solver_config={"log_solver": False, "mip_gap": 0.01, "max_solver_time": 120},
     )
 
     if show_results:
@@ -186,8 +187,8 @@ def simulate_ax(parameterization, trial_index, queue):
         400 / depreciation_period
     )  # Annual depreciation cost of battery storages in [€/kWh/a]
     capex_grid_capacity = (
-        100
-    )  # Annual capacity charge for utilization of the power grid in [€/kW/a]
+        100  # Annual capacity charge for utilization of the power grid in [€/kW/a]
+    )
     capex_excavators = (
         500000 / depreciation_period
     )  # Annual depreciation costs for an electric excavator [€]
@@ -252,7 +253,7 @@ def simulate_ax(parameterization, trial_index, queue):
     simulation.simulate(
         threshold=0.000001,
         interval_length=730,
-        solver_config={"log_solver": False, "mip_gap": 0.01, "max_solver_time": 60},
+        solver_config={"log_solver": False, "mip_gap": 0.01, "max_solver_time": 120},
     )
 
     # calculate and return costs:

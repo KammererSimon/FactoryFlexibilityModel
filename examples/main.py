@@ -50,6 +50,7 @@ import webbrowser
 from multiprocessing import Process
 from wsgiref.simple_server import make_server
 
+import numpy as np
 import torch
 from ax.modelbridge.cross_validation import cross_validate
 from ax.modelbridge.transforms.winsorize import Winsorize
@@ -62,11 +63,14 @@ from ax.plot.pareto_utils import (
     compute_posterior_pareto_frontier,
     get_observed_pareto_frontiers,
 )
+from ax.service.utils.report_utils import _pareto_frontier_scatter_2d_plotly
 from ax.utils.notebook.plotting import render
 from botorch.acquisition.multi_objective.logei import (
     qLogNoisyExpectedHypervolumeImprovement,
 )
 from botorch.models import SaasFullyBayesianSingleTaskGP
+from matplotlib import pyplot as plt
+from matplotlib.pyplot import colormaps
 
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.simulation.Scenario as sc
@@ -138,8 +142,8 @@ def run_ax_optimizer():
             },
         ],
         objectives={
-            "costs": ObjectiveProperties(minimize=True, threshold=435000),
-            "emissions": ObjectiveProperties(minimize=True, threshold=82000),
+            "costs": ObjectiveProperties(minimize=True, threshold=500000),
+            "emissions": ObjectiveProperties(minimize=True, threshold=90000),
         },
         parameter_constraints=None,
         outcome_constraints=None,
@@ -198,30 +202,39 @@ def ax_plot_results():
     val = input("Enter filename to load: ")
     ax_client = AxClient.load_from_json_file(val)
     ax_client.fit_model()
-    objectives = ax_client.experiment.optimization_config.objective.objectives
-    frontier = compute_posterior_pareto_frontier(
-        experiment=ax_client.experiment,
-        data=ax_client.experiment.fetch_data(),
-        primary_objective=objectives[1].metric,
-        secondary_objective=objectives[0].metric,
-        absolute_metrics=["costs", "emissions"],
-        num_points=20,
-    )
-    observed_pareto_frontier = get_observed_pareto_frontiers(
-        experiment=ax_client.experiment,
-        data=ax_client.experiment.fetch_data(),
-    )[0]
 
-    render(plot_pareto_frontier(frontier, CI_level=0.90))
-    render(plot_pareto_frontier(observed_pareto_frontier, CI_level=0.90))
+    _pareto_frontier_scatter_2d_plotly(experiment=ax_client.experiment).show()
 
     model = ax_client.generation_strategy.model
 
     cv_results = cross_validate(model)
-    render(interact_cross_validation(cv_results))
+    cross_validation_plot = interact_cross_validation(cv_results)
+    render(cross_validation_plot)
+    cost_contour_plot = interact_contour(model=model, metric_name="costs")
+    for i in range(len(cost_contour_plot.data["data"])):
+        if "colorscale" not in cost_contour_plot.data["data"][i]:
+            continue
+        colorscale = np.asarray(cost_contour_plot.data["data"][i]["colorscale"])
+        viridis = plt.cm.get_cmap("viridis", len(colorscale[:, 0]))
+        colors = viridis(np.linspace(0, 1, len(colorscale[:, 0]))).tolist()
+        for j in range(len(colors)):
+            colors[j] = f"rgb{tuple([int(255.0*x) for x in colors[j]])}"
+        cost_contour_plot.data["data"][i]["colorscale"] = colors
 
-    render(interact_contour(model=model, metric_name="costs"))
-    render(interact_contour(model=model, metric_name="emissions"))
+    render(cost_contour_plot)
+    emission_contour_plot = interact_contour(model=model, metric_name="emissions")
+    for i in range(len(emission_contour_plot.data["data"])):
+        if "colorscale" not in emission_contour_plot.data["data"][i]:
+            continue
+        colorscale = np.asarray(emission_contour_plot.data["data"][i]["colorscale"])
+        viridis = plt.cm.get_cmap("viridis", len(colorscale[:, 0]))
+        colors = viridis(np.linspace(0, 1, len(colorscale[:, 0]))).tolist()
+        for j in range(len(colors)):
+            colors[j] = f"rgb{tuple([int(255.0*x) for x in colors[j]])}"
+        emission_contour_plot.data["data"][i]["colorscale"] = colors
+    render(emission_contour_plot)
+
+    render(ax_client.get_feature_importances())
 
 
 # def run_optimizer():
