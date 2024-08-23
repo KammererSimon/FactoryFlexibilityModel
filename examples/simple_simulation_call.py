@@ -129,7 +129,7 @@ def simulate_ax(parameterization, trial_index, queue):
         scenario.configurations[factory.get_key("Excavator_3")]["capacity"] = 0
 
     # set emissions as big M for electricity Slack
-    scenario.configurations[factory.get_key("Slack Grid")][
+    scenario.configurations[factory.get_key("Slack Netz")][
         "co2_emissions_per_unit"
     ] = 1000
 

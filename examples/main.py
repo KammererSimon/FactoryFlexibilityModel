@@ -51,8 +51,10 @@ from ax.modelbridge.modelbridge_utils import observed_pareto_frontier
 from ax.models.torch.botorch_modular.surrogate import Surrogate
 from ax.plot.contour import interact_contour
 from ax.plot.diagnostic import interact_cross_validation
+from ax.plot.pareto_frontier import plot_pareto_frontier
 from ax.plot.pareto_utils import (
     get_tensor_converter_model,
+    get_observed_pareto_frontiers,
 )
 from ax.service.utils.report_utils import (
     _pareto_frontier_scatter_2d_plotly,
@@ -222,6 +224,11 @@ def ax_plot_results():
             # ],
         )
     ]
+    observed_pareto_frontier = get_observed_pareto_frontiers(
+        experiment=ax_client.experiment,
+        data=ax_client.experiment.fetch_data(),
+    )[0]
+    render(plot_pareto_frontier(observed_pareto_frontier, CI_level=0.90))
 
     cv_results = cross_validate(model)
     cross_validation_plot = interact_cross_validation(cv_results)
