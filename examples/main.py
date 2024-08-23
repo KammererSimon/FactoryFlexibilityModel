@@ -39,6 +39,7 @@
 
 import atexit
 import datetime
+import json
 import logging
 import multiprocessing
 import os
@@ -52,18 +53,24 @@ from wsgiref.simple_server import make_server
 
 import numpy as np
 import torch
+from ax import ObjectiveThreshold
 from ax.modelbridge.cross_validation import cross_validate
+from ax.modelbridge.modelbridge_utils import observed_pareto_frontier
 from ax.modelbridge.transforms.winsorize import Winsorize
 from ax.models.torch.botorch_modular.model import BoTorchModel
 from ax.models.torch.botorch_modular.surrogate import Surrogate
-from ax.plot.contour import interact_contour
+from ax.plot.contour import interact_contour, interact_contour_plotly
 from ax.plot.diagnostic import interact_cross_validation
 from ax.plot.pareto_frontier import plot_pareto_frontier
 from ax.plot.pareto_utils import (
     compute_posterior_pareto_frontier,
     get_observed_pareto_frontiers,
+    get_tensor_converter_model,
 )
-from ax.service.utils.report_utils import _pareto_frontier_scatter_2d_plotly
+from ax.service.utils.report_utils import (
+    _pareto_frontier_scatter_2d_plotly,
+    _get_objective_v_param_plots,
+)
 from ax.utils.notebook.plotting import render
 from botorch.acquisition.multi_objective.logei import (
     qLogNoisyExpectedHypervolumeImprovement,
@@ -202,15 +209,55 @@ def ax_plot_results():
     val = input("Enter filename to load: ")
     ax_client = AxClient.load_from_json_file(val)
     ax_client.fit_model()
+    model = ax_client.generation_strategy.model
 
     _pareto_frontier_scatter_2d_plotly(experiment=ax_client.experiment).show()
-
-    model = ax_client.generation_strategy.model
+    mb = get_tensor_converter_model(
+        experiment=ax_client.experiment, data=ax_client.experiment.lookup_data()
+    )
+    pareto_indices = [
+        int(s.arm_name[:-2])
+        for s in observed_pareto_frontier(
+            modelbridge=mb,
+            objective_thresholds=ax_client.experiment.optimization_config.objective_thresholds,
+            # objective_thresholds=[
+            #     ObjectiveThreshold(
+            #         metric=ax_client.experiment.optimization_config.objective_thresholds[
+            #             0
+            #         ].metric.clone(),
+            #         bound=9999999.0,
+            #         relative=False,
+            #     ),
+            #     ObjectiveThreshold(
+            #         metric=ax_client.experiment.optimization_config.objective_thresholds[
+            #             1
+            #         ].metric.clone(),
+            #         bound=9999999.0,
+            #         relative=False,
+            #     ),
+            # ],
+        )
+    ]
 
     cv_results = cross_validate(model)
     cross_validation_plot = interact_cross_validation(cv_results)
     render(cross_validation_plot)
     cost_contour_plot = interact_contour(model=model, metric_name="costs")
+    for i, trace in enumerate(cost_contour_plot.data["data"]):
+        if trace["type"] == "scatter":
+            x = []
+            y = []
+            t = []
+            for j in pareto_indices:
+                x.append(trace["x"][j])
+                y.append(trace["y"][j])
+                t.append(trace["text"][j])
+            cost_contour_plot.data["data"][i]["x"] = x
+            cost_contour_plot.data["data"][i]["y"] = y
+            cost_contour_plot.data["data"][i]["text"] = t
+            cost_contour_plot.data["data"][i]["marker"]["opacity"] = 0.6
+            cost_contour_plot.data["data"][i]["marker"]["color"] = "red"
+
     for i in range(len(cost_contour_plot.data["data"])):
         if "colorscale" not in cost_contour_plot.data["data"][i]:
             continue
@@ -222,7 +269,22 @@ def ax_plot_results():
         cost_contour_plot.data["data"][i]["colorscale"] = colors
 
     render(cost_contour_plot)
+
     emission_contour_plot = interact_contour(model=model, metric_name="emissions")
+    for i, trace in enumerate(emission_contour_plot.data["data"]):
+        if trace["type"] == "scatter":
+            x = []
+            y = []
+            t = []
+            for j in pareto_indices:
+                x.append(trace["x"][j])
+                y.append(trace["y"][j])
+                t.append(trace["text"][j])
+            emission_contour_plot.data["data"][i]["x"] = x
+            emission_contour_plot.data["data"][i]["y"] = y
+            emission_contour_plot.data["data"][i]["text"] = t
+            emission_contour_plot.data["data"][i]["marker"]["opacity"] = 0.6
+            emission_contour_plot.data["data"][i]["marker"]["color"] = "red"
     for i in range(len(emission_contour_plot.data["data"])):
         if "colorscale" not in emission_contour_plot.data["data"][i]:
             continue
