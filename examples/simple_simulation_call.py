@@ -37,7 +37,6 @@
 # IMPORTS
 import logging
 import os
-from random import uniform
 
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.simulation.Scenario as sc

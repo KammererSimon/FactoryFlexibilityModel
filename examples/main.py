@@ -37,39 +37,25 @@
 # FACTORY MODEL MAIN
 #     This skript is used to call the main functionalities of the factory flexibility model
 
-import atexit
-import datetime
-import json
 import logging
 import multiprocessing
 import os
-import signal
 import sys
-import threading
 import time
-import webbrowser
 from multiprocessing import Process
-from wsgiref.simple_server import make_server
 
 import numpy as np
 import torch
-from ax import ObjectiveThreshold
 from ax.modelbridge.cross_validation import cross_validate
 from ax.modelbridge.modelbridge_utils import observed_pareto_frontier
-from ax.modelbridge.transforms.winsorize import Winsorize
-from ax.models.torch.botorch_modular.model import BoTorchModel
 from ax.models.torch.botorch_modular.surrogate import Surrogate
-from ax.plot.contour import interact_contour, interact_contour_plotly
+from ax.plot.contour import interact_contour
 from ax.plot.diagnostic import interact_cross_validation
-from ax.plot.pareto_frontier import plot_pareto_frontier
 from ax.plot.pareto_utils import (
-    compute_posterior_pareto_frontier,
-    get_observed_pareto_frontiers,
     get_tensor_converter_model,
 )
 from ax.service.utils.report_utils import (
     _pareto_frontier_scatter_2d_plotly,
-    _get_objective_v_param_plots,
 )
 from ax.utils.notebook.plotting import render
 from botorch.acquisition.multi_objective.logei import (
@@ -77,16 +63,14 @@ from botorch.acquisition.multi_objective.logei import (
 )
 from botorch.models import SaasFullyBayesianSingleTaskGP
 from matplotlib import pyplot as plt
-from matplotlib.pyplot import colormaps
 
 import factory_flexibility_model.factory.Blueprint as bp
 import factory_flexibility_model.simulation.Scenario as sc
-from examples.simple_simulation_call import simulate_ax, simulate
+from examples.simple_simulation_call import simulate_ax
 
 # IMPORTS
 from factory_flexibility_model.io import factory_import as imp
 from factory_flexibility_model.simulation import Simulation as fs
-from examples.simple_simulation_call import simulate_ax
 
 proc: list[Process] = []
 
