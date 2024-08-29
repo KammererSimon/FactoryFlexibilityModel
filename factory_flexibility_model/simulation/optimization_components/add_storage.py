@@ -1,5 +1,32 @@
-#  CALLING PATH:
-#  -> Simulation.simulate() -> Simulation.create_optimization_problem()
+# -----------------------------------------------------------------------------
+# Project Name: Factory_Flexibility_Model
+# File Name: add_storage.py
+#
+# Copyright (c) [2024]
+# [Institute of Energy Systems, Energy Efficiency and Energy Economics
+#  TU Dortmund
+#  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
 
 # IMPORTS
 import logging
@@ -9,13 +36,16 @@ from gurobipy import GRB
 
 
 # CODE START
-def add_storage(simulation, component):
+def add_storage(simulation, component, t_start, t_end):
     """
     This function adds all necessary MVARS and constraints to the optimization problem that are
     required to integrate the slack handed over as 'Component'
     :param component: components.slack-object
     :return: simulation.m is being extended
     """
+
+    interval_length = t_end-t_start+1
+
     # create  variable for initial SOC
     simulation.MVars[f"SOC_{component.key}_start"] = simulation.m.addMVar(
         1, vtype=GRB.CONTINUOUS, name=f"SOC_{component.key}_start"
@@ -33,13 +63,13 @@ def add_storage(simulation, component):
 
     # create variable for SOC
     simulation.MVars[f"SOC_{component.key}"] = simulation.m.addMVar(
-        simulation.T, vtype=GRB.CONTINUOUS, name=f"SOC_{component.key}"
+        interval_length, vtype=GRB.CONTINUOUS, name=f"SOC_{component.key}"
     )
     logging.debug(f"        - Variable:     SOC for storage {component.name} ")
 
     # calculate SOC for every timestep using cumsum + SOC_start
     cumsum_matrix = np.tril(
-        np.ones(simulation.T)
+        np.ones(interval_length)
     )  # create a matrix with ones on- and under the main diagonal to quickly perform cumsum-calculations in matrix form
     simulation.m.addConstr(
         simulation.MVars[f"SOC_{component.key}"]
@@ -58,7 +88,7 @@ def add_storage(simulation, component):
 
     # set SOC_end = SOC_start
     simulation.m.addConstr(
-        simulation.MVars[f"SOC_{component.key}"][simulation.T - 1]
+        simulation.MVars[f"SOC_{component.key}"][interval_length - 1]
         == simulation.MVars[f"SOC_{component.key}_start"][0] * component.capacity
     )
     logging.debug(
@@ -78,7 +108,7 @@ def add_storage(simulation, component):
     logging.debug(f"        - Constraint:   Cumsum(E) >= 0 for {component.name} ")
 
     # create Pcharge_max-constraint
-    if component.power_max_charge > 0:
+    if component.power_max_charge is not None:
         simulation.m.addConstr(
             simulation.MVars[component.inputs[0].key]
             <= component.power_max_charge * simulation.interval_length
@@ -88,7 +118,7 @@ def add_storage(simulation, component):
         )
 
     # create Pdischarge_max-constraint
-    if component.power_max_discharge > 0:
+    if component.power_max_discharge is not None:
         simulation.m.addConstr(
             simulation.MVars[component.outputs[0].key]
             <= component.power_max_discharge * simulation.interval_length
@@ -117,7 +147,7 @@ def add_storage(simulation, component):
                 + simulation.MVars[component.outputs[0].key][t]
                 * (1 / component.efficiency - 1)
             )
-            for t in range(simulation.T)
+            for t in range(interval_length)
         )
         logging.debug(
             f"        - Constraint:   Energy_losses = Energy_discharge * (1-efficiency) for {component.name}"
@@ -133,18 +163,18 @@ def add_storage(simulation, component):
     ) or component.direct_throughput == False:
         # add helper variable to track if the storage is charging or discharging
         simulation.MVars[f"{component.key}_charging"] = simulation.m.addMVar(
-            simulation.T, vtype=GRB.BINARY, name=f"{component.key}_charging"
+            interval_length, vtype=GRB.BINARY, name=f"{component.key}_charging"
         )
         # use big M method to force either input or output to be zero
         simulation.m.addConstrs(
             simulation.MVars[component.inputs[0].key][t]
             <= simulation.big_m * simulation.MVars[f"{component.key}_charging"][t]
-            for t in range(simulation.T)
+            for t in range(interval_length)
         )
         simulation.m.addConstrs(
             simulation.MVars[component.outputs[0].key][t]
             <= simulation.big_m * (1 - simulation.MVars[f"{component.key}_charging"][t])
-            for t in range(simulation.T)
+            for t in range(interval_length)
         )
 
         logging.debug(
@@ -163,7 +193,7 @@ def add_storage(simulation, component):
         simulation.m.addConstrs(
             simulation.MVars[f"SOC_max_{component.key}"][0]
             >= simulation.MVars[f"SOC_{component.key}"][t]
-            for t in range(simulation.T)
+            for t in range(interval_length)
         )
 
         # create new cost term
@@ -177,7 +207,7 @@ def add_storage(simulation, component):
         simulation.m.addConstr(
             simulation.C_objective[-1]
             == simulation.interval_length
-            * simulation.T
+            * interval_length
             / 8760
             * component.capacity_charge
             * simulation.MVars[f"SOC_max_{component.key}"]

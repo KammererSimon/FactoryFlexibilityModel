@@ -1,3 +1,36 @@
+# -----------------------------------------------------------------------------
+# This script is used to read in factory layouts and specifications from Excel files and to generate
+# factory-objects out of them that can be used for the simulations
+#
+# Project Name: Factory_Flexibility_Model
+# File Name: create_layout_html.py
+#
+# Copyright (c) [2024]
+# [Institute of Energy Systems, Energy Efficiency and Energy Economics
+#  TU Dortmund
+#  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+
 # This script is called on the following paths:
 # -> fm.dash.create_dash()
 
@@ -38,13 +71,6 @@ def create_layout_html(
     layout = html.Div(
         style={"backgroundColor": style["background"], "overflow": "hidden"},
         children=[
-            dbc.Row(
-                [
-                    dbc.Col(
-                        dcc.Markdown(children="# FACTORY SIMULATION"), style=style["H1"]
-                    )
-                ],
-            ),
             dcc.Tabs(
                 [
                     dcc.Tab(
@@ -76,6 +102,7 @@ def create_layout_html(
                                                 ],
                                                 style=card_style,
                                             ),
+
                                             dbc.Row(
                                                 [
                                                     component_info["total_cost"],
@@ -87,6 +114,12 @@ def create_layout_html(
                                                     ),
                                                 ],
                                                 style=card_style_contrast,
+                                            ),
+                                            dbc.Row(
+                                                [
+                                                    component_info["detailed_emissions"],
+                                                ],
+                                                style=card_style,
                                             ),
                                             dbc.Row(
                                                 [
@@ -441,7 +474,7 @@ def create_layout_html(
                                             dbc.Row(
                                                 [
                                                     dcc.Markdown(
-                                                        children="#### COST",
+                                                        children="#### COST / EMISSIONS",
                                                         style=style["card_title"],
                                                     ),
                                                     dbc.Row([figures["source_cost"]]),
@@ -873,6 +906,151 @@ def create_layout_html(
                                     ),
                                 ],
                                 style={"height": "86vh"},
+                            ),
+                        ],
+                    ),
+                    dcc.Tab(
+                        label="HEATPUMPS",
+                        children=[
+                            dbc.Row(
+                                [
+                                    dbc.Col(
+                                        [
+                                            dbc.Row(
+                                                [
+                                                    dcc.Markdown(
+                                                        children="#### OPTIONS",
+                                                        style=style[
+                                                            "card_title_contrast"
+                                                        ],
+                                                    ),
+                                                    dcc.Markdown(
+                                                        children="##### Component:",
+                                                        style=style["H2"],
+                                                    ),
+                                                    dropdowns["heatpump"],
+                                                    dcc.Markdown(
+                                                        children="##### Time interval:",
+                                                        style=style["H2"],
+                                                    ),
+                                                    dcc.RangeSlider(
+                                                        0,
+                                                        T,
+                                                        1,
+                                                        value=[0, T],
+                                                        id="timestep_slider_heatpump",
+                                                        marks={0: "0", T: f"{T}"},
+                                                        tooltip={
+                                                            "placement": "bottom",
+                                                            "always_visible": True,
+                                                        },
+                                                        updatemode="drag",
+                                                    ),
+                                                ],
+                                                style=card_style_contrast,
+                                            ),
+                                            dbc.Row(
+                                                [
+                                                    component_info["heatpump_sum_in"],
+                                                    dcc.Markdown(
+                                                        children="#### ELECTRICITY INPUT",
+                                                        style=style[
+                                                            "value_description"
+                                                        ],
+                                                    ),
+                                                ],
+                                                align="start",
+                                                style=card_style_contrast,
+                                            ),
+                                            dbc.Row(
+                                                [
+                                                    component_info["heatpump_sum_out"],
+                                                    dcc.Markdown(
+                                                        children="#### TOTAL HEAT OUTPUT",
+                                                        style=style[
+                                                            "value_description"
+                                                        ],
+                                                    ),
+                                                ],
+                                                align="start",
+                                                style=card_style_contrast,
+                                            ),
+                                            dbc.Row(
+                                                [
+                                                    component_info["heatpump_avg_cop"],
+                                                    dcc.Markdown(
+                                                        children="#### SEASONAL PERFORMANCE FACTOR",
+                                                        style=style[
+                                                            "value_description"
+                                                        ],
+                                                    ),
+                                                ],
+                                                align="start",
+                                                style=card_style_contrast,
+                                            ),
+                                            dbc.Row(
+                                                [
+                                                    component_info["heatpump_cop_range"],
+                                                    dcc.Markdown(
+                                                        children="#### COP RANGE",
+                                                        style=style[
+                                                            "value_description"
+                                                        ],
+                                                    ),
+                                                ],
+                                                align="start",
+                                                style=card_style_contrast,
+                                            ),
+                                            dbc.Row(
+                                                [
+                                                    dbc.Row(
+                                                        [
+                                                            dcc.Markdown(
+                                                                children="#### COP Profile",
+                                                                style=style[
+                                                                    "card_title"
+                                                                ],
+                                                            )
+                                                        ],
+                                                    ),  # style={"height": "3vh"}),
+                                                    dbc.Row(
+                                                        [
+                                                            figures[
+                                                                "heatpump_cop_profile"
+                                                            ]
+                                                        ]
+                                                    ),
+                                                ],
+                                                style=card_style,
+                                            ),
+                                        ],
+                                        width=2,
+                                    ),
+                                    dbc.Col(
+                                        [
+                                            dbc.Row(
+                                                [
+                                                    dcc.Markdown(
+                                                        children="#### UTILIZATION",
+                                                        style=style["card_title"],
+                                                    ),
+                                                    dbc.Row([figures["heatpump_utilization"]]),
+                                                ],
+                                                style=card_style,
+                                            ),
+                                            dbc.Row(
+                                                [
+                                                    dcc.Markdown(
+                                                        children="#### SOURCE TEMPERATURE / COP",
+                                                        style=style["card_title"],
+                                                    ),
+                                                    dbc.Row([figures["heatpump_cop"]]),
+                                                ],
+                                                style=card_style,
+                                            ),
+                                        ]
+                                    ),
+                                ]
                             ),
                         ],
                     ),

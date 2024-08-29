@@ -1,13 +1,13 @@
 arrow: factory_flexibility_model\ui\assets\arrow.png
 add: factory_flexibility_model\ui\assets\add.png
 delete: factory_flexibility_model\ui\assets\delete.png
-ie3: factory_flexibility_model\ui\assets\ie3.png
 logo_big: factory_flexibility_model\ui\assets\logo_big.png
 logo_small: factory_flexibility_model\ui\assets\logo_small.png
-grk: factory_flexibility_model\ui\assets\logo_grk.png
+logo_volterica: factory_flexibility_model\ui\assets\logo_volterica.png
 swipe: factory_flexibility_model\ui\assets\swipe_instruction.png
 converter_default: factory_flexibility_model\ui\assets\defaults\converter.png
 deadtime_default: factory_flexibility_model\ui\assets\defaults\deadtime.png
+heatpump_default: factory_flexibility_model\ui\assets\defaults\heatpump.png
 pool_default: factory_flexibility_model\ui\assets\defaults\pool.png
 schedule_default: factory_flexibility_model\ui\assets\defaults\schedule.png
 sink_default: factory_flexibility_model\ui\assets\defaults\sink.png
@@ -20,6 +20,7 @@ dummy: factory_flexibility_model\ui\assets\empty_rectangle.png
 highlights:
   converter: factory_flexibility_model\ui\assets\highlights\converter.png
   deadtime: factory_flexibility_model\ui\assets\highlights\deadtime.png
+  heatpump: factory_flexibility_model\ui\assets\highlights\heatpump.png
   pool: factory_flexibility_model\ui\assets\highlights\pool.png
   schedule: factory_flexibility_model\ui\assets\highlights\schedule.png
   sink: factory_flexibility_model\ui\assets\highlights\sink.png

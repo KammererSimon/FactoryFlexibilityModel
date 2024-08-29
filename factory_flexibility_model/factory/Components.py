@@ -2,6 +2,39 @@
 # This script contains the classes that specify all the components used to create a factory architecture.
 # "Component" is a general parent class, all other classes are children representing a specific technical behaviour.
 
+# -----------------------------------------------------------------------------
+# This script is used to read in factory layouts and specifications from Excel files and to generate
+# factory-objects out of them that can be used for the simulations
+#
+# Project Name: Factory_Flexibility_Model
+# File Name: Components.py
+#
+# Copyright (c) [2024]
+# [Institute of Energy Systems, Energy Efficiency and Energy Economics
+#  TU Dortmund
+#  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+
 # IMPORT
 import logging
 
@@ -644,6 +677,160 @@ class Deadtime(Component):
             logging.debug(f"        - {parameter} set for {self.type} {self.name}")
 
 
+class Heatpump(Component):
+    def __init__(self, key: str, factory, name: str = None):
+        # STANDARD COMPONENT ATTRIBUTES
+        super().__init__(key, factory, name=name)
+
+        # STRUCTURAL ATTRIBUTES
+        self.description = (
+            "Unspecified Heatpump"  # Description for better identification in UI
+        )
+        self.input_main = []  # input from energy supply
+        self.input_gains = []  # input from heatsource
+        self.max_inputs = 2  # heatpumps allow for an electricity and a heatsource input
+        self.max_outputs = 1  # heatpumps allow for an useenergy and losses output
+        self.type = "heatpump"  # specify Component as heatpump
+
+        # POWER CONSTRAINTS
+        self.power_max_limited = (
+            False  # determines, whether the maximum Power of the converter is limited
+        )
+        self.power_max = (
+            np.ones(factory.timesteps) * 1000000000
+        )  # big M, just in case....
+
+        # EFFICIENCY PARAMETERS
+        self.temperature_source = (
+            np.ones(factory.timesteps) * 20
+        )  # temperature level of the heat source; Standard value of 20°C
+        self.cop_profile = np.ones(
+            500
+        )  # profile determining the cop of the heatpump. Array with values for temperatures ranging from 0 to 500 Kelvin
+        self.cop = np.ones(
+            factory.timesteps
+        )  # timeseries of operating cop, based on cop profile and source temperature. Is being calculated when one of both attributes is set
+
+        logging.debug(
+            f"        - New heatpump {self.name} created with Component-key{self.key}"
+        )
+
+    def calculate_cop_timeseries(self):
+        """
+        This function calculates the realizable cop for every timestep based on the source temperature profile and the cop profile. The function simply performs a lookup of the cop at the source temperature of every timestep.
+        :return: None; recalculates self.cop
+        """
+        # iterate over all timesteps
+        for t in range(len(self.temperature_source)):
+            # lookup the correct COP value in the cop profile that corresponds to the source temperature in timestep t
+            self.cop[t] = self.cop_profile[
+                int(self.temperature_source[t]) + 273
+            ]  # 273 bc the cop profile is based on celvin and the source temperature is in °C
+
+    def set_input(self, connection: co.Connection):
+        """
+        This function sets the given connection as an input for the heatpump-component.
+        :param connection: [fm.Connection-object]
+        """
+
+        self.inputs.append(connection)
+        if connection.flowtype.is_energy():
+            if connection.type == "gains" or connection.flowtype.key == "heat":
+                if self.input_gains != []:
+                    logging.critical(
+                        f"Cannot set {connection.name} as input for Heatpump {self.name}, because it already has a heat source input."
+                    )
+                    raise Exception
+                else:
+                    self.input_gains = connection
+            else:
+                if self.input_main != []:
+                    logging.critical(
+                        f"Cannot set {connection.name} as input for Heatpump {self.name}, because it already has a main energy input."
+                    )
+                    raise Exception
+                else:
+                    self.input_main = connection
+        elif connection.flowtype.is_material():
+            logging.critical(
+                f"Heatpump {self.name} is not allowed to have any material inputs!"
+            )
+            raise Exception
+        else:
+            logging.critical(
+                f"Invalid flowtype handed over to {self.name}.set_input(): {connection.flowtype.name}"
+            )
+            raise Exception
+
+    def set_output(self, connection: co.Connection):
+        """
+        This function sets the given connection as an output for the component. Output limit of parent component is being ignored
+        :param connection: [fm.Connection-object]
+        """
+        # Make sure, that no already defined output is being overwritten
+        if self.outputs != []:
+            logging.critical(
+                f"Cannot set another output for heatpump {self.name}, because it already has its output defined!"
+            )
+            raise Exception
+
+        if not connection.flowtype.key in ["heat", "unknown"]:
+            logging.critical(
+                f"Invalid flowtype {connection.flowtype.name} connected to heatpump {self.name}. The flowtype has to be heat."
+            )
+            raise Exception
+
+        # handle connections to losses if specified:
+        if connection.type == "losses":
+            logging.warning(
+                f"Heatpumps do not support loss outputs. The connection {connection.name} is therefore used as the regular output for {self.name}"
+            )
+
+        self.outputs.append(connection)
+
+    def update_flowtype(self, flowtype: str):
+        """
+        The flowtypes at heatpumps are predefined. Therefore this function just interrupts the browadcast.
+        """
+        # break the recursive broadcast # FLOWTYPE DETERMINATION
+
+    def set_configuration(self, timesteps: int, parameters: dict) -> bool:
+        """
+        This function sets the configuration for the component. All parameters to be defined can be handed over as key-value-pairs within a single dictionary.
+        :param timesteps: [int] The number of timesteps that stationary values are scaled to and user given timeseries need to have at minimum
+        :param parameters: [dict] dictionary with key-value-combinations that specify all the parameters to be configured.
+        :return: [boolean] True, if the configuration war successfull
+        """
+        # iterate over all given parameters and figure out how to handle them...
+        for parameter in parameters:
+            # HANDLE HEATPUMP-SPECIFIC PARAMETERS
+            if parameter == "power_max":
+                self.power_max_limited = True
+                self.power_max = iv.validate(
+                    parameters["power_max"], "float", timesteps=timesteps
+                )
+
+            elif parameter == "temperature_source":
+                self.temperature_source = iv.validate(
+                    parameters["temperature_source"], "float", timesteps=timesteps
+                )
+                self.calculate_cop_timeseries()  # recalculate the timeseries of relevant COP based on the new source temperature profile
+
+            elif parameter == "cop_profile":
+                self.cop_profile = iv.validate(
+                    parameters["cop_profile"], "float", timesteps=500
+                )
+                self.calculate_cop_timeseries()  # recalculate the timerseries of relevant COP based on the new cop profile
+
+            # HANDLE GENERAL PARAMETERS
+            else:
+                if not super().set_parameter(timesteps, parameter, parameters):
+                    # in case the function failed to set the parameter it returns false
+                    continue
+
+            logging.debug(f"        - {parameter} set for {self.type} {self.name}")
+
+
 class Pool(Component):
     def __init__(self, key, factory, *, flowtype=None, name: str = None):
         super().__init__(key, factory, flowtype=flowtype, name=name)
@@ -738,7 +925,7 @@ class Sink(Component):
                         raise Exception
                 # check, if power_max constraints is compatible with determined power
                 if self.determined:
-                    if sum(self.power <= self.power_max) < timesteps:
+                    if sum(self.demand <= self.power_max) < timesteps:
                         logging.critical(
                             f"ERROR: Already determined Power is incompatible with the power_max you're trying to set for Component {self.name}"
                         )
@@ -901,7 +1088,6 @@ class Sink(Component):
         The parent class method is overridden because triggerdemands have to distinct between material and energy inputs.
         :param connection: [fm.Connecntion-object]
         """
-        print(connection.type)
         # check, that there is no more than one energy and material input each
         if connection.type == "losses":
             self.inputs.append(connection)
@@ -1106,12 +1292,8 @@ class Storage(Component):
         self.flowtype_description = ""  # Optional string shown as explanation in GUI
         self.leakage_time = 0  # fixed % of capacity that leaks per timestep
         self.leakage_SOC = 0  # % of the stored ressource that leaks per timestep
-        self.power_max_charge = (
-            0  # maximum charging / unloading speed, initialized as almost unlimited
-        )
-        self.power_max_discharge = (
-            0  # maximum discharging / unloading speed, initialized as almost unlimited
-        )
+        self.power_max_charge = None  # maximum charging / unloading speed, None = Unlimited
+        self.power_max_discharge = None # maximum discharging / unloading speed, None = Unlimited
         self.soc_start = 0.5  # State of charge at the beginning of the Simulation, initialized as 50%; NO EFFECT IF soc_start_determined=False
         self.soc_start_determined = True  # Determines, wether the SOC at the start/end of the Simulation has to be the given value or wether it it up to the solver
         self.sustainable = True  # Determines, wether the SOC has to be the same at the start and end of the Simulation or not.
@@ -1205,9 +1387,7 @@ class Thermalsystem(Component):
         self.temperature_min = np.zeros(
             factory.timesteps
         )  # set minimum temperature to zero degrees as a standard value
-        self.temperature_start = (
-            293.15  # starting temperature of the internal storage (=20°C)
-        )
+        self.temperature_start = None
         self.to_losses = (
             []
         )  # placeholder for a pointer directing to the correct losses destination
@@ -1313,17 +1493,18 @@ class Thermalsystem(Component):
             )
             raise Exception
 
-        if self.temperature_min[0] > self.temperature_start:
-            logging.critical(
-                f"ERROR during configuration of {self.name}: Tmin for t=0 is greater than Tstart. Tmin(t=0)={self.temperature_min[0]}, Tstart={self.temperature_start}"
-            )
-            raise Exception
+        if self.temperature_start is not None:
+            if self.temperature_min[0] > self.temperature_start:
+                logging.critical(
+                    f"ERROR during configuration of {self.name}: Tmin for t=0 is greater than Tstart. Tmin(t=0)={self.temperature_min[0]}, Tstart={self.temperature_start}"
+                )
+                raise Exception
 
-        if self.temperature_max[0] < self.temperature_start:
-            logging.critical(
-                f"ERROR during configuration of {self.name}: Tmax for t=0 is smaller than Tstart. Tmax(t=0)={self.temperature_max[0]}, Tstart={self.temperature_start}"
-            )
-            raise Exception
+            if self.temperature_max[0] < self.temperature_start:
+                logging.critical(
+                    f"ERROR during configuration of {self.name}: Tmax for t=0 is smaller than Tstart. Tmax(t=0)={self.temperature_max[0]}, Tstart={self.temperature_start}"
+                )
+                raise Exception
 
 
 class Triggerdemand(Component):
@@ -1337,7 +1518,7 @@ class Triggerdemand(Component):
         self.load_profile_energy = (
             []
         )  # profiles of the energy load that has to be fulfilled on execution
-        self.load_profile_material = (
+        self.load_profile_mass = (
             []
         )  # profiles of the energy load that has to be fulfilled on execution
         self.max_parallel = 0  # maximum number of parallel executions. Initialized as 0 = no restrictions
@@ -1368,23 +1549,23 @@ class Triggerdemand(Component):
             if parameter == "load_profile_energy":
                 self.load_profile_energy = parameters["load_profile_energy"]
                 # set profile length for the Component + check compatibility with material profile
-                if self.load_profile_material == []:
+                if self.load_profile_mass == []:
                     self.profile_length = len(self.load_profile_energy)
                 elif not len(self.load_profile_energy) == self.profile_length:
                     logging.critical(
-                        f"ERROR: Length of energy and material load profiles for triggerdemand {self.name} do not match! (Energy profile: {len(self.load_profile_energy)}; Material profile: {len(self.load_profile_material)} "
+                        f"ERROR: Length of energy and material load profiles for triggerdemand {self.name} do not match! (Energy profile: {len(self.load_profile_energy)}; Material profile: {len(self.load_profile_mass)} "
                     )
                     raise Exception
 
-            elif parameter == "load_profile_material":
-                self.load_profile_material = parameters["load_profile_material"]
+            elif parameter == "load_profile_mass":
+                self.load_profile_mass = parameters["load_profile_mass"]
                 # set profile length for the Component + check compatibility with energyprofile
                 if self.load_profile_energy == []:
 
-                    self.profile_length = len(self.load_profile_material)
+                    self.profile_length = len(self.load_profile_mass)
                 elif not len(self.load_profile_energy) == self.profile_length:
                     logging.critical(
-                        f"ERROR: Length of energy and material load profiles for triggerdemand {self.name} do not match! (Energy profile: {len(self.load_profile_energy)}; Material profile: {len(self.load_profile_material)}) "
+                        f"ERROR: Length of energy and material load profiles for triggerdemand {self.name} do not match! (Energy profile: {len(self.load_profile_energy)}; Material profile: {len(self.load_profile_mass)}) "
                     )
                     raise Exception
 
@@ -1396,9 +1577,6 @@ class Triggerdemand(Component):
 
             elif parameter == "max_parallel":
                 self.max_parallel = iv.validate(parameters["max_parallel"], "int")
-
-            elif parameter == "executions":
-                self.executions = iv.validate(parameters["executions"], "int")
 
             # HANDLE GENERAL PARAMETERS
             else:
@@ -1529,10 +1707,33 @@ class Schedule(Component):
                     )
                     raise Exception
                 if max(self.demands[:, 1]) > timesteps:
-                    logging.critical(
-                        f"ERROR in demand input data for {self.name}: Endpoint of at least one demand interval is after maximum Simulation length."
+                    # fit demand matrix to length of the simulation
+                    adjusted_demands = []
+                    for row in self.demands:
+                        start_time = row[0]
+                        end_time = row[1]
+                        total_energy = row[2]
+                        max_power = row[3]
+
+                        # only consider demands that start within the simulation timeframe
+                        if start_time <= timesteps:
+                            if end_time > timesteps:
+                                # cut demand and only require a share of the energy if the demand outlasts the simulation
+                                new_duration = timesteps - start_time
+                                # calculate the relative amount of energy assigned to the current interval
+                                energy_within_interval = total_energy / (end_time - start_time + 1) * new_duration
+                                adjusted_demands.append([start_time, timesteps, energy_within_interval, max_power])
+                            else:
+                                # use row if the demand is fully within the simulation timeframe
+                                adjusted_demands.append(row)
+                    self.demands = np.array(adjusted_demands)
+
+                    logging.warning(
+                        f"Data inconsistency in demand input data for {self.name}: Endpoint of at least one demand interval is after maximum Simulation length. Demands with tstart later than simulation length will be ignored"
                     )
-                    raise Exception
+
+
+
                 if min(self.demands[:, 0]) <= 0:
                     logging.critical(
                         f"ERROR in demand input data for {self.name}: The earliest starting Point for demands is interval 1. Earlier starts are invalid."

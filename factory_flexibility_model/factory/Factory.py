@@ -1,3 +1,36 @@
+# -----------------------------------------------------------------------------
+# This script is used to read in factory layouts and specifications from Excel files and to generate
+# factory-objects out of them that can be used for the simulations
+#
+# Project Name: Factory_Flexibility_Model
+# File Name: Factory.py
+#
+# Copyright (c) [2024]
+# [Institute of Energy Systems, Energy Efficiency and Energy Economics
+#  TU Dortmund
+#  Simon Kammerer (simon.kammerer@tu-dortmund.de)]
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+
 """
 .. _Factory:
 This Package contains everything that is needed to specify the structure of a factory for the Simulation:
@@ -183,6 +216,12 @@ class Factory:
         elif component_type == "deadtime":
             # call deadtime constructor
             self.components[key] = factory_components.Deadtime(key, self, name=name)
+
+        elif component_type == "heatpump":
+            # call heatpump constructor
+            self.components[key] = factory_components.Heatpump(
+                key, self, name=name
+            )
 
         elif component_type == "thermalsystem":
             # call thermalsystem constructor
@@ -503,7 +542,7 @@ class Factory:
 
         return True
 
-    def set_configuration(self, component: str, parameters: dict):
+    def set_configuration(self, component: str, parameters: dict, timesteps: int = None):
         """
         This function takes a string-identifier of a Component in a factory and a dict of configuration parameters.
         It hands the configuration parameters over to the set_configuration method of the Component.
@@ -513,8 +552,12 @@ class Factory:
         # make sure that the specified Component exists
         self.check_existence(component)
 
+        # determine number of required timesteps
+        if timesteps is None:
+            timesteps = self.timesteps
+
         # call the set_configuration - method of the component
-        self.components[component].set_configuration(self.timesteps, parameters)
+        self.components[component].set_configuration(timesteps, parameters)
 
         # enable emission accounting if any component gets an emission factor assigned
         if "co2_emissions_per_unit" in parameters.keys():
@@ -706,16 +749,14 @@ class Factory:
 
                 # check, if the combination of input and output weight sums is valid
                 if weightsum_output_energy > weightsum_input_energy:
-                    logging.critical(
+                    logging.warning(
                         f"Error in the factory architecture: The sum of weights at the energy output of converter '{component.name}' ({weightsum_output_energy}) is greater that the sum of input weights {weightsum_input_energy}!"
                     )
-                    raise Exception
 
                 if weightsum_output_material > weightsum_input_material:
-                    logging.critical(
+                    logging.warning(
                         f"Error in the factory architecture: The sum of weights at the material output of converter '{component.name}' ({weightsum_output_material}) is greater that the sum of input weights {weightsum_input_material}!"
                     )
-                    raise Exception
 
             elif component.type == "deadtime":
                 # if Component is a deadtime: make sure that there is at least one input

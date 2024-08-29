@@ -9,4 +9,5 @@ from .add_source import add_source
 from .add_storage import add_storage
 from .add_thermalsystem import add_thermalsystem
 from .add_triggerdemand import add_triggerdemand
+from .add_heatpump import add_heatpump
 from .solve import solve

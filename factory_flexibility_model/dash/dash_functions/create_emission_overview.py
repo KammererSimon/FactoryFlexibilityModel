@@ -3,7 +3,7 @@
 # factory-objects out of them that can be used for the simulations
 #
 # Project Name: Factory_Flexibility_Model
-# File Name: create_cost_overview.py
+# File Name: create_emission_overview.py
 #
 # Copyright (c) [2024]
 # [Institute of Energy Systems, Energy Efficiency and Energy Economics
@@ -35,7 +35,7 @@
 # -> fm.dash.create_dash() -> update_plots_overview()
 
 
-def create_cost_overview(simulation):
+def create_emission_overview(simulation):
     """
     This function takes a simulation object and creates a simple string that contains a formatted list of all the costs factors that determine the target function value of the solved simulation.
 
@@ -43,48 +43,24 @@ def create_cost_overview(simulation):
     :return: [str]
     """
 
-    # get cost results from simulation
-    costs = simulation.result["costs"]
-
-    # get currency from factory
-    currency = simulation.factory.currency
-
-    # define cost_types and their display names
-    cost_types = {
-        "inputs": "Cost and revenue of inputs",
-        "outputs": "Cost and revenue of outputs",
-        "converter_ramping": "Converter operation cost",
-        "capacity_provision": "Costs for capacity provision",
-        "emission_allowances": "Emission cost",
-        "slacks": "Slack cost",
-    }
+    # get emission results from simulation
+    emissions = simulation.result["total_emissions"]
 
     # initialize string
-    detailed_costs = ""
+    detailed_emissions = "**Emission Sources:**"
 
-    # iterate over all cost types
-    for cost_type, cost_items in costs.items():
 
-        #  Skip iteration if no cost items of current type exist
-        if cost_items == {}:
-            continue
+    # iterate oer all components
+    for component in simulation.factory.components.values():
+        # only continue for sources and sinks
+        if component.type in ["source", "sink"]:
+            #calculate total emissions
+            component_emissions = simulation.result[component.key]["emissions"]
+            if sum(component_emissions) > 0:
+                # add line with component emissions to the string if the source or sink caused emissions
+                detailed_emissions = detailed_emissions + f"\n * **{simulation.factory.get_name(component.key)}:** {round(sum(component_emissions)/1000,2)} tCO2\n"
 
-        # write headline for current cost type
-        detailed_costs = detailed_costs + f"\n **{cost_types[cost_type]}:** \n"
+    detailed_emissions = detailed_emissions + f"\n * **Total Emissions:** {round(sum(simulation.result['total_emissions'])/1000, 2)} tCO2\n"
 
-        # iterate over all cost items
-        for item, value in cost_items.items():
-
-            # write line with bulletpoint for current cost item
-            if value > 0:
-                detailed_costs = (
-                    detailed_costs
-                    + f"\n * **Cost of {simulation.factory.get_name(item)}:** {round(value,2)}{currency}\n"
-                )
-            elif value < 0:
-                detailed_costs = (
-                    detailed_costs
-                    + f"\n * **Revenue from {simulation.factory.get_name(item)}:** {round(value,2)}{currency}\n"
-                )
-
-    return detailed_costs
+    # return created string
+    return detailed_emissions

@@ -12,8 +12,8 @@ def set_component_flowtype(blueprint, component_key: str, flowtype):
     :param flowtype: [Flowtype.Flowtype] Expecpected to be a valid factory model Flowtype object
     """
 
-    # abort if the component is a converter
-    if blueprint.components[component_key]["type"] == "converter":
+    # abort if the component is a converter or a heatpump
+    if blueprint.components[component_key]["type"] in ["converter", "heatpump"]:
         return
 
     # set the flowtype of the given component as the given flowtype

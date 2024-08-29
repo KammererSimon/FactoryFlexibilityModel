@@ -453,7 +453,6 @@ class factory_GUIApp(MDApp):
             self.change_selected_asset(key)
 
     def initiate_new_connection(self, *args):
-        print("NEW CONNECTION BUTTON PRESSED")
         self.connection_edit_mode = True
         Window.bind(
             mouse_pos=lambda _, pos: draw_connection_preview(self, mouse_pos=pos)

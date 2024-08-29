@@ -52,6 +52,10 @@ converter:
       description: Cost for ramping up
       text: Ramping cost
       unit_type: ramping_cost
+    switchable:
+      description: Can the converter be turned on and off
+      text: Switchable
+      unit_type: 'boolean'
 deadtime:
   default_icon: deadtime_default
   max_inputs: 1
@@ -61,6 +65,23 @@ deadtime:
       description: Delay Number of Timesteps
       text: Deadtime
       unit_type: timesteps
+heatpump:
+  default_icon: heatpump_default
+  max_inputs: 2
+  max_outputs: 1
+  parameters:
+    power_max:
+      description: Maximum electric operating power
+      text: Power Max
+      unit_type: flowrate
+    temperature_source:
+      description: Temperature level of the heat source
+      text: Temperature Source
+      unit_type: temperature
+    cop_profile:
+      description: Temperature dependant COP
+      text: COP Profile
+      unit_type: integer
 schedule:
   default_icon: schedule_default
   max_inputs: 1
