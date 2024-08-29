@@ -987,6 +987,10 @@ class Simulation:
             self.t_start = time.time()  # reset timer
 
         # CONFIGURE SOLVER
+        if "mip_gap" in solver_config.keys():
+            self.m.setParam("MIPGap", solver_config["mip_gap"])
+            logging.info(f"Solver MIP-Gap set to {solver_config['mip_gap']}")
+
         oc.solve(self, solver_config)
 
         # Check solver status
