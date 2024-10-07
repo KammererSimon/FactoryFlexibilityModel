@@ -42,9 +42,13 @@ import multiprocessing
 import os
 import sys
 import time
+from collections import deque
 from multiprocessing import Process
+from numbers import Number
+from typing import Iterable
 
 import numpy as np
+import psutil
 import torch
 from ax.modelbridge.cross_validation import cross_validate
 from ax.modelbridge.modelbridge_utils import observed_pareto_frontier
@@ -56,6 +60,7 @@ from ax.plot.pareto_utils import (
     get_tensor_converter_model,
     get_observed_pareto_frontiers,
 )
+from ax.modelbridge.modelbridge_utils import observed_pareto_frontier
 from ax.service.utils.report_utils import (
     _pareto_frontier_scatter_2d_plotly,
 )
@@ -290,107 +295,128 @@ def ax_plot_results():
     render(ax_client.get_feature_importances())
 
 
-# def run_optimizer():
-#     global proc, thread
-#     atexit.register(cleanup)
-#     signal.signal(signal.SIGTERM, sigHandler)
-#     signal.signal(signal.SIGINT, sigHandler)
-#
-#     val = input("Enter your postgres password: ")
-#     storage = optuna.storages.RDBStorage(
-#         f"postgresql://postgres:{val}@localhost:5432/ffm"
-#     )
-#
-#     study = optuna.create_study(
-#         storage=storage,
-#         directions=["minimize", "minimize"],
-#         study_name=f"{datetime.datetime.now():%Y-%m-%d_%H-%M-%S}_FFM",
-#         sampler=TPESampler(),
-#     )
-#
-#     app = wsgi(storage)
-#     httpd = make_server("localhost", 8080, app)
-#     thread = threading.Thread(target=httpd.serve_forever)
-#     thread.daemon = True
-#     thread.start()
-#     webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
-#
-#     for i in range(24):
-#         p = Process(target=study.optimize, args=(simulate,), kwargs={"n_trials": 8})
-#         p.start()
-#         proc.append(p)
-#         print(f"Started Process {i}")
-#     for p in proc:
-#         p.join()
+def generate_volatilities(number_of_years: int) -> Iterable[Number]:
+    return [1] * number_of_years
 
 
-def gui():
-    """
-    This function opens the simulation setup gui.
-    """
-    from factory_flexibility_model.ui import kivy_gui as fg
-
-    # create gui instance
-    gui = fg.factory_GUIApp()
-
-    # run gui
-    gui.run()
-
-
-def simulate_session():
-    """
-    This function takes the path to a session folder and conducts the simulation.
-    """
-
-    simulate_ax()
-    return
-
-    logging.basicConfig(level=logging.WARNING)
-
-    session_folder = sys.argv[1]
-
-    # check, that the session_folder is existing
-    if not os.path.exists(session_folder):
-        raise FileNotFoundError(f"The given path ({session_folder}) does not exist!")
-
-    # create scenario
-    scenario = sc.Scenario(scenario_file=f"{session_folder}\\scenarios\\default.sc")
-
-    # create factory
-    blueprint = bp.Blueprint()
-    blueprint.import_from_file(f"{session_folder}\\layout\\Layout.factory")
-    factory = blueprint.to_factory()
-
-    # setup, run and save simulation
-    simulation = fs.Simulation(factory=factory, scenario=scenario)
-    simulation.simulate(
-        interval_length=730, threshold=0.000001, solver_config={"log_solver": False}
+def simulate_scalarized(
+    parameterization, index: int, trial_index: int, queue: multiprocessing.Queue
+):
+    queue.put(
+        {
+            "idx": index,
+            "t_idx": trial_index,
+            "res": {
+                "quality": (parameterization.get("input"), 0.0),
+            },
+        }
     )
-    simulation.save(rf"{session_folder}\simulations")
-
-    # run dashboard
-    simulation.create_dash()
+    print(f"Process {index} produced a result.")
+    pass
 
 
-def dash():
-    r"""
-    This function imports a given (solved) simulation file and loads it into the plotly dashboard for analysis.
-    :param simulation_data: [str] Path to a solved simulation file. Typically stored under "session_folder\simulations\*simulation_name*.sim"
-    """
+def create_scalarized_experiment(index: int, volatility: Number) -> AxClient:
+    storage_name = f"{time.strftime("%Y%m%d-%H%M%S")}_snapshot.json"
+    ax_client = AxClient(torch_device=torch.device("cuda"))
+    ax_client.create_experiment(
+        name=f"experiment_{index}",
+        parameters=[
+            {
+                "name": "input",
+                "type": "range",
+                "bounds": [0.0, 3000.0],
+                "value_type": "float",
+            },
+        ],
+        objectives={
+            "quality": ObjectiveProperties(minimize=True),
+        },
+        parameter_constraints=None,
+        outcome_constraints=None,
+        overwrite_existing_experiment=True,
+    )
+    return ax_client
 
-    # import simulation
-    simulation = imp.import_simulation(sys.argv[1])
 
-    # create and run dashboard
-    simulation.create_dash()  # add  -> authentication={"user": "password"} <- to add a user login
+def simulate_multiyear_scalarized():
+    import logging
+    from ax.utils.common.logger import ROOT_STREAM_HANDLER
+
+    ROOT_STREAM_HANDLER.setLevel(logging.CRITICAL)
+
+    output_folder = f"{time.strftime("%Y%m%d-%H%M%S")}_output"
+    os.makedirs(output_folder, exist_ok=True)
+    os.chdir(output_folder)
+    current_year = 2024
+    number_of_years = 12
+    max_parallelism = 3
+    cpus = psutil.cpu_count(logical=False)
+    volatilities = generate_volatilities(number_of_years)
+
+    experiments: list[AxClient] = [
+        create_scalarized_experiment(current_year + i, volatilities[i])
+        for i in range(number_of_years)
+    ]
+    experiments: dict[int, tuple[AxClient, int]] = {
+        i: (experiments[i], 0, 0) for i in range(len(experiments))
+    }
+    queue = multiprocessing.Queue()
+    active_processes = 0
+    max_trials = 100
+    while experiments:
+        if (
+            active_processes >= cpus
+            # Returns the amount of running instances of the year with the least running instances
+            or list(sorted(experiments.items(), key=lambda item: item[1][2]))[0][1][2]
+            >= max_parallelism
+        ):
+            # This is not thread-safe, but it doesn't need to be
+            # We just want to clean out the result queue as much as possible
+            res = queue.get(block=True)
+            handle_simulation_result(experiments, max_trials, res)
+            active_processes -= 1
+            while not queue.empty():
+                res = queue.get(block=True)
+                handle_simulation_result(experiments, max_trials, res)
+                active_processes -= 1
+
+        # Returns the year which currently has the fewest running instances
+        next_index = list(sorted(experiments.items(), key=lambda item: item[1][2]))[0][
+            0
+        ]
+        experiment: AxClient
+        experiment, arms, current_proc_count = experiments[next_index]
+        # Getting next trial can't really be parallelized simply without running each year as a fully independent thing
+        # Technically you can parallelize this function and then parallelize again in the parallelized stuff and still
+        # balance, but it seems like rather little gain for the effort
+        # At no computation for evaluating we hit 76% utilisation for instance
+        # On a server, fitting the model will take up the slack, because there probably won't be CUDA
+        # And numpy will grab all cores to get next trials
+        parameterization, trial_index = experiment.get_next_trial()
+        process = Process(
+            target=simulate_scalarized,
+            args=(
+                parameterization,
+                next_index,
+                trial_index,
+                queue,
+            ),
+        )
+        process.start()
+
+        # Update current stats
+        current_proc_count += 1
+        experiments[next_index] = (experiment, arms, current_proc_count)
+        active_processes += 1
 
 
-# def optuna_dashboard():
-#     val = input("Enter your postgres password: ")
-#     storage = optuna.storages.RDBStorage(
-#         f"postgresql://postgres:{val}@localhost:5432/ffm"
-#     )
-#     app = wsgi(storage)
-#     httpd = make_server("localhost", 8080, app)
-#     webbrowser.open("http://localhost:8080/", new=0, autoraise=True)
-#     httpd.serve_forever()
+def handle_simulation_result(experiments, max_trials, res):
+    experiment: AxClient
+    experiment, completed_arms, current_proc_count = experiments[res["idx"]]
+    experiment.complete_trial(trial_index=res["t_idx"], raw_data=res["res"])
+    completed_arms += 1
+    current_proc_count -= 1
+    if completed_arms == max_trials:
+        del experiments[res["idx"]]
+    else:
+        experiments[res["idx"]] = (experiment, completed_arms, current_proc_count)
