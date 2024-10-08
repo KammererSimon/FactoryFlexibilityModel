@@ -229,11 +229,11 @@ def ax_plot_results():
             # ],
         )
     ]
-    observed_pareto_frontier = get_observed_pareto_frontiers(
+    observed_pareto_frontier_data = get_observed_pareto_frontiers(
         experiment=ax_client.experiment,
         data=ax_client.experiment.fetch_data(),
     )[0]
-    render(plot_pareto_frontier(observed_pareto_frontier, CI_level=0.90))
+    render(plot_pareto_frontier(observed_pareto_frontier_data, CI_level=0.90))
 
     cv_results = cross_validate(model)
     cross_validation_plot = interact_cross_validation(cv_results)
