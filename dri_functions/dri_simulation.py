@@ -31,7 +31,7 @@ def simulate_dri(simulation_task, model_parameters, simulation_config, total_sim
     cost_electricity = simulation_task["cost_electricity"]
     cost_electricity = (cost_electricity - cost_electricity.mean()) * simulation_task["volatility"] / np.std(cost_electricity) + simulation_task["avg_electricity_price"]
 
-    emissions_electricity = simulation_task["timeseriess_emissions_electricity"]
+    emissions_electricity = simulation_task["timeseries_emissions_electricity"]
     emissions_electricity = emissions_electricity / emissions_electricity.mean() * simulation_task["electricity_emission_factor"]
 
     scenario.configurations[simulation_task["factory"].get_key("Electricity Grid")] = {"cost": cost_electricity,

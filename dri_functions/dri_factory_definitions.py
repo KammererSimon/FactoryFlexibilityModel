@@ -81,6 +81,7 @@ def create_steel_plant(model_parameters, plant_type, config = None):
                                                                     "power_max": model_parameters["dri_power_max"],
                                                                     "power_ramp_max_pos": model_parameters["dri_ramp_up"],
                                                                     "power_ramp_max_neg":  model_parameters["dri_ramp_down"]}
+        scenario.configurations[plant.get_key("Natural Gas DRI")] = {"rampup_cost ": 1}
 
         scenario.configurations[plant.get_key("EAF Trigger")] = {"max_parallel": model_parameters["eaf_entities"],
                                                                  "load_profile_material": [model_parameters["eaf_batch_size_tls"]]}
