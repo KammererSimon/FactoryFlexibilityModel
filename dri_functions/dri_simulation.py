@@ -27,15 +27,15 @@ def simulate_dri(simulation_task, model_parameters, simulation_config, total_sim
     # set prices
     scenario.configurations[simulation_task["factory"].get_key("Source Natural Gas")] = {"cost": simulation_task["natural_gas_cost"]}
 
-    # scale timeseries to scenario parameters -> a explanation of this method can be found in the papers appendix
+    # scale timeseries to scenario parameters -> an explanation of this method can be found in the papers appendix
     cost_electricity = simulation_task["cost_electricity"]
     cost_electricity = (cost_electricity - cost_electricity.mean()) * simulation_task["volatility"] / np.std(cost_electricity) + simulation_task["avg_electricity_price"]
 
-    emissions_electricity = simulation_task["timeseriess_emissions_electricity"]
+    emissions_electricity = simulation_task["timeseries_emissions_electricity"]
     emissions_electricity = emissions_electricity / emissions_electricity.mean() * simulation_task["electricity_emission_factor"]
 
     scenario.configurations[simulation_task["factory"].get_key("Electricity Grid")] = {"cost": cost_electricity,
-                                                                                       "co2_emissions_per_unit": simulation_task["timeseries_emissions_electricity"]*simulation_task["electricity_emission_factor"]}
+                                                                                       "co2_emissions_per_unit": emissions_electricity}
 
     # set slack costs
     scenario.configurations[simulation_task["factory"].get_key("Electricity Slack")] = {"cost": 1000000,
@@ -60,6 +60,7 @@ def simulate_dri(simulation_task, model_parameters, simulation_config, total_sim
         logging.getLogger().setLevel(logging.ERROR)
     simulation = fs.Simulation(factory=simulation_task["factory"],
                                scenario=scenario)
+
     simulation.simulate(threshold=simulation_config["threshold"],
                         interval_length=730,
                         solver_config={"max_solver_time": simulation_config["max_solver_time"],
@@ -231,6 +232,7 @@ def count_simulations(scenario_variations):
            len(scenario_variations["plant_types"]) * \
            len(scenario_variations["CO2_reduction"]) * \
            len(scenario_variations["electricity_emissions"])
+
 
 def create_simulation_list(simulation_config, model_parameters, timeseries_data, scenario_variations):
 

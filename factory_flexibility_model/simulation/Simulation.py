@@ -96,6 +96,7 @@ class Simulation:
         self.simulation_valid = None  # Is being set by self.validate_results
         self.T = None  # To be set during Simulation
         self.time_reference_factor = None  # To be set during Simulation
+        self.valid = True
 
         # initialize tracking of resulting problem class
         self.problem_class = {
@@ -806,6 +807,9 @@ class Simulation:
 
         # start iteration
         for interval in range(num_of_intervals):
+            if not self.valid:
+                return
+
             # determine first and last timestep of the current interval
             t_start = int(interval * interval_length)
             t_end = int(t_start + interval_length - 1)
@@ -975,8 +979,10 @@ class Simulation:
 
 
         if self.m.Status == GRB.TIME_LIMIT:
-            logging.error("Solver time exceeded. Calculation aborted")
-            raise Exception
+            logging.warning("Solver time exceeded. Calculation aborted")
+            #raise Exception
+            self.valid=False
+            return
 
         # COLLECT THE RESULTS
         self.__collect_results(threshold=threshold, rounding_decimals=rounding_decimals, interval_length=t_end-t_start, t_start=t_start)
