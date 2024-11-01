@@ -75,7 +75,7 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         scenario.configurations[plant.get_key("Source Scrap")] = {"cost": model_parameters["cost_scrap_€_per_t"]}
 
         # SET COMPONENT OPERATING CONSTRAINTS
-        scenario.configurations[plant.get_key("PEM")] = {"power_max": model_parameters["electrolyzer_size"]}
+        scenario.configurations[plant.get_key("PEM")] = {"power_max": model_parameters["electrolyzer_size"]*1.5}
         scenario.configurations[plant.get_key("DRI Compactor")] = {"power_max": model_parameters["dri_power_max"]}
         scenario.configurations[plant.get_key("DRI Restrictions")] = {"power_min": model_parameters["dri_power_min"],
                                                                     "power_max": model_parameters["dri_power_max"],
