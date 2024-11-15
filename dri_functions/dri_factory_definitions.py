@@ -67,12 +67,12 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         plant.connections[plant.get_key("Pool Electricity -> DRI Compactor")].weight = model_parameters["hbi_compact_electricity_mwh_per_tDRI"] + model_parameters["hbi_reheat_electricity_mwh_per_tDRI"]
 
         # SET MARKET SCENARIO
-        scenario.configurations[plant.get_key("Oxygen Sales")] = {"revenue": model_parameters["cost_oxygen_€_per_to2"]}
-        scenario.configurations[plant.get_key("Source Hydrogen")] = {"cost": model_parameters["cost_hydrogen_€_per_th2"]}
-        scenario.configurations[plant.get_key("Source Iron Ore")] = {"cost": model_parameters["cost_iron_ore_€_per_t"]}
-        scenario.configurations[plant.get_key("Source Lime")] = {"cost": model_parameters["cost_lime_€_per_t"]}
-        scenario.configurations[plant.get_key("Source Oxygen")] = {"cost": model_parameters["cost_oxygen_€_per_to2"]}
-        scenario.configurations[plant.get_key("Source Scrap")] = {"cost": model_parameters["cost_scrap_€_per_t"]}
+        scenario.configurations[plant.get_key("Oxygen Sales")] = {"revenue": model_parameters["cost_oxygen_$_per_to2"]}
+        scenario.configurations[plant.get_key("Source Hydrogen")] = {"cost": model_parameters["cost_hydrogen_$_per_th2"]}
+        scenario.configurations[plant.get_key("Source Iron Ore")] = {"cost": model_parameters["cost_iron_ore_$_per_t"]}
+        scenario.configurations[plant.get_key("Source Lime")] = {"cost": model_parameters["cost_lime_$_per_t"]}
+        scenario.configurations[plant.get_key("Source Oxygen")] = {"cost": model_parameters["cost_oxygen_$_per_to2"]}
+        scenario.configurations[plant.get_key("Source Scrap")] = {"cost": model_parameters["cost_scrap_$_per_t"]}
 
         # SET COMPONENT OPERATING CONSTRAINTS
         scenario.configurations[plant.get_key("PEM")] = {"power_max": model_parameters["electrolyzer_size"]*1.5}
@@ -126,12 +126,12 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         plant.connections[plant.get_key("Pool Electricity -> CCS")].weight = model_parameters["electricity_mwh_per_t_sequestered"]
 
         # SET MARKET SCENARIO
-        scenario.configurations[plant.get_key("Oxygen Sales")] = {"revenue": model_parameters["revenue_oxygen_€_per_to2"]}
-        scenario.configurations[plant.get_key("Source Iron Ore")] = {"cost": model_parameters["cost_iron_ore_€_per_t"]}
-        scenario.configurations[plant.get_key("Source Lime")] = {"cost": model_parameters["cost_lime_€_per_t"]}
-        scenario.configurations[plant.get_key("Source Oxygen")] = {"cost": model_parameters["cost_oxygen_€_per_to2"]}
-        scenario.configurations[plant.get_key("Source Scrap")] = {"cost": model_parameters["cost_scrap_€_per_t"]}
-        scenario.configurations[plant.get_key("CO2 Storage")] = {"cost": model_parameters["cost_co2_storage_€_per_t"]}
+        scenario.configurations[plant.get_key("Oxygen Sales")] = {"revenue": model_parameters["revenue_oxygen_$_per_to2"]}
+        scenario.configurations[plant.get_key("Source Iron Ore")] = {"cost": model_parameters["cost_iron_ore_$_per_t"]}
+        scenario.configurations[plant.get_key("Source Lime")] = {"cost": model_parameters["cost_lime_$_per_t"]}
+        scenario.configurations[plant.get_key("Source Oxygen")] = {"cost": model_parameters["cost_oxygen_$_per_to2"]}
+        scenario.configurations[plant.get_key("Source Scrap")] = {"cost": model_parameters["cost_scrap_$_per_t"]}
+        scenario.configurations[plant.get_key("CO2 Storage")] = {"cost": model_parameters["cost_co2_storage_$_per_t"]}
 
         # SET COMPONENT OPERATING CONSTRAINTS
         scenario.configurations[plant.get_key("DRI Compactor")] = {"power_max": model_parameters["dri_power_max"]}
@@ -178,12 +178,12 @@ def create_steel_plant(model_parameters, plant_type, config = None):
         plant.connections[plant.get_key("Pool Electricity -> CCS")].weight = model_parameters["electricity_mwh_per_t_sequestered"]
 
         # SET MARKET SCENARIO
-        scenario.configurations[plant.get_key("Oxygen Sales")] = {"revenue": model_parameters["revenue_oxygen_€_per_to2"]}
-        scenario.configurations[plant.get_key("Source Iron Ore")] = {"cost": model_parameters["cost_iron_ore_€_per_t"]}
-        scenario.configurations[plant.get_key("Source Lime")] = {"cost": model_parameters["cost_lime_€_per_t"]}
-        scenario.configurations[plant.get_key("Source Oxygen")] = {"cost": model_parameters["cost_oxygen_€_per_to2"]}
-        scenario.configurations[plant.get_key("Source Scrap")] = {"cost": model_parameters["cost_scrap_€_per_t"]}
-        scenario.configurations[plant.get_key("CO2 Storage")] = {"cost": model_parameters["cost_co2_storage_€_per_t"]}
+        scenario.configurations[plant.get_key("Oxygen Sales")] = {"revenue": model_parameters["revenue_oxygen_$_per_to2"]}
+        scenario.configurations[plant.get_key("Source Iron Ore")] = {"cost": model_parameters["cost_iron_ore_$_per_t"]}
+        scenario.configurations[plant.get_key("Source Lime")] = {"cost": model_parameters["cost_lime_$_per_t"]}
+        scenario.configurations[plant.get_key("Source Oxygen")] = {"cost": model_parameters["cost_oxygen_$_per_to2"]}
+        scenario.configurations[plant.get_key("Source Scrap")] = {"cost": model_parameters["cost_scrap_$_per_t"]}
+        scenario.configurations[plant.get_key("CO2 Storage")] = {"cost": model_parameters["cost_co2_storage_$_per_t"]}
 
         # SET COMPONENT OPERATING CONSTRAINTS
         scenario.configurations[plant.get_key("DRI Compactor")] = {"power_max": model_parameters["dri_power_max"]}
@@ -241,12 +241,12 @@ def create_steel_plant(model_parameters, plant_type, config = None):
 
 
         # SET MARKET SCENARIO
-        scenario.configurations[plant.get_key("Oxygen Sales")] = {"revenue": model_parameters["revenue_oxygen_€_per_to2"]}
-        scenario.configurations[plant.get_key("Source Hydrogen")] = {"cost": model_parameters["cost_hydrogen_€_per_th2"]}
-        scenario.configurations[plant.get_key("Source Iron Ore")] = {"cost": model_parameters["cost_iron_ore_€_per_t"]}
-        scenario.configurations[plant.get_key("Source Lime")] = {"cost": model_parameters["cost_lime_€_per_t"]}
-        scenario.configurations[plant.get_key("Source Oxygen")] = {"cost": model_parameters["cost_oxygen_€_per_to2"]}
-        scenario.configurations[plant.get_key("Source Scrap")] = {"cost": model_parameters["cost_scrap_€_per_t"]}
+        scenario.configurations[plant.get_key("Oxygen Sales")] = {"revenue": model_parameters["revenue_oxygen_$_per_to2"]}
+        scenario.configurations[plant.get_key("Source Hydrogen")] = {"cost": model_parameters["cost_hydrogen_$_per_th2"]}
+        scenario.configurations[plant.get_key("Source Iron Ore")] = {"cost": model_parameters["cost_iron_ore_$_per_t"]}
+        scenario.configurations[plant.get_key("Source Lime")] = {"cost": model_parameters["cost_lime_$_per_t"]}
+        scenario.configurations[plant.get_key("Source Oxygen")] = {"cost": model_parameters["cost_oxygen_$_per_to2"]}
+        scenario.configurations[plant.get_key("Source Scrap")] = {"cost": model_parameters["cost_scrap_$_per_t"]}
 
         # SET COMPONENT OPERATING CONSTRAINTS
         scenario.configurations[plant.get_key("PEM")] = {"power_max": model_parameters["electrolyzer_size"]}
@@ -306,12 +306,12 @@ def create_steel_plant(model_parameters, plant_type, config = None):
 
 
         # SET MARKET SCENARIO
-        scenario.configurations[plant.get_key("Oxygen Sales")] = {"revenue": model_parameters["revenue_oxygen_€_per_to2"]}
-        scenario.configurations[plant.get_key("Source Hydrogen")] = {"cost": model_parameters["cost_hydrogen_€_per_th2"]}
-        scenario.configurations[plant.get_key("Source Iron Ore")] = {"cost": model_parameters["cost_iron_ore_€_per_t"]}
-        scenario.configurations[plant.get_key("Source Lime")] = {"cost": model_parameters["cost_lime_€_per_t"]}
-        scenario.configurations[plant.get_key("Source Oxygen")] = {"cost": model_parameters["cost_oxygen_€_per_to2"]}
-        scenario.configurations[plant.get_key("Source Scrap")] = {"cost": model_parameters["cost_scrap_€_per_t"]}
+        scenario.configurations[plant.get_key("Oxygen Sales")] = {"revenue": model_parameters["revenue_oxygen_$_per_to2"]}
+        scenario.configurations[plant.get_key("Source Hydrogen")] = {"cost": model_parameters["cost_hydrogen_$_per_th2"]}
+        scenario.configurations[plant.get_key("Source Iron Ore")] = {"cost": model_parameters["cost_iron_ore_$_per_t"]}
+        scenario.configurations[plant.get_key("Source Lime")] = {"cost": model_parameters["cost_lime_$_per_t"]}
+        scenario.configurations[plant.get_key("Source Oxygen")] = {"cost": model_parameters["cost_oxygen_$_per_to2"]}
+        scenario.configurations[plant.get_key("Source Scrap")] = {"cost": model_parameters["cost_scrap_$_per_t"]}
 
         # SET COMPONENT OPERATING CONSTRAINTS
         scenario.configurations[plant.get_key("PEM")] = {"power_max": 1200}

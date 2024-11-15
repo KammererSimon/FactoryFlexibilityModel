@@ -15,7 +15,8 @@ def collect_results():
                      "co2_per_ton", "cost_per_ton", "hbi_storage_rate", "co2_capture_rate", "cost_electricity"])
 
     # add row descriptions to dataframe
-    data = data._append({"Layout": "Which of the three DRI Layouts was used for this run?",
+    data = data._append({"file": "Name of the simulation file",
+                        "Layout": "Which of the three DRI Layouts was used for this run?",
                         "cost_natural_gas": "Fixed natural Gas price in [€/t]",
                         "avg_cost_electricity": "Average cost of the electricity timeseries in [€/MWh]",
                         "volantility_electricity": "An index describing the peak-to-peak value that the underlying timeseries has been scaled to. 0=stationary, 1=original, 2=doubled, etc..",
@@ -26,7 +27,6 @@ def collect_results():
                         "hbi_storage_rate": "Ratio of total DRI taking the storage path vs the total amount of DRI being fed into EAF [%]",
                         "co2_capture_rate": "Ratio of captured CO2 vs produced CO2 [%]",
                         "rate_h2_in_dri": "Ratio of DRI produced using Hydrogen vs total DRI production volume [%]",
-                        "h2_storage_rate": "Ratio of total Hydrogen taking the storage path vs the total amount of H2 being fed into DRI [%]",
                         "solver_time": "Required runtime of the simulation [s]",
                         "cost_electricity": "Average cost of purchased electricity resulting from the optimized operation profile [€/MWh]",
                         "emissions_electricity": "Are scope 2 electricity emissions considered in this run?",
@@ -74,16 +74,6 @@ def collect_results():
             else:
                 rate_h2_in_dri = 1
 
-            # calculate h2_storage_rate
-            #if simulation.info["layout"] in ["Partial", "Hydrogen"]:
-            #    hydrogen_stored = sum(simulation.result[factory.get_key('Pool Hydrogen -> Hydrogen Storage')])
-            #    hydrogen_used = sum(simulation.result[factory.get_key('Pool Hydrogen -> Hydrogen DRI')])
-            #    if hydrogen_used == 0 or hydrogen_stored == 0:
-            #        h2_storage_rate = 0
-            #    else:
-            #        h2_storage_rate = hydrogen_stored/hydrogen_used
-            #else:
-            h2_storage_rate = 0
 
             # calculate hbi_storage_rate
             hbi_storage_rate = sum(simulation.result[factory.get_key('Pool DRI -> DRI Compactor')]) / sum(
@@ -102,7 +92,8 @@ def collect_results():
 
             electricity_savings_ratio = cost_electricity / simulation.info["avg_electricity_price"]
 
-            data = data._append({"Layout": simulation.info["layout"],
+            data = data._append({"file": file,
+                                "Layout": simulation.info["layout"],
                                 "cost_natural_gas": simulation.info["natural_gas_cost"],
                                 "avg_cost_electricity": simulation.info["avg_electricity_price"],
                                 "volantility_electricity": simulation.info["volatility"],
@@ -113,7 +104,6 @@ def collect_results():
                                 "hbi_storage_rate": hbi_storage_rate,
                                 "co2_capture_rate": co2_capture_rate,
                                 "rate_h2_in_dri": rate_h2_in_dri,
-                                "h2_storage_rate": h2_storage_rate,
                                 "solver_time": simulation.info["solver_time"],
                                 "cost_electricity": cost_electricity,
                                 "emissions_electricity": emissions_electricity,
