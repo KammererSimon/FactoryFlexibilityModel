@@ -75,11 +75,10 @@ To simulate a session save it with the gui and then call:
 poetry run simulate [session_folder_path]
 ```
 
-To simulate the demo sessions just execute:
+To simulate the session of the SPIES 2024 Paper execute:
 
 ```shell
-poetry run examples\Demo_01
-poetry run examples\Demo_02
+poetry run simulate examples\SPIES_2024 
 ```
 
 ### 3) Showing result dashboard on a simulated model run:
@@ -90,4 +89,4 @@ To show the results of a performed simulation execute:
 poetry run dashboard [simulation_object]
 ```
 
-with [simulation_object] being a .sim file within session_folder\simulations
+with [simulation_object] being a .sim file within the session_folder

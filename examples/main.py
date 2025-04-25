@@ -43,7 +43,6 @@ import factory_flexibility_model.simulation.Scenario as sc
 # IMPORTS
 from factory_flexibility_model.io import factory_import as imp
 from factory_flexibility_model.simulation import Simulation as fs
-from examples.simple_simulation_call import simulate_ax
 
 
 def gui():
@@ -64,11 +63,8 @@ def simulate_session():
     This function takes the path to a session folder and conducts the simulation.
     """
 
-    simulate_ax()
-    return
 
     logging.basicConfig(level=logging.WARNING)
-
 
     session_folder = sys.argv[1]
 
@@ -88,7 +84,10 @@ def simulate_session():
     simulation = fs.Simulation(factory=factory, scenario=scenario)
     simulation.simulate(
         threshold=0.000001,
-        solver_config={interval_length=730, "log_solver": False, "mip_gap": 0.01, "logger_level": "INFO"},
+        solver_config={"interval_length": 730,
+                       "log_solver": False,
+                       "mip_gap": 0.01,
+                       "logger_level": "INFO"},
     )
 
     simulation.save(rf"{session_folder}\simulations")
@@ -100,11 +99,12 @@ def simulate_session():
 def dash():
     r"""
     This function imports a given (solved) simulation file and loads it into the plotly dashboard for analysis.
-    :param simulation_data: [str] Path to a solved simulation file. Typically stored under "session_folder\simulations\*simulation_name*.sim"
+    :param simulation_data: [str] Path to a solved simulation file.
+    Typically stored under "session_folder\simulations\*simulation_name*.sim"
     """
 
     # import simulation
     simulation = imp.import_simulation(sys.argv[1])
 
     # create and run dashboard
-    simulation.create_dash()  # add  -> authentication={"user": "password"} <- to add a user login
+    simulation.create_dash()

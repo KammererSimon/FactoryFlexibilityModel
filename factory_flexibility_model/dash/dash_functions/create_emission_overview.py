@@ -60,7 +60,7 @@ def create_emission_overview(simulation):
                 # add line with component emissions to the string if the source or sink caused emissions
                 detailed_emissions = detailed_emissions + f"\n * **{simulation.factory.get_name(component.key)}:** {round(sum(component_emissions)/1000,2)} tCO2\n"
 
-    detailed_emissions = detailed_emissions + f"\n * **Total Emissions:** {round(sum(simulation.result['total_emissions'])/1000, 2)} tCO2\n"
+    detailed_emissions = detailed_emissions + f"\n * **Total Emissions:** {round(simulation.result['total_emissions']/1000, 2)} tCO2\n"
 
     # return created string
     return detailed_emissions

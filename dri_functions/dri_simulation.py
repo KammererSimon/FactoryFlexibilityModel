@@ -232,6 +232,7 @@ def count_simulations(scenario_variations):
            len(scenario_variations["CO2_reduction"]) * \
            len(scenario_variations["electricity_emissions"])
 
+
 def create_simulation_list(simulation_config, model_parameters, timeseries_data, scenario_variations):
 
     # initialize empty list
