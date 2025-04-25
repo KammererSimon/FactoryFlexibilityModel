@@ -44,7 +44,7 @@ def add_converter(simulation, component, t_start, t_end):
     :param component: components.converter-object
     :return: simulation.m is being extended
     """
-    interval_length = t_end - t_start + 1
+    interval_length = t_end-t_start+1
 
     # create a timeseries of decision variables to represent the utilization U(t)
     simulation.MVars[f"P_{component.key}"] = simulation.m.addMVar(
@@ -61,8 +61,6 @@ def add_converter(simulation, component, t_start, t_end):
     simulation.MVars[f"P_{component.key}_devneg"] = simulation.m.addMVar(
         interval_length, vtype=GRB.CONTINUOUS, name=f"P_{component.name}_devneg"
     )
-
-
 
     # Calculate the efficiency of operation for each timestep based on the deviations
     simulation.MVars[f"Eta_{component.key}"] = simulation.m.addMVar(

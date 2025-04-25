@@ -36,7 +36,12 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-gui = "examples.main:gui"
-dashboard = "examples.main:dash"
-simulate = "examples.main:simulate_session"
-create_shortcut = "examples.create_desktop_shortcut:create_desktop_shortcut"
+gui = "dri_functions.gui:gui"
+dashboard = "dri_functions.open_dashboard:dash"
+simulate = "dri_functions.dri_simulation:iterate_dri_simulations"
+iterate = "dri_functions.scenario_iteration:iterate_simulations"
+simulate_session = "examples.main:simulate_session"
+heatmap = "dri_functions.create_heatmap"
+boxplot = "dri_functions.create_diagrams:create_boxplot_dash"
+collect_results = "dri_functions.collect_results:collect_results"
+create_partial_plots = "dri_functions.create_partial_utilization_plot:create_partial_utilization_plot"

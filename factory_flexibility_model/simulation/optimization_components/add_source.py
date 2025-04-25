@@ -38,7 +38,7 @@ from gurobipy import GRB
 def add_source(simulation, component, t_start, t_end):
     """
     This function adds all necessary MVARS and constraints to the optimization problem that are
-    required to integrate the source handed over as 'Component'
+    required to integrate the source handed over as 'component'
     :param component: components.source-object
     :return: simulation.m is being extended
     """

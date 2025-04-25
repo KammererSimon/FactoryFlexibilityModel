@@ -35,7 +35,7 @@ from gurobipy import GRB
 
 
 # CODE START
-def add_slack(simulation, component, interval_length):
+def add_slack(simulation, component, t_start, t_end):
     """
     This function adds all necessary MVARS and constraints to the optimization problem that are
     required to integrate the slack handed over as 'Component'
@@ -45,6 +45,8 @@ def add_slack(simulation, component, interval_length):
     # slacks don't need any power restrictions or other constraints.
     # All they basically have to do is to be usable in any situation but be very expensive then.
     # So just two cost terms are being created here
+
+    interval_length = t_end - t_start + 1
 
     # add a cost term for negative slack usage to the target function
     for i in range(len(component.inputs)):
